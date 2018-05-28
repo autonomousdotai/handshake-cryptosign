@@ -225,6 +225,7 @@ def init():
 			user_id = user.id
 		)
 		
+		db.session.add(handshake)
 		db.session.commit()
 
 		hs_json = handshake.to_json()

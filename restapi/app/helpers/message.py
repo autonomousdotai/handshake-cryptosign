@@ -1,0 +1,33 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+class MESSAGE(object):
+	# USER
+	USER_INVALID_EMAIL = 'Please enter a valid email address.'
+	USER_INVALID_INPUT = 'Please make sure your email and password are correct.'
+	USER_CANNOT_REGISTRY = 'Sorry, we were unable to register you. Please contact human@autonomous.ai for support.'
+	USER_INVALID = 'Invalid user'
+	USER_NEED_PURCHASE_PRODUCT = 'Please purchase to sign more.'
+	USER_INVALID_ACCESS_TOKEN = 'Invalid user'
+	USER_INVALID_SOURCE = 'Please login with google+ or facebook account.'
+
+	# HANSHAKE
+	HANDSHAKE_NOT_ENOUGH_GAS = 'You\'re out of gas! Please wait while we add ETH to your account.'
+	HANDSHAKE_CANNOT_SEND_TO_MYSELF = 'You can\'t Handshake with yourself!'
+	HANDSHAKE_EMPTY = 'This Handshake seems to be empty.'
+	HANDSHAKE_NO_PERMISSION = 'You are not authorized to make this Handshake.'
+	HANDSHAKE_NO_CONTRACT_FILE = 'Contract file not found!'
+	HANDSHAKE_NOT_FOUND = 'Handshake not found. Please try again.'
+	HANDSHAKE_TERM_AND_VALUE_NOT_MATCH = 'Please enter a payment amount.'
+	HANDSHAKE_VALUE_GREATER_THAN_0 = 'Amount should be larger > 0.'
+	HANDSHAKE_AMOUNT_INVALID = 'Amount key is invalid.'
+	HANDSHAKE_PUBLIC_INVALID = 'Public key is invalid.'
+	HANDSHAKE_INVALID_WALLET_ADDRESS = 'Please enter a valid wallet address which exists in our system.'
+	HANDSHAKE_ERROR_ANYTHING = 'You\'re out of gas! Please wait while we add ETH to your account.'
+	HANDSHAKE_DESC_TOO_LONG = 'Your note is too long. It should be less than 1000 characters.'
+	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
+
+	# WALLET
+	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'
+	WALLET_RECEIVE_ETH_ALREADY = 'You can only request free Handshakes once.'
+	WALLET_REJECT_FREE_ETH = 'Your account can\'t get free ETH.'

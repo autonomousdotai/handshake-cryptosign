@@ -5,6 +5,7 @@ import os
 import requests
 import hashlib
 import sys
+import json
 
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
@@ -204,14 +205,18 @@ def init():
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_uid(uid)		
 
-		data = request.form
-		hs_type = data.get('type', -1, type=int)
+		data = request.json
+		if data is None:
+			raise Exception("Please double check your input data")
+
+		print(type(data))
+		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		chain_id = data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY'], type=int)
+		chain_id = data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY'])
 		from_address = data.get('from_address', '')
 		to_address = data.get('to_address', '')
-		state = data.get('state', 1, type=int)
+		state = data.get('state', 1)
 
 		print 'type = {}, {}'.format(hs_type, type(hs_type))
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:

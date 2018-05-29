@@ -9,7 +9,7 @@ from app import db, fcm, sg
 from sqlalchemy import and_, or_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, Wallet, Device, User
-from app.helpers.utils import parse_date_to_int, is_valid_email
+from app.helpers.utils import parse_date_to_int, is_valid_email, parse_str_to_array
 from app.tasks import add_transaction
 from app.helpers.bc_exception import BcException
 from datetime import datetime
@@ -388,13 +388,14 @@ def add_handshake_to_solrservice(handshake):
 		"state_i": handshake.state,
 		"status_i": handshake.status,
 		"init_user_id_i": handshake.user_id,
-		"shaked_user_ids_is": [],
+		"shaked_user_ids_is": parse_str_to_array(handshake.shaked_user_ids),
 		"text_search_ss": [handshake.description],
-		"shake_count_i": 0,
-		"view_count_i": 0,
-		"extra_data_s": handshake.extra_data
+		"shake_count_i": handshake.shake_count,
+		"view_count_i": handshake.view_count,
+		"extra_data_s": handshake.extra_data,
+		"from_address_s": handshake.from_address,
+		"to_address_s": handshake.to_address
 	}
-
 	arr_handshakes = []
 	arr_handshakes.append(hs)
 

@@ -26,6 +26,7 @@ class Handshake(BaseModel):
 	                      default=CONST.Handshake['STATUS_PENDING'])
 	shake_count = db.Column(db.Integer)
 	view_count = db.Column(db.Integer)
+	shaked_user_ids = db.Column(db.Text)
 	secret_key = db.Column(db.String(4096))
 	signed_secret_key = db.Column(db.String(4096))
 
@@ -34,13 +35,6 @@ class Handshake(BaseModel):
 	@classmethod
 	def find_handshake_by_id(cls, _id):
 		handshake = Handshake.query.filter_by(id=_id).first()
-		if handshake is not None:
-			return handshake
-		return None
-
-	@classmethod
-	def find_handshake_by_offchain(cls, offchain):
-		handshake = Handshake.query.filter_by(offchain=offchain).first()
 		if handshake is not None:
 			return handshake
 		return None

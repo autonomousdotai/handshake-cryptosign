@@ -5,7 +5,7 @@
 
 from flask_testing import TestCase
 from tests.routes.base import BaseTestCase
-from app.helpers.utils import is_valid_email, isnumber, formalize_description
+from app.helpers.utils import is_valid_email, isnumber, formalize_description, parse_str_to_array
 from app import db, app
 
 
@@ -69,6 +69,31 @@ class TestUtils(BaseTestCase):
 
         actual = formalize_description(None)
         expected = None
+        self.assertEqual(actual, expected)
+
+    def test_parse_str_to_array(self):
+        actual = parse_str_to_array(None)
+        expected = []
+        self.assertEqual(actual, expected)
+
+        actual = parse_str_to_array('')
+        expected = []
+        self.assertEqual(actual, expected)
+
+        actual = parse_str_to_array([1,2])
+        expected = []
+        self.assertEqual(actual, expected)
+
+        actual = parse_str_to_array("[1, 2]")
+        expected = [1, 2]
+        self.assertEqual(actual, expected)
+
+        actual = parse_str_to_array("['1', '2']")
+        expected = []
+        self.assertEqual(actual, expected)
+
+        actual = parse_str_to_array("[\"1\", \"2\"]")
+        expected = ["1", "2"]
         self.assertEqual(actual, expected)
 
 

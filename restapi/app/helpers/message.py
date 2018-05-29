@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 class MESSAGE(object):
+	# ERROR:
+	INVALID_DATA = 'Please double check your input data.'
+
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
 	USER_INVALID_INPUT = 'Please make sure your email and password are correct.'
@@ -26,6 +29,7 @@ class MESSAGE(object):
 	HANDSHAKE_ERROR_ANYTHING = 'You\'re out of gas! Please wait while we add ETH to your account.'
 	HANDSHAKE_DESC_TOO_LONG = 'Your note is too long. It should be less than 1000 characters.'
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
+	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
 
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'

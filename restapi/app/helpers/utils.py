@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import re
+import json
+
 from fractions import Fraction
 from datetime import datetime
 
@@ -47,7 +49,6 @@ def isnumber(s):
        return False
 
 def formalize_description(desc):
-	
 	if desc is None or len(desc.strip()) == 0:
 		return desc
 		
@@ -56,4 +57,16 @@ def formalize_description(desc):
 		desc = "{}.".format(desc)
 
 	return desc
+
+def parse_str_to_array(shaked_user_ids):
+	if shaked_user_ids is None:
+		return []
+	try:
+		data = json.loads(shaked_user_ids)
+		if isinstance(data, list):
+			return data
+		return []
+	except Exception as ex:
+		print str(ex)
+		return []
 		

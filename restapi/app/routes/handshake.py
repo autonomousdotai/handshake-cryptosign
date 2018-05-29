@@ -211,6 +211,7 @@ def init():
 		chain_id = data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY'], type=int)
 		from_address = data.get('from_address', '')
 		to_address = data.get('to_address', '')
+		state = data.get('state', 1, type=int)
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			return response_error('Handshake type is not betting')
@@ -222,10 +223,14 @@ def init():
 			chain_id = chain_id,
 			from_address = from_address,
 			to_address = to_address,
-			user_id = user.id
+			user_id = user.id,
+			state = state
 		)
 		
 		db.session.add(handshake)
+		db.session.flush()
+
+		handshake_bl.add_handshake_to_solrservice(handshake)
 		db.session.commit()
 
 		hs_json = handshake.to_json()

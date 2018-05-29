@@ -213,6 +213,7 @@ def init():
 		to_address = data.get('to_address', '')
 		state = data.get('state', 1, type=int)
 
+		print 'type = {}, {}'.format(hs_type, type(hs_type))
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			return response_error('Handshake type is not betting')
 

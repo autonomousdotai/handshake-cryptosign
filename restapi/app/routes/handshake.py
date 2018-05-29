@@ -213,6 +213,7 @@ def init():
 		to_address = data.get('to_address', '')
 		state = data.get('state', 1, type=int)
 
+		print '1'
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			return response_error('Handshake type is not betting')
 
@@ -227,12 +228,14 @@ def init():
 			state = state
 		)
 		
+		print '2'
 		db.session.add(handshake)
 		db.session.flush()
 
 		handshake_bl.add_handshake_to_solrservice(handshake)
 		db.session.commit()
 
+		print '3'
 		hs_json = handshake.to_json()
 		hs_json["offchain"] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id)
 

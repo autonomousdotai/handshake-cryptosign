@@ -380,14 +380,14 @@ def list_to_user(user, to_address, chain_id):
 
 	return list_to_user
 
-def add_handshake_to_solrservice(handshake):
+def add_handshake_to_solrservice(handshake, user):
 	hs = {
 		"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id),
 		"hid_s": handshake.hid,
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
 		"status_i": handshake.status,
-		"init_user_id_i": handshake.user_id,
+		"init_user_id_i": user.uid,
 		"shaked_user_ids_is": parse_str_to_array(handshake.shaked_user_ids),
 		"text_search_ss": [handshake.description],
 		"shake_count_i": handshake.shake_count,

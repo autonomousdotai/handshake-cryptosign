@@ -88,13 +88,13 @@ def init():
 			chain_id = chain_id,
 			from_address = from_address,
 			to_address = to_address,
-			user_id = user.uid,
+			user_id = user.id,
 			state = state
 		)
 		db.session.add(handshake)
 		db.session.flush()
 
-		handshake_bl.add_handshake_to_solrservice(handshake)
+		handshake_bl.add_handshake_to_solrservice(handshake, user)
 		db.session.commit()
 
 		# response data
@@ -162,7 +162,7 @@ def update():
 
 		db.session.flush()
 
-		handshake_bl.add_handshake_to_solrservice(handshake)
+		handshake_bl.add_handshake_to_solrservice(handshake, user)
 		db.session.commit()
 
 		# response data

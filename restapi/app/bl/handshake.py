@@ -387,7 +387,7 @@ def add_handshake_to_solrservice(handshake):
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
 		"status_i": handshake.status,
-		"init_user_id_i": handshake.user_id
+		"init_user_id_i": handshake.user_id,
 		"shaked_user_ids_is": [],
 		"text_search_ss": [handshake.description],
 		"shake_count_i": 0,

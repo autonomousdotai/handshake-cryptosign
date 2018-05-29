@@ -154,6 +154,12 @@ gcloud init
 gcloud auth application-default login
 ```
 
+#### SOLR
+
+```
+- /usr/local/Cellar/solr/7.3.1/server/solr/handshakes
+```
+
 #### Kubernetes
 
 https://kubernetes.io/docs/tasks/tools/install-kubectl/

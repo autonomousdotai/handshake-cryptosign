@@ -382,7 +382,7 @@ def list_to_user(user, to_address, chain_id):
 
 def add_handshake_to_solrservice(handshake):
 	hs = {
-		"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + handshake.id,
+		"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id),
 		"hid_s": handshake.hid,
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
@@ -395,13 +395,16 @@ def add_handshake_to_solrservice(handshake):
 		"extra_data_s": handshake.extra_data
 	}
 
-	print 'hs = {}'.format(hs)
-	data = []
-	data.append(hs)
+	arr_handshakes = []
+	arr_handshakes.append(hs)
+
 	endpoint = "{}/handshake/update".format(g.SOLR_SERVICE)
-	res = requests.post(endpoint, data={"add": data})
+	data = {
+		"add": arr_handshakes
+	}
+	
+	res = requests.post(endpoint, json=data)
 	if res.status_code > 400:
 		raise Exception('SOLR service is failed.')
 	json = res.json()
-	print json
 	return json

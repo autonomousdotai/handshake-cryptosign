@@ -229,7 +229,7 @@ def init():
 			chain_id = chain_id,
 			from_address = from_address,
 			to_address = to_address,
-			user_id = user.id,
+			user_id = user.uid,
 			state = state
 		)
 		

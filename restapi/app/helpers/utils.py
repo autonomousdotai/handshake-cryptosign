@@ -58,11 +58,11 @@ def formalize_description(desc):
 
 	return desc
 
-def parse_str_to_array(shaked_user_ids):
-	if shaked_user_ids is None:
+def parse_str_to_array(shake_user_ids):
+	if shake_user_ids is None:
 		return []
 	try:
-		data = json.loads(shaked_user_ids)
+		data = json.loads(shake_user_ids)
 		if isinstance(data, list):
 			return data
 		return []

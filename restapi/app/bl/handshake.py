@@ -14,6 +14,8 @@ from app.tasks import add_transaction
 from app.helpers.bc_exception import BcException
 from datetime import datetime
 from app.helpers.message import MESSAGE
+from datetime import datetime
+import time
 
 import requests
 import app.constants as CONST
@@ -388,14 +390,19 @@ def add_handshake_to_solrservice(handshake, user):
 		"state_i": handshake.state,
 		"status_i": handshake.status,
 		"init_user_id_i": user.uid,
-		"shaked_user_ids_is": parse_str_to_array(handshake.shaked_user_ids),
+		"shake_user_ids_is": parse_str_to_array(handshake.shake_user_ids),
 		"text_search_ss": [handshake.description],
 		"shake_count_i": handshake.shake_count,
 		"view_count_i": handshake.view_count,
+		"comment_count_i": 0,
+		"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
+		"last_update_at_": int(time.mktime(handshake.date_modified.timetuple())),
+		"is_private_i": handshake.is_private,
 		"extra_data_s": handshake.extra_data,
 		"from_address_s": handshake.from_address,
 		"to_address_s": handshake.to_address
 	}
+	print hs
 	arr_handshakes = []
 	arr_handshakes.append(hs)
 

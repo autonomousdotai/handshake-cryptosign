@@ -63,6 +63,7 @@ def detail(id):
 def init():
 	try:
 		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_uid(uid)		
 
 		data = request.json
@@ -72,24 +73,24 @@ def init():
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		chain_id = data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY'])
 		from_address = data.get('from_address', '')
 		to_address = data.get('to_address', '')
-		state = data.get('state', 1)
-		shaked_user_ids = data.get('shaked_user_ids', '')
+		is_private = data.get('is_private', 0)
+		shake_user_ids = data.get('shake_user_ids', '')
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
 
 		handshake = Handshake(
-			hs_type = hs_type,
-			extra_data = extra_data,
-			description = description,
-			chain_id = chain_id,
-			from_address = from_address,
-			to_address = to_address,
-			user_id = user.id,
-			state = state
+			hs_type=hs_type,
+			extra_data=extra_data,
+			description=description,
+			chain_id=chain_id,
+			from_address=from_address,
+			to_address=to_address,
+			user_id=user.id,
+			shake_user_ids=shake_user_ids,
+			is_private=is_private
 		)
 		db.session.add(handshake)
 		db.session.flush()
@@ -112,6 +113,7 @@ def init():
 def update():
 	try:
 		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_uid(uid)
 
 		data = request.json
@@ -130,13 +132,14 @@ def update():
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		chain_id = data.get('chain_id', -1)
 		from_address = data.get('from_address', '')
 		to_address = data.get('to_address', '')
 		state = data.get('state', -1)
-		shaked_user_ids = data.get('shaked_user_ids', '')
+		shake_user_ids = data.get('shake_user_ids', '')
 
 		if hs_type != -1:
+			if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
+				raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
 			handshake.hs_type = hs_type
 
 		if len(extra_data) != 0:
@@ -157,8 +160,8 @@ def update():
 		if state != -1:
 			handshake.state = state
 
-		if len(shaked_user_ids) != 0:
-			handshake.shaked_user_ids = shaked_user_ids
+		if len(shake_user_ids) != 0:
+			handshake.shake_user_ids = shake_user_ids
 
 		db.session.flush()
 

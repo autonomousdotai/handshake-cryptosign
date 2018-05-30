@@ -396,7 +396,7 @@ def add_handshake_to_solrservice(handshake, user):
 		"view_count_i": handshake.view_count,
 		"comment_count_i": 0,
 		"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
-		"last_update_at_": int(time.mktime(handshake.date_modified.timetuple())),
+		"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 		"is_private_i": handshake.is_private,
 		"extra_data_s": handshake.extra_data,
 		"from_address_s": handshake.from_address,

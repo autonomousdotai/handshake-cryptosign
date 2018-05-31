@@ -14,10 +14,10 @@ def login_required(f):
             return response_error("Please login first!")
         else:
             uid = int(request.headers["Uid"])
-            user = User.find_user_with_uid(uid)
+            user = User.find_user_with_id(uid)
             if user is None:
                 user = User(
-                    uid=uid
+                    id=uid
                 )
                 db.session.add(user)
                 db.session.commit()

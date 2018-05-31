@@ -385,12 +385,13 @@ def list_to_user(user, to_address, chain_id):
 def add_handshake_to_solrservice(handshake, user):
 	hs = {
 		"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id),
-		"hid_s": handshake.hid,
+		"hid_s": -1,
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
 		"status_i": handshake.status,
-		"init_user_id_i": user.uid,
-		"shake_user_ids_is": parse_str_to_array(handshake.shake_user_ids),
+		"init_user_id_i": user.id,
+		"chain_id_i": handshake.chain_id,
+		"shake_user_ids_is": [],
 		"text_search_ss": [handshake.description],
 		"shake_count_i": handshake.shake_count,
 		"view_count_i": handshake.view_count,
@@ -399,13 +400,16 @@ def add_handshake_to_solrservice(handshake, user):
 		"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 		"is_private_i": handshake.is_private,
 		"extra_data_s": handshake.extra_data,
-		"from_address_s": handshake.from_address,
-		"to_address_s": handshake.to_address
+		"remaining_value_f": handshake.remaining_amount,
+		"amount_f": handshake.amount,
+		"outcome_id_i": handshake.outcome_id,
+		"odds_f": handshake.odds,
+		"currency_s": handshake.currency,
+		"side_i": handshake.side,
+		"win_value_f": handshake.win_value,
 	}
-	print hs
 	arr_handshakes = []
 	arr_handshakes.append(hs)
-
 	endpoint = "{}/handshake/update".format(g.SOLR_SERVICE)
 	data = {
 		"add": arr_handshakes
@@ -414,5 +418,10 @@ def add_handshake_to_solrservice(handshake, user):
 	res = requests.post(endpoint, json=data)
 	if res.status_code > 400:
 		raise Exception('SOLR service is failed.')
+	
 	json = res.json()
 	return json
+
+def find_all_matched_handshakes(side, odds):
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.odds==float(1/odds), Handshake.remaining_amount>0)).all()
+	return handshakes

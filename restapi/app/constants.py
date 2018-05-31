@@ -116,3 +116,15 @@ STATE_TYPE = {
 	'NEW': 0,
 	'PUBLISH': 1
 }
+
+RESULT_TYPE = {
+	'PENDING': -1,
+	'DRAW': 0,
+	'SUPPORT_WIN': 1,
+	'AGAINST_WIN': 2
+}
+
+SIDE_TYPE = {
+	'SUPPORT': 1,
+	'AGAINST': 2
+}

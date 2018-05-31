@@ -33,7 +33,7 @@ handshake_routes = Blueprint('handshake', __name__)
 def detail(id):
 	uid = int(request.headers['Uid'])
 	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-	user = User.find_user_with_uid(uid)
+	user = User.find_user_with_id(uid)
 
 	try:
 		handshake = Handshake.find_handshake_by_id(id)
@@ -56,7 +56,7 @@ def init():
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_uid(uid)		
+		user = User.find_user_with_id(uid)		
 
 		data = request.json
 		if data is None:
@@ -65,117 +65,60 @@ def init():
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		from_address = data.get('from_address', '')
-		to_address = data.get('to_address', '')
 		is_private = data.get('is_private', 0)
-		shake_user_ids = data.get('shake_user_ids', '')
+		outcome_id = data.get('outcome_id')
+		odds = float(data.get('odds'))
+		amount = float(data.get('amount'))
+		currency = data.get('currency', 'ETH')
+		side = data.get('side', CONST.SIDE_TYPE['SUPPORT'])
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
 
-		handshake = Handshake(
-			hs_type=hs_type,
-			extra_data=extra_data,
-			description=description,
-			chain_id=chain_id,
-			from_address=from_address,
-			to_address=to_address,
-			user_id=user.id,
-			shake_user_ids=shake_user_ids,
-			is_private=is_private
-		)
-		db.session.add(handshake)
-		db.session.flush()
+		# filter all handshakes which able be to match first
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds)
+		if len(handshakes) == 0:
+			handshake = Handshake(
+				hs_type=hs_type,
+				extra_data=extra_data,
+				description=description,
+				chain_id=chain_id,
+				is_private=is_private,
+				user_id=user.id,
+				outcome_id=outcome_id,
+				odds=odds,
+				amount=amount,
+				currency=currency,
+				side=side,
+				win_value=odds*amount,
+				remaining_amount=odds*amount
+			)
+			db.session.add(handshake)
+			db.session.flush()
 
-		handshake_bl.add_handshake_to_solrservice(handshake, user)
-		db.session.commit()
+			handshake_bl.add_handshake_to_solrservice(handshake, user)
+			db.session.commit()
 
-		# response data
-		hs_json = handshake.to_json()
-		hs_json['id'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id)
+			# response data
+			hs_json = handshake.to_json()
+			hs_json['id'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id)
 
-		return response_ok(hs_json)
+			return response_ok(hs_json)
+		else:
+			pass
 
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-@handshake_routes.route('/update', methods=['POST'])
-@login_required
-def update():
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_uid(uid)
-
-		data = request.json
-		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
-
-		offchain = data.get('id', -1)
-		if offchain == -1 or CONST.CRYPTOSIGN_OFFCHAIN_PREFIX not in offchain:
-			raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
-
-		offchain = int(offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, ''))
-		handshake = Handshake.query.filter(Handshake.user_id == user.id, Handshake.id == offchain).first()
-		if handshake is None:
-			raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
-
-		hs_type = data.get('type', -1)
-		extra_data = data.get('extra_data', '')
-		description = data.get('description', '')
-		from_address = data.get('from_address', '')
-		to_address = data.get('to_address', '')
-		state = data.get('state', -1)
-		shake_user_ids = data.get('shake_user_ids', '')
-
-		if hs_type != -1:
-			if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
-				raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
-			handshake.hs_type = hs_type
-
-		if len(extra_data) != 0:
-			handshake.extra_data = extra_data
-
-		if len(description) != 0:
-			handshake.description = description
-
-		if chain_id != -1:
-			handshake.chain_id = chain_id
-
-		if len(from_address) != 0:
-			handshake.from_address = from_address
-
-		if len(to_address) != 0:
-			handshake.to_address = to_address
-
-		if state != -1:
-			handshake.state = state
-
-		if len(shake_user_ids) != 0:
-			handshake.shake_user_ids = shake_user_ids
-
-		db.session.flush()
-
-		handshake_bl.add_handshake_to_solrservice(handshake, user)
-		db.session.commit()
-
-		# response data
-		hs_json = handshake.to_json()
-		hs_json["id"] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id)
-
-		return response_ok(hs_json)
+		return response_ok()
 
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
 
 
-@handshake_routes.route('/', methods=['GET'])
+@handshake_routes.route('/shake', methods=['GET'])
 @login_required
 def handshakes():
 	uid = int(request.headers['Uid'])
 	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-	user = User.find_user_with_uid(uid)
+	user = User.find_user_with_id(uid)
 
 	return response_ok()

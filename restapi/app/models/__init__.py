@@ -6,3 +6,5 @@ from device import *
 from industries import *
 from match import *
 from outcome import *
+from shaker import *
+from history import *

@@ -13,29 +13,24 @@ def is_valid_email(email):
 		return True
 	return False
 
-
 def is_valid_password(password):
 	if len(password) >= 3:
 		return True
 	return False
-
 
 def is_valid_name(name):
 	if len(name.strip()) == 0:
 		return False
 	return True
 
-
 def is_valid_event(data):
 	if 'txId' in data and 'txStatus' in data and 'events' in data:
 		return True
 	return False
 
-
 def parse_date_to_int(input):
 	delta = input - datetime.now()
 	return delta.seconds
-
 
 def isnumber(s):
    try:
@@ -58,7 +53,6 @@ def formalize_description(desc):
 
 	return desc
 
-
 def parse_str_to_array(shake_user_ids):
 	if shake_user_ids is None:
 		return []
@@ -71,6 +65,19 @@ def parse_str_to_array(shake_user_ids):
 		print str(ex)
 		return []
 
+def parse_shakers_array(shakers):
+	if shakers is None:
+		return []
+
+	try:
+		shaker_ids = []
+		for shaker in shakers:
+			shaker_ids.append(shaker.shaker_id)	
+		return shaker_ids
+	except Exception as ex:
+		print(str(ex))
+		return []
+		
 def parse_date_string_to_timestamp(date_str):
 	dt_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ').strftime('%s')
 	return int(dt_obj)

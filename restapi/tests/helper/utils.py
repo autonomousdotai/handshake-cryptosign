@@ -5,8 +5,9 @@
 
 from flask_testing import TestCase
 from tests.routes.base import BaseTestCase
-from app.helpers.utils import is_valid_email, isnumber, formalize_description, parse_str_to_array, parse_date_string_to_timestamp
+from app.helpers.utils import is_valid_email, isnumber, formalize_description, parse_str_to_array, parse_date_string_to_timestamp, parse_shakers_array
 from app import db, app
+from app.models import Shaker
 
 
 class TestUtils(BaseTestCase):
@@ -101,6 +102,31 @@ class TestUtils(BaseTestCase):
         # UTC time
         expected = 1528963200 
         self.assertEqual(actual, expected)
+
+    def test_parse_shakers_array(self):
+        shakers = []
+        
+        expected = []
+        actual = parse_shakers_array(shakers)
+        self.assertEqual(expected, actual)
+
+        expected = []
+        actual = parse_shakers_array(None)
+        self.assertEqual(expected, actual)
+
+
+        shaker = Shaker(
+            shaker_id=1
+        )
+        shakers.append(shaker)
+        shaker = Shaker(
+            shaker_id=2
+        )
+        shakers.append(shaker)
+
+        expected = [1, 2]
+        actual = parse_shakers_array(shakers)
+        self.assertEqual(expected, actual)
 
 
 if __name__ == '__main__':

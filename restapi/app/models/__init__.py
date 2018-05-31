@@ -4,3 +4,5 @@ from wallet import *
 from tx import *
 from device import *
 from industries import *
+from match import *
+from outcome import *

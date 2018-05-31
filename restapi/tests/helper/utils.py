@@ -5,7 +5,7 @@
 
 from flask_testing import TestCase
 from tests.routes.base import BaseTestCase
-from app.helpers.utils import is_valid_email, isnumber, formalize_description, parse_str_to_array
+from app.helpers.utils import is_valid_email, isnumber, formalize_description, parse_str_to_array, parse_date_string_to_timestamp
 from app import db, app
 
 
@@ -94,6 +94,12 @@ class TestUtils(BaseTestCase):
 
         actual = parse_str_to_array("[\"1\", \"2\"]")
         expected = ["1", "2"]
+        self.assertEqual(actual, expected)
+
+    def test_parse_date_string_to_timestamp(self):
+        actual = parse_date_string_to_timestamp('2018-06-14T15:00:00Z')
+        # UTC time
+        expected = 1528963200 
         self.assertEqual(actual, expected)
 
 

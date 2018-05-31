@@ -9,13 +9,10 @@ import json
 
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
-import app.bl.user as user_bl
 
-from uuid import uuid4
 from flask import Blueprint, request, g, current_app, Response
 from sqlalchemy import or_, text
 from werkzeug.utils import secure_filename
-from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token
 
 from app.helpers.response import response_ok, response_error
 from app.helpers.utils import is_valid_email, isnumber, formalize_description
@@ -25,8 +22,6 @@ from app.helpers.decorators import login_required
 from app import db, s3, ipfs
 from app.models import User, Handshake, Tx, Wallet, Industries
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import add_transaction, upload_handshake_file, create_handshake_file
-from app.extensions.file_crypto import FileCrypto
 from datetime import datetime
 
 
@@ -36,21 +31,18 @@ handshake_routes = Blueprint('handshake', __name__)
 @handshake_routes.route('/<int:id>')
 @login_required
 def detail(id):
-	user_id = get_jwt_identity()
-	user = User.query.get(user_id)
+	uid = int(request.headers['Uid'])
+	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+	user = User.find_user_with_uid(uid)
 
 	try:
 		handshake = Handshake.find_handshake_by_id(id)
 		if not handshake:
 			raise Exception('Handshake {} is not found.'.format(id))
 		if user.wallet.address not in [handshake.from_address, handshake.to_address]:
-			raise Exception('You don\'t have permission to retrieve this handshake')
+			raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
 
 		handshake_json = handshake.to_json()
-		handshake_json['txs'] = []
-		txs = Tx.find_tx_with_hand_shake_id(handshake.id)
-		for tx in txs:
-			handshake_json['txs'].append(tx.to_json())
 
 		return response_ok(handshake_json)
 
@@ -177,3 +169,13 @@ def update():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
+
+@handshake_routes.route('/', methods=['GET'])
+@login_required
+def handshakes():
+	uid = int(request.headers['Uid'])
+	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+	user = User.find_user_with_uid(uid)
+
+	return response_ok()

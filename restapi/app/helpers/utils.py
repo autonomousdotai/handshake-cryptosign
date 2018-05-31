@@ -58,6 +58,7 @@ def formalize_description(desc):
 
 	return desc
 
+
 def parse_str_to_array(shake_user_ids):
 	if shake_user_ids is None:
 		return []
@@ -69,4 +70,7 @@ def parse_str_to_array(shake_user_ids):
 	except Exception as ex:
 		print str(ex)
 		return []
-		
+
+def parse_date_string_to_timestamp(date_str):
+	dt_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ').strftime('%s')
+	return int(dt_obj)

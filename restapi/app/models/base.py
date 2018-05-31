@@ -9,6 +9,7 @@ class BaseModel(db.Model, JsonSerializer):
 	id = db.Column(db.Integer, primary_key=True)
 	date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
 	date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+	deleted = db.Column(db.Integer, default=0)
 
 	@declared_attr
 	def created_user_id(cls):

@@ -5,6 +5,9 @@ class MESSAGE(object):
 	# ERROR:
 	INVALID_DATA = 'Please double check your input data.'
 
+	# MATCH:
+	MATCH_NOT_FOUND = 'Match not found. Please try again.'
+
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
 	USER_INVALID_INPUT = 'Please make sure your email and password are correct.'

@@ -30,7 +30,9 @@ def add(match_id):
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		
+		match = Match.find_match_by_id(match_id)
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND)
 
 		outcomes = []
 		for item in data:
@@ -50,20 +52,17 @@ def add(match_id):
 		return response_error(ex.message)
 
 
-@outcome_routes.route('/remove', methods=['POST'])
+@outcome_routes.route('/remove/<int:outcome_id>', methods=['POST'])
 @login_required
-def remove():
+def remove(outcome_id):
 	try:
-		user_id = get_jwt_identity()
-		device_token = request.form.get('device_token')
-
-		device = Device.find_device_with_device_token_and_user_id(device_token, user_id)
-		if device is not None:
-			db.session.delete(device)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is not None:
+			db.session.delete(outcome)
 			db.session.commit()
-			return response_ok("{} has been deleted!".format(device.id))
+			return response_ok("{} has been deleted!".format(outcome.id))
 		else:
-			return response_error("Please check your device id")
+			return response_error("Please check your outcome id")
 
 	except Exception, ex:
 		db.session.rollback()

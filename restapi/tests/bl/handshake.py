@@ -412,10 +412,5 @@ class TestHandshakeBl(BaseTestCase):
         arr_push = app.config['push']
         self.assertEqual(0, len(arr_push))
 
-    def test_list_to_user(self):
-        user = User.find_user_with_id(1)
-        to_users = handshake_bl.list_to_user(user, 'a@a.vn, trong2@autonomous.nyc')
-        self.assertEqual(len(to_users), 2)
-
 if __name__ == '__main__':
     unittest.main()

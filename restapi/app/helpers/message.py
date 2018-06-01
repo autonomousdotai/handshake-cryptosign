@@ -4,6 +4,9 @@
 class MESSAGE(object):
 	# ERROR:
 	INVALID_DATA = 'Please double check your input data.'
+	INVALID_BET = 'There is something wrong with your bet.'
+	BET_NOT_FOUND = 'There is no bet which match your side. Please create a new one or choose another side!'
+	INVALID_ADDRESS = 'Please provide valid wallet address!'
 
 	# MATCH:
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
@@ -33,6 +36,9 @@ class MESSAGE(object):
 	HANDSHAKE_DESC_TOO_LONG = 'Your note is too long. It should be less than 1000 characters.'
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
+
+	# SHAKER
+	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
 
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'

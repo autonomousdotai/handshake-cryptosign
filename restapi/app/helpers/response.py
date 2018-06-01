@@ -3,10 +3,15 @@
 from flask import jsonify
 
 
-def response_ok(value=None):
+def response_ok(value=None, message=''):
 	result = {
-		'status': 1
+		'status': 1,
+		'message': message
 	}
+
+	if len(message) > 0:
+		result['message'] = message
+
 	if value is not None:
 		result.update({'data': value})
 

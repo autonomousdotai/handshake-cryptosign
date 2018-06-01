@@ -2,7 +2,6 @@ from flask import g
 from app import db
 
 from app.helpers.bc_exception import BcException
-from app.models import Wallet
 
 import requests
 

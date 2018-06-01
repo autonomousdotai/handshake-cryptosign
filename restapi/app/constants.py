@@ -34,9 +34,15 @@ Handshake = {
 	'STATUS_BLOCKCHAIN_PENDING': -4,
 	'STATUS_NEW': -3,
 	'STATUS_TRANSACTION_FAILED': -2,
+
 	'STATUS_PENDING': -1,
 	'STATUS_INITED': 0,
-	'STATUS_SHAKED': 1,
+	'STATUS_MAKER_UNINIT': 1,
+	'STATUS_SHAKER_SHAKED': 2,
+	'STATUS_MARKET_REPORT': 3,
+	'STATUS_MARKET_COLLECT': 4,
+	'STATUS_REFUND': 5,
+
 	'STATUS_ACCEPTED': 2,
 	'STATUS_REJECTED': 3,
 	'STATUS_DONE': 4,
@@ -54,16 +60,6 @@ Handshake = {
 	'INDUSTRIES_NONE': 0,
 	'INDUSTRIES_UPLOAD_DOCUMENT': 13,
 	'INDUSTRIES_BETTING': 3
-}
-
-Handshake['STATUS_OPTIONS'] = {
-	Handshake['STATUS_PENDING']: 'Pending',
-	Handshake['STATUS_INITED']: 'Inited',
-	Handshake['STATUS_SHAKED']: 'Shaked',
-	Handshake['STATUS_ACCEPTED']: 'Accepted',
-	Handshake['STATUS_REJECTED']: 'Rejected',
-	Handshake['STATUS_DONE']: 'Done',
-	Handshake['STATUS_CANCELLED']: 'Cancelled',
 }
 
 Handshake['TERM_OPTIONS'] = {

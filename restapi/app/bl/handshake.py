@@ -2,23 +2,22 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import os
-
 import sys
+import time
+import requests
+import app.constants as CONST
+
 from flask import g
 from app import db, fcm, sg
 from sqlalchemy import and_, or_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
-from app.models import Handshake, Wallet, Device, User
-from app.helpers.utils import parse_date_to_int, is_valid_email, parse_str_to_array
+from app.models import Handshake, User, Shaker
+from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
 from app.tasks import add_transaction
 from app.helpers.bc_exception import BcException
 from datetime import datetime
 from app.helpers.message import MESSAGE
 from datetime import datetime
-import time
-
-import requests
-import app.constants as CONST
 from sqlalchemy import literal
 
 
@@ -113,16 +112,27 @@ def save_group_handshake_for_shake_state(offchain, state, isPayable=False):
 	return handshake
 
 
-def save_handshake_for_state(state, offchain):
-	print "handshakeId = {}, state = {}".format(offchain, state)
-	handshake = Handshake.find_handshake_by_id(offchain)
-	if handshake is not None:
-		handshake.status = state
-		handshake.bk_status = state
+def save_handshake_for_event(event_name, offchain):
+	print "offchain = {}, event_name = {}".format(offchain, event_name)
+	if 's' in offchain: # shaker
+		offchain = offchain.replace('s', '')
+		shaker = Shaker.find_shaker_by_id(int(offchain))
+		print 'shaker = {}'.format(shaker)
+		if shaker is not None:
+			if '__shake' in event_name:
+				print '__shake'
+				shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
+				shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
-		if state ==  HandshakeStatus['STATUS_DONE']:
-			send_noti_for_handshake(handshake, CONST.HANDSHAKE_STATE['DONE'])
-	return handshake
+	else: # maker
+		offchain = offchain.replace('m', '')
+		handshake = Handshake.find_handshake_by_id(int(offchain))
+		print 'handshake = {}'.format(shaker)
+		if handshake is not None:
+			if '__init' in event_name:
+				print '__init'
+				handshake.status = HandshakeStatus['STATUS_INITED']
+				handshake.bk_status = HandshakeStatus['STATUS_INITED']
 
 
 def rollback_handshake_state(handshake_id):
@@ -316,75 +326,15 @@ def send_push(devices, title, body, data_message):
 		fcm.push_multi_devices(devices=dvs, title=title, body=body, data_message=data_message)
 
 
-def list_to_user(user, to_address, chain_id):
-	if to_address is None or len(to_address) == 0:
-		return ''
+def add_handshake_to_solrservice(handshake, user, shaker=None):
+	_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+	amount = handshake.amount
+	if shaker is not None:
+		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.shaker_id)
+		amount = shaker.amount
 
-	# create 3 list of address:
-	list_to_user = []
-	list_wallet_address = []
-	list_email_address = []
-
-	list_to_address = to_address.split(",")
-	for to_address in list_to_address:
-		to_address = to_address.strip().encode("utf-8")
-
-		# convert email to wallet address if data is email
-		if is_valid_email(to_address):
-			list_email_address.append(to_address.lower())
-		else:
-			list_wallet_address.append(to_address)
-
-	# with email list:
-	if len(list_email_address) > 0:
-
-		# get list user with list email:
-		to_users_from_email = User.find_user_with_list_email(list_email_address)
-		for to_user_email in to_users_from_email:
-
-
-			# raise if to user wallet address === owner wallet:
-			if to_user_email.wallet.address == user.wallet.address:
-				raise Exception(MESSAGE.HANDSHAKE_CANNOT_SEND_TO_MYSELF)
-
-			to_user_email.chain_id = chain_id
-
-			# add to final list to_user:
-			list_to_user.append({"email": to_user_email.email, "address": to_user_email.wallet.address})
-
-		# create list user not exist in db:
-		for email in list_email_address:
-			if email not in [u.email for u in to_users_from_email]:
-				list_to_user.append({"email": email, "address": email})
-
-	# with wallet address:
-	if len(list_wallet_address) > 0:
-
-		# get list database wallet with list wallet address:
-		to_wallets = Wallet.find_wallet_by_list_address(list_wallet_address)
-
-		# check total:
-		if not to_wallets or len(to_wallets) < len(list_wallet_address):
-			raise Exception(MESSAGE.HANDSHAKE_INVALID_WALLET_ADDRESS)
-
-		# raise if to user wallet address === owner wallet:
-		if user.wallet.address in [wallet.address for wallet in to_wallets]:
-			raise Exception(MESSAGE.HANDSHAKE_CANNOT_SEND_TO_MYSELF)
-
-		# get user list for wallet list:
-		to_users_from_address = User.find_user_with_list_id([wallet.user_id for wallet in to_wallets])
-
-		if not to_users_from_address or len(to_users_from_address) < len(list_wallet_address):
-			raise Exception(MESSAGE.HANDSHAKE_INVALID_WALLET_ADDRESS)
-
-		# extend to final list to_user:
-		list_to_user.extend([{"email": str(u.email), "address": str(u.wallet.address)} for u in to_users_from_address])
-
-	return list_to_user
-
-def add_handshake_to_solrservice(handshake, user):
 	hs = {
-		"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id),
+		"id": _id,
 		"hid_s": -1,
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
@@ -400,13 +350,14 @@ def add_handshake_to_solrservice(handshake, user):
 		"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 		"is_private_i": handshake.is_private,
 		"extra_data_s": handshake.extra_data,
-		"remaining_value_f": handshake.remaining_amount,
-		"amount_f": handshake.amount,
+		"remaining_amount_f": handshake.remaining_amount,
+		"amount_f": amount,
 		"outcome_id_i": handshake.outcome_id,
 		"odds_f": handshake.odds,
 		"currency_s": handshake.currency,
 		"side_i": handshake.side,
 		"win_value_f": handshake.win_value,
+		"from_address_s": handshake.from_address
 	}
 	arr_handshakes = []
 	arr_handshakes.append(hs)
@@ -422,6 +373,14 @@ def add_handshake_to_solrservice(handshake, user):
 	json = res.json()
 	return json
 
-def find_all_matched_handshakes(side, odds):
-	handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.odds==float(1/odds), Handshake.remaining_amount>0)).all()
+def find_all_matched_handshakes(side, odds, outcome_id):
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds==float(1/odds), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).all()
 	return handshakes
+
+def find_all_joined_handshakes(side, outcome_id):
+	if side == CONST.SIDE_TYPE['SUPPORT']:
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.desc()).all()
+		return handshakes
+	else:
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
+		return handshakes

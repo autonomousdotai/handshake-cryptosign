@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Handshake(BaseModel):
 	__tablename__ = 'handshake'
-	__json_public__ = ['id', 'extra_data', 'chain_id', 'is_private', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'currency', 'side', 'shakers', 'outcome_id']
+	__json_public__ = ['id', 'extra_data', 'chain_id', 'is_private', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'currency', 'side', 'shakers', 'outcome_id', 'from_address']
 	__json_modifiers__ = {
         'shakers': lambda shakers, _: [shaker.to_json() for shaker in shakers]
     }
@@ -22,18 +22,25 @@ class Handshake(BaseModel):
 						server_default=str(CONST.STATE_TYPE['PUBLISH']),
 	                   	default=CONST.STATE_TYPE['PUBLISH'])
 	is_private = db.Column(db.Integer,
-						server_default=str(CONST.COMMUNITY_TYPE['PUBLIC']),
-	                   	default=CONST.COMMUNITY_TYPE['PUBLIC'])
+							server_default=str(CONST.COMMUNITY_TYPE['PUBLIC']),
+							default=CONST.COMMUNITY_TYPE['PUBLIC'])
 	description = db.Column(db.Text)
 	status = db.Column(db.Integer,
-	                   server_default=str(CONST.Handshake['STATUS_PENDING']),
-	                   default=CONST.Handshake['STATUS_PENDING'])
+						server_default=str(CONST.Handshake['STATUS_PENDING']),
+						default=CONST.Handshake['STATUS_PENDING'])
 	bk_status = db.Column(db.Integer,
-	                      server_default=str(CONST.Handshake['STATUS_PENDING']),
-	                      default=CONST.Handshake['STATUS_PENDING'])
-	shake_count = db.Column(db.Integer)
-	view_count = db.Column(db.Integer)
-	comment_count = db.Column(db.Integer)
+	                      	server_default=str(CONST.Handshake['STATUS_PENDING']),
+	                      	default=CONST.Handshake['STATUS_PENDING'])
+	shake_count = db.Column(db.Integer,
+							server_default=str(0),
+	                      	default=0)
+	view_count = db.Column(db.Integer,
+							server_default=str(0),
+	                      	default=0)
+	comment_count = db.Column(db.Integer,
+							server_default=str(0),
+	                      	default=0)
+	from_address = db.Column(db.String(255))
 	odds = db.Column(db.Float)
 	amount = db.Column(db.Float)
 	remaining_amount = db.Column(db.Float)

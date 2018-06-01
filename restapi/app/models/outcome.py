@@ -27,5 +27,9 @@ class Outcome(BaseModel):
 	def find_outcome_by_id(cls, outcome_id):
 		return Outcome.query.filter_by(id=outcome_id).first()
 
+	@classmethod
+	def find_outcome_by_hid(cls, hid):
+		return Outcome.query.filter_by(hid=hid).first()
+
 	def __repr__(self):
 		return '<outcome {}, {}>'.format(self.id, self.name)

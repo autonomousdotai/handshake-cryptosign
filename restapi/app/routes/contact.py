@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from app.helpers.response import response_ok, response_error
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import User, Wallet
+from app.models import User
 
 contact_routes = Blueprint('contact', __name__)
 

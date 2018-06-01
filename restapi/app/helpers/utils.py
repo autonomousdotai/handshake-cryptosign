@@ -68,7 +68,6 @@ def parse_str_to_array(shake_user_ids):
 def parse_shakers_array(shakers):
 	if shakers is None:
 		return []
-
 	try:
 		shaker_ids = []
 		for shaker in shakers:

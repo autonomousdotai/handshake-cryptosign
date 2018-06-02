@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: c5d55a4513a7
+Revision ID: 59049baa31a9
 Revises: 
-Create Date: 2018-06-02 17:47:16.482550
+Create Date: 2018-06-02 20:37:08.126115
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c5d55a4513a7'
+revision = '59049baa31a9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -145,10 +145,10 @@ def upgrade():
     sa.Column('view_count', sa.Integer(), server_default='0', nullable=True),
     sa.Column('comment_count', sa.Integer(), server_default='0', nullable=True),
     sa.Column('from_address', sa.String(length=255), nullable=True),
-    sa.Column('odds', sa.Numeric(), nullable=True),
-    sa.Column('amount', sa.Numeric(), nullable=True),
-    sa.Column('remaining_amount', sa.Numeric(), nullable=True),
-    sa.Column('win_value', sa.Numeric(), nullable=True),
+    sa.Column('odds', sa.Numeric(precision=20, scale=2), nullable=True),
+    sa.Column('amount', sa.Numeric(precision=20, scale=18), nullable=True),
+    sa.Column('remaining_amount', sa.Numeric(precision=20, scale=18), nullable=True),
+    sa.Column('win_value', sa.Numeric(precision=20, scale=18), nullable=True),
     sa.Column('currency', sa.String(length=10), nullable=True),
     sa.Column('side', sa.Integer(), server_default='1', nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
@@ -167,10 +167,10 @@ def upgrade():
     sa.Column('date_modified', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Integer(), nullable=True),
     sa.Column('shaker_id', sa.Integer(), nullable=True),
-    sa.Column('amount', sa.Numeric(), nullable=True),
+    sa.Column('amount', sa.Numeric(precision=20, scale=18), nullable=True),
     sa.Column('currency', sa.String(length=10), nullable=True),
-    sa.Column('odds', sa.Numeric(), nullable=True),
-    sa.Column('win_value', sa.Numeric(), nullable=True),
+    sa.Column('odds', sa.Numeric(precision=20, scale=2), nullable=True),
+    sa.Column('win_value', sa.Numeric(precision=20, scale=18), nullable=True),
     sa.Column('side', sa.Integer(), server_default='1', nullable=True),
     sa.Column('status', sa.Integer(), server_default='-1', nullable=True),
     sa.Column('bk_status', sa.Integer(), server_default='-1', nullable=True),

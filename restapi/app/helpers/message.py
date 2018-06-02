@@ -10,6 +10,7 @@ class MESSAGE(object):
 
 	# OUTCOME
 	INVALID_OUTCOME = 'Please check your outcome id'
+	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
 
 	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
@@ -39,6 +40,7 @@ class MESSAGE(object):
 	HANDSHAKE_DESC_TOO_LONG = 'Your note is too long. It should be less than 1000 characters.'
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
+	HANDSHAKE_CANNOT_UNINIT = 'There is shakers. Therefore you cannot refund!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'

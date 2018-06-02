@@ -4,9 +4,21 @@ from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
 from app.routes import init_routes
+
 import time
+import decimal
+import flask.json
+
+class MyJSONEncoder(flask.json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            # Convert decimal instances to strings.
+            return str(obj)
+        return super(MyJSONEncoder, self).default(obj)
+
 
 app = Flask(__name__)
+app.json_encoder = MyJSONEncoder
 # disable strict_slashes
 app.url_map.strict_slashes = False
 # config app

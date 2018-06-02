@@ -81,9 +81,10 @@ def report(outcome_id):
 		if outcome is not None:
 			side = data.get('side', -2)
 			if(side == -2):
-				return response_error(MESSAGE.INVALID_OUTCOME)	
+				return response_error(MESSAGE.INVALID_OUTCOME)
 
 			# TODO: call nodejs
+			return response_ok()
 		else:
 			return response_error(MESSAGE.INVALID_OUTCOME)
 

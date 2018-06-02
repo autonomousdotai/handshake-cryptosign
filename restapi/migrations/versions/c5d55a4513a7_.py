@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: fb1479b1dd49
+Revision ID: c5d55a4513a7
 Revises: 
-Create Date: 2018-05-31 15:16:27.957644
+Create Date: 2018-06-02 17:47:16.482550
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'fb1479b1dd49'
+revision = 'c5d55a4513a7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,26 +23,26 @@ def upgrade():
     sa.Column('date_created', sa.DateTime(), nullable=True),
     sa.Column('date_modified', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Integer(), nullable=True),
-    sa.Column('uid', sa.BigInteger(), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['modified_user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('device',
+    op.create_table('event',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('date_created', sa.DateTime(), nullable=True),
     sa.Column('date_modified', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Integer(), nullable=True),
-    sa.Column('device_token', sa.String(length=255), nullable=True),
-    sa.Column('device_type', sa.String(length=25), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('address', sa.String(length=255), nullable=True),
+    sa.Column('event_name', sa.String(length=50), nullable=True),
+    sa.Column('value', sa.Text(), nullable=True),
+    sa.Column('block', sa.BigInteger(), nullable=True),
+    sa.Column('log_index', sa.Integer(), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['modified_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('history',
@@ -52,23 +52,10 @@ def upgrade():
     sa.Column('deleted', sa.Integer(), nullable=True),
     sa.Column('shaker_id', sa.Integer(), nullable=True),
     sa.Column('handshake_id', sa.Integer(), nullable=True),
-    sa.Column('modified_user_id', sa.Integer(), nullable=True),
-    sa.Column('created_user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['modified_user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('industries',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('date_created', sa.DateTime(), nullable=True),
-    sa.Column('date_modified', sa.DateTime(), nullable=True),
-    sa.Column('deleted', sa.Integer(), nullable=True),
-    sa.Column('name', sa.String(length=255), nullable=True),
-    sa.Column('backgroundColor', sa.String(length=25), nullable=True),
-    sa.Column('desc', sa.Text(), nullable=True),
-    sa.Column('public', sa.Integer(), server_default='0', nullable=True),
-    sa.Column('order_id', sa.Integer(), server_default='0', nullable=True),
-    sa.Column('message', sa.Text(), nullable=True),
+    sa.Column('maker_amount', sa.Float(), nullable=True),
+    sa.Column('maker_odds', sa.Float(), nullable=True),
+    sa.Column('shaker_amount', sa.Float(), nullable=True),
+    sa.Column('shaker_odds', sa.Float(), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
@@ -86,6 +73,8 @@ def upgrade():
     sa.Column('awayTeamName', sa.String(length=255), nullable=True),
     sa.Column('awayTeamCode', sa.String(length=10), nullable=True),
     sa.Column('awayTeamFlag', sa.String(length=512), nullable=True),
+    sa.Column('homeScore', sa.Integer(), nullable=True),
+    sa.Column('awayScore', sa.Integer(), nullable=True),
     sa.Column('date', sa.BigInteger(), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
@@ -122,23 +111,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('wallet',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('date_created', sa.DateTime(), nullable=True),
-    sa.Column('date_modified', sa.DateTime(), nullable=True),
-    sa.Column('deleted', sa.Integer(), nullable=True),
-    sa.Column('address', sa.String(length=255), nullable=True),
-    sa.Column('private_key', sa.String(length=255), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('status', sa.Integer(), server_default='1', nullable=True),
-    sa.Column('source', sa.String(length=50), nullable=True),
-    sa.Column('modified_user_id', sa.Integer(), nullable=True),
-    sa.Column('created_user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['modified_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('outcome',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('date_created', sa.DateTime(), nullable=True),
@@ -148,6 +120,7 @@ def upgrade():
     sa.Column('match_id', sa.Integer(), nullable=True),
     sa.Column('hid', sa.BigInteger(), nullable=True),
     sa.Column('result', sa.Integer(), server_default='-1', nullable=True),
+    sa.Column('tx', sa.String(length=255), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
@@ -168,13 +141,14 @@ def upgrade():
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('status', sa.Integer(), server_default='-1', nullable=True),
     sa.Column('bk_status', sa.Integer(), server_default='-1', nullable=True),
-    sa.Column('shake_count', sa.Integer(), nullable=True),
-    sa.Column('view_count', sa.Integer(), nullable=True),
-    sa.Column('comment_count', sa.Integer(), nullable=True),
-    sa.Column('odds', sa.Float(), nullable=True),
-    sa.Column('amount', sa.Float(), nullable=True),
-    sa.Column('remaining_amount', sa.Float(), nullable=True),
-    sa.Column('win_value', sa.Float(), nullable=True),
+    sa.Column('shake_count', sa.Integer(), server_default='0', nullable=True),
+    sa.Column('view_count', sa.Integer(), server_default='0', nullable=True),
+    sa.Column('comment_count', sa.Integer(), server_default='0', nullable=True),
+    sa.Column('from_address', sa.String(length=255), nullable=True),
+    sa.Column('odds', sa.Numeric(), nullable=True),
+    sa.Column('amount', sa.Numeric(), nullable=True),
+    sa.Column('remaining_amount', sa.Numeric(), nullable=True),
+    sa.Column('win_value', sa.Numeric(), nullable=True),
     sa.Column('currency', sa.String(length=10), nullable=True),
     sa.Column('side', sa.Integer(), server_default='1', nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
@@ -193,11 +167,13 @@ def upgrade():
     sa.Column('date_modified', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Integer(), nullable=True),
     sa.Column('shaker_id', sa.Integer(), nullable=True),
-    sa.Column('amount', sa.Float(), nullable=True),
+    sa.Column('amount', sa.Numeric(), nullable=True),
     sa.Column('currency', sa.String(length=10), nullable=True),
-    sa.Column('odds', sa.Float(), nullable=True),
-    sa.Column('win_value', sa.Float(), nullable=True),
+    sa.Column('odds', sa.Numeric(), nullable=True),
+    sa.Column('win_value', sa.Numeric(), nullable=True),
     sa.Column('side', sa.Integer(), server_default='1', nullable=True),
+    sa.Column('status', sa.Integer(), server_default='-1', nullable=True),
+    sa.Column('bk_status', sa.Integer(), server_default='-1', nullable=True),
     sa.Column('handshake_id', sa.Integer(), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
@@ -214,11 +190,9 @@ def downgrade():
     op.drop_table('shaker')
     op.drop_table('handshake')
     op.drop_table('outcome')
-    op.drop_table('wallet')
     op.drop_table('tx')
     op.drop_table('match')
-    op.drop_table('industries')
     op.drop_table('history')
-    op.drop_table('device')
+    op.drop_table('event')
     op.drop_table('user')
     # ### end Alembic commands ###

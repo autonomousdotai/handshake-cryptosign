@@ -41,10 +41,10 @@ class Handshake(BaseModel):
 							server_default=str(0),
 	                      	default=0)
 	from_address = db.Column(db.String(255))
-	odds = db.Column(db.Float)
-	amount = db.Column(db.Float)
-	remaining_amount = db.Column(db.Float)
-	win_value = db.Column(db.Float)
+	odds = db.Column(db.Numeric(20, 2))
+	amount = db.Column(db.Numeric(20, 18))
+	remaining_amount = db.Column(db.Numeric(20, 18))
+	win_value = db.Column(db.Numeric(20, 18))
 	currency = db.Column(db.String(10))
 	side = db.Column(db.Integer,
 						server_default=str(CONST.SIDE_TYPE['SUPPORT']),

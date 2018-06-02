@@ -10,10 +10,10 @@ class Shaker(BaseModel):
 	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'currency', 'side', 'odds', 'win_value', 'status', 'bk_status']
 
 	shaker_id = db.Column(db.Integer)
-	amount = db.Column(db.Float)
+	amount = db.Column(db.Numeric(20, 18))
 	currency = db.Column(db.String(10))
-	odds = db.Column(db.Float)
-	win_value = db.Column(db.Float)
+	odds = db.Column(db.Numeric(20, 2))
+	win_value = db.Column(db.Numeric(20, 18))
 	side = db.Column(db.Integer,
 					server_default=str(CONST.SIDE_TYPE['SUPPORT']),
 					default=CONST.SIDE_TYPE['SUPPORT'])

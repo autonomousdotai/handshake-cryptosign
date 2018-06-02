@@ -11,7 +11,7 @@ import app.constants as CONST
 import app.bl.handshake as handshake_bl
 
 from flask import Blueprint, request, g, Response
-from sqlalchemy import or_, text
+from sqlalchemy import or_, and_, text
 
 from app.helpers.response import response_ok, response_error
 from app.helpers.utils import is_valid_email, isnumber, formalize_description
@@ -47,11 +47,17 @@ def handshakes():
 
 		arr_supports = []
 		for support in supports:
-			arr_supports.append(support.to_json())
+			data = {}
+			data['odds'] = support[0]
+			data['amount'] = support[1]
+			arr_supports.append(data)
 
 		arr_against = []
 		for against in arr_against:
-			arr_against.append(against.to_json())
+			data = {}
+			data['odds'] = against[0]
+			data['amount'] = against[1]
+			arr_against.append(data)
 
 		respose = {
 			"support": arr_supports,
@@ -101,6 +107,7 @@ def init():
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		from_address = data.get('from_address', '')
 
+		print odds
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
 
@@ -110,6 +117,9 @@ def init():
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
+
+		if outcome.result != CONST.RESULT_TYPE['PENDING']:
+			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id)
@@ -137,15 +147,17 @@ def init():
 			db.session.commit()
 
 			# response data
+			arr_hs = []
 			hs_json = handshake.to_json()
 			hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+			arr_hs.append(hs_json)
 
-			return response_ok(hs_json)
+			return response_ok(arr_hs)
 		else:
 			arr_hs = []
 			shaker_amount = amount
 			for handshake in handshakes:
-
+				handshake.shake_count += 1
 				amount_for_handshake = 0
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
@@ -252,11 +264,15 @@ def shake():
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
 
+		if outcome.result != CONST.RESULT_TYPE['PENDING']:
+			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
+
 		handshakes = handshake_bl.find_all_joined_handshakes(side, outcome_id)
 		if len(handshakes) > 0:
 			arr_hs = []
 			shaker_amount = amount
 			for handshake in handshakes:
+				handshake.shake_count += 1
 				amount_for_handshake = 0
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
@@ -274,7 +290,7 @@ def shake():
 					amount=amount_for_handshake,
 					currency=currency,
 					odds=1/handshake.odds,
-					win_value=1/handshake.odds*amount,
+					win_value=(1/handshake.odds)*amount,
 					side=side,
 					handshake_id=handshake.id
 				)
@@ -306,10 +322,46 @@ def shake():
 		db.session.rollback()
 		return response_error(ex.message)
 
+@handshake_routes.route('/refund/<int:handshake_id>', methods=['POST'])
+@login_required
+def refund(handshake_id):
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
+		if handshake is not None:
+			if len(handshake.shakers) > 0:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
+			else:
+				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
+				handshake_json = handshake.to_json()
+				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+
+				db.session.commit()
+				return response_ok(handshake_json)
+		else:
+			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND)		
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+@handshake_routes.route('/collect', methods=['POST'])
+@login_required
+def collect():
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
-	# TODO: rollback
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

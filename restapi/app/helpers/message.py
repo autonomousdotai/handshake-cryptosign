@@ -2,13 +2,16 @@
 # -*- coding: utf-8 -*-
 
 class MESSAGE(object):
-	# ERROR:
+	# ERROR
 	INVALID_DATA = 'Please double check your input data.'
 	INVALID_BET = 'There is something wrong with your bet.'
 	BET_NOT_FOUND = 'There is no bet which match your side. Please create a new one or choose another side!'
 	INVALID_ADDRESS = 'Please provide valid wallet address!'
 
-	# MATCH:
+	# OUTCOME
+	INVALID_OUTCOME = 'Please check your outcome id'
+
+	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
 
 	# USER

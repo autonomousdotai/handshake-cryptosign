@@ -8,10 +8,10 @@ from app.models.base import BaseModel
 
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
-	__json_public__ = ['id', 'name', 'handshakes', 'hid', 'result']
-	__json_modifiers__ = {
-        'handshakes': lambda handshakes, _: [handshake.to_json() for handshake in handshakes]
-    }
+	__json_public__ = ['id', 'name', 'hid', 'result']
+	# __json_modifiers__ = {
+    #     'handshakes': lambda handshakes, _: [handshake.to_json() for handshake in handshakes]
+    # }
 
 	name = db.Column(db.String(255))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))

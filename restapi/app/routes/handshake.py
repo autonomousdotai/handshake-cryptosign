@@ -31,28 +31,47 @@ handshake_routes = Blueprint('handshake', __name__)
 @login_required
 def handshakes():
 	uid = int(request.headers['Uid'])
-	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-	user = User.find_user_with_id(uid)
 
+	try:
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		outcome_id = data.get('outcome_id', -1)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None:
+			raise Exception(MESSAGE.INVALID_BET)
+
+		supports = handshake_bl.find_available_support_handshakes(outcome_id)
+		against = handshake_bl.find_available_against_handshakes(outcome_id)
+
+		arr_supports = []
+		for support in supports:
+			arr_supports.append(support.to_json())
+
+		arr_against = []
+		for against in arr_against:
+			arr_against.append(against.to_json())
+
+		respose = {
+			"support": arr_supports,
+			"against": arr_against
+		}
+
+		return response_ok(respose)
+
+	except Exception, ex:
+		return response_error(ex.message)
+	
 	return response_ok()
 
 @handshake_routes.route('/<int:id>')
 @login_required
 def detail(id):
-	uid = int(request.headers['Uid'])
 	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-	user = User.find_user_with_id(uid)
 
 	try:
-		handshake = Handshake.find_handshake_by_id(id)
-		if not handshake:
-			raise Exception('Handshake {} is not found.'.format(id))
-		if user.wallet.address not in [handshake.from_address, handshake.to_address]:
-			raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
-
-		handshake_json = handshake.to_json()
-
-		return response_ok(handshake_json)
+		return response_ok()
 
 	except Exception, ex:
 		return response_error(ex.message)
@@ -131,11 +150,13 @@ def init():
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
 					amount_for_handshake = handshake.remaining_amount
+					handshake.remaining_amount = 0
 
 				else:
 					amount_for_handshake = amount
 					shaker_amount -= amount
-
+					handshake.remaining_amount -= amount
+				
 				# create shaker
 				shaker = Shaker(
 					shaker_id=user.id,
@@ -240,10 +261,12 @@ def shake():
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
 					amount_for_handshake = handshake.remaining_amount
+					handshake.remaining_amount = 0
 
 				else:
 					amount_for_handshake = amount
 					shaker_amount -= amount
+					handshake.remaining_amount -= amount
 
 				# create shaker
 				shaker = Shaker(
@@ -286,6 +309,7 @@ def shake():
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
+	# TODO: rollback
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

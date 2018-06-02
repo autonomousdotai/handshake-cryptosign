@@ -62,7 +62,31 @@ def remove(outcome_id):
 			db.session.commit()
 			return response_ok("{} has been deleted!".format(outcome.id))
 		else:
-			return response_error("Please check your outcome id")
+			return response_error(MESSAGE.INVALID_OUTCOME)
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@outcome_routes.route('/report/<int:outcome_id>', methods=['POST'])
+@login_required
+def report(outcome_id):
+	try:
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is not None:
+			side = data.get('side', -2)
+			if(side == -2):
+				return response_error(MESSAGE.INVALID_OUTCOME)	
+
+			# TODO: call nodejs
+		else:
+			return response_error(MESSAGE.INVALID_OUTCOME)
+
 
 	except Exception, ex:
 		db.session.rollback()

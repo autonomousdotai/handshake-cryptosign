@@ -29,6 +29,15 @@ def event():
 		outcome = Outcome.find_outcome_by_hid(hid)
 		if outcome is None:
 			return response_error(MESSAGE.INVALID_BET)
+
+		if 'report' in offchain:
+			side = offchain.replace('report', '')
+			if len(side) > 0:
+				side = int(side)
+				outcome.result = side
+				db.session.commit()
+
+			return response_ok()
 	
 		handshake_bl.save_handshake_for_event(event_name, offchain)
 		db.session.commit()
@@ -37,19 +46,3 @@ def event():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
-
-
-def parse_data(data):
-	offchain = None
-	hid = None
-	state = -1
-	if 'hid' in data:
-		hid = data['hid']
-
-	if 'offchain' in data:
-		offchain = data['offchain']
-
-	if 'state' in data:
-		state = int(data['state'])
-
-	return (hid, offchain, state)

@@ -11,7 +11,7 @@ from flask import g
 from app import db, fcm, sg
 from sqlalchemy import and_, or_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
-from app.models import Handshake, User, Shaker
+from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
 from app.tasks import add_transaction
 from app.helpers.bc_exception import BcException
@@ -113,7 +113,6 @@ def save_group_handshake_for_shake_state(offchain, state, isPayable=False):
 
 
 def save_handshake_for_event(event_name, offchain):
-	print "offchain = {}, event_name = {}".format(offchain, event_name)
 	if 's' in offchain: # shaker
 		offchain = offchain.replace('s', '')
 		shaker = Shaker.find_shaker_by_id(int(offchain))
@@ -124,15 +123,24 @@ def save_handshake_for_event(event_name, offchain):
 				shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 				shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
+				# update solr
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+				user = User.find_user_with_id(handshake.user_id)
+				add_handshake_to_solrservice(handshake, user, shaker)
+
 	else: # maker
 		offchain = offchain.replace('m', '')
 		handshake = Handshake.find_handshake_by_id(int(offchain))
-		print 'handshake = {}'.format(shaker)
+		print 'handshake = {}'.format(handshake)
 		if handshake is not None:
 			if '__init' in event_name:
 				print '__init'
 				handshake.status = HandshakeStatus['STATUS_INITED']
 				handshake.bk_status = HandshakeStatus['STATUS_INITED']
+
+				# update solr
+				user = User.find_user_with_id(handshake.user_id)
+				add_handshake_to_solrservice(handshake, user)
 
 
 def rollback_handshake_state(handshake_id):
@@ -327,18 +335,22 @@ def send_push(devices, title, body, data_message):
 
 
 def add_handshake_to_solrservice(handshake, user, shaker=None):
+	outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 	_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 	amount = handshake.amount
+	status = handshake.status
+
 	if shaker is not None:
 		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.shaker_id)
 		amount = shaker.amount
+		status = shaker.status
 
 	hs = {
 		"id": _id,
 		"hid_s": -1,
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
-		"status_i": handshake.status,
+		"status_i": status,
 		"init_user_id_i": user.id,
 		"chain_id_i": handshake.chain_id,
 		"shake_user_ids_is": [],
@@ -357,8 +369,12 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 		"currency_s": handshake.currency,
 		"side_i": handshake.side,
 		"win_value_f": handshake.win_value,
-		"from_address_s": handshake.from_address
+		"from_address_s": handshake.from_address,
+		"result_i": outcome.result
 	}
+
+	print "add to solr -> {}".format(hs)
+
 	arr_handshakes = []
 	arr_handshakes.append(hs)
 	endpoint = "{}/handshake/update".format(g.SOLR_SERVICE)
@@ -379,8 +395,16 @@ def find_all_matched_handshakes(side, odds, outcome_id):
 
 def find_all_joined_handshakes(side, outcome_id):
 	if side == CONST.SIDE_TYPE['SUPPORT']:
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.desc()).all()
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
 		return handshakes
 	else:
 		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
 		return handshakes
+
+def find_available_support_handshakes(outcome_id):
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.desc()).all()
+	return handshakes
+
+def find_available_against_handshakes(outcome_id):
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
+	return handshakes

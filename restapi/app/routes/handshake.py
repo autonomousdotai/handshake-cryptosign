@@ -108,7 +108,6 @@ def init():
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		from_address = data.get('from_address', '')
 
-		print odds
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
 

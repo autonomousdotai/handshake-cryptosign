@@ -6,6 +6,7 @@ import sys
 import time
 import requests
 import app.constants as CONST
+import math
 
 from flask import g
 from app import db, fcm, sg
@@ -378,13 +379,13 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 		"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 		"is_private_i": handshake.is_private,
 		"extra_data_s": handshake.extra_data,
-		"remaining_amount_f": handshake.remaining_amount,
-		"amount_f": amount,
+		"remaining_amount_f": float(handshake.remaining_amount),
+		"amount_f": float(amount),
 		"outcome_id_i": handshake.outcome_id,
-		"odds_f": handshake.odds,
+		"odds_f": float(handshake.odds),
 		"currency_s": handshake.currency,
 		"side_i": handshake.side,
-		"win_value_f": handshake.win_value,
+		"win_value_f": float(handshake.win_value),
 		"from_address_s": handshake.from_address,
 		"result_i": outcome.result
 	}
@@ -397,7 +398,6 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 	data = {
 		"add": arr_handshakes
 	}
-	
 	res = requests.post(endpoint, json=data)
 	if res.status_code > 400:
 		raise Exception('SOLR service is failed.')

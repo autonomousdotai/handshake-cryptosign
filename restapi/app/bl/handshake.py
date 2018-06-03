@@ -402,33 +402,30 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 	if res.status_code > 400:
 		raise Exception('SOLR service is failed.')
 
-def find_all_matched_handshakes(side, odds, outcome_id):
-	outcome = db.session.query(Outcome).filter(Outcome.result==CONST.RESULT_TYPE['PENDING'])
+def find_all_matched_handshakes(side, odds, outcome_id, amount):
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds==float(1/odds), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).all()
+		win_value = amount*odds
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds<=win_value/(win_value-amount), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
 		return handshakes
 	return []
 
 def find_all_joined_handshakes(side, outcome_id):
-	outcome = db.session.query(Outcome).filter(Outcome.result==CONST.RESULT_TYPE['PENDING'])
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
-		if side == CONST.SIDE_TYPE['SUPPORT']:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
-			return handshakes
-		else:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
-			return handshakes
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
+		return handshakes
 	return []
 
 def find_available_support_handshakes(outcome_id):
-	outcome = db.session.query(Outcome).filter(Outcome.result==CONST.RESULT_TYPE['PENDING'])
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
 
 def find_available_against_handshakes(outcome_id):
-	outcome = db.session.query(Outcome).filter(Outcome.result==CONST.RESULT_TYPE['PENDING'])
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
 		return handshakes

@@ -122,7 +122,7 @@ def init():
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
 
 		# filter all handshakes which able be to match first
-		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id)
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -137,7 +137,7 @@ def init():
 				currency=currency,
 				side=side,
 				win_value=odds*amount,
-				remaining_amount=odds*amount,
+				remaining_amount=(odds*amount)-amount,
 				from_address=from_address
 			)
 			db.session.add(handshake)
@@ -207,7 +207,7 @@ def init():
 					currency=currency,
 					side=side,
 					win_value=odds*shaker_amount,
-					remaining_amount=odds*shaker_amount,
+					remaining_amount=(odds*shaker_amount)-shaker_amount,
 					from_address=from_address
 				)
 				db.session.add(handshake)
@@ -285,12 +285,13 @@ def shake():
 					handshake.remaining_amount -= amount
 
 				# create shaker
+				shaker_odds = (handshake.amount*handshake.odds)/(handshake.amount*handshake.odds-handshake.amount)
 				shaker = Shaker(
 					shaker_id=user.id,
 					amount=amount_for_handshake,
 					currency=currency,
-					odds=1/handshake.odds,
-					win_value=(1/handshake.odds)*amount,
+					odds=shaker_odds,
+					win_value=shaker_odds*amount_for_handshake,
 					side=side,
 					handshake_id=handshake.id
 				)

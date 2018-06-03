@@ -10,6 +10,7 @@ import json
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
 
+from decimal import Decimal
 from flask import Blueprint, request, g, Response
 from sqlalchemy import or_, and_, text
 
@@ -100,8 +101,8 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = float(data.get('odds'))
-		amount = float(data.get('amount'))
+		odds = Decimal(data.get('odds'))
+		amount = Decimal(data.get('amount'))
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -249,7 +250,7 @@ def shake():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		amount = float(data.get('amount'))
+		amount = Decimal(data.get('amount'))
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

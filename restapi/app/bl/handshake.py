@@ -362,7 +362,7 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 
 	hs = {
 		"id": _id,
-		"hid_s": -1,
+		"hid_s": outcome.hid,
 		"type_i": handshake.hs_type,
 		"state_i": handshake.state,
 		"status_i": status,

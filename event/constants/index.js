@@ -26,5 +26,7 @@ module.exports = {
     'STATUS_UNACTIVE': 0,
     'STATUS_ACTIVE': 1,
     'STATUS_LOCKED': 2,
-  }
+  },
+
+  CRYPTOSIGN_OFFCHAIN_PREFIX: 'cryptosign',
 }

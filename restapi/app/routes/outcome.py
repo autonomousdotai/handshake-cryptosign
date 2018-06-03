@@ -38,6 +38,7 @@ def add(match_id):
 		for item in data:
 			outcome = Outcome(
 				name=item['name'],
+				hid=item['hid'],
 				match_id=match_id
 			)
 			outcomes.append(outcome)

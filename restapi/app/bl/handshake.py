@@ -362,7 +362,7 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 	bk_status = handshake.bk_status
 
 	if shaker is not None:
-		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.shaker_id)
+		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 		amount = shaker.amount
 		status = shaker.status
 		bk_status = shaker.bk_status
@@ -412,8 +412,9 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
 		win_value = amount*odds
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds<=win_value/(win_value-amount), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
-		return handshakes
+		if win_value - amount > 0:
+			handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds<=win_value/(win_value-amount), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
+			return handshakes
 	return []
 
 def find_all_joined_handshakes(side, outcome_id):

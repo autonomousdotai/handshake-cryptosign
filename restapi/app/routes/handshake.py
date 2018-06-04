@@ -214,6 +214,10 @@ def init():
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user)
 
+				hs_json = handshake.to_json()
+				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+				arr_hs.append(hs_json)
+
 			db.session.commit()
 			return response_ok(arr_hs)
 
@@ -294,7 +298,6 @@ def shake():
 					side=side,
 					handshake_id=handshake.id
 				)
-				shaker_amount -= amount
 
 				db.session.add(shaker)
 				db.session.flush()

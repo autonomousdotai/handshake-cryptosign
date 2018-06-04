@@ -57,6 +57,34 @@ class TestHandshakeBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
+
+    def test_init_handshake_with_win_value_equal_amount(self):
+        with self.client:
+            Uid = 52
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "Trong: test case 2",
+                "outcome_id": 4,
+                "odds": 2,
+                "amount": 1,
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    headers={"Uid": "{}".format(Uid)})
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+    def test_shake_handshake(self):
+        pass
     
 if __name__ == '__main__':
     unittest.main()

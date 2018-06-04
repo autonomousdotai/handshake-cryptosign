@@ -30,7 +30,7 @@ prediction/dist
 .Python
 bin/
 include/
-# lib/
+lib/
 pip-selfcheck.json
 
 # pdf

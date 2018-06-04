@@ -328,17 +328,18 @@ def uninit(handshake_id):
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
 		
 		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
 		if handshake is not None:
-			if len(handshake.shakers) > 0:
+			if len(handshake.shakers.all()) > 0:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
 			else:
 				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
 				db.session.flush()
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user)
-				
+
 				handshake_json = handshake.to_json()
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 

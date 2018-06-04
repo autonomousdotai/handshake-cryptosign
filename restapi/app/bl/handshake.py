@@ -127,7 +127,7 @@ def save_handshake_for_event(event_name, offchain):
 
 				# update solr
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-				user = User.find_user_with_id(handshake.user_id)
+				user = User.find_user_with_id(shaker.shaker_id)
 				add_handshake_to_solrservice(handshake, user, shaker)
 
 			elif '__collect' in event_name:
@@ -194,12 +194,6 @@ def is_need_fire_notification_for_handshake(handshake):
 		return False
 	return True
 
-def is_group_handshake(handshake):
-	if handshake.to_address is not None:
-		addresses = str(handshake.to_address).split(",")
-		if len(addresses) > 1:
-			return True
-	return False
 
 def has_permission_to_open_handshake(wallet_address, handshake):
 	print 'public --> {}'.format(handshake.public)
@@ -360,12 +354,14 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 	amount = handshake.amount
 	status = handshake.status
 	bk_status = handshake.bk_status
+	shake_user_ids = []
 
 	if shaker is not None:
-		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.shaker_id)
+		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 		amount = shaker.amount
 		status = shaker.status
 		bk_status = shaker.bk_status
+		shake_user_ids = [ shaker.shaker_id ]
 
 	hs = {
 		"id": _id,
@@ -376,7 +372,7 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 		"bk_status_i": bk_status,
 		"init_user_id_i": user.id,
 		"chain_id_i": handshake.chain_id,
-		"shake_user_ids_is": [],
+		"shake_user_ids_is": shake_user_ids,
 		"text_search_ss": [handshake.description],
 		"shake_count_i": handshake.shake_count,
 		"view_count_i": handshake.view_count,
@@ -412,8 +408,9 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
 		win_value = amount*odds
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds<=win_value/(win_value-amount), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
-		return handshakes
+		if win_value - amount > 0:
+			handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds<=win_value/(win_value-amount), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
+			return handshakes
 	return []
 
 def find_all_joined_handshakes(side, outcome_id):
@@ -426,13 +423,13 @@ def find_all_joined_handshakes(side, outcome_id):
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
 
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
 		return handshakes
 	return []

@@ -235,6 +235,7 @@ class TestHandshakeBl(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
+
     def test_find_available_support_handshakes(self):
         pass
 

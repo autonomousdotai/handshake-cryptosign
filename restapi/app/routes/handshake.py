@@ -53,18 +53,18 @@ def handshakes():
 			arr_supports.append(data)
 
 		arr_against = []
-		for against in arr_against:
+		for against in against:
 			data = {}
 			data['odds'] = against[0]
 			data['amount'] = against[1]
 			arr_against.append(data)
 
-		respose = {
+		response = {
 			"support": arr_supports,
 			"against": arr_against
 		}
 
-		return response_ok(respose)
+		return response_ok(response)
 
 	except Exception, ex:
 		return response_error(ex.message)
@@ -339,8 +339,10 @@ def uninit(handshake_id):
 				db.session.flush()
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user)
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 				handshake_json = handshake.to_json()
+				handshake_json['hid'] = outcome.hid
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 
 				db.session.commit()
@@ -412,6 +414,20 @@ def rollback():
 					return response_ok(shaker.to_json())
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@handshake_routes.route('/refund', methods=['POST'])
+@login_required
+def refund():
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
 
 		return response_ok()
 	except Exception, ex:

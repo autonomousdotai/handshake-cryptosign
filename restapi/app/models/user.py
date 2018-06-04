@@ -6,7 +6,6 @@ class User(BaseModel):
 	__json_public__ = ['id']
 	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
 	                             lazy='dynamic')
-	txs = db.relationship('Tx', backref='user', primaryjoin="User.id == Tx.user_id", lazy='dynamic')
 
 	@classmethod
 	def find_user_with_id(cls, user_id):

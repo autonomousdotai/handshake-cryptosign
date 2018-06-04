@@ -142,21 +142,3 @@ def check_user_is_able_to_create_new_handshake(user):
 		if len(handshakes) >= user.subscription_type:
 			return MESSAGE.USER_NEED_PURCHASE_PRODUCT
 	return ''
-
-
-def is_user_receive_free_ETH(user):
-	wallet = user.wallet
-
-	tx = Tx.query.filter(Tx.contract_method == 'free-transfer', Tx.user_id == user.id).first()
-
-	if tx:
-		raise Exception(MESSAGE.WALLET_RECEIVE_ETH_ALREADY)
-
-	total_free_today = Tx.query.filter(Tx.contract_method == 'free-transfer',
-                                       func.datediff(Tx.date_created, func.date(func.now()))).count()
-
-	if total_free_today >= 1000:
-		raise Exception(MESSAGE.WALLET_EXCEED_FREE_ETH)
-
-
-	return False

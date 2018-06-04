@@ -151,6 +151,12 @@ def save_handshake_for_event(event_name, offchain):
 				handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
 				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
 
+			elif '__collect' in event_name:
+				print '__collect'
+				# update status of shaker and handshake to done
+				# find all bets belongs to this outcome which user join
+				# update all statuses (shaker and handshake) of them to done
+
 			db.session.commit()
 			# update solr
 			user = User.find_user_with_id(handshake.user_id)

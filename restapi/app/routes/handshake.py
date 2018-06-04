@@ -32,7 +32,6 @@ handshake_routes = Blueprint('handshake', __name__)
 @login_required
 def handshakes():
 	uid = int(request.headers['Uid'])
-
 	try:
 		data = request.json
 		if data is None:
@@ -42,7 +41,7 @@ def handshakes():
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
-
+		
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
 		against = handshake_bl.find_available_against_handshakes(outcome_id)
 
@@ -323,19 +322,23 @@ def shake():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@handshake_routes.route('/refund/<int:handshake_id>', methods=['POST'])
+@handshake_routes.route('/uninit/<int:handshake_id>', methods=['POST'])
 @login_required
-def refund(handshake_id):
+def uninit(handshake_id):
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		
-		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
 		if handshake is not None:
 			if len(handshake.shakers) > 0:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
 			else:
 				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
+				db.session.flush()
+
+				handshake_bl.add_handshake_to_solrservice(handshake, user)
+				
 				handshake_json = handshake.to_json()
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 
@@ -367,6 +370,47 @@ def rollback():
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
+
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		offchain = data.get('outcome_id')
+		if offchain is None or len(offchain) == 0:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		if 'm' in offchain:
+			offchain = offchain.replace('m', '')
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
+			if handshake is not None:
+				if handshake.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
+					handshake.status = handshake.bk_status
+					db.session.flush()
+
+					handshake_bl.add_handshake_to_solrservice(handshake, user)
+
+					db.session.commit()
+					return response_ok(handshake.to_json())
+
+			else:
+				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
+		else:
+			offchain = offchain.replace('s', '')
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
+			if shaker is not None:
+				if shaker.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
+					shaker.status = shaker.bk_status
+					db.session.flush()
+
+					handshake = db.session.query(Handshake).filter(Handshake.id==shaker.handshake_id).first()
+					handshake_bl.add_handshake_to_solrservice(handshake, user, shaker)
+
+					db.session.commit()
+					return response_ok(shaker.to_json())
+			else:
+				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
 		return response_ok()
 	except Exception, ex:

@@ -20,11 +20,17 @@ event/configs/config-local.js
 event/configs/config-staging.js
 event/configs/config-production.js
 
+#prediction ignore
+prediction/node_modules
+prediction/.sonarlint
+prediction/dist
+
+
 # virtualenv
 .Python
 bin/
 include/
-lib/
+# lib/
 pip-selfcheck.json
 
 # pdf

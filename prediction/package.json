@@ -1,0 +1,88 @@
+{
+  "name": "prediction-v1",
+  "version": "0.1.0",
+  "description": "Prediction v1",
+  "author": "Pham Quoc Khanh",
+  "scripts": {
+    "start": "npm run build && npm run watch",
+    "build": "npm run build-ts && npm run tslint",
+    "serve": "node dist/server.js",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"nodemon dist/server.js\"",
+    "clean": "rm -rf node_modules/ dist/",
+    "reinstall": "npm cache --force clean && npm run clean && yarn install",
+    "test": "jest --forceExit",
+    "build-ts": "tsc",
+    "watch-ts": "tsc -w",
+    "tslint": "tslint -c tslint.json -p tsconfig.json",
+    "postinstall": "npm run build-ts && npm run tslint"
+  },
+  "jest": {
+    "globals": {
+      "__TS_CONFIG__": "tsconfig.json"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "./node_modules/ts-jest/preprocessor.js"
+    },
+    "testMatch": [
+      "**/test/**/*.test.(ts|js)"
+    ],
+    "testEnvironment": "node"
+  },
+  "dependencies": {
+    "@types/glob": "^5.0.34",
+    "@types/knex": "^0.14.7",
+    "@types/moment-timezone": "^0.5.4",
+    "bignumber.js": "^6.0.0",
+    "body-parser": "^1.18.2",
+    "class-validator": "^0.7.3",
+    "compression": "^1.7.1",
+    "cron": "^1.3.0",
+    "dotenv": "^4.0.0",
+    "elasticsearch": "^13.3.1",
+    "eth-block-tracker": "^2.3.0",
+    "eth-gas-price-suggestor": "^1.0.2",
+    "ethereumjs-tx": "^1.3.4",
+    "ethereumjs-util": "^5.1.5",
+    "ethjs": "^0.3.3",
+    "express": "^4.16.2",
+    "express-fileupload": "^0.4.0",
+    "express-route-validator": "^0.2.5",
+    "generate-password": "^1.4.0",
+    "glob": "^7.1.2",
+    "helmet": "^3.9.0",
+    "ioredis": "^3.1.4",
+    "json2csv": "^4.0.1",
+    "jsonwebtoken": "^8.1.0",
+    "knex": "^0.14.4",
+    "lodash": "^4.17.4",
+    "moment": "^2.21.0",
+    "moment-timezone": "^0.5.14",
+    "mysql": "^2.15.0",
+    "mysql2": "^1.5.2",
+    "rxjs": "^5.5.5",
+    "scrypt": "^6.0.3",
+    "web3": "^1.0.0-beta.30"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.5.16",
+    "@types/body-parser": "^1.16.5",
+    "@types/dotenv": "^4.0.0",
+    "@types/express": "^4.0.37",
+    "@types/helmet": "0.0.36",
+    "@types/jest": "^21.1.4",
+    "@types/jsonwebtoken": "^7.2.4",
+    "@types/lodash": "^4.14.88",
+    "@types/supertest": "^2.0.3",
+    "concurrently": "^3.5.0",
+    "jest": "^21.3.0-beta.13",
+    "nodemon": "^1.12.5",
+    "supertest": "^3.0.0",
+    "ts-jest": "^21.2.4",
+    "tslint": "^5.8.0",
+    "typescript": "^2.7.0-dev.20171209"
+  }
+}

@@ -8,7 +8,6 @@ from app.bl.handshake import update_to_address_for_user
 from datetime import datetime
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity)
 
-from app.tasks import add_request_eth_transaction
 from app.helpers.message import MESSAGE
 from app.helpers.response import response_ok, response_error
 from app.helpers.utils import is_valid_email

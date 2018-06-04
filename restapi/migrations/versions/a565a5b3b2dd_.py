@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 59049baa31a9
+Revision ID: a565a5b3b2dd
 Revises: 
-Create Date: 2018-06-02 20:37:08.126115
+Create Date: 2018-06-04 11:17:40.586231
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '59049baa31a9'
+revision = 'a565a5b3b2dd'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -80,35 +80,6 @@ def upgrade():
     sa.Column('created_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['modified_user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('tx',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('date_created', sa.DateTime(), nullable=True),
-    sa.Column('date_modified', sa.DateTime(), nullable=True),
-    sa.Column('deleted', sa.Integer(), nullable=True),
-    sa.Column('hash', sa.String(length=255), nullable=True),
-    sa.Column('block_number', sa.String(length=255), nullable=True),
-    sa.Column('block_time_stamp', sa.String(length=255), nullable=True),
-    sa.Column('scope', sa.String(length=255), nullable=True),
-    sa.Column('scope_id', sa.Integer(), nullable=True),
-    sa.Column('contract_name', sa.String(length=255), nullable=True),
-    sa.Column('contract_address', sa.String(length=255), nullable=True),
-    sa.Column('contract_method', sa.String(length=255), nullable=True),
-    sa.Column('arguments', sa.String(length=255), nullable=True),
-    sa.Column('payload', sa.Text(), nullable=True),
-    sa.Column('from_address', sa.String(length=255), nullable=True),
-    sa.Column('to_address', sa.String(length=255), nullable=True),
-    sa.Column('amount', sa.String(length=255), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('status', sa.Integer(), server_default='-1', nullable=True),
-    sa.Column('transaction_status', sa.String(length=255), nullable=True),
-    sa.Column('chain_id', sa.Integer(), server_default='4', nullable=True),
-    sa.Column('modified_user_id', sa.Integer(), nullable=True),
-    sa.Column('created_user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['modified_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('outcome',
@@ -190,7 +161,6 @@ def downgrade():
     op.drop_table('shaker')
     op.drop_table('handshake')
     op.drop_table('outcome')
-    op.drop_table('tx')
     op.drop_table('match')
     op.drop_table('history')
     op.drop_table('event')

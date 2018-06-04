@@ -2,10 +2,9 @@ from flask import Blueprint, request
 from app.helpers.response import response_ok, response_error
 from app import db
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
-from app.models import Tx, Handshake, Outcome, Shaker
+from app.models import Handshake, Outcome, Shaker
 from app.helpers.message import MESSAGE
 import app.bl.handshake as handshake_bl
-from app.tasks import create_signed_handshake_file, add_payee_signature
 
 event_routes = Blueprint('event', __name__)
 

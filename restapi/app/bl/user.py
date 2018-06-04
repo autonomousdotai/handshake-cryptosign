@@ -3,7 +3,7 @@ from sqlalchemy import and_, func
 from datetime import datetime
 
 from app import db
-from app.models import User, Handshake, Tx
+from app.models import User, Handshake
 from app.helpers.message import MESSAGE
 
 import app.constants as CONST

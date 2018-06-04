@@ -20,7 +20,7 @@ from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app import db, s3, ipfs
-from app.models import User, Handshake, Tx, Shaker, Outcome
+from app.models import User, Handshake, Shaker, Outcome
 from app.constants import Handshake as HandshakeStatus
 from datetime import datetime
 

@@ -8,9 +8,10 @@ import requests
 import app.constants as CONST
 import math
 
+from decimal import Decimal
 from flask import g
 from app import db, fcm, sg
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_, or_, func, text
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
@@ -405,30 +406,59 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 		raise Exception('SOLR service is failed.')
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):
-	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		win_value = amount*odds
 		if win_value - amount > 0:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.odds<=win_value/(win_value-amount), Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
+			d = Decimal(win_value/(win_value-amount))
+			v = round(d, 2)
+			query = text('''
+						SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {};
+						'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED']))
+			handshakes = []
+			result_db = db.engine.execute(query)
+			for row in result_db:
+				handshake = Handshake(
+					id=row['id'],
+					hs_type=row['hs_type'],
+					extra_data=row['extra_data'],
+					description=row['description'],
+					chain_id=row['chain_id'],
+					is_private=row['is_private'],
+					user_id=row['user_id'],
+					outcome_id=row['outcome_id'],
+					odds=row['odds'],
+					amount=row['amount'],
+					currency=row['currency'],
+					side=row['side'],
+					win_value=row['win_value'],
+					remaining_amount=row['remaining_amount'],
+					from_address=row['from_address'],
+					shake_count=row['shake_count'],
+					view_count=row['view_count'],
+					date_created=row['date_created'],
+					date_modified=row['date_modified']
+				)
+				handshakes.append(handshake)
 			return handshakes
 	return []
 
 def find_all_joined_handshakes(side, outcome_id):
-	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.asc()).all()
 		return handshakes
 	return []
 
 def find_available_support_handshakes(outcome_id):
-	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
 
 def find_available_against_handshakes(outcome_id):
-	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id))
+	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
 		return handshakes

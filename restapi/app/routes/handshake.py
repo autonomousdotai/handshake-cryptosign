@@ -158,6 +158,7 @@ def init():
 			for handshake in handshakes:
 				handshake.shake_count += 1
 				amount_for_handshake = 0
+				
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
 					amount_for_handshake = handshake.remaining_amount
@@ -174,19 +175,19 @@ def init():
 					amount=amount_for_handshake,
 					currency=currency,
 					odds=odds,
-					win_value=odds*amount,
+					win_value=odds*amount_for_handshake,
 					side=side,
 					handshake_id=handshake.id
-				)
-				shaker_amount -= amount
+				)				
 
 				db.session.add(shaker)
 				db.session.flush()
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
-				shaker_json = handshake.to_json()
-				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(shaker_json)
+				handshake = handshake.to_json()
+				handshake['shakers'] = shaker.to_json()
+				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(handshake)
 				
 				if shaker_amount <= 0:
 					break

@@ -40,7 +40,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             params = {
                 "type": 3,
                 "extra_data": "",
-                "description": "Trong: test case 2",
+                "description": "TESTING MODE",
                 "outcome_id": 4,
                 "odds": 2,
                 "amount": 1,
@@ -52,6 +52,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             response = self.client.post(
                                     '/handshake/init',
                                     data=json.dumps(params), 
+                                    content_type='application/json',
                                     headers={"Uid": "{}".format(Uid)})
 
             data = json.loads(response.data.decode()) 
@@ -65,9 +66,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             params = {
                 "type": 3,
                 "extra_data": "",
-                "description": "Trong: test case 2",
+                "description": "TESTING MODE",
                 "outcome_id": 4,
-                "odds": 2,
+                "odds": 1,
                 "amount": 1,
                 "currency": "ETH",
                 "chain_id": 4,
@@ -77,6 +78,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             response = self.client.post(
                                     '/handshake/init',
                                     data=json.dumps(params), 
+                                    content_type='application/json',
                                     headers={"Uid": "{}".format(Uid)})
 
             data = json.loads(response.data.decode()) 
@@ -84,6 +86,18 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_shake_handshake(self):
+        pass
+
+    def test_uninit_handshake(self):
+        pass
+
+    def test_refund_handshake(self):
+        pass
+
+    def test_collect_handshake(self):
+        pass
+
+    def test_rollback_handshake(self):
         pass
     
 if __name__ == '__main__':

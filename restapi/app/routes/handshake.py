@@ -23,7 +23,7 @@ from app import db, s3, ipfs
 from app.models import User, Handshake, Shaker, Outcome
 from app.constants import Handshake as HandshakeStatus
 from datetime import datetime
-
+from app.tasks import update_feed
 
 handshake_routes = Blueprint('handshake', __name__)
 
@@ -184,6 +184,7 @@ def init():
 				db.session.flush()
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
+
 				handshake = handshake.to_json()
 				arr_shakers = handshake['shakers']
 				arr_shakers.append(shaker.to_json())
@@ -225,20 +226,6 @@ def init():
 			db.session.commit()
 			return response_ok(arr_hs)
 
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
-@handshake_routes.route('/update', methods=['POST'])
-@login_required
-def update():
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
-
-		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
@@ -470,7 +457,7 @@ def rollback():
 		db.session.rollback()
 		return response_error(ex.message)
 
-
+# TODO
 @handshake_routes.route('/refund', methods=['POST'])
 @login_required
 def refund():

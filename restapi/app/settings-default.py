@@ -44,6 +44,7 @@ class BaseConfig(object):
 	CELERY_RESULT_BACKEND = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY', '')
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
+	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')
 
 
 class DevelopmentConfig(BaseConfig):

@@ -34,6 +34,7 @@ def event():
 			if len(side) > 0:
 				side = int(side)
 				outcome.result = side
+				# TODO: add solr and firebase to result 0
 				db.session.commit()
 
 			return response_ok()

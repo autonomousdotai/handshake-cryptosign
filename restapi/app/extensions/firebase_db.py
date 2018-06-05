@@ -15,11 +15,13 @@ class FirebaseDatabase(object):
 		if app:
 			self.app = app
 			config['databaseURL'] = app.config['FIREBASE_DATABASE_URL']
+			config['serviceAccount'] = dir_path + "/{}.json".format(app.config['FIREBASE_PROJECT_NAME'])
 			self.firebase = pyrebase.initialize_app(config)
 			
 	def init_app(self, app):
 		self.app = app
 		config['databaseURL'] = app.config['FIREBASE_DATABASE_URL']
+		config['serviceAccount'] = dir_path + "/{}.json".format(app.config['FIREBASE_PROJECT_NAME'])
 		self.firebase = pyrebase.initialize_app(config)
 
 	def push_data(self, data, user_id):

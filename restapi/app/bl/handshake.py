@@ -66,8 +66,7 @@ def save_group_handshake_for_shake_state(offchain, state, isPayable=False):
 
 	return handshake
 
-def find_all_bet_which_user_win(user_id, outcome):
-	print 'find_all_bet_which_user_win'
+def save_status_all_bet_which_user_win(user_id, outcome):
 	handshakes = []
 	shakers = []
 	if outcome.result == CONST.RESULT_TYPE['DRAW'] or outcome.result == CONST.RESULT_TYPE['PENDING']:
@@ -102,7 +101,7 @@ def save_collect_state_for_maker(handshake):
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 				db.session.flush()
 
-				find_all_bet_which_user_win(handshake.user_id, outcome)
+				save_status_all_bet_which_user_win(handshake.user_id, outcome)
 				
 
 def save_collect_state_for_shaker(shaker):
@@ -119,7 +118,7 @@ def save_collect_state_for_shaker(shaker):
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 
-				find_all_bet_which_user_win(shaker.shaker_id, outcome)
+				save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
 
 def update_feed_result_for_outcome(outcome):
 	print 'update_feed_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)

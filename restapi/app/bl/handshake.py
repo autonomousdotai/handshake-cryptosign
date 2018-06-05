@@ -23,53 +23,6 @@ from datetime import datetime
 from sqlalchemy import literal
 
 
-def init_handshake_for_user(user):
-	handshakes = Handshake.query.filter_by(to_address=user.email).all()
-	if len(handshakes) > 0:
-		for handshake in handshakes:
-			if handshake.from_address is not None:
-				handshake.to_address = user.wallet.address
-				bc_json = init_handshake(handshake)
-				add_transaction.delay(bc_json, handshake.id, handshake.user_id)
-
-def init_handshake(handshake):
-	send_noti_for_handshake(handshake)
-	return bc_init_handshake(handshake)
-
-def bc_init_handshake(handshake):
-	try:
-		to_address = '' if is_valid_email(handshake.to_address) else handshake.to_address
-		if "," in handshake.to_email:
-			to_address = ", ".join([hashlib.md5(email.strip()).hexdigest() for email in str(handshake.to_email).split(",")])
-
-		wallet = Wallet.find_wallet_by_address(handshake.from_address)
-		if wallet is not None:
-			bc_data = {
-				'address': wallet.address,
-				'privateKey': wallet.private_key,
-				'value': handshake.value,
-				'term': handshake.term,
-				'escrow_date': parse_date_to_int(handshake.escrow_date) if handshake.escrow_date else 0,
-				'delivery_date': parse_date_to_int(handshake.delivery_date) if handshake.delivery_date else 0,
-				'to_address': to_address,
-				'offchain': CRYPTOSIGN_OFFCHAIN_PREFIX + str(handshake.id)
-			}
-
-			bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', data=bc_data, params={'chain_id': handshake.chain_id})
-
-			bc_json = bc_res.json()
-
-			print "bc_res=>", bc_json
-
-			if bc_json['status'] != 1:
-				raise BcException(bc_json['message'])
-
-			return bc_json
-	except Exception, ex:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print(exc_type, fname, exc_tb.tb_lineno)
-
 def save_handshake_for_init_state(hid, offchain):
 	print "hid = {}, offchain = {}".format(hid, offchain)
 	handshake = Handshake.find_handshake_by_id(offchain)

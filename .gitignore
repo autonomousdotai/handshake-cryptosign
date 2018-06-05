@@ -20,10 +20,10 @@ event/configs/config-local.js
 event/configs/config-staging.js
 event/configs/config-production.js
 
-#prediction ignore
-prediction/node_modules
-prediction/.sonarlint
-prediction/dist
+#event-new ignore
+event-new/node_modules
+event-new/.sonarlint
+event-new/dist
 
 
 # virtualenv

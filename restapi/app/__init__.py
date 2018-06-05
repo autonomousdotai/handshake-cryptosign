@@ -50,9 +50,9 @@ def before_request():
 
 	g.BLOCKCHAIN_SERVER_ENDPOINT = app.config.get('BLOCKCHAIN_SERVER_ENDPOINT')
 	g.AUTONOMOUS_SERVICE_ENDPOINT = app.config.get('AUTONOMOUS_SERVICE_ENDPOINT')
-	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.AUTONOMOUS_WEB_PASSPHASE = app.config.get('AUTONOMOUS_WEB_PASSPHASE')
 	g.SOLR_SERVICE = app.config.get('SOLR_SERVICE')
+	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
 
 	g.start = time.time()
 

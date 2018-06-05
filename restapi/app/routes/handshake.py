@@ -185,7 +185,10 @@ def init():
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
 				handshake = handshake.to_json()
-				handshake['shakers'] = shaker.to_json()
+				arr_shakers = handshake['shakers']
+				arr_shakers.append(shaker.to_json())
+				
+				handshake['shakers'] = arr_shakers
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
@@ -289,8 +292,7 @@ def shake():
 					handshake.remaining_amount -= amount
 
 				# create shaker
-				d = Decimal((handshake.amount*handshake.odds)/(handshake.amount*handshake.odds-handshake.amount))
-				shaker_odds = round(d, 2)
+				shaker_odds = handshake.amount*handshake.odds/(handshake.amount*handshake.odds-handshake.amount)
 				shaker = Shaker(
 					shaker_id=user.id,
 					amount=amount_for_handshake,
@@ -307,7 +309,10 @@ def shake():
 				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
 
 				handshake = handshake.to_json()
-				handshake['shakers'] = shaker.to_json()
+				arr_shakers = handshake['shakers']
+				arr_shakers.append(shaker.to_json())
+				
+				handshake['shakers'] = arr_shakers
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				

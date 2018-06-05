@@ -79,14 +79,17 @@ def find_all_bet_which_user_win(user_id, outcome):
 	for handshake in handshakes:
 		handshake.status = HandshakeStatus['STATUS_DONE']
 		handshake.bk_status = HandshakeStatus['STATUS_DONE']
-
 		db.session.flush()
+
+		add_handshake_to_solrservice(handshake, User.find_user_with_id(handshake.user_id))
+
 
 	for shaker in shakers:
 		shaker.status = HandshakeStatus['STATUS_DONE']
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
-
 		db.session.flush()
+
+		add_handshake_to_solrservice(Handshake.find_handshake_by_id(shaker.handshake_id), User.find_user_with_id(shaker.shaker_id), shaker=shaker)
 
 def save_collect_state_for_maker(handshake):
 	if handshake is not None:
@@ -97,6 +100,7 @@ def save_collect_state_for_maker(handshake):
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 
+				db.session.flush()
 				find_all_bet_which_user_win(handshake.user_id, outcome)
 				
 
@@ -113,6 +117,7 @@ def save_collect_state_for_shaker(shaker):
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 
+				db.session.flush()
 				find_all_bet_which_user_win(shaker.shaker_id, outcome)
 
 
@@ -319,7 +324,6 @@ def fcm_send_notification(handshake, handshake_state=CONST.HANDSHAKE_STATE['INIT
 	except Exception as ex:
 		print "error on fcm_send_notification->", ex.message
 
-
 def build_fcm_body_for_handshake(handshake, handshake_state):
 	body_payer = ''
 	body_payee = ''
@@ -356,6 +360,14 @@ def send_push(devices, title, body, data_message):
 			dvs.append(device[0])
 		print "devices --> {}".format(dvs)
 		fcm.push_multi_devices(devices=dvs, title=title, body=body, data_message=data_message)
+
+def add_feed(handshake, user, shaker=None):
+	add_handshake_to_solrservice(handshake, user, shaker=shaker)
+	add_handshake_to_firebase(handshake, user, shaker=shaker)
+
+#TODO: move to celery
+def add_handshake_to_firebase(handshake, user, shaker=None):
+	pass
 
 # TODO: move to celery
 def add_handshake_to_solrservice(handshake, user, shaker=None):
@@ -465,13 +477,13 @@ def find_all_joined_handshakes(side, outcome_id):
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
 
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
 		return handshakes
 	return []

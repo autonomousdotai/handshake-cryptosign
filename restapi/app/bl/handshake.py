@@ -67,6 +67,7 @@ def save_group_handshake_for_shake_state(offchain, state, isPayable=False):
 	return handshake
 
 def find_all_bet_which_user_win(user_id, outcome):
+	print 'find_all_bet_which_user_win'
 	handshakes = []
 	shakers = []
 	if outcome.result == CONST.RESULT_TYPE['DRAW'] or outcome.result == CONST.RESULT_TYPE['PENDING']:
@@ -74,7 +75,9 @@ def find_all_bet_which_user_win(user_id, outcome):
 		return
 
 	handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+	print 'handshakes {}'.format(handshakes)
 	shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
 		handshake.status = HandshakeStatus['STATUS_DONE']
@@ -92,8 +95,7 @@ def find_all_bet_which_user_win(user_id, outcome):
 
 def save_collect_state_for_maker(handshake):
 	if handshake is not None:
-		outcome = Outcome.find_outcome_by_id(handshake.id)
-
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is not None:
 			if handshake.side == outcome.result:
 				handshake.status = HandshakeStatus['STATUS_DONE']
@@ -105,7 +107,8 @@ def save_collect_state_for_maker(handshake):
 
 def save_collect_state_for_shaker(shaker):
 	if shaker is not None:
-		outcome = Outcome.find_outcome_by_id(shaker.handshake_id)
+		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 		if outcome is not None:
 			if shaker.side == outcome.result:

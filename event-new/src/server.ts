@@ -11,22 +11,19 @@ require('module').Module._initPaths();
  * Module dependencies.
  */
 import * as express from 'express';
-import { connectDB, createTable } from 'mysql.cfg';
+import { connectDB } from 'mysql.cfg';
 import { initExpress, initErrorRoutes } from 'express.cfg';
 import { connectWeb3Server } from 'web3.cfg';
 import { initModules } from './modules';
+
+const env       = process.env.NODE_ENV || 'development';
+const db_config    = require(__dirname + '/config/sequelize-config')[env];
 
 /**
  * Initialize vars
  */
 const appPort = process.env.PORT || process.env.NODE_PORT,
   appEnv = process.env.NODE_ENV,
-  mysqlConfig = {
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PWD,
-    database: process.env.MYSQL_DBNAME
-  },
   web3Config = {
     http: process.env.HTTP_PROVIDER,
     ws: process.env.WS_PROVIDER,
@@ -38,8 +35,7 @@ const app = express();
 
 const start = async () => {
   // Connect to Mysql.
-  connectDB(mysqlConfig);
-  createTable();
+  await connectDB(db_config);
 
   // Express configuration.
   initExpress(app);

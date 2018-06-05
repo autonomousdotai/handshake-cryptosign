@@ -1,7 +1,7 @@
 {
-  "name": "prediction-v1",
+  "name": "cryptosign-event",
   "version": "0.1.0",
-  "description": "Prediction v1",
+  "description": "cryptosign event v1",
   "author": "Pham Quoc Khanh",
   "scripts": {
     "start": "npm run build && npm run watch",
@@ -34,8 +34,8 @@
   },
   "dependencies": {
     "@types/glob": "^5.0.34",
-    "@types/knex": "^0.14.7",
     "@types/moment-timezone": "^0.5.4",
+    "@types/sequelize": "^4.27.20",
     "bignumber.js": "^6.0.0",
     "body-parser": "^1.18.2",
     "class-validator": "^0.7.3",
@@ -54,17 +54,15 @@
     "generate-password": "^1.4.0",
     "glob": "^7.1.2",
     "helmet": "^3.9.0",
-    "ioredis": "^3.1.4",
-    "json2csv": "^4.0.1",
     "jsonwebtoken": "^8.1.0",
-    "knex": "^0.14.4",
-    "lodash": "^4.17.4",
     "moment": "^2.21.0",
     "moment-timezone": "^0.5.14",
     "mysql": "^2.15.0",
     "mysql2": "^1.5.2",
+    "node-cron": "^1.2.1",
     "rxjs": "^5.5.5",
     "scrypt": "^6.0.3",
+    "sequelize": "^4.37.10",
     "web3": "^1.0.0-beta.30"
   },
   "devDependencies": {
@@ -75,7 +73,6 @@
     "@types/helmet": "0.0.36",
     "@types/jest": "^21.1.4",
     "@types/jsonwebtoken": "^7.2.4",
-    "@types/lodash": "^4.14.88",
     "@types/supertest": "^2.0.3",
     "concurrently": "^3.5.0",
     "jest": "^21.3.0-beta.13",

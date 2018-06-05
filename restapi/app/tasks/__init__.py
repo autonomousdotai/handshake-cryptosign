@@ -5,7 +5,7 @@ from werkzeug.datastructures import FileStorage
 from app.factory import make_celery
 from app.core import db, s3, configure_app, wm, ipfs, firebase
 from app.extensions.file_crypto import FileCrypto
-from app.models import Handshake, Outcome, user
+from app.models import Handshake, Outcome, User, Shaker
 
 import time
 import app.constants as CONST
@@ -31,12 +31,13 @@ celery = make_celery(app)
 
 
 @celery.task()
-def update_feed(handshake_id, user_id, shaker_id=-1):
+def update_feed(handshake_id, user_id, shake_id=-1):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+		user = User.find_user_with_id(user_id)
 		shaker = None
-		
+
 		# create maker id
 		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 		amount = handshake.amount
@@ -44,9 +45,9 @@ def update_feed(handshake_id, user_id, shaker_id=-1):
 		bk_status = handshake.bk_status
 		shake_user_ids = []
 
-		if shaker != -1:
-
+		if shake_id != -1:
 			# replace with shaker id
+			shaker = Shaker.find_shaker_by_id(shake_id)
 			_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 			amount = shaker.amount
 			status = shaker.status
@@ -82,7 +83,23 @@ def update_feed(handshake_id, user_id, shaker_id=-1):
 			"result_i": outcome.result
 		}
 
+		print hs
+
+		# add to firebase database
 		firebase.push_data(hs, user.id)
+
+		#  add to solr
+		arr_handshakes = []
+		arr_handshakes.append(hs)
+		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+		data = {
+			"add": arr_handshakes
+		}
+		res = requests.post(endpoint, json=data)
+		if res.status_code > 400:
+			print('SOLR service is failed.')
+
+
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

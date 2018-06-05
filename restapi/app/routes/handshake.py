@@ -140,10 +140,9 @@ def init():
 				from_address=from_address
 			)
 			db.session.add(handshake)
-			db.session.flush()
-
-			handshake_bl.add_handshake_to_solrservice(handshake, user)
 			db.session.commit()
+
+			update_feed.delay(handshake.id, user.id)
 
 			# response data
 			arr_hs = []
@@ -183,13 +182,9 @@ def init():
 				db.session.add(shaker)
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
+				update_feed.delay(handshake.id, user.id, shaker.id)
 
 				handshake = handshake.to_json()
-				arr_shakers = handshake['shakers']
-				arr_shakers.append(shaker.to_json())
-				
-				handshake['shakers'] = arr_shakers
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
@@ -217,7 +212,7 @@ def init():
 				db.session.add(handshake)
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user)
+				update_feed.delay(handshake.id, user.id)
 
 				hs_json = handshake.to_json()
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
@@ -293,13 +288,9 @@ def shake():
 				db.session.add(shaker)
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
+				update_feed.delay(handshake.id, user.id, shaker.id)
 
 				handshake = handshake.to_json()
-				arr_shakers = handshake['shakers']
-				arr_shakers.append(shaker.to_json())
-				
-				handshake['shakers'] = arr_shakers
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
@@ -337,7 +328,7 @@ def uninit(handshake_id):
 				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user)
+				update_feed.delay(handshake.id, user.id)
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 				handshake_json = handshake.to_json()
@@ -373,20 +364,20 @@ def collect():
 		shakers = []
 		if 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
-			shaker = db.session.query(Shaker).filter_by(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if shaker is not None:
-				handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
-				shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
+				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
+				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
 
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
 		else:
 			offchain = int(offchain.replace('m', ''))
-			handshake = db.session.query(Handshake).filter_by(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake is not None:
-				handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
-				shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
+				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
+				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
@@ -427,11 +418,9 @@ def rollback():
 			if handshake is not None:
 				if handshake.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
 					handshake.status = handshake.bk_status
-					db.session.flush()
-
-					handshake_bl.add_handshake_to_solrservice(handshake, user)
-
 					db.session.commit()
+
+					update_feed.delay(handshake.id, user.id)
 					return response_ok(handshake.to_json())
 
 			else:
@@ -442,12 +431,9 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
 					shaker.status = shaker.bk_status
-					db.session.flush()
-
-					handshake = db.session.query(Handshake).filter(Handshake.id==shaker.handshake_id).first()
-					handshake_bl.add_handshake_to_solrservice(handshake, user, shaker)
-
 					db.session.commit()
+
+					update_feed.delay(shaker.handshake_id, user.id, shaker.id)
 					return response_ok(shaker.to_json())
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)

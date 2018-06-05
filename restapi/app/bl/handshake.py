@@ -113,6 +113,55 @@ def save_group_handshake_for_shake_state(offchain, state, isPayable=False):
 
 	return handshake
 
+def find_all_bet_which_user_win(user_id, outcome):
+	handshakes = []
+	shakers = []
+	if outcome.result == CONST.SIDE_TYPE['DRAW']:
+		handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id)).all()
+		shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter_by(Handshake.outcome_id==outcome.id)))).all()
+	else:
+		handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+		shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter_by(Handshake.outcome_id==outcome.id)))).all()
+
+	for handshake in handshakes:
+		handshake.status = HandshakeStatus['STATUS_DONE']
+		handshake.bk_status = HandshakeStatus['STATUS_DONE']
+
+		db.session.flush()
+
+	for shaker in shakers:
+		shaker.status = HandshakeStatus['STATUS_DONE']
+		shaker.bk_status = HandshakeStatus['STATUS_DONE']
+
+		db.session.flush()
+
+def save_collect_state_for_maker(handshake):
+	if handshake is not None:
+		outcome = Outcome.find_outcome_by_id(handshake.id)
+
+		if outcome is not None:
+			if handshake.side == outcome.result:
+				handshake.status = HandshakeStatus['STATUS_DONE']
+				handshake.bk_status = HandshakeStatus['STATUS_DONE']
+
+				find_all_bet_which_user_win(handshake.user_id, outcome)
+				
+
+def save_collect_state_for_shaker(shaker):
+	if shaker is not None:
+		outcome = Outcome.find_outcome_by_id(shaker.handshake_id)
+
+		if outcome is not None:
+			if shaker.side == outcome.result:
+				shaker.status = HandshakeStatus['STATUS_DONE']
+				shaker.bk_status = HandshakeStatus['STATUS_DONE']
+
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+				handshake.status = HandshakeStatus['STATUS_DONE']
+				handshake.bk_status = HandshakeStatus['STATUS_DONE']
+
+				find_all_bet_which_user_win(shaker.shaker_id, outcome)
+
 
 def save_handshake_for_event(event_name, offchain):
 	if 's' in offchain: # shaker
@@ -136,6 +185,7 @@ def save_handshake_for_event(event_name, offchain):
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
+				save_collect_state_for_shaker(shaker)
 
 	else: # maker
 		offchain = offchain.replace('m', '')
@@ -147,21 +197,27 @@ def save_handshake_for_event(event_name, offchain):
 				handshake.status = HandshakeStatus['STATUS_INITED']
 				handshake.bk_status = HandshakeStatus['STATUS_INITED']
 
+				db.session.commit()
+				# update solr
+				user = User.find_user_with_id(handshake.user_id)
+				add_handshake_to_solrservice(handshake, user)
+
 			elif '__uninit' in event_name:
 				print '__uninit'
 				handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
 				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
+
+				db.session.commit()
+				# update solr
+				user = User.find_user_with_id(handshake.user_id)
+				add_handshake_to_solrservice(handshake, user)
 
 			elif '__collect' in event_name:
 				print '__collect'
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
-
-			db.session.commit()
-			# update solr
-			user = User.find_user_with_id(handshake.user_id)
-			add_handshake_to_solrservice(handshake, user)
+				save_collect_state_for_maker(handshake)
 
 
 def rollback_handshake_state(handshake_id):
@@ -348,9 +404,11 @@ def send_push(devices, title, body, data_message):
 		print "devices --> {}".format(dvs)
 		fcm.push_multi_devices(devices=dvs, title=title, body=body, data_message=data_message)
 
-
+# TODO: move to celery
 def add_handshake_to_solrservice(handshake, user, shaker=None):
 	outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+	# create maker id
 	_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 	amount = handshake.amount
 	status = handshake.status
@@ -358,6 +416,7 @@ def add_handshake_to_solrservice(handshake, user, shaker=None):
 	shake_user_ids = []
 
 	if shaker is not None:
+		# replace with shaker id
 		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 		amount = shaker.amount
 		status = shaker.status

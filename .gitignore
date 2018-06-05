@@ -30,7 +30,7 @@ event-new/dist
 .Python
 bin/
 include/
-# lib/
+lib/
 pip-selfcheck.json
 
 # pdf

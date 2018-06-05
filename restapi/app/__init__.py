@@ -1,5 +1,5 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
@@ -40,6 +40,8 @@ wm.init_app(app)
 fcm.init_app(app)
 # init ipfs
 ipfs.init_app(app)
+# init firebase database
+firebase.init_app(app)
 
 
 @app.before_request
@@ -50,9 +52,9 @@ def before_request():
 
 	g.BLOCKCHAIN_SERVER_ENDPOINT = app.config.get('BLOCKCHAIN_SERVER_ENDPOINT')
 	g.AUTONOMOUS_SERVICE_ENDPOINT = app.config.get('AUTONOMOUS_SERVICE_ENDPOINT')
-	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.AUTONOMOUS_WEB_PASSPHASE = app.config.get('AUTONOMOUS_WEB_PASSPHASE')
 	g.SOLR_SERVICE = app.config.get('SOLR_SERVICE')
+	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
 
 	g.start = time.time()
 

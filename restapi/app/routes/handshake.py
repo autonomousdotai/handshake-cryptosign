@@ -23,7 +23,7 @@ from app import db, s3, ipfs
 from app.models import User, Handshake, Shaker, Outcome
 from app.constants import Handshake as HandshakeStatus
 from datetime import datetime
-
+from app.tasks import update_feed
 
 handshake_routes = Blueprint('handshake', __name__)
 
@@ -158,6 +158,7 @@ def init():
 			for handshake in handshakes:
 				handshake.shake_count += 1
 				amount_for_handshake = 0
+				
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
 					amount_for_handshake = handshake.remaining_amount
@@ -174,19 +175,23 @@ def init():
 					amount=amount_for_handshake,
 					currency=currency,
 					odds=odds,
-					win_value=odds*amount,
+					win_value=odds*amount_for_handshake,
 					side=side,
 					handshake_id=handshake.id
-				)
-				shaker_amount -= amount
+				)				
 
 				db.session.add(shaker)
 				db.session.flush()
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
-				shaker_json = handshake.to_json()
-				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(shaker_json)
+
+				handshake = handshake.to_json()
+				arr_shakers = handshake['shakers']
+				arr_shakers.append(shaker.to_json())
+				
+				handshake['shakers'] = arr_shakers
+				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(handshake)
 				
 				if shaker_amount <= 0:
 					break
@@ -221,20 +226,6 @@ def init():
 			db.session.commit()
 			return response_ok(arr_hs)
 
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
-@handshake_routes.route('/update', methods=['POST'])
-@login_required
-def update():
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
-
-		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
@@ -288,7 +279,7 @@ def shake():
 					handshake.remaining_amount -= amount
 
 				# create shaker
-				shaker_odds = (handshake.amount*handshake.odds)/(handshake.amount*handshake.odds-handshake.amount)
+				shaker_odds = handshake.amount*handshake.odds/(handshake.amount*handshake.odds-handshake.amount)
 				shaker = Shaker(
 					shaker_id=user.id,
 					amount=amount_for_handshake,
@@ -303,9 +294,14 @@ def shake():
 				db.session.flush()
 
 				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
-				shaker_json = handshake.to_json()
-				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(shaker_json)
+
+				handshake = handshake.to_json()
+				arr_shakers = handshake['shakers']
+				arr_shakers.append(shaker.to_json())
+				
+				handshake['shakers'] = arr_shakers
+				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(handshake)
 				
 				if shaker_amount <= 0:
 					break
@@ -363,6 +359,44 @@ def collect():
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
+
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		offchain = data.get('offchain', '')
+		if len(offchain) == 0:
+			raise Exception(MESSAGE.MISSING_OFFCHAIN)
+
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		handshakes = []
+		shakers = []
+		if 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = db.session.query(Shaker).filter_by(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			if shaker is not None:
+				handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
+				shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
+
+			else:
+				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+
+		else:
+			offchain = int(offchain.replace('m', ''))
+			handshake = db.session.query(Handshake).filter_by(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			if handshake is not None:
+				handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
+				shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
+			else:
+				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+
+		for handshake in handshakes:
+			handshake.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+
+		for shaker in shakers:
+			shaker.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+
+		db.session.commit()
 
 		return response_ok()
 	except Exception, ex:
@@ -423,7 +457,7 @@ def rollback():
 		db.session.rollback()
 		return response_error(ex.message)
 
-
+# TODO
 @handshake_routes.route('/refund', methods=['POST'])
 @login_required
 def refund():

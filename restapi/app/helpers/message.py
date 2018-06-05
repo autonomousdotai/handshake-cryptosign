@@ -7,6 +7,7 @@ class MESSAGE(object):
 	INVALID_BET = 'There is something wrong with your bet.'
 	BET_NOT_FOUND = 'There is no bet which match your side. Please create a new one or choose another side!'
 	INVALID_ADDRESS = 'Please provide valid wallet address!'
+	MISSING_OFFCHAIN = 'Missing offchain data!'
 
 	# OUTCOME
 	INVALID_OUTCOME = 'Please check your outcome id'

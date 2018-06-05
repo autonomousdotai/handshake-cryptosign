@@ -1,13 +1,14 @@
 import os
 
-from app.extensions.ipfs import IPFS
-from app.extensions.sg import SendGrid
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 
+from app.extensions.ipfs import IPFS
+from app.extensions.sg import SendGrid
 from app.extensions.s3 import AWSS3
 from app.extensions.water_mark import WaterMark
 from app.extensions.fcm import FirebaseCloudMessage
+from app.extensions.firebase_db import FirebaseDatabase
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -16,6 +17,7 @@ sg = SendGrid()
 wm = WaterMark()
 fcm = FirebaseCloudMessage()
 ipfs = IPFS()
+firebase = FirebaseDatabase()
 
 
 # configure app from env + silent local settings.cfg

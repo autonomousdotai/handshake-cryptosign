@@ -45,6 +45,8 @@ class BaseConfig(object):
 	FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY', '')
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')
+	FIREBASE_DATABASE_URL = ''
+	FIREBASE_PROJECT_NAME = ''
 
 
 class DevelopmentConfig(BaseConfig):
@@ -63,6 +65,8 @@ class StagingConfig(BaseConfig):
 	CELERY_BROKER_URL = 'redis://:%s@%s:%s/0' % (REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
 	CELERY_RESULT_BACKEND = 'redis://:%s@%s:%s/0' % (REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
+	FIREBASE_DATABASE_URL = ''
+	FIREBASE_PROJECT_NAME = ''
 
 class ProductionConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
@@ -71,3 +75,5 @@ class ProductionConfig(BaseConfig):
 	CELERY_BROKER_URL = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	CELERY_RESULT_BACKEND = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
+	FIREBASE_DATABASE_URL = ''
+	FIREBASE_PROJECT_NAME = ''

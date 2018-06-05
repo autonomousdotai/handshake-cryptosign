@@ -7,7 +7,7 @@ config = {
 	"authDomain": "",
 	"databaseURL": "",
 	"storageBucket": "",
-	"serviceAccount": dir_path + "/handshake-205007.json"
+	"serviceAccount": ""
 }
 class FirebaseDatabase(object):
 	def __init__(self, app=None):

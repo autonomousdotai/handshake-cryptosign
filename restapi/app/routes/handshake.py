@@ -165,8 +165,8 @@ def init():
 
 				else:
 					amount_for_handshake = shaker_amount
-					shaker_amount = 0
 					handshake.remaining_amount -= shaker_amount
+					shaker_amount = 0
 				
 				# create shaker
 				shaker = Shaker(
@@ -271,8 +271,8 @@ def shake():
 
 				else:
 					amount_for_handshake = shaker_amount
-					shaker_amount = 0
 					handshake.remaining_amount -= shaker_amount
+					shaker_amount = 0
 
 				# create shaker
 				shaker_odds = handshake.amount*handshake.odds/(handshake.amount*handshake.odds-handshake.amount)

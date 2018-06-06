@@ -6,7 +6,7 @@ from app.models.base import BaseModel
 
 class Match(BaseModel):
 	__tablename__ = 'match'
-	__json_public__ = ['id', 'homeTeamName', 'homeTeamCode', 'homeTeamFlag', 'awayTeamName', 'awayTeamCode', 'awayTeamFlag', 'date', 'outcomes', 'homeScore', 'awayScore']	
+	__json_public__ = ['id', 'homeTeamName', 'homeTeamCode', 'homeTeamFlag', 'awayTeamName', 'awayTeamCode', 'awayTeamFlag', 'date', 'outcomes', 'homeScore', 'awayScore', 'name']	
 	__json_modifiers__ = {
         'outcomes': lambda outcomes, _: [outcome.to_json() for outcome in outcomes]
     }
@@ -16,6 +16,7 @@ class Match(BaseModel):
 	awayTeamName = db.Column(db.String(255))
 	awayTeamCode = db.Column(db.String(10))
 	awayTeamFlag = db.Column(db.String(512))
+	name = db.Column(db.String(512))
 	homeScore = db.Column(db.Integer)
 	awayScore = db.Column(db.Integer)
 	date = db.Column(db.BigInteger)

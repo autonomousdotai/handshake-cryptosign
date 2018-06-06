@@ -394,8 +394,9 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 			d = Decimal(win_value/(win_value-amount))
 			v = round(d, 2)
 			query = text('''
-						SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {};
+						SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC, remaining_amount DESC;
 						'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
+
 			handshakes = []
 			result_db = db.engine.execute(query)
 			for row in result_db:
@@ -434,7 +435,7 @@ def find_all_joined_handshakes(side, outcome_id):
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
 		return handshakes
 	return []
 

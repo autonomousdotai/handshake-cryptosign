@@ -164,9 +164,9 @@ def init():
 					handshake.remaining_amount = 0
 
 				else:
-					amount_for_handshake = amount
-					shaker_amount -= amount
-					handshake.remaining_amount -= amount
+					amount_for_handshake = shaker_amount
+					shaker_amount = 0
+					handshake.remaining_amount -= shaker_amount
 				
 				# create shaker
 				shaker = Shaker(
@@ -263,15 +263,16 @@ def shake():
 			for handshake in handshakes:
 				handshake.shake_count += 1
 				amount_for_handshake = 0
+
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
 					amount_for_handshake = handshake.remaining_amount
 					handshake.remaining_amount = 0
 
 				else:
-					amount_for_handshake = amount
-					shaker_amount -= amount
-					handshake.remaining_amount -= amount
+					amount_for_handshake = shaker_amount
+					shaker_amount = 0
+					handshake.remaining_amount -= shaker_amount
 
 				# create shaker
 				shaker_odds = handshake.amount*handshake.odds/(handshake.amount*handshake.odds-handshake.amount)

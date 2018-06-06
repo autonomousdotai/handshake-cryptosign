@@ -305,7 +305,7 @@ def shake():
 			
 			return response_ok(arr_hs, message=message)
 		else:
-			return response_error(MESSAGE.BET_NOT_FOUND)
+			return response_error(MESSAGE.INVALID_BET)
 
 		return response_ok()
 

@@ -11,16 +11,14 @@ import app.constants as CONST
 import app.bl.handshake as handshake_bl
 
 from decimal import Decimal
-from flask import Blueprint, request, g, Response
+from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text
-
 from app.helpers.response import response_ok, response_error
-from app.helpers.utils import is_valid_email, isnumber, formalize_description
 from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app import db, s3, ipfs
-from app.models import User, Handshake, Shaker, Outcome
+from app.models import User, Handshake, Shaker, Outcome, Match
 from app.constants import Handshake as HandshakeStatus
 from datetime import datetime
 from app.tasks import update_feed
@@ -42,14 +40,17 @@ def handshakes():
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
 		
+		match = Match.find_match_by_id(outcome.match_id)
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
 		against = handshake_bl.find_available_against_handshakes(outcome_id)
 
+		total = Decimal(0, 2)
 		arr_supports = []
 		for support in supports:
 			data = {}
 			data['odds'] = support[0]
 			data['amount'] = support[1]
+			total += support[0] * support[1]
 			arr_supports.append(data)
 
 		arr_against = []
@@ -57,11 +58,14 @@ def handshakes():
 			data = {}
 			data['odds'] = against[0]
 			data['amount'] = against[1]
+			total += against[0] * against[1]
 			arr_against.append(data)
 
 		response = {
 			"support": arr_supports,
-			"against": arr_against
+			"against": arr_against,
+			"traded_volumn": total,
+			"market_fee": match.market_fee
 		}
 
 		return response_ok(response)

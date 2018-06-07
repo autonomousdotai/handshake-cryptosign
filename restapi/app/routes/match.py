@@ -1,5 +1,6 @@
 import json
 import app.constants as CONST
+import app.bl.match as match_bl
 
 from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
@@ -18,7 +19,18 @@ def matches():
 		matches = Match.query.all()
 		data = []
 		for match in matches:
-			data.append(match.to_json())
+			#  find best odds which match against
+			match_json = match.to_json()
+
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				outcome_json = outcome.to_json()
+				odds = match_bl.find_best_odds_which_match_support_side(outcome.id)
+				outcome_json["market_odds"] = odds
+				arr_outcomes.append(outcome_json)
+				
+			match_json["outcomes"] = arr_outcomes
+			data.append(match_json)
 
 		return response_ok(data)
 	except Exception, ex:

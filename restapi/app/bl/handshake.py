@@ -385,13 +385,9 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 			v = Decimal(o, 2)
 
 			if side == CONST.SIDE_TYPE['SUPPORT']:
-				query = text('''
-						SELECT * FROM handshake where outcome_id = {} and odds >= {} remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount ASC, remaining_amount DESC;
-						'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))	
+				query = text('''SELECT * FROM handshake where outcome_id = {} and odds >= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount ASC, remaining_amount DESC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))	
 			else:
-				query = text('''
-							SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount DESC, remaining_amount DESC;
-							'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
+				query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount DESC, remaining_amount DESC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
 
 			handshakes = []
 			result_db = db.engine.execute(query)
@@ -420,71 +416,6 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 				handshakes.append(handshake)
 			return handshakes
 	return []
-
-# def create_shaker():
-# 	arr_hs = []
-# 	shaker_amount = amount
-# 	for handshake in handshakes:
-# 		handshake.shake_count += 1
-# 		amount_for_handshake = 0
-		
-# 		if shaker_amount > handshake.remaining_amount:
-# 			shaker_amount -= handshake.remaining_amount
-# 			amount_for_handshake = handshake.remaining_amount
-# 			handshake.remaining_amount = 0
-
-# 		else:
-# 			amount_for_handshake = shaker_amount
-# 			handshake.remaining_amount -= shaker_amount
-# 			shaker_amount = 0
-		
-# 		# create shaker
-# 		shaker = Shaker(
-# 			shaker_id=user.id,
-# 			amount=amount_for_handshake,
-# 			currency=currency,
-# 			odds=odds,
-# 			win_value=odds*amount_for_handshake,
-# 			side=side,
-# 			handshake_id=handshake.id
-# 		)				
-
-# 		db.session.add(shaker)
-# 		db.session.flush()
-
-# 		update_feed.delay(handshake.id, user.id, shaker.id)
-
-# 		handshake = handshake.to_json()
-# 		handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-# 		arr_hs.append(handshake)
-		
-# 		if shaker_amount <= 0:
-# 			break
-
-# 	if shaker_amount > 0:
-# 		print 'still has money'
-# 		handshake = Handshake(
-# 			hs_type=hs_type,
-# 			extra_data=extra_data,
-# 			description=description,
-# 			chain_id=chain_id,
-# 			is_private=is_private,
-# 			user_id=user.id,
-# 			outcome_id=outcome_id,
-# 			odds=odds,
-# 			amount=shaker_amount,
-# 			currency=currency,
-# 			side=side,
-# 			win_value=odds*shaker_amount,
-# 			remaining_amount=(odds*shaker_amount)-shaker_amount,
-# 			from_address=from_address
-# 		)
-# 		db.session.add(handshake)
-# 		db.session.flush()
-
-# 		update_feed.delay(handshake.id, user.id)
-
-# 	return arr_hs
 
 def find_all_joined_handshakes(side, outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()

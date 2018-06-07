@@ -392,7 +392,7 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 		win_value = amount*odds
 		if win_value - amount > 0:
 			query = text('''
-						SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC, remaining_amount DESC;
+						SELECT * FROM handshake where outcome_id = {} and odds >= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC, remaining_amount DESC;
 						'''.format(outcome_id, odds, CONST.Handshake['STATUS_INITED'], side))
 			if side == CONST.SIDE_TYPE['SUPPORT']:
 				query = text('''

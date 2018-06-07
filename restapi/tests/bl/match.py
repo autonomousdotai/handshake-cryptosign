@@ -23,10 +23,8 @@ class TestMatchBl(BaseTestCase):
 
 
     def test_all_matches(self):
-        matches = match_bl.find_all_markets()
-        
+        matches = match_bl.find_all_markets()        
         print matches
-
         self.assertTrue(False)
 
 if __name__ == '__main__':

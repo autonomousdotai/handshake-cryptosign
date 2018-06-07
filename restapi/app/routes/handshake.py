@@ -140,7 +140,7 @@ def init():
 				currency=currency,
 				side=side,
 				win_value=odds*amount,
-				remaining_amount=(odds*amount)-amount,
+				remaining_amount=amount,
 				from_address=from_address
 			)
 			db.session.add(handshake)
@@ -162,14 +162,14 @@ def init():
 			for handshake in handshakes:
 				handshake.shake_count += 1
 
-				handshake_win_value = handshake.remaining_amount*handshake.odds
+				handshake_win_value = handshake.amount*handshake.odds
 				shaker_win_value = amount*odds
 				final_win_value = min(handshake_win_value, shaker_win_value)
 
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
 				subtracted_amount_for_shaker = final_win_value/odds
 
-				handshake.remaining_amount -= subtracted_amount_for_handshake
+				handshake.amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
 				
 				# create shaker
@@ -210,7 +210,7 @@ def init():
 					currency=currency,
 					side=side,
 					win_value=odds*shaker_amount,
-					remaining_amount=(odds*shaker_amount)-shaker_amount,
+					remaining_amount=shaker_amount,
 					from_address=from_address
 				)
 				db.session.add(handshake)

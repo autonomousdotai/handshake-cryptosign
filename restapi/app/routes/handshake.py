@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import base64
 import time
 import os
@@ -56,7 +57,7 @@ def handshakes():
 		arr_against = []
 		for against in against:
 			data = {}
-			data['odds'] = against[0]
+			data['odds'] = against[0]/(against[0]-1)
 			data['amount'] = against[1]
 			total += against[0] * against[1]
 			arr_against.append(data)

@@ -78,7 +78,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=1,
 				win_value=1.25,
-				remaining_amount=0.25,
+				remaining_amount=1,
 				from_address='0x123',
                 status=0
         )
@@ -99,7 +99,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=1,
 				win_value=1.10,
-				remaining_amount=0.10,
+				remaining_amount=1,
 				from_address='0x1234',
                 status=0
         )
@@ -107,12 +107,13 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.1)
+        self.assertEqual(float(handshake.win_value), 1.10)
         
         handshakes = handshake_bl.find_all_matched_handshakes(side=2, odds=5.0, outcome_id=88, amount=0.25)
+
         self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].odds), 1.1)
-        self.assertEqual(float(handshakes[1].odds), 1.25)
+        self.assertEqual(float(handshakes[0].odds), 1.25)
+        self.assertEqual(float(handshakes[1].odds), 1.1)
         
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -135,7 +136,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=2,
 				win_value=1.25,
-				remaining_amount=0.25,
+				remaining_amount=1,
 				from_address='0x123',
                 status=0
         )
@@ -156,7 +157,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=2,
 				win_value=1.10,
-				remaining_amount=0.10,
+				remaining_amount=1,
 				from_address='0x1234',
                 status=0
         )
@@ -167,9 +168,8 @@ class TestHandshakeBl(BaseTestCase):
         self.assertEqual(float(handshake.win_value), 1.1)
         
         handshakes = handshake_bl.find_all_matched_handshakes(side=1, odds=5.0, outcome_id=88, amount=0.25)
-        self.assertEqual(len(handshakes), 2)
+        self.assertEqual(len(handshakes), 1)
         self.assertEqual(float(handshakes[0].odds), 1.25)
-        self.assertEqual(float(handshakes[1].odds), 1.10)
         
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -192,7 +192,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=1,
 				win_value=1.25,
-				remaining_amount=0.25,
+				remaining_amount=1,
 				from_address='0x123',
                 status=0
         )
@@ -213,7 +213,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=2,
 				win_value=1.10,
-				remaining_amount=0.10,
+				remaining_amount=1,
 				from_address='0x1234',
                 status=0
         )
@@ -226,6 +226,32 @@ class TestHandshakeBl(BaseTestCase):
         handshakes = handshake_bl.find_all_joined_handshakes(side=1, outcome_id=88)
         self.assertEqual(len(handshakes), 1)
         self.assertEqual(float(handshakes[0].odds), 1.10)
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.09,
+				amount=1,
+				currency='ETH',
+				side=2,
+				win_value=1.10,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+
+        handshakes = handshake_bl.find_all_joined_handshakes(side=1, outcome_id=88)
+        self.assertEqual(len(handshakes), 2)
+        self.assertEqual(float(handshakes[0].odds), 1.10)
+        self.assertEqual(float(handshakes[1].odds), 1.09)
         
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -248,7 +274,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=1,
 				win_value=1.25,
-				remaining_amount=0.25,
+				remaining_amount=1,
 				from_address='0x123',
                 status=0
         )
@@ -269,7 +295,7 @@ class TestHandshakeBl(BaseTestCase):
 				currency='ETH',
 				side=2,
 				win_value=1.10,
-				remaining_amount=0.10,
+				remaining_amount=1,
 				from_address='0x1234',
                 status=0
         )
@@ -282,259 +308,287 @@ class TestHandshakeBl(BaseTestCase):
         handshakes = handshake_bl.find_all_joined_handshakes(side=2, outcome_id=88)
         self.assertEqual(len(handshakes), 1)
         self.assertEqual(float(handshakes[0].odds), 1.25)
+
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.24,
+				amount=1,
+				currency='ETH',
+				side=1,
+				win_value=1.24,
+				remaining_amount=1,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        self.assertEqual(float(handshake.win_value), 1.24)
+        
+        handshakes = handshake_bl.find_all_joined_handshakes(side=2, outcome_id=88)
+        self.assertEqual(len(handshakes), 2)
+        self.assertEqual(float(handshakes[0].odds), 1.25)
+        self.assertEqual(float(handshakes[1].odds), 1.24)
         
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
 
-    def test_find_available_support_handshakes(self):
-        self.clear_data_before_test()
+    # def test_find_available_support_handshakes(self):
+    #     self.clear_data_before_test()
 
-        arr_hs = []
+    #     arr_hs = []
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.25,
-				amount=1,
-				currency='ETH',
-				side=1,
-				win_value=1.25,
-				remaining_amount=0.25,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.25,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=1.25,
+	# 			remaining_amount=0.25,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.25)
+    #     self.assertEqual(float(handshake.win_value), 1.25)
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.25,
-				amount=0.25,
-				currency='ETH',
-				side=1,
-				win_value=0.3125,
-				remaining_amount=0.0625,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=1.25,
+	# 			amount=0.25,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.3125,
+	# 			remaining_amount=0.0625,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 0.3125)
+    #     self.assertEqual(float(handshake.win_value), 0.3125)
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.10,
-				amount=1,
-				currency='ETH',
-				side=1,
-				win_value=1.10,
-				remaining_amount=0.10,
-				from_address='0x1234',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.10,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=1.10,
+	# 			remaining_amount=0.10,
+	# 			from_address='0x1234',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.10)
+    #     self.assertEqual(float(handshake.win_value), 1.10)
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.10,
-				amount=0.1,
-				currency='ETH',
-				side=1,
-				win_value=0.11,
-				remaining_amount=0.01,
-				from_address='0x1234',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.10,
-				amount=1,
-				currency='ETH',
-				side=1,
-				win_value=1.11,
-				remaining_amount=0.1,
-				from_address='0x12345',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.11)
-
-        handshakes = handshake_bl.find_available_support_handshakes(outcome_id=88)
-        self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].amount), 2.10)
-        self.assertEqual(float(handshakes[1].amount), 1.25)
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.10,
+	# 			amount=0.1,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.11,
+	# 			remaining_amount=0.01,
+	# 			from_address='0x1234',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
 
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=1.10,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=1.11,
+	# 			remaining_amount=0.1,
+	# 			from_address='0x12345',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-    def test_find_available_against_handshakes(self):
-        self.clear_data_before_test()
+    #     self.assertEqual(float(handshake.win_value), 1.11)
 
-        arr_hs = []
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.25,
-				amount=1,
-				currency='ETH',
-				side=2,
-				win_value=1.25,
-				remaining_amount=0.25,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.25)
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.25,
-				amount=0.25,
-				currency='ETH',
-				side=2,
-				win_value=0.3125,
-				remaining_amount=0.0625,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 0.3125)
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.10,
-				amount=1,
-				currency='ETH',
-				side=2,
-				win_value=1.10,
-				remaining_amount=0.10,
-				from_address='0x1234',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.10)
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.10,
-				amount=0.1,
-				currency='ETH',
-				side=2,
-				win_value=0.11,
-				remaining_amount=0.01,
-				from_address='0x1234',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     handshakes = handshake_bl.find_available_support_handshakes(outcome_id=88)
+    #     self.assertEqual(len(handshakes), 2)
+    #     self.assertEqual(float(handshakes[0].amount), 2.10)
+    #     self.assertEqual(float(handshakes[1].amount), 1.25)
 
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.10,
-				amount=1,
-				currency='ETH',
-				side=2,
-				win_value=1.11,
-				remaining_amount=0.1,
-				from_address='0x12345',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     for handshake in arr_hs:
+    #         db.session.delete(handshake)
+    #         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.11)
+    # def test_find_available_against_handshakes(self):
+    #     self.clear_data_before_test()
 
-        handshakes = handshake_bl.find_available_against_handshakes(outcome_id=88)
-        self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].amount), 1.25)
-        self.assertEqual(float(handshakes[1].amount), 2.10)
+    #     arr_hs = []
+
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.25,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=1.25,
+	# 			remaining_amount=0.25,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     self.assertEqual(float(handshake.win_value), 1.25)
+
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=1.25,
+	# 			amount=0.25,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=0.3125,
+	# 			remaining_amount=0.0625,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     self.assertEqual(float(handshake.win_value), 0.3125)
+
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.10,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=1.10,
+	# 			remaining_amount=0.10,
+	# 			from_address='0x1234',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     self.assertEqual(float(handshake.win_value), 1.10)
+
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.10,
+	# 			amount=0.1,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=0.11,
+	# 			remaining_amount=0.01,
+	# 			from_address='0x1234',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
 
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=1.10,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=1.11,
+	# 			remaining_amount=0.1,
+	# 			from_address='0x12345',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     self.assertEqual(float(handshake.win_value), 1.11)
+
+    #     handshakes = handshake_bl.find_available_against_handshakes(outcome_id=88)
+    #     self.assertEqual(len(handshakes), 2)
+    #     self.assertEqual(float(handshakes[0].amount), 1.25)
+    #     self.assertEqual(float(handshakes[1].amount), 2.10)
+
+
+    #     for handshake in arr_hs:
+    #         db.session.delete(handshake)
+    #         db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

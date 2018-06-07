@@ -389,8 +389,8 @@ class TestHandshakeBl(BaseTestCase):
 
         handshakes = handshake_bl.find_available_support_handshakes(outcome_id=88)
         self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].amount), 2.10)
-        self.assertEqual(float(handshakes[1].amount), 1.25)
+        self.assertEqual(float(handshakes[0].amount), 1.25)
+        self.assertEqual(float(handshakes[1].amount), 2.10)
 
 
         for handshake in arr_hs:
@@ -512,8 +512,8 @@ class TestHandshakeBl(BaseTestCase):
 
         handshakes = handshake_bl.find_available_against_handshakes(outcome_id=88)
         self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].amount), 2.10)
-        self.assertEqual(float(handshakes[1].amount), 1.25)
+        self.assertEqual(float(handshakes[0].amount), 1.25)
+        self.assertEqual(float(handshakes[1].amount), 2.10)
 
 
         for handshake in arr_hs:

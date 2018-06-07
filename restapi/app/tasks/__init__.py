@@ -33,6 +33,9 @@ celery = make_celery(app)
 @celery.task()
 def update_feed(handshake_id, user_id, shake_id=-1):
 	try:
+		print '------------------------------------------------'
+		print 'update for user id: {}'.format(user_id)
+		print '------------------------------------------------'
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		user = User.find_user_with_id(user_id)

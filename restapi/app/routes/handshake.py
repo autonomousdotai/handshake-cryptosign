@@ -167,7 +167,7 @@ def init():
 				final_win_value = min(handshake_win_value, shaker_win_value)
 
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
-				subtracted_amount_for_shaker = final_win_value/odds
+				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
 
 				handshake.amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker

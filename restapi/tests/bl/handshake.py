@@ -58,6 +58,11 @@ class TestHandshakeBl(BaseTestCase):
 
 
     def test_find_all_matched_handshakes_with_side_against(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
+
         arr_hs = []
         # -----
         handshake = Handshake(
@@ -112,6 +117,11 @@ class TestHandshakeBl(BaseTestCase):
             db.session.commit()
 
     def test_find_all_matched_handshakes_with_side_support(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
+
         arr_hs = []
 
         # -----
@@ -159,14 +169,19 @@ class TestHandshakeBl(BaseTestCase):
         
         handshakes = handshake_bl.find_all_matched_handshakes(side=1, odds=5.0, outcome_id=88, amount=0.25)
         self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].odds), 1.10)
-        self.assertEqual(float(handshakes[1].odds), 1.25)
+        self.assertEqual(float(handshakes[0].odds), 1.25)
+        self.assertEqual(float(handshakes[1].odds), 1.10)
         
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
     def test_find_all_joined_handshakes_with_side_support(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
+
         arr_hs = []
 
         # -----
@@ -221,6 +236,11 @@ class TestHandshakeBl(BaseTestCase):
             db.session.commit()
 
     def test_find_all_joined_handshakes_with_side_against(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
+
         arr_hs = []
 
         # -----
@@ -276,6 +296,11 @@ class TestHandshakeBl(BaseTestCase):
 
 
     def test_find_available_support_handshakes(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
+
         arr_hs = []
 
         # -----
@@ -389,16 +414,20 @@ class TestHandshakeBl(BaseTestCase):
 
         handshakes = handshake_bl.find_available_support_handshakes(outcome_id=88)
         self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].amount), 1.25)
-        self.assertEqual(float(handshakes[1].amount), 2.10)
+        self.assertEqual(float(handshakes[0].amount), 2.10)
+        self.assertEqual(float(handshakes[1].amount), 1.25)
 
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
-
     def test_find_available_against_handshakes(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
+
         arr_hs = []
 
         # -----

@@ -275,12 +275,11 @@ def shake():
 					shaker_amount = 0
 
 				# create shaker
-				shaker_odds = handshake.amount*handshake.odds/(handshake.amount*handshake.odds-handshake.amount)
 				shaker = Shaker(
 					shaker_id=user.id,
 					amount=amount_for_handshake,
 					currency=currency,
-					odds=shaker_odds,
+					odds=handshake.odds,
 					win_value=shaker_odds*amount_for_handshake,
 					side=side,
 					handshake_id=handshake.id

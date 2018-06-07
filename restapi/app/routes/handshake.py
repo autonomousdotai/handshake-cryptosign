@@ -154,27 +154,27 @@ def init():
 		else:
 			arr_hs = []
 			shaker_amount = amount
+
 			for handshake in handshakes:
 				handshake.shake_count += 1
-				amount_for_handshake = 0
-				
-				if shaker_amount > handshake.remaining_amount:
-					shaker_amount -= handshake.remaining_amount
-					amount_for_handshake = handshake.remaining_amount
-					handshake.remaining_amount = 0
 
-				else:
-					amount_for_handshake = shaker_amount
-					handshake.remaining_amount -= shaker_amount
-					shaker_amount = 0
+				handshake_win_value = handshake.remaining_amount*handshake.odds
+				shaker_win_value = amount*odds
+				final_win_value = min(handshake_win_value, shaker_win_value)
+
+				subtracted_amount_for_handshake = final_win_value/handshake.odds
+				subtracted_amount_for_shaker = final_win_value/odds
+
+				handshake.remaining_amount -= subtracted_amount_for_handshake
+				shaker_amount -= subtracted_amount_for_shaker
 				
 				# create shaker
 				shaker = Shaker(
 					shaker_id=user.id,
-					amount=amount_for_handshake,
+					amount=subtracted_amount_for_shaker,
 					currency=currency,
 					odds=odds,
-					win_value=odds*amount_for_handshake,
+					win_value=odds*subtracted_amount_for_shaker,
 					side=side,
 					handshake_id=handshake.id
 				)				

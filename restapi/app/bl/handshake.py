@@ -234,16 +234,6 @@ def is_need_fire_notification_for_handshake(handshake):
 		return False
 	return True
 
-
-def has_permission_to_open_handshake(wallet_address, handshake):
-	print 'public --> {}'.format(handshake.public)
-	if int(handshake.public) is 1:
-		return True
-
-	if handshake.from_address != wallet_address and wallet_address not in handshake.to_address:
-		return False
-	return True
-
 # refer document: https://docs.google.com/document/d/1iKS7bgSm8DUcvpFE3GqWb1pWcdJWXxYeuxULNgsOIec/edit
 def send_noti_for_handshake(handshake, handshake_state=CONST.HANDSHAKE_STATE['INIT'], source='web'):
 	print "send push notification ..."
@@ -391,13 +381,17 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	if outcome is not None:
 		win_value = amount*odds
 		if win_value - amount > 0:
-			query = text('''
-						SELECT * FROM handshake where outcome_id = {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount ASC, remaining_amount DESC;
-						'''.format(outcome_id, odds, CONST.Handshake['STATUS_INITED'], side))
+			o = win_value/(win_value-amount)
+			v = Decimal(o, 2)
+
 			if side == CONST.SIDE_TYPE['SUPPORT']:
 				query = text('''
-							SELECT * FROM handshake where outcome_id = {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount DESC, remaining_amount DESC;
-							'''.format(outcome_id, odds, CONST.Handshake['STATUS_INITED'], side))
+						SELECT * FROM handshake where outcome_id = {} and odds >= {} remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount ASC, remaining_amount DESC;
+						'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))	
+			else:
+				query = text('''
+							SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount DESC, remaining_amount DESC;
+							'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
 
 			handshakes = []
 			result_db = db.engine.execute(query)
@@ -426,6 +420,71 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 				handshakes.append(handshake)
 			return handshakes
 	return []
+
+# def create_shaker():
+# 	arr_hs = []
+# 	shaker_amount = amount
+# 	for handshake in handshakes:
+# 		handshake.shake_count += 1
+# 		amount_for_handshake = 0
+		
+# 		if shaker_amount > handshake.remaining_amount:
+# 			shaker_amount -= handshake.remaining_amount
+# 			amount_for_handshake = handshake.remaining_amount
+# 			handshake.remaining_amount = 0
+
+# 		else:
+# 			amount_for_handshake = shaker_amount
+# 			handshake.remaining_amount -= shaker_amount
+# 			shaker_amount = 0
+		
+# 		# create shaker
+# 		shaker = Shaker(
+# 			shaker_id=user.id,
+# 			amount=amount_for_handshake,
+# 			currency=currency,
+# 			odds=odds,
+# 			win_value=odds*amount_for_handshake,
+# 			side=side,
+# 			handshake_id=handshake.id
+# 		)				
+
+# 		db.session.add(shaker)
+# 		db.session.flush()
+
+# 		update_feed.delay(handshake.id, user.id, shaker.id)
+
+# 		handshake = handshake.to_json()
+# 		handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+# 		arr_hs.append(handshake)
+		
+# 		if shaker_amount <= 0:
+# 			break
+
+# 	if shaker_amount > 0:
+# 		print 'still has money'
+# 		handshake = Handshake(
+# 			hs_type=hs_type,
+# 			extra_data=extra_data,
+# 			description=description,
+# 			chain_id=chain_id,
+# 			is_private=is_private,
+# 			user_id=user.id,
+# 			outcome_id=outcome_id,
+# 			odds=odds,
+# 			amount=shaker_amount,
+# 			currency=currency,
+# 			side=side,
+# 			win_value=odds*shaker_amount,
+# 			remaining_amount=(odds*shaker_amount)-shaker_amount,
+# 			from_address=from_address
+# 		)
+# 		db.session.add(handshake)
+# 		db.session.flush()
+
+# 		update_feed.delay(handshake.id, user.id)
+
+# 	return arr_hs
 
 def find_all_joined_handshakes(side, outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()

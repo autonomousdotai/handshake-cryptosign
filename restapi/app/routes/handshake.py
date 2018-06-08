@@ -183,6 +183,7 @@ def init():
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
 
+				db.session.merge(handshake)
 				print 'shaker_amount = {}'.format(shaker_amount)				
 				print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
 

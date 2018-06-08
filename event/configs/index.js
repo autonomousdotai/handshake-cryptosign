@@ -21,23 +21,36 @@ const baseConfig = {
   port: 5000,
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
+  payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
   network: {
     '1': {
       basicHandshakeAddress: '',
       payableHandshakeAddress: '',
       bettingHandshakeAddress: '',
+      predictionHandshakeAddress: '',
+      ownerAddress: '',
+      privateKey: '',
+      gasLimit: 3000000,
       blockchainNetwork: 'https://mainnet.infura.io/',
     },
     '4': {
       basicHandshakeAddress: '',
       payableHandshakeAddress: '',
       bettingHandshakeAddress: '',
+      predictionHandshakeAddress: '',
+      ownerAddress: '',
+      privateKey: '',
+      gasLimit: 3000000,
       blockchainNetwork: 'https://rinkeby.infura.io/',
     },
     '5': { 
       basicHandshakeAddress: '',
       payableHandshakeAddress: '',
       bettingHandshakeAddress: '',
+      predictionHandshakeAddress: '',
+      ownerAddress: '',
+      privateKey: '',
+      gasLimit: 3000000,
       blockchainNetwork: 'http://localhost:8545',
     }
   }

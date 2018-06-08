@@ -31,7 +31,7 @@ const submitInit = (outcome, match, address, side, chainId) => {
             hostname: 'ninja.org',
             path: `/api/cryptosign/handshake/init`,
             method: 'POST',
-            isHttps: false,
+            isHttps: true,
             headers: {
               'Content-Type': 'application/json',
               'Payload': configs.payload

@@ -31,7 +31,7 @@ const submitInit = (outcome, match, address, side, chainId) => {
             hostname: configs.restApiEndpoint,
             path: `/api/cryptosign/handshake/init`,
             method: 'POST',
-            isHttps: true,
+            isHttps: false,
             headers: {
               'Content-Type': 'application/json',
               'Payload': configs.payload

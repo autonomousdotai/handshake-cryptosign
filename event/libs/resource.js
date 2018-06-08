@@ -28,7 +28,7 @@ const submitInit = (outcome, match, address, side, chainId) => {
         };
     
         const options = {
-            hostname: 'cryptosign-service', //configs.restApiEndpoint
+            hostname: 'ninja.org',
             path: `/api/cryptosign/handshake/init`,
             method: 'POST',
             isHttps: false,
@@ -36,8 +36,7 @@ const submitInit = (outcome, match, address, side, chainId) => {
               'Content-Type': 'application/json',
               'Payload': configs.payload
             },
-            data: dataRequest,
-            port: '5000',
+            data: dataRequest
         };
         httpRequest.request(options).then(result => {
             return resolve(result);

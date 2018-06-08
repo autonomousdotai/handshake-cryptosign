@@ -192,10 +192,10 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # Support
         #   amount          odds
-        #   0.2               3
-        #   0.1               2.9
-        #   0.3               2.8
-        # Shake with 1.25 ETH, odds: 1.6
+        #   0.2               3         1.5
+        #   0.1               2.9       1.52
+        #   0.3               2.8       1.55  
+        # Shake with 1.25 ETH, odds: 1.4
         # Expected: 
         #   Maker:  
         #          remaining_amount = 0
@@ -274,7 +274,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                 "extra_data": "",
                 "description": "TESTING MODE",
                 "outcome_id": 88,
-                "odds": 1.6,
+                "odds": 1.4,
                 "amount": 1.25,
                 "currency": "ETH",
                 "chain_id": 4,
@@ -307,9 +307,9 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # Against
         #   amount          odds
-        #   0.2               1.5
-        #   0.1               1.4
-        #   0.3               1.3
+        #   0.2               1.5           3
+        #   0.1               1.4           3.5
+        #   0.3               1.3           4.33
         # Shake with 0.25 ETH, odds: 5
         # Expected:
         #   Against:            
@@ -406,6 +406,15 @@ class TestHandshakeBluePrint(BaseTestCase):
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 3)
+
+            shaker1 = data_json[0]
+            self.assertEqual(float(shaker1['remaining_amount']), 0)
+
+            print shaker1
+            self.assertEqual(len(shaker1['shakers']), 1)
+
+            shaker2 = data_json[1]
+            shaker3 = data_json[2]
             self.assertEqual(response.status_code, 200)
 
         for handshake in arr_hs:

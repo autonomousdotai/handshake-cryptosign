@@ -40,9 +40,9 @@ const submitInit = (outcome, match, address, side, chainId) => {
         };
         httpRequest.request(options).then(result => {
             return resolve(result);
-        }).catch(er => {
+        }).catch(err => {
             console.log(err);
-            return reject(er);
+            return reject(err);
         });
     });
 };

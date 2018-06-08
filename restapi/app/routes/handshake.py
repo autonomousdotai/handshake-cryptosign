@@ -181,8 +181,6 @@ def init():
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
-				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
-				
 				shaker_amount -= subtracted_amount_for_shaker
 
 				print 'shaker_amount = {}'.format(shaker_amount)				
@@ -200,7 +198,7 @@ def init():
 				)
 
 				db.session.add(shaker)
-				db.session.commit()
+				db.session.flush()
 
 				update_feed.delay(handshake.id, shaker.id)
 				
@@ -235,7 +233,7 @@ def init():
 					from_address=from_address
 				)
 				db.session.add(handshake)
-				db.session.commit()
+				db.session.flush()
 
 				update_feed.delay(handshake.id)				
 
@@ -243,6 +241,10 @@ def init():
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 				arr_hs.append(hs_json)
 
+			print '----------------------'
+			print arr_hs
+			print '----------------------'
+			print 'commit database'
 			db.session.commit()
 			return response_ok(arr_hs)
 

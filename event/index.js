@@ -169,13 +169,13 @@ function asyncScanOddsNull() {
         const tasks = [];
         const submitInit = (arr, side) => {
             (arr || []).forEach(item => {
-                console.log(item);
                 if (item) {
                     const task = new Promise (async (resolve, reject) => {
                         const match = await matchDAO.getMatchById(item.match_id);
                         resource
                         .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4)
                         .then(response => {
+                            console.log(response);
                             if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
                                 dataInit.hids.push(item.hid);
                                 dataInit.sides.push(side);

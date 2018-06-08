@@ -181,6 +181,8 @@ def init():
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
+				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
+				
 				shaker_amount -= subtracted_amount_for_shaker
 
 				print 'shaker_amount = {}'.format(shaker_amount)				

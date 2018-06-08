@@ -31,14 +31,14 @@ celery = make_celery(app)
 
 
 @celery.task()
-def update_feed(handshake_id, user_id, shake_id=-1):
+def update_feed(handshake_id, shake_id=-1):
 	try:
-		print '------------------------------------------------'
-		print 'update for user id: {}'.format(user_id)
-		print '------------------------------------------------'
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-		user = User.find_user_with_id(user_id)
+		
+		print '------------------------------------------------'
+		print 'update feed for user id: {}'.format(handshake.user_id)
+		print '------------------------------------------------'
 		shaker = None
 
 		# create maker id
@@ -49,7 +49,6 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 		shake_user_ids = []
 
 		if shake_id != -1:
-			print 'shaker id not none'
 			shaker = Shaker.find_shaker_by_id(shake_id)
 			shake_user_ids = [ shaker.shaker_id ]
 
@@ -60,7 +59,7 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 			"state_i": handshake.state,
 			"status_i": status,
 			"bk_status_i": bk_status,
-			"init_user_id_i": user.id,
+			"init_user_id_i": handshake.user_id,
 			"chain_id_i": handshake.chain_id,
 			"shake_user_ids_is": shake_user_ids,
 			"text_search_ss": [handshake.description],
@@ -84,7 +83,7 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 		print 'create maker {}'.format(hs)
 
 		# add to firebase database
-		firebase.push_data(hs, user.id)
+		firebase.push_data(hs, handshake.user_id)
 
 		#  add to solr
 		arr_handshakes = []
@@ -99,8 +98,11 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 
 
 		# replace with shaker id
-		if shake_id != -1:
-			shaker = Shaker.find_shaker_by_id(shake_id)
+		if shaker is not None:
+			print '------------------------------------------------'
+			print 'update feed for user id: {}'.format(shaker.shaker_id)
+			print '------------------------------------------------'
+			
 			_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 			amount = shaker.amount
 			status = shaker.status
@@ -114,7 +116,7 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 				"state_i": handshake.state,
 				"status_i": status,
 				"bk_status_i": bk_status,
-				"init_user_id_i": user.id,
+				"init_user_id_i": shaker.shaker_id,
 				"chain_id_i": handshake.chain_id,
 				"shake_user_ids_is": shake_user_ids,
 				"text_search_ss": [handshake.description],
@@ -138,7 +140,7 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 			print 'create shaker {}'.format(hs)
 
 			# add to firebase database
-			firebase.push_data(hs, user.id)
+			firebase.push_data(hs, shaker.shaker_id)
 
 			#  add to solr
 			arr_handshakes = []

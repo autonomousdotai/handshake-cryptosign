@@ -22,7 +22,7 @@ from app.helpers.message import MESSAGE
 from datetime import datetime
 from sqlalchemy import literal
 
-getcontext().prec = 19
+getcontext().prec = 18
 
 def save_handshake_for_init_state(hid, offchain):
 	print "hid = {}, offchain = {}".format(hid, offchain)
@@ -84,14 +84,14 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		handshake.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.flush()
 
-		update_feed.delay(handshake.id, handshake.user_id)
+		update_feed.delay(handshake.id)
 
 	for shaker in shakers:
 		shaker.status = HandshakeStatus['STATUS_DONE']
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.flush()
 
-		update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
+		update_feed.delay(handshake.id, shaker.id)
 
 def save_collect_state_for_maker(handshake):
 	if handshake is not None:
@@ -129,11 +129,11 @@ def update_feed_result_for_outcome(outcome):
 
 	for handshake in handshakes:
 		print '--> {}'.format(handshake)
-		update_feed.delay(handshake.id, handshake.user_id)
+		update_feed.delay(handshake.id)
 
 	for shaker in shakers:
 		print '--> {}'.format(shaker)
-		update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
+		update_feed.delay(handshake.id, shaker.id)
 
 
 def save_handshake_for_event(event_name, offchain, outcome=None):
@@ -166,7 +166,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				db.session.flush()
 
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-				update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
+				update_feed.delay(handshake.id, shaker.id)
 
 			elif '__collect' in event_name:
 				print '__collect'
@@ -186,7 +186,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				handshake.bk_status = HandshakeStatus['STATUS_INITED']
 				db.session.flush()
 
-				update_feed.delay(handshake.id, handshake.user_id)
+				update_feed.delay(handshake.id)
 
 			elif '__uninit' in event_name:
 				print '__uninit'
@@ -194,7 +194,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
 				db.session.flush()
 
-				update_feed.delay(handshake.id, handshake.user_id)
+				update_feed.delay(handshake.id)
 
 			elif '__collect' in event_name:
 				print '__collect'

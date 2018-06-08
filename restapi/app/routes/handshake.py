@@ -25,7 +25,7 @@ from datetime import datetime
 from app.tasks import update_feed
 
 handshake_routes = Blueprint('handshake', __name__)
-
+getcontext().prec = 18
 
 @handshake_routes.route('/', methods=['POST'])
 @login_required
@@ -92,7 +92,6 @@ def detail(id):
 @login_required
 def init():
 	try:
-		getcontext().prec = 19
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)		
@@ -106,8 +105,12 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
-		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
+		odds = Decimal(data.get('odds'))
+		amount = Decimal(data.get('amount'))
+
+		print '-------------------'
+		print 'input {}, {}'.format(odds, amount)
+
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -152,7 +155,7 @@ def init():
 			db.session.add(handshake)
 			db.session.commit()
 
-			update_feed.delay(handshake.id, user.id)
+			update_feed.delay(handshake.id)
 
 			# response data
 			arr_hs = []
@@ -194,7 +197,7 @@ def init():
 				db.session.add(shaker)
 				db.session.flush()
 
-				update_feed.delay(handshake.id, user.id, shaker.id)
+				update_feed.delay(handshake.id, shaker.id)
 				
 				handshake_json = handshake.to_json()
 				shakers = handshake_json['shakers']
@@ -229,7 +232,7 @@ def init():
 				db.session.add(handshake)
 				db.session.flush()
 
-				update_feed.delay(handshake.id, user.id)				
+				update_feed.delay(handshake.id)				
 
 				hs_json = handshake.to_json()
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
@@ -255,7 +258,7 @@ def shake():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
+		amount = Decimal(data.get('amount'))
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -310,7 +313,7 @@ def shake():
 				db.session.add(shaker)
 				db.session.flush()
 
-				update_feed.delay(handshake.id, user.id, shaker.id)
+				update_feed.delay(handshake.id, shaker.id)
 
 				handshake = handshake.to_json()
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
@@ -348,7 +351,7 @@ def uninit(handshake_id):
 				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
 				db.session.flush()
 
-				update_feed.delay(handshake.id, user.id)
+				update_feed.delay(handshake.id)
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 				handshake_json = handshake.to_json()
@@ -400,14 +403,14 @@ def collect():
 					handshake.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 					db.session.flush()
 
-					update_feed.delay(handshake.id, handshake.user_id)
+					update_feed.delay(handshake.id)
 
 				for shaker in shakers:
 					shaker.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 					shaker.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 					db.session.flush()
 
-					update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
+					update_feed.delay(handshake.id, shaker.id)
 
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
@@ -430,14 +433,14 @@ def collect():
 					handshake.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 					db.session.flush()
 
-					update_feed.delay(handshake.id, handshake.user_id)
+					update_feed.delay(handshake.id)
 
 				for shaker in shakers:
 					shaker.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 					shaker.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 					db.session.flush()
 
-					update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
+					update_feed.delay(handshake.id, shaker.id)
 
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
@@ -475,7 +478,7 @@ def rollback():
 					handshake.status = handshake.bk_status
 					db.session.commit()
 
-					update_feed.delay(handshake.id, user.id)
+					update_feed.delay(handshake.id)
 					return response_ok(handshake.to_json())
 
 			else:
@@ -488,7 +491,7 @@ def rollback():
 					shaker.status = shaker.bk_status
 					db.session.commit()
 
-					update_feed.delay(shaker.handshake_id, user.id, shaker.id)
+					update_feed.delay(shaker.handshake_id, shaker.id)
 					return response_ok(shaker.to_json())
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)

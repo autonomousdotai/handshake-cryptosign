@@ -8,7 +8,7 @@ import requests
 import app.constants as CONST
 import math
 
-from decimal import Decimal
+from decimal import *
 from flask import g
 from app import db, fcm, sg, firebase
 from sqlalchemy import and_, or_, func, text
@@ -22,6 +22,7 @@ from app.helpers.message import MESSAGE
 from datetime import datetime
 from sqlalchemy import literal
 
+getcontext().prec = 18
 
 def save_handshake_for_init_state(hid, offchain):
 	print "hid = {}, offchain = {}".format(hid, offchain)

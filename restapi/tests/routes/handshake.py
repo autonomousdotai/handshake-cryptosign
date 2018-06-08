@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome
+from app.models import Handshake, User, Outcome, Match
 from app.helpers.message import MESSAGE
 from io import BytesIO
 
@@ -17,6 +17,16 @@ import app.bl.handshake as handshake_bl
 class TestHandshakeBluePrint(BaseTestCase):   
 
     def setUp(self):
+        # create match
+
+        match = Match.find_match_by_id(1)
+        if match is None:
+            match = Match(
+                id=1
+            )
+            db.session.add(match)
+            db.session.commit()
+
         # create user
         user = User.find_user_with_id(88)
         if user is None:

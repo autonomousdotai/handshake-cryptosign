@@ -106,7 +106,7 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
+		odds = Decimal(data.get('odds')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -164,7 +164,6 @@ def init():
 		else:
 			arr_hs = []
 			shaker_amount = amount
-			print 'BEFORE {}'.format(shaker_amount)
 
 			for handshake in handshakes:
 				if shaker_amount <= 0:
@@ -173,25 +172,13 @@ def init():
 				handshake.shake_count += 1
 
 				handshake_win_value = handshake.remaining_amount*handshake.odds
-				print 'handshake_win_value {}'.format(handshake_win_value)
-
 				shaker_win_value = shaker_amount*odds
-				print 'shaker_win_value {}'.format(shaker_win_value)
-
 				final_win_value = min(handshake_win_value, shaker_win_value)
-				print 'final_win_value {}'.format(final_win_value)
-
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
-				print 'subtracted_amount_for_handshake {}'.format(subtracted_amount_for_handshake)
-
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
-				print 'subtracted_amount_for_shaker {}'.format(subtracted_amount_for_shaker)
-
 				handshake.remaining_amount -= subtracted_amount_for_handshake
-				print 'subtracted_amount_for_handshake {}'.format(handshake.remaining_amount)
 
 				shaker_amount -= subtracted_amount_for_shaker
-				print 'shaker_amount {}'.format(shaker_amount)
 				
 				# create shaker
 				shaker = Shaker(
@@ -268,7 +255,7 @@ def shake():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		amount = Decimal(data.get('amount'), 18)
+		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

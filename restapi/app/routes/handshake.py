@@ -105,7 +105,7 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'), 2)
+		odds = Decimal(data.get('odds'), 18)
 		amount = Decimal(data.get('amount'), 18)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -266,7 +266,7 @@ def shake():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		amount = Decimal(data.get('amount'))
+		amount = Decimal(data.get('amount'), 18)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -292,7 +292,7 @@ def shake():
 				print shaker_amount
 				if shaker_amount <= 0:
 					break
-					
+
 				handshake.shake_count += 1
 				amount_for_handshake = 0
 

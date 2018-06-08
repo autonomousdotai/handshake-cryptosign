@@ -49,6 +49,7 @@ def update_feed(handshake_id, user_id, shake_id=-1):
 		shake_user_ids = []
 
 		if shake_id != -1:
+			print 'shaker id not none'
 			shaker = Shaker.find_shaker_by_id(shake_id)
 			shake_user_ids = [ shaker.shaker_id ]
 

@@ -105,8 +105,8 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
-		amount = Decimal(data.get('amount'))
+		odds = Decimal(data.get('odds'), 2)
+		amount = Decimal(data.get('amount'), 18)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -168,12 +168,25 @@ def init():
 				handshake.shake_count += 1
 
 				handshake_win_value = handshake.remaining_amount*handshake.odds
+				print 'handshake_win_value {}'.format(handshake_win_value)
+
 				shaker_win_value = shaker_amount*odds
+				print 'shaker_win_value {}'.format(shaker_win_value)
+
 				final_win_value = min(handshake_win_value, shaker_win_value)
+				print 'final_win_value {}'.format(final_win_value)
+
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
+				print 'subtracted_amount_for_handshake {}'.format(subtracted_amount_for_handshake)
+
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
+				print 'subtracted_amount_for_shaker {}'.format(subtracted_amount_for_shaker)
+
 				handshake.remaining_amount -= subtracted_amount_for_handshake
+				print 'subtracted_amount_for_handshake {}'.format(handshake.remaining_amount)
+
 				shaker_amount -= subtracted_amount_for_shaker
+				print 'shaker_amount {}'.format(shaker_amount)
 				
 				# create shaker
 				shaker = Shaker(

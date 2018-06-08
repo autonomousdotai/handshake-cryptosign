@@ -125,6 +125,9 @@ def init():
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
 
+		if odds <= 1:
+			raise Exception(MESSAGE.INVALID_ODDS)
+
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
 		if len(handshakes) == 0:

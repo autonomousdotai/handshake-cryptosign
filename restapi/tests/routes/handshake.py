@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User
+from app.models import Handshake, User, Outcome
 from app.helpers.message import MESSAGE
 from io import BytesIO
 
@@ -14,36 +14,144 @@ import json
 import time
 import app.bl.handshake as handshake_bl
 
-class TestHandshakeBluePrint(BaseTestCase):    
+class TestHandshakeBluePrint(BaseTestCase):   
+
+    def setUp(self):
+        # create user
+        user = User.find_user_with_id(88)
+        if user is None:
+            user = User(
+                id=88
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        user = User.find_user_with_id(99)
+        if user is None:
+            user = User(
+                id=99
+            )
+            db.session.add(user)
+            db.session.commit()
+
+
+        user = User.find_user_with_id(66)
+        if user is None:
+            user = User(
+                id=66
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        # create outcome
+        outcome = Outcome.find_outcome_by_id(88)
+        if outcome is None:
+            outcome = Outcome(
+                id=88,
+                match_id=1,
+                hid=88
+            )
+            db.session.add(outcome)
+            db.session.commit()
+
+    def clear_data_before_test(self):
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        for handshake in handshakes:
+            db.session.delete(handshake)
+            db.session.commit()
 
     def test_list_of_handshakes(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.25,
+				amount=1,
+				currency='ETH',
+				side=1,
+				win_value=1.25,
+				remaining_amount=1,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
         with self.client:
-            Uid = 52
+            Uid = 88
             
             params = {
-                "outcome_id": 4
+                "outcome_id": 88
             }
             response = self.client.post(
                                     '/handshake',
                                     data=json.dumps(params), 
                                     content_type='application/json',
-                                    headers={"Uid": "{}".format(Uid)})
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                    })
 
             data = json.loads(response.data.decode()) 
+            data_json = data['data']
             self.assertTrue(data['status'] == 1)
+            self.assertEqual(len(data_json['support']), 1)
             self.assertEqual(response.status_code, 200)
 
-    def test_init_handshake(self):
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+    def test_init_handshake_case_1(self):
+        # Support
+        #   amount          odds
+        #   1               3
+        # Shake with 1.25 ETH, odds: 1.5
+        # Expected: 
+        #   Maker:  
+        #          remaining_amount = 0
+        #          list handshake is now empty
+        #  Shaker:
+        #          match with handshake
+
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=3,
+				amount=1,
+				currency='ETH',
+				side=1,
+				win_value=3,
+				remaining_amount=1,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
         with self.client:
-            Uid = 52
+            Uid = 88
 
             params = {
                 "type": 3,
                 "extra_data": "",
                 "description": "TESTING MODE",
-                "outcome_id": 4,
-                "odds": 2,
-                "amount": 1,
+                "outcome_id": 88,
+                "odds": 1.5,
+                "amount": 1.25,
                 "currency": "ETH",
                 "chain_id": 4,
                 "side": 2,
@@ -53,15 +161,24 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     '/handshake/init',
                                     data=json.dumps(params), 
                                     content_type='application/json',
-                                    headers={"Uid": "{}".format(Uid)})
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                    })
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
     def test_init_handshake_with_win_value_equal_amount(self):
+        self.clear_data_before_test()
+        
         with self.client:
-            Uid = 52
+            Uid = 88
 
             params = {
                 "type": 3,
@@ -79,10 +196,13 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     '/handshake/init',
                                     data=json.dumps(params), 
                                     content_type='application/json',
-                                    headers={"Uid": "{}".format(Uid)})
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                    })
 
             data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
+            self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 
     def test_shake_handshake(self):

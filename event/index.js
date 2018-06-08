@@ -259,4 +259,4 @@ function runOddsCron() {
 }
 
 runBettingCron();
-runOddsCron();
+// runOddsCron();

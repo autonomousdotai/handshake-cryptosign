@@ -7,6 +7,7 @@ class MESSAGE(object):
 	INVALID_BET = 'No equivalent bets found. Please create a new bet.'
 	INVALID_ADDRESS = 'Please provide valid wallet address!'
 	MISSING_OFFCHAIN = 'Missing offchain data!'
+	INVALID_ODDS = 'Odds shoule be large than 1'
 
 	# OUTCOME
 	INVALID_OUTCOME = 'Please check your outcome id'

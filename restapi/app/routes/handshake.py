@@ -11,7 +11,7 @@ import json
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
 
-from decimal import Decimal
+from decimal import *
 from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text
 from app.helpers.response import response_ok, response_error
@@ -57,7 +57,7 @@ def handshakes():
 		arr_against = []
 		for against in against:
 			data = {}
-			data['odds'] = against[0]/(against[0]-1)
+			data['odds'] = against[0]
 			data['amount'] = against[1]
 			total += against[0] * against[1]
 			arr_against.append(data)
@@ -92,6 +92,7 @@ def detail(id):
 @login_required
 def init():
 	try:
+		getcontext().prec = 18
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)		
@@ -105,8 +106,8 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
-		amount = Decimal(data.get('amount'))
+		odds = Decimal(data.get('odds')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
+		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -165,16 +166,18 @@ def init():
 			shaker_amount = amount
 
 			for handshake in handshakes:
+				if shaker_amount <= 0:
+					break
+
 				handshake.shake_count += 1
 
 				handshake_win_value = handshake.remaining_amount*handshake.odds
 				shaker_win_value = shaker_amount*odds
 				final_win_value = min(handshake_win_value, shaker_win_value)
-
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
-
 				handshake.remaining_amount -= subtracted_amount_for_handshake
+
 				shaker_amount -= subtracted_amount_for_shaker
 				
 				# create shaker
@@ -204,8 +207,6 @@ def init():
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake_json)
 				
-				if shaker_amount <= 0:
-					break
 
 			if shaker_amount > 0:
 				print 'still has money'
@@ -254,7 +255,7 @@ def shake():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		amount = Decimal(data.get('amount'))
+		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -277,6 +278,10 @@ def shake():
 			arr_hs = []
 			shaker_amount = amount
 			for handshake in handshakes:
+				print shaker_amount
+				if shaker_amount <= 0:
+					break
+
 				handshake.shake_count += 1
 				amount_for_handshake = 0
 
@@ -311,8 +316,6 @@ def shake():
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
-				if shaker_amount <= 0:
-					break
 
 			db.session.commit()	
 			message = ''

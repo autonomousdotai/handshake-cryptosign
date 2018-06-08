@@ -50,7 +50,8 @@ def update_feed(handshake_id, shake_id=-1):
 
 		if shake_id != -1:
 			shaker = Shaker.find_shaker_by_id(shake_id)
-			shake_user_ids = [ shaker.shaker_id ]
+			if shaker is not None:
+				shake_user_ids.append(shaker.shaker_id)
 
 		hs = {
 			"id": _id,

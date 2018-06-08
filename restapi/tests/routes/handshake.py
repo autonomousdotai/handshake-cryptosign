@@ -406,6 +406,15 @@ class TestHandshakeBluePrint(BaseTestCase):
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 3)
+
+            shaker1 = data_json[0]
+            self.assertEqual(float(shaker1['remaining_amount']), 0)
+
+            print shaker1
+            self.assertEqual(len(shaker1['shakers']), 1)
+
+            shaker2 = data_json[1]
+            shaker3 = data_json[2]
             self.assertEqual(response.status_code, 200)
 
         for handshake in arr_hs:

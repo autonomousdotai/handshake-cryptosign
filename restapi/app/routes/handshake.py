@@ -186,14 +186,21 @@ def init():
 					win_value=odds*subtracted_amount_for_shaker,
 					side=side,
 					handshake_id=handshake.id
-				)				
+				)
 
 				db.session.add(shaker)
 				db.session.flush()
 
 				update_feed.delay(handshake.id, user.id, shaker.id)
-
+				
 				handshake_json = handshake.to_json()
+				shakers = handshake_json['shakers']
+				if shakers is None:
+					shakers = []
+
+				shakers.append(shaker.to_json())
+
+				handshake_json['shakers'] = shakers
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake_json)
 				

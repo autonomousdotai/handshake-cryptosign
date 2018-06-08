@@ -167,7 +167,7 @@ def init():
 			for handshake in handshakes:
 				if shaker_amount <= 0:
 					break
-					
+
 				handshake.shake_count += 1
 
 				handshake_win_value = handshake.remaining_amount*handshake.odds
@@ -289,6 +289,10 @@ def shake():
 			arr_hs = []
 			shaker_amount = amount
 			for handshake in handshakes:
+				print shaker_amount
+				if shaker_amount <= 0:
+					break
+					
 				handshake.shake_count += 1
 				amount_for_handshake = 0
 
@@ -323,9 +327,6 @@ def shake():
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
-				print shaker_amount
-				if shaker_amount <= 0:
-					break
 
 			db.session.commit()	
 			message = ''

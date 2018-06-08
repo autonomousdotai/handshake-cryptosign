@@ -22,7 +22,7 @@ from app.helpers.message import MESSAGE
 from datetime import datetime
 from sqlalchemy import literal
 
-getcontext().prec = 18
+getcontext().prec = 19
 
 def save_handshake_for_init_state(hid, offchain):
 	print "hid = {}, offchain = {}".format(hid, offchain)

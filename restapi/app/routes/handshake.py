@@ -57,7 +57,7 @@ def handshakes():
 		arr_against = []
 		for against in against:
 			data = {}
-			data['odds'] = against[0]/(against[0]-1)
+			data['odds'] = against[0]
 			data['amount'] = against[1]
 			total += against[0] * against[1]
 			arr_against.append(data)
@@ -164,9 +164,10 @@ def init():
 		else:
 			arr_hs = []
 			shaker_amount = amount
+			print 'BEFORE {}'.format(shaker_amount)
 
 			for handshake in handshakes:
-				if shaker_amount <= Decimal(0):
+				if shaker_amount <= 0:
 					break
 
 				handshake.shake_count += 1

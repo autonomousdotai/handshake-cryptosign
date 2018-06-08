@@ -170,10 +170,8 @@ def init():
 				handshake_win_value = handshake.remaining_amount*handshake.odds
 				shaker_win_value = shaker_amount*odds
 				final_win_value = min(handshake_win_value, shaker_win_value)
-
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
-
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
 				
@@ -204,6 +202,8 @@ def init():
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake_json)
 				
+
+				print 'shaker amount {}'.format(shaker_amount)
 				if shaker_amount <= 0:
 					break
 
@@ -311,6 +311,7 @@ def shake():
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
+				print shaker_amount
 				if shaker_amount <= 0:
 					break
 

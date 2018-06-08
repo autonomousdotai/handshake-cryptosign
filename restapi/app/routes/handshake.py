@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import base64
 import time
 import os
@@ -10,17 +11,15 @@ import json
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
 
-from decimal import Decimal
-from flask import Blueprint, request, g, Response
+from decimal import *
+from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text
-
 from app.helpers.response import response_ok, response_error
-from app.helpers.utils import is_valid_email, isnumber, formalize_description
 from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app import db, s3, ipfs
-from app.models import User, Handshake, Shaker, Outcome
+from app.models import User, Handshake, Shaker, Outcome, Match
 from app.constants import Handshake as HandshakeStatus
 from datetime import datetime
 from app.tasks import update_feed
@@ -42,14 +41,17 @@ def handshakes():
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
 		
+		match = Match.find_match_by_id(outcome.match_id)
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
 		against = handshake_bl.find_available_against_handshakes(outcome_id)
 
+		total = Decimal(0, 2)
 		arr_supports = []
 		for support in supports:
 			data = {}
 			data['odds'] = support[0]
 			data['amount'] = support[1]
+			total += support[0] * support[1]
 			arr_supports.append(data)
 
 		arr_against = []
@@ -57,11 +59,14 @@ def handshakes():
 			data = {}
 			data['odds'] = against[0]
 			data['amount'] = against[1]
+			total += against[0] * against[1]
 			arr_against.append(data)
 
 		response = {
 			"support": arr_supports,
-			"against": arr_against
+			"against": arr_against,
+			"traded_volumn": total,
+			"market_fee": match.market_fee
 		}
 
 		return response_ok(response)
@@ -87,6 +92,7 @@ def detail(id):
 @login_required
 def init():
 	try:
+		getcontext().prec = 19
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)		
@@ -100,8 +106,8 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
-		amount = Decimal(data.get('amount'))
+		odds = Decimal(data.get('odds')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
+		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -120,8 +126,12 @@ def init():
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
 
+		if odds <= 1:
+			raise Exception(MESSAGE.INVALID_ODDS)
+
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+		print 'DEBUG {}'.format(handshakes)
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -136,14 +146,13 @@ def init():
 				currency=currency,
 				side=side,
 				win_value=odds*amount,
-				remaining_amount=(odds*amount)-amount,
+				remaining_amount=amount,
 				from_address=from_address
 			)
 			db.session.add(handshake)
-			db.session.flush()
-
-			handshake_bl.add_handshake_to_solrservice(handshake, user)
 			db.session.commit()
+
+			update_feed.delay(handshake.id, user.id)
 
 			# response data
 			arr_hs = []
@@ -155,46 +164,49 @@ def init():
 		else:
 			arr_hs = []
 			shaker_amount = amount
-			for handshake in handshakes:
-				handshake.shake_count += 1
-				amount_for_handshake = 0
-				
-				if shaker_amount > handshake.remaining_amount:
-					shaker_amount -= handshake.remaining_amount
-					amount_for_handshake = handshake.remaining_amount
-					handshake.remaining_amount = 0
 
-				else:
-					amount_for_handshake = amount
-					shaker_amount -= amount
-					handshake.remaining_amount -= amount
+			for handshake in handshakes:
+				if shaker_amount <= 0:
+					break
+
+				handshake.shake_count += 1
+
+				handshake_win_value = handshake.remaining_amount*handshake.odds
+				shaker_win_value = shaker_amount*odds
+				final_win_value = min(handshake_win_value, shaker_win_value)
+				subtracted_amount_for_handshake = final_win_value/handshake.odds
+				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
+				handshake.remaining_amount -= subtracted_amount_for_handshake
+
+				shaker_amount -= subtracted_amount_for_shaker
 				
 				# create shaker
 				shaker = Shaker(
 					shaker_id=user.id,
-					amount=amount_for_handshake,
+					amount=subtracted_amount_for_shaker,
 					currency=currency,
 					odds=odds,
-					win_value=odds*amount_for_handshake,
+					win_value=odds*subtracted_amount_for_shaker,
 					side=side,
 					handshake_id=handshake.id
-				)				
+				)
 
 				db.session.add(shaker)
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
+				update_feed.delay(handshake.id, user.id, shaker.id)
+				
+				handshake_json = handshake.to_json()
+				shakers = handshake_json['shakers']
+				if shakers is None:
+					shakers = []
 
-				handshake = handshake.to_json()
-				arr_shakers = handshake['shakers']
-				arr_shakers.append(shaker.to_json())
+				shakers.append(shaker.to_json())
+
+				handshake_json['shakers'] = shakers
+				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(handshake_json)
 				
-				handshake['shakers'] = arr_shakers
-				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(handshake)
-				
-				if shaker_amount <= 0:
-					break
 
 			if shaker_amount > 0:
 				print 'still has money'
@@ -211,13 +223,13 @@ def init():
 					currency=currency,
 					side=side,
 					win_value=odds*shaker_amount,
-					remaining_amount=(odds*shaker_amount)-shaker_amount,
+					remaining_amount=shaker_amount,
 					from_address=from_address
 				)
 				db.session.add(handshake)
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user)
+				update_feed.delay(handshake.id, user.id)				
 
 				hs_json = handshake.to_json()
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
@@ -243,7 +255,7 @@ def shake():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		amount = Decimal(data.get('amount'))
+		amount = Decimal(data.get('amount')).quantize(Decimal('.000000000000000001'), rounding=ROUND_DOWN)
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -266,17 +278,22 @@ def shake():
 			arr_hs = []
 			shaker_amount = amount
 			for handshake in handshakes:
+				print shaker_amount
+				if shaker_amount <= 0:
+					break
+
 				handshake.shake_count += 1
 				amount_for_handshake = 0
+
 				if shaker_amount > handshake.remaining_amount:
 					shaker_amount -= handshake.remaining_amount
 					amount_for_handshake = handshake.remaining_amount
 					handshake.remaining_amount = 0
 
 				else:
-					amount_for_handshake = amount
-					shaker_amount -= amount
-					handshake.remaining_amount -= amount
+					amount_for_handshake = shaker_amount
+					handshake.remaining_amount -= shaker_amount
+					shaker_amount = 0
 
 				# create shaker
 				shaker_odds = handshake.amount*handshake.odds/(handshake.amount*handshake.odds-handshake.amount)
@@ -293,18 +310,12 @@ def shake():
 				db.session.add(shaker)
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user, shaker=shaker)
+				update_feed.delay(handshake.id, user.id, shaker.id)
 
 				handshake = handshake.to_json()
-				arr_shakers = handshake['shakers']
-				arr_shakers.append(shaker.to_json())
-				
-				handshake['shakers'] = arr_shakers
 				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake)
 				
-				if shaker_amount <= 0:
-					break
 
 			db.session.commit()	
 			message = ''
@@ -313,7 +324,7 @@ def shake():
 			
 			return response_ok(arr_hs, message=message)
 		else:
-			return response_error(MESSAGE.BET_NOT_FOUND)
+			return response_error(MESSAGE.INVALID_BET)
 
 		return response_ok()
 
@@ -337,7 +348,7 @@ def uninit(handshake_id):
 				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
 				db.session.flush()
 
-				handshake_bl.add_handshake_to_solrservice(handshake, user)
+				update_feed.delay(handshake.id, user.id)
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 				handshake_json = handshake.to_json()
@@ -373,28 +384,63 @@ def collect():
 		shakers = []
 		if 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
-			shaker = db.session.query(Shaker).filter_by(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if shaker is not None:
-				handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
-				shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				if outcome.result != shaker.side:
+					raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
+
+				# update status to STATUS_BLOCKCHAIN_PENDING
+				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+				for handshake in handshakes:
+					handshake.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					handshake.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					db.session.flush()
+
+					update_feed.delay(handshake.id, handshake.user_id)
+
+				for shaker in shakers:
+					shaker.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					shaker.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					db.session.flush()
+
+					update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
 
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
 		else:
 			offchain = int(offchain.replace('m', ''))
-			handshake = db.session.query(Handshake).filter_by(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake is not None:
-				handshakes = db.session.query(Handshake).filter_by(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side)).all()
-				shakers = db.session.query(Shaker).filter_by(and_(Shaker.shaker_id==user.uid, Shaker.side==handshake.side, Shaker.handshake_id==handshake.id)).all()
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				if outcome.result != handshake.side:
+					raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
+
+
+				# update status to STATUS_BLOCKCHAIN_PENDING
+				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+				for handshake in handshakes:
+					handshake.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					handshake.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					db.session.flush()
+
+					update_feed.delay(handshake.id, handshake.user_id)
+
+				for shaker in shakers:
+					shaker.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					shaker.bk_status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
+					db.session.flush()
+
+					update_feed.delay(handshake.id, shaker.shaker_id, shaker.id)
+
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
-
-		for handshake in handshakes:
-			handshake.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
-
-		for shaker in shakers:
-			shaker.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
 
 		db.session.commit()
 
@@ -427,11 +473,9 @@ def rollback():
 			if handshake is not None:
 				if handshake.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
 					handshake.status = handshake.bk_status
-					db.session.flush()
-
-					handshake_bl.add_handshake_to_solrservice(handshake, user)
-
 					db.session.commit()
+
+					update_feed.delay(handshake.id, user.id)
 					return response_ok(handshake.to_json())
 
 			else:
@@ -442,12 +486,9 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
 					shaker.status = shaker.bk_status
-					db.session.flush()
-
-					handshake = db.session.query(Handshake).filter(Handshake.id==shaker.handshake_id).first()
-					handshake_bl.add_handshake_to_solrservice(handshake, user, shaker)
-
 					db.session.commit()
+
+					update_feed.delay(shaker.handshake_id, user.id, shaker.id)
 					return response_ok(shaker.to_json())
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)

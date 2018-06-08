@@ -28,18 +28,8 @@ def event():
 		outcome = Outcome.find_outcome_by_hid(hid)
 		if outcome is None:
 			return response_error(MESSAGE.INVALID_BET)
-
-		if 'report' in offchain:
-			side = offchain.replace('report', '')
-			if len(side) > 0:
-				side = int(side)
-				outcome.result = side
-				# TODO: add solr and firebase to result 0
-				db.session.commit()
-
-			return response_ok()
 	
-		handshake_bl.save_handshake_for_event(event_name, offchain)
+		handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
 		db.session.commit()
 
 		return response_ok()

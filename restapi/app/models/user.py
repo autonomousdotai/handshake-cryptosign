@@ -6,6 +6,7 @@ class User(BaseModel):
 	__json_public__ = ['id', 'fcm_token']
 
 	fcm_token = db.Column(db.Text)
+	payload = db.Column(db.Text)
 	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
 	                             lazy='dynamic')
 

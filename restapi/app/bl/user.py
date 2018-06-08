@@ -7,41 +7,12 @@ from app.models import User, Handshake
 from app.helpers.message import MESSAGE
 
 import app.constants as CONST
-import app.bl.wallet as wallet_bl
 import requests
 import json
 import base64
 import hashlib
 import urllib
 
-
-def sync_user(autonomous_id, autonomous_name, autonomous_email, autonomous_eth_address, autonomous_eth_private_key):
-	"""
-	This method will sync autonomous user to our user table.
-	return user
-	"""
-	user = User.find_user_with_ref_id(autonomous_id)
-
-	if user is None:
-		user = User(email=autonomous_email, name=autonomous_name, ref_id=autonomous_id)
-
-	else:
-		if user.name != autonomous_name and len(autonomous_name) > 0:
-			user.name = autonomous_name
-
-	wallet = None
-
-	if user.wallets.count() > 0:
-		if isUserHasWalletOnMainNetwork(user) is False:
-			wallet = wallet_bl.create_main_wallet(autonomous_eth_address, autonomous_eth_private_key)
-	else:
-		wallet = wallet_bl.create_wallet(autonomous_eth_address, autonomous_eth_private_key)
-
-	if wallet is not None:
-		db.session.add(wallet)
-		user.wallets.append(wallet)
-
-	return user
 
 def isUserHasWalletOnMainNetwork(user):
 	if  user.wallets.filter_by(source='Both').first() is None:

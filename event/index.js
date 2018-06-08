@@ -169,7 +169,7 @@ function asyncScanOddsNull() {
         const tasks = [];
         const submitInit = (arr, side) => {
             (arr || []).forEach(item => {
-                if (item && item.id !== undefined && item.hid !== undefined) {
+                if (item) {
                     const task = new Promise (async (resolve, reject) => {
                         const match = await matchDAO.getMatchById(item.match_id);
                         resource

@@ -381,13 +381,14 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	if outcome is not None:
 		win_value = amount*odds
 		if win_value - amount > 0:
-			o = win_value/(win_value-amount)
+			# follow shaker odds based on handshake odds
+			o = win_value/(win_value-1)
 			v = Decimal(o, 2)
 
 			if side == CONST.SIDE_TYPE['SUPPORT']:
-				query = text('''SELECT * FROM handshake where outcome_id = {} and odds >= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount ASC, remaining_amount DESC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))	
+				query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount ASC, remaining_amount DESC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))	
 			else:
-				query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount DESC, remaining_amount DESC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
+				query = text('''SELECT * FROM handshake where outcome_id = {} and odds >= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds * amount DESC, remaining_amount DESC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
 
 			handshakes = []
 			result_db = db.engine.execute(query)

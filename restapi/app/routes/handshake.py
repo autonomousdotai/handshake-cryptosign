@@ -130,6 +130,7 @@ def init():
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+		print 'DEBUG {}'.format(handshakes)
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -192,9 +193,9 @@ def init():
 
 				update_feed.delay(handshake.id, user.id, shaker.id)
 
-				handshake = handshake.to_json()
-				handshake['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(handshake)
+				handshake_json = handshake.to_json()
+				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(handshake_json)
 				
 				if shaker_amount <= 0:
 					break
@@ -220,7 +221,7 @@ def init():
 				db.session.add(handshake)
 				db.session.flush()
 
-				update_feed.delay(handshake.id, user.id)
+				update_feed.delay(handshake.id, user.id)				
 
 				hs_json = handshake.to_json()
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)

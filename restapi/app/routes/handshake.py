@@ -165,6 +165,9 @@ def init():
 			shaker_amount = amount
 
 			for handshake in handshakes:
+				if shaker_amount <= 0:
+					break
+					
 				handshake.shake_count += 1
 
 				handshake_win_value = handshake.remaining_amount*handshake.odds
@@ -215,10 +218,6 @@ def init():
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake_json)
 				
-
-				print 'shaker amount {}'.format(shaker_amount)
-				if shaker_amount <= 0:
-					break
 
 			if shaker_amount > 0:
 				print 'still has money'

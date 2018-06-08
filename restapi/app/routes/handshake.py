@@ -163,14 +163,14 @@ def init():
 			for handshake in handshakes:
 				handshake.shake_count += 1
 
-				handshake_win_value = handshake.amount*handshake.odds
-				shaker_win_value = amount*odds
+				handshake_win_value = handshake.remaining_amount*handshake.odds
+				shaker_win_value = shaker_amount*odds
 				final_win_value = min(handshake_win_value, shaker_win_value)
 
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
 
-				handshake.amount -= subtracted_amount_for_handshake
+				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
 				
 				# create shaker

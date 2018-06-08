@@ -46,6 +46,18 @@ def update_feed(handshake_id, shake_id=-1):
 		amount = handshake.amount
 		status = handshake.status
 		bk_status = handshake.bk_status
+		shakers = handshake.shakers
+
+		shake_user_ids = []
+		if shakers is not None:
+			for s in shakers:
+				shake_user_ids.append(s.id)		
+
+		if shake_id != -1:
+			shaker = Shaker.find_shaker_by_id(shake_id)
+			if shaker is not None:
+				if shaker.shaker_id not in shake_user_ids:
+					shake_user_ids.append(shaker.shaker_id)
 
 		hs = {
 			"id": _id,
@@ -56,7 +68,7 @@ def update_feed(handshake_id, shake_id=-1):
 			"bk_status_i": bk_status,
 			"init_user_id_i": handshake.user_id,
 			"chain_id_i": handshake.chain_id,
-			"shake_user_ids_is": [],
+			"shake_user_ids_is": shake_user_ids,
 			"text_search_ss": [handshake.description],
 			"shake_count_i": handshake.shake_count,
 			"view_count_i": handshake.view_count,

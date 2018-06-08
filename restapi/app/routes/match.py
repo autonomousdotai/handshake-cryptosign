@@ -54,6 +54,8 @@ def add():
 				awayTeamName=item['awayTeamName'],
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
+				name=item['name'],
+				market_fee=int(item['market_fee']),
 				date=parse_date_string_to_timestamp(item['date'])
 			)
 			matches.append(match)
@@ -94,8 +96,8 @@ def report(match_id):
 
 		match = Match.find_match_by_id(match_id)
 		if match is not None:
-			homeScore = data['homeScore']
-			awayScore = data['awayScore']
+			homeScore = data['homeScore'] if 'homeScore' in data else ''
+			awayScore = data['awayScore'] if 'awayScore' in data else ''
 			result = data['result']
 
 			match.homeScore = homeScore

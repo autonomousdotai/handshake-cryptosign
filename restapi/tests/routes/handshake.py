@@ -96,12 +96,15 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
                                     })
 
             data = json.loads(response.data.decode()) 
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json['support']), 1)
+
+            self.assertEqual(data_json['support'][0]['odds'], '1.25')
             self.assertEqual(response.status_code, 200)
 
         for handshake in arr_hs:
@@ -164,6 +167,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
                                     })
 
             data = json.loads(response.data.decode()) 
@@ -199,6 +203,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
                                     })
 
             data = json.loads(response.data.decode()) 

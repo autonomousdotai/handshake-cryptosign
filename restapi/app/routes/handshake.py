@@ -92,7 +92,7 @@ def detail(id):
 @login_required
 def init():
 	try:
-		getcontext().prec = 18
+		getcontext().prec = 19
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)		

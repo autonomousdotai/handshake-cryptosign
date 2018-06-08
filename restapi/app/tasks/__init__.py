@@ -59,6 +59,13 @@ def update_feed(handshake_id, shake_id=-1):
 				if shaker.shaker_id not in shake_user_ids:
 					shake_user_ids.append(shaker.shaker_id)
 
+		extra_data = {}
+		try:
+			extra_data = json.loads(handshake.extra_data)
+		except Exception as ex:
+			print str(ex)
+		extra_data['shakers'] = shake_user_ids
+
 		hs = {
 			"id": _id,
 			"hid_s": outcome.hid,
@@ -76,7 +83,7 @@ def update_feed(handshake_id, shake_id=-1):
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
-			"extra_data_s": handshake.extra_data,
+			"extra_data_s": json.dumps(extra_data),
 			"remaining_amount_f": float(handshake.remaining_amount),
 			"amount_f": float(amount),
 			"outcome_id_i": handshake.outcome_id,

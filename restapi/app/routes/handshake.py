@@ -186,7 +186,6 @@ def init():
 				print 'shaker_amount = {}'.format(shaker_amount)				
 				print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
 
-				
 				# create shaker
 				shaker = Shaker(
 					shaker_id=user.id,
@@ -199,7 +198,7 @@ def init():
 				)
 
 				db.session.add(shaker)
-				db.session.flush()
+				db.session.commit()
 
 				update_feed.delay(handshake.id, shaker.id)
 				
@@ -234,7 +233,7 @@ def init():
 					from_address=from_address
 				)
 				db.session.add(handshake)
-				db.session.flush()
+				db.session.commit()
 
 				update_feed.delay(handshake.id)				
 

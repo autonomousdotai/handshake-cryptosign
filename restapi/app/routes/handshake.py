@@ -11,7 +11,7 @@ import json
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
 
-from decimal import Decimal
+from decimal import *
 from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text
 from app.helpers.response import response_ok, response_error
@@ -92,6 +92,7 @@ def detail(id):
 @login_required
 def init():
 	try:
+		getcontext().prec = 18
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)		
@@ -165,7 +166,7 @@ def init():
 			shaker_amount = amount
 
 			for handshake in handshakes:
-				if shaker_amount <= 0:
+				if shaker_amount <= Decimal(0):
 					break
 
 				handshake.shake_count += 1

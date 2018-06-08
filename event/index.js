@@ -169,6 +169,7 @@ function asyncScanOddsNull() {
         const tasks = [];
         const submitInit = (arr, side) => {
             (arr || []).forEach(item => {
+                console.log(item);
                 if (item) {
                     const task = new Promise (async (resolve, reject) => {
                         const match = await matchDAO.getMatchById(item.match_id);

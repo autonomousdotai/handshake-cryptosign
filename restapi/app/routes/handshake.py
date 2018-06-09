@@ -13,7 +13,7 @@ import app.bl.handshake as handshake_bl
 
 from decimal import *
 from flask import Blueprint, request, g
-from sqlalchemy import or_, and_, text
+from sqlalchemy import or_, and_, text, func
 from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
@@ -46,12 +46,16 @@ def handshakes():
 		against = handshake_bl.find_available_against_handshakes(outcome_id)
 
 		total = Decimal(0, 2)
+
+		traded_volumns = db.session.query(func.sum(Handshake.amount*Handshake.odds).label('traded_volumn')).filter(and_(Handshake.outcome_id==outcome_id, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).all()
+		for traded in traded_volumns:
+			total += traded[0]
+
 		arr_supports = []
 		for support in supports:
 			data = {}
 			data['odds'] = support[0]
 			data['amount'] = support[1]
-			total += support[0] * support[1]
 			arr_supports.append(data)
 
 		arr_against = []
@@ -59,7 +63,6 @@ def handshakes():
 			data = {}
 			data['odds'] = against[0]
 			data['amount'] = against[1]
-			total += against[0] * against[1]
 			arr_against.append(data)
 
 		response = {
@@ -123,6 +126,7 @@ def init():
 			raise Exception(MESSAGE.INVALID_ADDRESS)
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
+		print outcome_id
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
 
@@ -174,11 +178,17 @@ def init():
 
 				handshake.shake_count += 1
 
+				print '----------------------------------------------'
 				handshake_win_value = handshake.remaining_amount*handshake.odds
+				print 'handshake_win_value --> {}'.format(handshake_win_value)
 				shaker_win_value = shaker_amount*odds
+				print 'shaker_win_value --> {}'.format(shaker_win_value)
 				final_win_value = min(handshake_win_value, shaker_win_value)
+				print 'final_win_value --> {}'.format(final_win_value)
 				subtracted_amount_for_handshake = final_win_value/handshake.odds
+				print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 				subtracted_amount_for_shaker = final_win_value - subtracted_amount_for_handshake
+				print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
@@ -186,6 +196,7 @@ def init():
 				db.session.merge(handshake)
 				print 'shaker_amount = {}'.format(shaker_amount)				
 				print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
+				print '----------------------------------------------'
 
 				# create shaker
 				shaker = Shaker(

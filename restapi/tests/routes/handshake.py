@@ -435,6 +435,43 @@ class TestHandshakeBluePrint(BaseTestCase):
     ef test_init_handshake_case_4(self):
         self.clear_data_before_test()
 
+        # DEBUG
+        # Against
+        #   amount          odds
+        #   0.7               6           1.2
+        #   0.007             1.5         3
+        #   0.003             1.25        5
+        # Shake with 0.001 ETH, odds: 1.20, side 1
+        # Expected:
+
+        amount tra ve 0.001456465
+
+
+        # DEBUG
+        # Against
+        #   amount          odds
+        #   0.7               6           1.2
+        #   0.007             1.5         3
+        #   0.003             1.25        5
+        # Shake with 0.008 ETH, odds: 4, side: 1
+        # Expected:
+
+        match voi thang 1.25
+
+
+
+        # DEBUG
+        # Support
+        #   amount          odds
+        #   0.004           5           1.25
+        #   0.009           8.0         1.14
+        # Shake with 0.008 ETH, odds: 1.14, side: 2
+        # Expected:
+
+        match voi thang 8
+
+        
+
         # Support
         #   amount          odds
         #   0.004             3           1.5

@@ -9,7 +9,7 @@ from app.models import Handshake, Outcome, User, Shaker
 
 import time
 import app.constants as CONST
-import json
+import simplejson as json
 import os, hashlib
 import requests
 
@@ -35,6 +35,9 @@ def update_feed(handshake_id, shake_id=-1):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+		if outcome is None:
+			print 'outcome is None'
+			return
 		
 		print '------------------------------------------------'
 		print 'update feed for user id: {}'.format(handshake.user_id)
@@ -46,6 +49,28 @@ def update_feed(handshake_id, shake_id=-1):
 		amount = handshake.amount
 		status = handshake.status
 		bk_status = handshake.bk_status
+		shakers = handshake.shakers
+
+		shake_user_ids = []
+		shake_user_infos = []
+		if shakers is not None:
+			for s in shakers:
+				shake_user_ids.append(s.id)	
+				shake_user_infos.append(s.to_json())
+
+		if shake_id != -1:
+			shaker = Shaker.find_shaker_by_id(shake_id)
+			if shaker is not None:
+				if shaker.shaker_id not in shake_user_ids:
+					shake_user_ids.append(shaker.shaker_id)
+					shake_user_infos.append(shaker.to_json())
+
+		extra_data = {}
+		try:
+			extra_data = json.loads(handshake.extra_data)
+		except Exception as ex:
+			print 'Handshake has no extra data'
+		extra_data['shakers'] = shake_user_infos
 
 		hs = {
 			"id": _id,
@@ -56,7 +81,7 @@ def update_feed(handshake_id, shake_id=-1):
 			"bk_status_i": bk_status,
 			"init_user_id_i": handshake.user_id,
 			"chain_id_i": handshake.chain_id,
-			"shake_user_ids_is": [],
+			"shake_user_ids_is": shake_user_ids,
 			"text_search_ss": [handshake.description],
 			"shake_count_i": handshake.shake_count,
 			"view_count_i": handshake.view_count,
@@ -64,7 +89,7 @@ def update_feed(handshake_id, shake_id=-1):
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
-			"extra_data_s": handshake.extra_data,
+			"extra_data_s": json.dumps(extra_data, use_decimal=True),
 			"remaining_amount_f": float(handshake.remaining_amount),
 			"amount_f": float(amount),
 			"outcome_id_i": handshake.outcome_id,
@@ -90,62 +115,6 @@ def update_feed(handshake_id, shake_id=-1):
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400:
 			print('SOLR service is failed.')
-
-
-		# replace with shaker id
-		if shaker is not None:
-			print '------------------------------------------------'
-			print 'update feed for user id: {}'.format(shaker.shaker_id)
-			print '------------------------------------------------'
-			
-			_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-			amount = shaker.amount
-			status = shaker.status
-			bk_status = shaker.bk_status
-
-			hs = {
-				"id": _id,
-				"hid_s": outcome.hid,
-				"type_i": handshake.hs_type,
-				"state_i": handshake.state,
-				"status_i": status,
-				"bk_status_i": bk_status,
-				"init_user_id_i": shaker.shaker_id,
-				"chain_id_i": handshake.chain_id,
-				"shake_user_ids_is": [],
-				"text_search_ss": [handshake.description],
-				"shake_count_i": handshake.shake_count,
-				"view_count_i": handshake.view_count,
-				"comment_count_i": 0,
-				"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
-				"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
-				"is_private_i": handshake.is_private,
-				"extra_data_s": handshake.extra_data,
-				"remaining_amount_f": float(handshake.remaining_amount),
-				"amount_f": float(amount),
-				"outcome_id_i": handshake.outcome_id,
-				"odds_f": float(handshake.odds),
-				"currency_s": handshake.currency,
-				"side_i": handshake.side,
-				"win_value_f": float(handshake.win_value),
-				"from_address_s": handshake.from_address,
-				"result_i": outcome.result
-			}
-			print 'create shaker {}'.format(hs)
-
-			# add to firebase database
-			firebase.push_data(hs, shaker.shaker_id)
-
-			#  add to solr
-			arr_handshakes = []
-			arr_handshakes.append(hs)
-			endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-			data = {
-				"add": arr_handshakes
-			}
-			res = requests.post(endpoint, json=data)
-			if res.status_code > 400:
-				print('SOLR service is failed.')
 
 
 	except Exception as e:

@@ -12,6 +12,7 @@ const txDAO = require('./daos/tx');
 const eventDAO = require('./daos/event');
 const oddsDAO = require('./daos/odds');
 const matchDAO = require('./daos/match');
+const outcomeDAO = require('./daos/outcome');
 
 const resource = require('./libs/resource')
 const predictionContract = require('./libs/smartcontract');
@@ -22,6 +23,7 @@ const Web3 = require('web3');
 // mark as running
 let isRunning = false;
 let isRunningOdds = false;
+let isRunningCreateMarket = false;
 
 var BettingHandshake = getCompilied('PredictionHandshake');
 
@@ -31,6 +33,7 @@ var contractBettingAddress = configs.network[4].bettingHandshakeAddress;
 var contractBettingHandshake = new web3.eth.Contract(BettingHandshake.abi, contractBettingAddress);
 
 const allEvents = [
+    '__createMarket',
 	'__init',
 	'__uninit',
 	'__shake',
@@ -95,6 +98,7 @@ async function processEventObj(contractAddress, eventName, eventObj) {
         switch (contractAddress) {
             case contractBettingAddress: {
                 switch (eventName) {
+                    case '__createMarket':
                     case '__init':
                     case '__shake':
                     case '__uninit':
@@ -210,6 +214,47 @@ function asyncScanOddsNull() {
     });
 }
 
+function asyncScanOutcomeNull() {
+    return new Promise(async(resolve, reject) => {
+        const outcomes = await outcomeDAO.getOutcomesNullHID();
+        if (outcomes.length > 0) {
+            tasks = []
+            outcomes.forEach((outcome) => {
+                const task = new Promise((resolve, reject) => {
+                    const match = matchDAO.getMatchById(outcome.match_id);
+                    const fee = match.market_fee;
+                    const reporter = "???";
+                    const closingTime = new Date().getTime() - match.date;
+                    const reportTime = closingTime + (60 * 60 * 4);
+                    const offchain = `cryptosign_${match.id}`;
+                    predictionContract
+                        .createMarketTransaction(fee, reporter, closingTime, reportTime, offchain)
+                        .then((hash) => {
+                            console.log(`Create outcome ${outcome.id} success, Hash: ${hash}`);
+                            resolve(hash);
+                        })
+                        .catch((e) => {
+                            console.log(`Create outcome ${outcome.id} fail: ${e.message}`);
+                            resolve(null);
+                        });
+                });
+                tasks.add(task);
+            });
+            Promise.all(tasks).then((results) => {
+                let success = 0;
+                (results || []).forEach((hash) => {
+                    if (hash) {
+                        success += 1
+                    }
+                });
+                resolve(success);
+            })
+        } else {
+            resolve(0)
+        }
+    });
+}
+
 function runBettingCron() {
 	cron.schedule('*/40 * * * * *', async function() {
 		console.log('running a task every 40s at ' + new Date());
@@ -237,7 +282,7 @@ function runBettingCron() {
 function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
     cron.schedule('*/30 * * * * *', async function() {
-		console.log('odds cron running a task every 1m at ' + new Date());
+		console.log('odds cron running a task every 30s at ' + new Date());
 		try {
 			if (isRunningOdds === false) {
                 isRunningOdds = true;
@@ -254,6 +299,31 @@ function runOddsCron() {
 		} catch (e) {
 			isRunningOdds = false;
 			console.log('cron odds error');
+			console.error(e);
+		}
+	});
+}
+
+function runCreateMarketCron() {
+    // run every 1 min
+    cron.schedule('*/2 * * * *', async function() {
+		console.log('create market cron running a task every 2m at ' + new Date());
+		try {
+			if (isRunningCreateMarket === false) {
+                isRunningCreateMarket = true;
+                
+                asyncScanOutcomeNull().then(result => {
+                    console.log('EXIT CREATE MARKET: ', result);
+                    isRunningCreateMarket = false;
+                });
+
+			} else {
+                console.log('CRON JOB CREATE MARKET IS RUNNING!');
+            }
+			
+		} catch (e) {
+			isRunningCreateMarket = false;
+			console.log('cron create marjet error');
 			console.error(e);
 		}
 	});

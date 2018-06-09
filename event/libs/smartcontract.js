@@ -1,6 +1,7 @@
 
 const Web3 = require('web3');
 const configs = require('../configs');
+const httpRequest = require('../libs/http');
 const PredictionHandshake = require('../contracts/PredictionHandshake.json');
 var web3 = new Web3(new Web3.providers.HttpProvider(configs.network[4].blockchainNetwork));
 var contractPredictionAddress = configs.network[4].predictionHandshakeAddress;
@@ -62,9 +63,29 @@ const sanitizeHex = (hex) => {
   return '0x' + padLeftEven(hex);
 };
 
-const getNonce = (address, status) => {
-  status = status ? status : 'latest';
-  return web3.eth.getTransactionCount(address, status);
+const getNonce = async (address, status) => {
+  const options = {
+    hostname: 'ninja.org',
+    path: `/api/nonce/get?address=${address}&network_id=4`,
+    method: 'GET',
+    isHttps: true,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  try {
+    response = await httpRequest.request(options);
+    if (response.status == 1) {
+      return response.data;
+    } else {
+      throw Error("Cannot get Nonce.")
+    }
+  } catch (e) {
+    console.log(e);
+    throw e
+  }
+  // status = status ? status : 'latest';
+  // return web3.eth.getTransactionCount(address, status);
 };
 
 const getGasPrice = async () => {
@@ -165,6 +186,82 @@ const submitMultiInitTransaction = (_hids, _sides, _payouts, _offchains) => {
         'to'      : contractAddress,
         'value'   : '0x0',
         'data'    : contract.methods.multiInit(_hids, _sides, _payouts, _offchains).encodeABI()
+    };
+
+    const tx                    = new ethTx(rawTransaction);
+    tx.sign(privKey);
+    const serializedTx          = tx.serialize();
+    let transactionHash    = '-';
+
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+    .on('transactionHash', (hash) => {
+        transactionHash = hash;
+        console.log('transactionHash: ', transactionHash);
+    })
+    .on('receipt', (receipt) => {
+      return resolve(receipt);
+    })
+    .catch((err) => {
+        const error = err.toString();
+        let _err = {};
+        if (error.indexOf('Transaction was not mined within 50 blocks') > 0) {
+            _err = {
+                status: '0x2',
+                error : err.toString(),
+                data  : rawTransaction,
+                transactionHash  : transactionHash
+            };
+        }
+        else if (error.indexOf('known transaction') > 0) {
+          _err = {
+                status: '0x3',
+                error : err.toString(),
+                data  : rawTransaction,
+                transactionHash  : transactionHash
+            };
+        }
+        else if (error.indexOf('Failed to check for transaction receipt') > 0) {
+          _err = {
+                status: '0x4',
+                error : err.toString(),
+                data  : rawTransaction,
+                transactionHash  : transactionHash
+            };
+        }
+        else {
+          _err = {
+            status: '0x0',
+            error : err.toString(),
+            data  : rawTransaction,
+            transactionHash  : transactionHash
+          };
+        }
+        return reject(_err);
+    });
+  });
+};
+
+/**
+ * Create Market
+ */
+const createMarketTransaction = (fee, reporter, closingTime, reportTime, offchain) => {
+  return new Promise(async(resolve, reject) => {
+    const contractAddress = contractPredictionAddress;
+    const privKey         = Buffer.from(privateKey, 'hex');
+    const gasPriceWei     = await getGasPrice();
+    const nonce           = await getNonce(ownerAddress);
+    const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+        from: ownerAddress
+    });
+
+    const rawTransaction = {
+        'from'    : ownerAddress,
+        'nonce'   : '0x' + nonce.toString(16),
+        'gasPrice': web3.utils.toHex(gasPriceWei),
+        'gasLimit': web3.utils.toHex(gasLimit),
+        'to'      : contractAddress,
+        'value'   : '0x0',
+        'data'    : contract.methods.createMarket(fee, reporter, closingTime, reportTime, web3.utils.fromUtf8(offchain)).encodeABI()
     };
 
     const tx                    = new ethTx(rawTransaction);

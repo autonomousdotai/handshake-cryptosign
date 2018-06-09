@@ -47,7 +47,9 @@ def handshakes():
 
 		total = Decimal(0, 2)
 
-		trade = db.session.query(func.sum(Handshake.amount*Handshake.odds).label('traded_volumn')).filter(and_(Handshake.outcome_id==outcome_id, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).first()
+		traded_volumns = db.session.query(func.sum(Handshake.amount*Handshake.odds).label('traded_volumn')).filter(and_(Handshake.outcome_id==outcome_id, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).all()
+		for traded in traded_volumns:
+			total += traded[0]
 
 		arr_supports = []
 		for support in supports:
@@ -66,7 +68,7 @@ def handshakes():
 		response = {
 			"support": arr_supports,
 			"against": arr_against,
-			"traded_volumn": trade[0],
+			"traded_volumn": total,
 			"market_fee": match.market_fee
 		}
 

@@ -469,7 +469,6 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         match voi thang 8
 
-        
 
         # Support
         #   amount          odds

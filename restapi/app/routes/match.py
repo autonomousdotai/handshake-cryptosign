@@ -4,7 +4,7 @@ import app.bl.match as match_bl
 
 from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
-from app.helpers.decorators import login_required
+from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import parse_date_string_to_timestamp
 from app import db
 from app.models import User, Match, Outcome
@@ -88,6 +88,7 @@ def remove(id):
 
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
+@admin_required
 def report(match_id):
 	try:
 		data = request.json
@@ -102,11 +103,10 @@ def report(match_id):
 
 			match.homeScore = homeScore
 			match.awayScore = awayScore
-			for outcome in result:
-				outcome = Outcome.find_outcome_by_id(outcome['outcome_id'])
+			for o in result:
+				outcome = Outcome.find_outcome_by_id(o['outcome_id'])
 				if outcome is not None:
-					pass
-					# TODO: call nodejs
+					outcome.result = o['side']
 				else:
 					return response_error(MESSAGE.INVALID_OUTCOME)
 

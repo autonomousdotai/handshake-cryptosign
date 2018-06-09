@@ -487,7 +487,7 @@ def rollback():
 		if offchain is None or len(offchain) == 0:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		
+		# TODO: rollback money
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		if 'm' in offchain:
 			offchain = offchain.replace('m', '')

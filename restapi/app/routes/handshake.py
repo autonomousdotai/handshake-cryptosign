@@ -123,6 +123,7 @@ def init():
 			raise Exception(MESSAGE.INVALID_ADDRESS)
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
+		print outcome_id
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_BET)
 

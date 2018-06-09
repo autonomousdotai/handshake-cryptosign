@@ -9,7 +9,7 @@ from app.models import Handshake, Outcome, User, Shaker
 
 import time
 import app.constants as CONST
-import json
+import simplejson as json
 import os, hashlib
 import requests
 
@@ -35,6 +35,9 @@ def update_feed(handshake_id, shake_id=-1):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+		if outcome is None:
+			print 'outcome is None'
+			return
 		
 		print '------------------------------------------------'
 		print 'update feed for user id: {}'.format(handshake.user_id)
@@ -49,22 +52,25 @@ def update_feed(handshake_id, shake_id=-1):
 		shakers = handshake.shakers
 
 		shake_user_ids = []
+		shake_user_infos = []
 		if shakers is not None:
 			for s in shakers:
-				shake_user_ids.append(s.id)		
+				shake_user_ids.append(s.id)	
+				shake_user_infos.append(s.to_json())
 
 		if shake_id != -1:
 			shaker = Shaker.find_shaker_by_id(shake_id)
 			if shaker is not None:
 				if shaker.shaker_id not in shake_user_ids:
 					shake_user_ids.append(shaker.shaker_id)
+					shake_user_infos.append(shaker.to_json())
 
 		extra_data = {}
 		try:
 			extra_data = json.loads(handshake.extra_data)
 		except Exception as ex:
-			print str(ex)
-		extra_data['shakers'] = shake_user_ids
+			print 'Handshake has no extra data'
+		extra_data['shakers'] = shake_user_infos
 
 		hs = {
 			"id": _id,
@@ -83,7 +89,7 @@ def update_feed(handshake_id, shake_id=-1):
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
-			"extra_data_s": json.dumps(extra_data),
+			"extra_data_s": json.dumps(extra_data, use_decimal=True),
 			"remaining_amount_f": float(handshake.remaining_amount),
 			"amount_f": float(amount),
 			"outcome_id_i": handshake.outcome_id,

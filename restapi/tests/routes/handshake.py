@@ -444,7 +444,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         # Shake with 0.001 ETH, odds: 1.20, side 1
         # Expected:
 
-        amount tra ve 0.001456465
+        amount tra ve 0.001456465: RECHECK
 
 
         # DEBUG
@@ -457,7 +457,6 @@ class TestHandshakeBluePrint(BaseTestCase):
         # Expected:
 
         match voi thang 1.25
-
 
 
         # DEBUG

@@ -185,7 +185,7 @@ function asyncScanOddsNull() {
                                 const hid = item.hid;
                                 const payout = web3.utils.toWei(response.data[0].odds + "");
                                 const value = web3.utils.toWei(amount);
-                                const offchain = web3.utils.fromUtf8(response.data[0].offchain);
+                                const offchain = response.data[0].offchain;
                                 dataInit.hids.push(hid);
                                 dataInit.sides.push(side);
                                 dataInit.payouts.push(payout);

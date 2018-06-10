@@ -99,7 +99,8 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
   return new Promise(async(resolve, reject) => {
     const contractAddress = contractPredictionAddress;
     const privKey         = Buffer.from(privateKey, 'hex');
-    const gasPriceWei     = await getGasPrice();
+    // const gasPriceWei     = await getGasPrice();
+    const gasPriceWei     = web3.utils.toWei('100', 'gwei');
     const nonce           = await getNonce(ownerAddress);
     const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
         from: ownerAddress

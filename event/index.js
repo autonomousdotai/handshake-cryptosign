@@ -208,11 +208,12 @@ function asyncScanOddsNull() {
         if (supports) {
             submitInit(supports, 1);
         }
-        console.log(tasks.length);
+        console.log("tasks length", tasks.length);
         if (tasks.length > 0) {
             Promise
                 .all(tasks)
                 .then(async () => {
+                    console.log("tasks length promise all", tasks.length);
                     if (dataInit.hids.length > 0) {
                         let success = 0;
                         for (var i = 0; i < dataInit.hids.length; i++) {
@@ -403,5 +404,5 @@ function runCreateMarketCron() {
 	});
 }
 
-runBettingCron();
+// runBettingCron();
 runOddsCron();

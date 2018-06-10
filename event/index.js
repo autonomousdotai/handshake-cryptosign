@@ -401,5 +401,5 @@ function runCreateMarketCron() {
 	});
 }
 
-// runBettingCron();
+runBettingCron();
 runOddsCron();

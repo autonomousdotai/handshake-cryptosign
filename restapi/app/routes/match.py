@@ -88,7 +88,7 @@ def remove(id):
 
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
-@admin_required
+# @admin_required
 def report(match_id):
 	try:
 		data = request.json

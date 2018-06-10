@@ -46,6 +46,9 @@ def login_required(f):
                 )
                 db.session.add(user)
                 db.session.commit()
+            elif user.token != token:
+                user.token = token
+                db.session.commit()
 
         return f(*args, **kwargs)
     return wrap

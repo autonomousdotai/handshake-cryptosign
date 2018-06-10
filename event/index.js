@@ -202,29 +202,37 @@ function asyncScanOddsNull() {
             });
         };
 
-        submitInit(againsts, 2);
-        submitInit(supports, 1);
+        if (againsts) {
+            submitInit(againsts, 2);
+        }
+        if (supports) {
+            submitInit(supports, 1);
+        }
 
-        Promise
-            .all(tasks)
-            .then(async () => {
-                if (dataInit.hids.length > 0) {
-                    let success = 0;
-                    for (var i = 0; i < dataInit.hids.length; i++) {
-                        try {
-                            const receipt = await predictionContract.submitInitTransaction(dataInit.hids[i], dataInit.sides[i], dataInit.payouts[i], dataInit.offchains[i], dataInit.values[i]);
-                            console.log('Bot bet success', receipt);
-                            success += 1;
-                        } catch (e) {
-                            console.log('Bot bet error', e);
+        if (tasks.length > 0) {
+            Promise
+                .all(tasks)
+                .then(async () => {
+                    if (dataInit.hids.length > 0) {
+                        let success = 0;
+                        for (var i = 0; i < dataInit.hids.length; i++) {
+                            try {
+                                const receipt = await predictionContract.submitInitTransaction(dataInit.hids[i], dataInit.sides[i], dataInit.payouts[i], dataInit.offchains[i], dataInit.values[i]);
+                                console.log('Bot bet success', receipt);
+                                success += 1;
+                            } catch (e) {
+                                console.log('Bot bet error', e);
+                            }
                         }
+                        resolve(success);
+                    } else {
+                        resolve(0);
                     }
-                    resolve(success);
-                } else {
-                    resolve(0);
-                }
-            })
-            .catch(reject);
+                })
+                .catch(reject);
+        } else {
+            resolve(0);
+        }
 
         // let dataInit = {
         //     hids: [],

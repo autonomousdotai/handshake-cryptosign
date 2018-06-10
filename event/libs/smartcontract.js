@@ -111,7 +111,7 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
         'gasPrice': web3.utils.toHex(gasPriceWei),
         'gasLimit': web3.utils.toHex(gasLimit),
         'to'      : contractAddress,
-        'value'   : _value,
+        'value'   : web3.utils.toHex(_value),
         'data'    : contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI()
     };
 

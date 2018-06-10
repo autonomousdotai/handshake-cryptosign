@@ -332,13 +332,14 @@ function runOddsCron() {
 			if (isRunningOdds === false) {
                 isRunningOdds = true;
                 
-                asyncScanOddsNull().then(result => {
-                    console.log('EXIT ODDS: ', result);
-                    isRunningOdds = false;
-                }).catch(e => {
-                    console.log('EXIT ODDS: ', e);
-                    isRunningOdds = false;
-                });
+                asyncScanOddsNull()
+                    .then(result => {
+                        console.log('EXIT ODDS: ', result);
+                        isRunningOdds = false;
+                    }).catch(e => {
+                        console.log('EXIT ODDS: ', e);
+                        isRunningOdds = false;
+                    });
 
 			} else {
                 console.log('CRON JOB IS RUNNING!');

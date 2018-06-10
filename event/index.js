@@ -167,7 +167,8 @@ function asyncScanOddsNull() {
             hids: [],
             sides: [],
             payouts: [],
-            offchains: []
+            offchains: [],
+            values: [],
         };
 
         const tasks = [];

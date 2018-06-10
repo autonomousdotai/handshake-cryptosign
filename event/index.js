@@ -402,4 +402,5 @@ function runCreateMarketCron() {
 }
 
 runBettingCron();
-runOddsCron();
+// runOddsCron();
+// runCreateMarketCron();

@@ -169,7 +169,7 @@ function asyncScanOddsNull() {
                 if (item) {
                     const task = new Promise (async (_resolve, _reject) => {
                         const match = await matchDAO.getMatchById(item.match_id);
-                        const amount = 0.1;
+                        const amount = '0.1';
                         resource
                             .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4, amount)
                             .then(response => {
@@ -177,7 +177,7 @@ function asyncScanOddsNull() {
                                 if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
                                     const hid = item.hid;
                                     const payout = web3.utils.toWei(response.data[0].odds);
-                                    const value = web3.utils.toWei(amount.toString());
+                                    const value = web3.utils.toWei(amount);
                                     const offchain = web3.utils.fromUtf8(response.data[0].offchain);
                                     predictionContract
                                         .submitInitTransaction(hid, side, payout, offchain, value)

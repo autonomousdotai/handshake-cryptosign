@@ -177,6 +177,7 @@ function asyncScanOddsNull() {
                                 if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
                                     const hid = item.hid;
                                     const payout = web3.utils.toWei(response.data[0].odds);
+                                    console.log(amount, typeof(amount));
                                     const value = web3.utils.toWei(amount);
                                     const offchain = web3.utils.fromUtf8(response.data[0].offchain);
                                     predictionContract

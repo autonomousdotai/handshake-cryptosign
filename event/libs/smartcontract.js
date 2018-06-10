@@ -95,7 +95,7 @@ const getGasPrice = async () => {
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_hid, _side, _payout, _offchain) => {
+const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
   return new Promise(async(resolve, reject) => {
     const contractAddress = contractPredictionAddress;
     const privKey         = Buffer.from(privateKey, 'hex');
@@ -111,7 +111,7 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain) => {
         'gasPrice': web3.utils.toHex(gasPriceWei),
         'gasLimit': web3.utils.toHex(gasLimit),
         'to'      : contractAddress,
-        'value'   : '0x0',
+        'value'   : _value,
         'data'    : contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI()
     };
 

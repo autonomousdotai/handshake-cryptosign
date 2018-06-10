@@ -115,6 +115,8 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
         'data'    : contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI()
     };
 
+    console.log('submit init transaction', nonce, gasPrice, gasLimit, _value);
+
     const tx                    = new ethTx(rawTransaction);
     tx.sign(privKey);
     const serializedTx          = tx.serialize();

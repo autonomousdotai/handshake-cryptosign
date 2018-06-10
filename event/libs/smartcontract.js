@@ -122,51 +122,59 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
     const serializedTx          = tx.serialize();
     let transactionHash    = '-';
 
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-    .on('transactionHash', (hash) => {
-        transactionHash = hash;
-        console.log('transactionHash: ', transactionHash);
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
+      if (err) {
+        console.log(err);
+      }
+      resolve({
+        raw: rawTransaction,
+        hash: hash,
+      });
     })
-    .on('receipt', (receipt) => {
-      return resolve(receipt);
-    })
-    .catch((err) => {
-        const error = err.toString();
-        let _err = {};
-        if (error.indexOf('Transaction was not mined within 50 blocks') > 0) {
-            _err = {
-                status: '0x2',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else if (error.indexOf('known transaction') > 0) {
-          _err = {
-                status: '0x3',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else if (error.indexOf('Failed to check for transaction receipt') > 0) {
-          _err = {
-                status: '0x4',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else {
-          _err = {
-            status: '0x0',
-            error : err.toString(),
-            data  : rawTransaction,
-            transactionHash  : transactionHash
-          };
-        }
-        return reject(_err);
-    });
+    // .on('transactionHash', (hash) => {
+    //     transactionHash = hash;
+    //     console.log('transactionHash: ', transactionHash);
+    // })
+    // .on('receipt', (receipt) => {
+    //   return resolve(receipt);
+    // })
+    // .catch((err) => {
+    //     const error = err.toString();
+    //     let _err = {};
+    //     if (error.indexOf('Transaction was not mined within 50 blocks') > 0) {
+    //         _err = {
+    //             status: '0x2',
+    //             error : err.toString(),
+    //             data  : rawTransaction,
+    //             transactionHash  : transactionHash
+    //         };
+    //     }
+    //     else if (error.indexOf('known transaction') > 0) {
+    //       _err = {
+    //             status: '0x3',
+    //             error : err.toString(),
+    //             data  : rawTransaction,
+    //             transactionHash  : transactionHash
+    //         };
+    //     }
+    //     else if (error.indexOf('Failed to check for transaction receipt') > 0) {
+    //       _err = {
+    //             status: '0x4',
+    //             error : err.toString(),
+    //             data  : rawTransaction,
+    //             transactionHash  : transactionHash
+    //         };
+    //     }
+    //     else {
+    //       _err = {
+    //         status: '0x0',
+    //         error : err.toString(),
+    //         data  : rawTransaction,
+    //         transactionHash  : transactionHash
+    //       };
+    //     }
+    //     return reject(_err);
+    // });
   });
 };
 

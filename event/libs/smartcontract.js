@@ -106,6 +106,10 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
         from: ownerAddress
     });
     console.log('start build raw transaction');
+    console.log('1', web3.utils.toHex(gasPriceWei));
+    console.log('2', web3.utils.toHex(gasLimit));
+    console.log('3', web3.utils.toHex(_value));
+    console.log('4', contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI());
     const rawTransaction = {
         'from'    : ownerAddress,
         'nonce'   : '0x' + nonce.toString(16),

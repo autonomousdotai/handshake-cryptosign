@@ -187,7 +187,7 @@ function asyncScanOddsNull() {
                                 const offchain = web3.utils.fromUtf8(response.data[0].offchain);
                                 dataInit.hids.push(hid);
                                 dataInit.sides.push(side);
-                                dataInit.payouts.push(payouts);
+                                dataInit.payouts.push(payout);
                                 dataInit.offchains.push(offchain);
                                 dataInit.values.push(value);
                             }

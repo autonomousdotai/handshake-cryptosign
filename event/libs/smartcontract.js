@@ -244,7 +244,7 @@ const submitMultiInitTransaction = (_hids, _sides, _payouts, _offchains) => {
 /**
  * Create Market
  */
-const createMarketTransaction = (fee, reporter, closingTime, reportTime, offchain) => {
+const createMarketTransaction = (fee, closingTime, reportTime, offchain) => {
   return new Promise(async(resolve, reject) => {
     const contractAddress = contractPredictionAddress;
     const privKey         = Buffer.from(privateKey, 'hex');
@@ -261,7 +261,7 @@ const createMarketTransaction = (fee, reporter, closingTime, reportTime, offchai
         'gasLimit': web3.utils.toHex(gasLimit),
         'to'      : contractAddress,
         'value'   : '0x0',
-        'data'    : contract.methods.createMarket(fee, reporter, closingTime, reportTime, web3.utils.fromUtf8(offchain)).encodeABI()
+        'data'    : contract.methods.createMarket(fee, ownerAddress, closingTime, reportTime, web3.utils.fromUtf8(offchain)).encodeABI()
     };
 
     const tx                    = new ethTx(rawTransaction);

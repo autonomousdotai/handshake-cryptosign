@@ -163,33 +163,36 @@ function asyncScanOddsNull() {
         const againsts = await oddsDAO.getAgainstOddsNull();
         const supports = await oddsDAO.getSupportOddsNull();
 
-        let dataInit = {
-            hids: [],
-            sides: [],
-            payouts: [],
-            offchains: []
-        };
-
         const tasks = [];
         const submitInit = (arr, side) => {
             (arr || []).forEach(item => {
                 if (item) {
-                    const task = new Promise (async (resolve, reject) => {
+                    const task = new Promise (async (_resolve, _reject) => {
                         const match = await matchDAO.getMatchById(item.match_id);
                         resource
-                        .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4)
-                        .then(response => {
-                            console.log(response);
-                            if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
-                                dataInit.hids.push(item.hid);
-                                dataInit.sides.push(side);
-                                // dataInit.payouts.push(web3.utils.toHex(web3.utils.toWei(response.data[0].odds)));
-                                dataInit.payouts.push(web3.utils.toWei(response.data[0].odds));
-                                dataInit.offchains.push(web3.utils.fromUtf8(response.data[0].offchain));
-                            }
-                            return resolve(response);
-                        })
-                        .catch(reject);
+                            .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4)
+                            .then(response => {
+                                console.log(response);
+                                if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
+                                    const hid = item.hid;
+                                    const payout = web3.utils.toWei(response.data[0].odds);
+                                    const offchain = web3.utils.fromUtf8(response.data[0].offchain);
+                                    predictionContract
+                                        .submitInitTransaction(hid, side, payout, offchain)
+                                        .then((receipt) => {
+                                            console.log('Bot bet success', item, receipt);
+                                            _resolve(receipt);
+                                        })
+                                        .catch((e) => {
+                                            console.log('Bot bet error', item, e);
+                                            _resolve(null);
+                                        });
+                                }
+                            })
+                            .catch(() => {
+                                console.log('Bot bet error', item, e);
+                                _resolve(null);
+                            });
                     });
                     tasks.push(task);
                 }
@@ -199,18 +202,59 @@ function asyncScanOddsNull() {
         submitInit(againsts, 2);
         submitInit(supports, 1);
 
-        Promise.all(tasks)
-        .then(results => {
-            if (dataInit.hids.length) {
-                predictionContract
-                .submitMultiInitTransaction(dataInit.hids, dataInit.sides, dataInit.payouts, dataInit.offchains)
-                .then(resolve)
-                .catch(reject);
-            } else {
-                return resolve('Data is empty');
-            }
-        })
-        .catch(reject);
+        Promise
+            .all(tasks)
+            .then(resolve)
+            .catch(reject);
+
+        // let dataInit = {
+        //     hids: [],
+        //     sides: [],
+        //     payouts: [],
+        //     offchains: []
+        // };
+
+        // const tasks = [];
+        // const submitInit = (arr, side) => {
+        //     (arr || []).forEach(item => {
+        //         if (item) {
+        //             const task = new Promise (async (resolve, reject) => {
+        //                 const match = await matchDAO.getMatchById(item.match_id);
+        //                 resource
+        //                 .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4)
+        //                 .then(response => {
+        //                     console.log(response);
+        //                     if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
+        //                         dataInit.hids.push(item.hid);
+        //                         dataInit.sides.push(side);
+        //                         // dataInit.payouts.push(web3.utils.toHex(web3.utils.toWei(response.data[0].odds)));
+        //                         dataInit.payouts.push(web3.utils.toWei(response.data[0].odds));
+        //                         dataInit.offchains.push(web3.utils.fromUtf8(response.data[0].offchain));
+        //                     }
+        //                     return resolve(response);
+        //                 })
+        //                 .catch(reject);
+        //             });
+        //             tasks.push(task);
+        //         }
+        //     });
+        // };
+
+        // submitInit(againsts, 2);
+        // submitInit(supports, 1);
+
+        // Promise.all(tasks)
+        // .then(results => {
+        //     if (dataInit.hids.length) {
+        //         predictionContract
+        //         .submitMultiInitTransaction(dataInit.hids, dataInit.sides, dataInit.payouts, dataInit.offchains)
+        //         .then(resolve)
+        //         .catch(reject);
+        //     } else {
+        //         return resolve('Data is empty');
+        //     }
+        // })
+        // .catch(reject);
     });
 }
 
@@ -223,7 +267,6 @@ function asyncScanOutcomeNull() {
                 const task = new Promise((resolve, reject) => {
                     const match = matchDAO.getMatchById(outcome.match_id);
                     const fee = match.market_fee;
-                    const reporter = "???";
                     const closingTime = new Date().getTime() - match.date;
                     const reportTime = closingTime + (60 * 60 * 4);
                     const offchain = `cryptosign_${match.id}`;

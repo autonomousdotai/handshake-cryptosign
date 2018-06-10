@@ -122,10 +122,10 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
     tx.sign(privKey);
     const serializedTx          = tx.serialize();
     let transactionHash    = '-';
-
+    console.log('submiit signed transaction', '0x' + serializedTx.toString('hex'));
     web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
       if (err) {
-        console.log(err);
+        console.log('submitInit', err);
       }
       resolve({
         raw: rawTransaction,

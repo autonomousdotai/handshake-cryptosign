@@ -208,7 +208,7 @@ function asyncScanOddsNull() {
         if (supports) {
             submitInit(supports, 1);
         }
-
+        console.log(tasks.length);
         if (tasks.length > 0) {
             Promise
                 .all(tasks)

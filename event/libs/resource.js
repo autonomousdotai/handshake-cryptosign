@@ -28,7 +28,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
         };
     
         const options = {
-            hostname: 'stag-handshake.autonomous.ai',
+            hostname: 'ninja.org',
             path: `/api/cryptosign/handshake/init`,
             method: 'POST',
             isHttps: true,

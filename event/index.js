@@ -335,6 +335,9 @@ function runOddsCron() {
                 asyncScanOddsNull().then(result => {
                     console.log('EXIT ODDS: ', result);
                     isRunningOdds = false;
+                }).catch(e => {
+                    console.log('EXIT ODDS: ', e);
+                    isRunningOdds = false;
                 });
 
 			} else {

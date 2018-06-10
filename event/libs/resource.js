@@ -7,7 +7,7 @@ const httpRequest = require('../libs/http');
 /*
 {"id":3,"date_created":null,"date_modified":null,"deleted":0,"name":"Spain wins","match_id":5,"hid":2,"result":-1,"tx":null,"modified_user_id":null,"created_user_id":null}
 */
-const submitInit = (outcome, match, address, side, chainId) => {
+const submitInit = (outcome, match, address, side, chainId, amount) => {
     return new Promise((resolve, reject) => {
         const oddSupportValue = [2.9, 2.8, 2.7];
         const oddAgainstValue = [1.8, 1.7, 1.6];
@@ -20,7 +20,7 @@ const submitInit = (outcome, match, address, side, chainId) => {
             description: 'cron job',
             outcome_id: outcome.id,
             odds: odds,
-            amount: 1,
+            amount: amount,
             currency: 'ETH',
             chain_id: chainId,
             side: side,

@@ -191,7 +191,7 @@ function asyncScanOddsNull() {
                                         });
                                 }
                             })
-                            .catch(() => {
+                            .catch((e) => {
                                 console.log('Bot bet error', item, e);
                                 _resolve(null);
                             });

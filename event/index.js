@@ -159,45 +159,45 @@ async function asyncScanEventLog(contract, contractAddress, eventName) {
 }
 
 function asyncScanOddsNull() {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const againsts = await oddsDAO.getAgainstOddsNull();
         const supports = await oddsDAO.getSupportOddsNull();
 
+        let dataInit = {
+            hids: [],
+            sides: [],
+            payouts: [],
+            offchains: []
+        };
+
         const tasks = [];
         const submitInit = (arr, side) => {
-            (arr || []).forEach(item => {
-                if (item) {
-                    const task = new Promise (async (_resolve, _reject) => {
-                        const match = await matchDAO.getMatchById(item.match_id);
-                        const amount = '0.1';
-                        resource
-                            .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4, amount)
-                            .then(response => {
-                                console.log(response);
-                                if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
-                                    const hid = item.hid;
-                                    const payout = web3.utils.toWei(response.data[0].odds + "");
-                                    const value = web3.utils.toWei(amount);
-                                    const offchain = web3.utils.fromUtf8(response.data[0].offchain);
-                                    predictionContract
-                                        .submitInitTransaction(hid, side, payout, offchain, value)
-                                        .then((receipt) => {
-                                            console.log('Bot bet success', item, receipt);
-                                            _resolve(receipt);
-                                        })
-                                        .catch((e) => {
-                                            console.log('Bot bet error', item, e);
-                                            _resolve(null);
-                                        });
-                                }
-                            })
-                            .catch((e) => {
-                                console.log('Bot bet error', item, e);
-                                _resolve(null);
-                            });
-                    });
-                    tasks.push(task);
-                }
+            arr.forEach(item => {
+                tasks.push(new Promise((_resolve, _reject) => {
+                    const match = await matchDAO.getMatchById(item.match_id);
+                    const amount = '0.1';
+                    resource
+                        .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4, amount)
+                        .then(response => {
+                            console.log(response);
+                            if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
+                                const hid = item.hid;
+                                const payout = web3.utils.toWei(response.data[0].odds + "");
+                                const value = web3.utils.toWei(amount);
+                                const offchain = web3.utils.fromUtf8(response.data[0].offchain);
+                                dataInit.hids.push(hid);
+                                dataInit.sides.push(side);
+                                dataInit.payouts.push(payouts);
+                                dataInit.offchains.push(offchain);
+                                dataInit.values.push(value);
+                            }
+                            _resolve(null)
+                        })
+                        .catch((e) => {
+                            console.log('Bot bet error', item, e);
+                            _resolve(null);
+                        }); 
+                }))   
             });
         };
 
@@ -206,7 +206,23 @@ function asyncScanOddsNull() {
 
         Promise
             .all(tasks)
-            .then(resolve)
+            .then(async () => {
+                if (dataInit.hids.length > 0) {
+                    let success = 0;
+                    for (var i = 0; i < dataInit.hids.length; i++) {
+                        try {
+                            const receipt = await predictionContract.submitInitTransaction(dataInit.hids[i], dataInit.sides[i], dataInit.payouts[i], dataInit.offchains[i], dataInit.values[i]);
+                            console.log('Bot bet success', receipt);
+                            success += 1;
+                        } catch (e) {
+                            console.log('Bot bet error', e);
+                        }
+                    }
+                    resolve(success);
+                } else {
+                    resolve(0);
+                }
+            })
             .catch(reject);
 
         // let dataInit = {

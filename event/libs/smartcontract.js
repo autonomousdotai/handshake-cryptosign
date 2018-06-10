@@ -97,45 +97,43 @@ const getGasPrice = async () => {
 // */
 const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
   return new Promise(async(resolve, reject) => {
-    const contractAddress = contractPredictionAddress;
-    const privKey         = Buffer.from(privateKey, 'hex');
-    const gasPriceWei     = await getGasPrice();
-    // const gasPriceWei     = web3.utils.toWei('100', 'gwei');
-    const nonce           = await getNonce(ownerAddress);
-    const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
-        from: ownerAddress
-    });
-    console.log('start build raw transaction');
-    console.log('1', web3.utils.toHex(gasPriceWei));
-    console.log('2', web3.utils.toHex(gasLimit));
-    console.log('3', web3.utils.toHex(_value));
-    console.log('4', contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI());
-    const rawTransaction = {
-        'from'    : ownerAddress,
-        'nonce'   : '0x' + nonce.toString(16),
-        'gasPrice': web3.utils.toHex(gasPriceWei),
-        'gasLimit': web3.utils.toHex(gasLimit),
-        'to'      : contractAddress,
-        'value'   : web3.utils.toHex(_value),
-        'data'    : contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI()
-    };
-
-    console.log('submit init transaction', nonce, gasPriceWei, gasLimit, _value);
-
-    const tx                    = new ethTx(rawTransaction);
-    tx.sign(privKey);
-    const serializedTx          = tx.serialize();
-    let transactionHash    = '-';
-    console.log('submiit signed transaction', '0x' + serializedTx.toString('hex'));
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
-      if (err) {
-        console.log('submitInit', err);
-      }
-      resolve({
-        raw: rawTransaction,
-        hash: hash,
+    try {
+      const contractAddress = contractPredictionAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      // const gasPriceWei     = await getGasPrice();
+      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const nonce           = await getNonce(ownerAddress);
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
       });
-    })
+    
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : web3.utils.toHex(_value),
+          'data'    : contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let transactionHash    = '-';
+      
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
+        if (err) {
+          console.log('submitInit', err);
+        }
+        resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+    } catch (e) {
+      reject(e);
+    }
     // .on('transactionHash', (hash) => {
     //     transactionHash = hash;
     //     console.log('transactionHash: ', transactionHash);

@@ -180,7 +180,6 @@ function asyncScanOddsNull() {
                     resource
                         .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4, amount)
                         .then(response => {
-                            console.log(item, match.toJSON(), configs.network[4].ownerAddress, side, 4, amount, response);
                             if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
                                 const hid = item.hid;
                                 const payout = web3.utils.toWei(response.data[0].odds + "");
@@ -208,17 +207,14 @@ function asyncScanOddsNull() {
         if (supports) {
             submitInit(supports, 1);
         }
-        console.log("tasks length", tasks.length);
         if (tasks.length > 0) {
             Promise
                 .all(tasks)
                 .then(async () => {
-                    console.log("tasks length promise all", tasks.length);
                     if (dataInit.hids.length > 0) {
                         let success = 0;
                         for (var i = 0; i < dataInit.hids.length; i++) {
                             try {
-                                console.log('start submit init', dataInit.hids[i], dataInit.sides[i], dataInit.payouts[i], dataInit.offchains[i], dataInit.values[i]);
                                 const receipt = await predictionContract.submitInitTransaction(dataInit.hids[i], dataInit.sides[i], dataInit.payouts[i], dataInit.offchains[i], dataInit.values[i]);
                                 console.log('Bot bet success', receipt);
                                 success += 1;

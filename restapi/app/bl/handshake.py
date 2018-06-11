@@ -137,6 +137,7 @@ def update_feed_result_for_outcome(outcome):
 
 
 def save_handshake_for_event(event_name, offchain, outcome=None):
+	# TODO: __createMarket
 	if 'report' in offchain:
 		if outcome is None:
 			print 'outcome is None'

@@ -260,7 +260,7 @@ function asyncScanOutcomeNull() {
                             const closingTime = match.date - Math.floor(+moment.utc()/1000);
                             const reportTime = closingTime + (4 * 60 * 60);
                             const dispute = reportTime + (4 * 60 * 60);
-                            const offchain = `crytosign_createMarket_${outcome.id}`;
+                            const offchain = `cryptosign_createMarket${outcome.id}`;
                             const source = match.source;
 
                             predictionContract

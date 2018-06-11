@@ -15,7 +15,6 @@ def admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         remote = request.remote_addr
-        print 'remote addres {}'.format(remote)
         route = list(request.access_route)
         while remote not in trusted_proxies:
             remote = route.pop()

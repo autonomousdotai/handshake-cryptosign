@@ -32,7 +32,7 @@ var BettingHandshake = getCompilied('PredictionHandshake');
 var web3 = new Web3(new Web3.providers.HttpProvider(configs.network[network_id].blockchainNetwork));
 var contractBettingAddress = configs.network[network_id].bettingHandshakeAddress;
 var contractBettingHandshake = new web3.eth.Contract(BettingHandshake.abi, contractBettingAddress);
-console.log(configs);
+
 const allEvents = [
     '__createMarket',
 	'__init',
@@ -314,6 +314,7 @@ function runBettingCron() {
 function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
     cron.schedule('*/1 * * * *', async function() {
+        console.log(configs);
 		console.log('odds cron running a task every 1m at ' + new Date());
 		try {
 			if (isRunningOdds === false) {
@@ -342,6 +343,7 @@ function runOddsCron() {
 
 function runCreateMarketCron() {
     cron.schedule('*/1 * * * *', async function() {
+        console.log(configs);
 		console.log('create market cron running a task every 2m at ' + new Date());
 		try {
 			if (isRunningCreateMarket === false) {

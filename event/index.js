@@ -260,13 +260,13 @@ function asyncScanOutcomeNull() {
                             const closingTime = match.date - Math.floor(+moment.utc()/1000);
                             const reportTime = closingTime + (4 * 60 * 60);
                             const dispute = reportTime + (4 * 60 * 60);
-                            const offchain = `createMarket_${outcome.id}`;
+                            const offchain = `crytosign_createMarket_${outcome.id}`;
                             const source = match.source;
                             console.log(index, fee, source, closingTime, reportTime, dispute, offchain);
                             predictionContract
                                 .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
-                                .then((receipt) => {
-                                    console.log(`Create outcome ${outcome.id} success, Receipt: ${receipt}`);
+                                .then((hash) => {
+                                    console.log(`Create outcome ${outcome.id} success, hash: ${hash}`);
                                     resolve(hash);
                                 })
                                 .catch((e) => {

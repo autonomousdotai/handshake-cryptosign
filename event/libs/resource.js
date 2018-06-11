@@ -35,10 +35,13 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             isHttps: false,
             headers: {
               'Content-Type': 'application/json',
-              'Payload': configs.payload
+              'Payload': configs.payload,
+              'Fcm-Token': '',
+              'Uid': '1234567890'
             },
             data: dataRequest
         };
+        console.log(options);
         httpRequest.request(options).then(result => {
             return resolve(result);
         }).catch(err => {

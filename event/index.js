@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const configs = require('./configs');
 const constants = require('./constants');
 const axios = require('axios');
-
+const moment = require('moment');
 // models
 const models = require('./models');
 
@@ -25,11 +25,12 @@ let isRunning = false;
 let isRunningOdds = false;
 let isRunningCreateMarket = false;
 
+const network_id = configs.network_id;
+
 var BettingHandshake = getCompilied('PredictionHandshake');
 
-var web3 = new Web3(new Web3.providers.HttpProvider(configs.network[4].blockchainNetwork));
-
-var contractBettingAddress = configs.network[4].bettingHandshakeAddress;
+var web3 = new Web3(new Web3.providers.HttpProvider(configs.network[network_id].blockchainNetwork));
+var contractBettingAddress = configs.network[network_id].bettingHandshakeAddress;
 var contractBettingHandshake = new web3.eth.Contract(BettingHandshake.abi, contractBettingAddress);
 
 const allEvents = [
@@ -138,6 +139,32 @@ function asyncGetPastEvents(contract, contractAddress, eventName, fromBlock) {
     })
 }
 
+function submitInitTransactions(dataInit, total, success) {
+    return new Promise(function (resolve, reject) {
+        const tnx_tasks = [];
+        dataInit.forEach((item, index) => {
+            tnx_tasks.push(new Promise((resolve, reject) => {
+                predictionContract
+                .submitInitTransaction(index, item.hid, item.side, item.payout, item.offchain, item.value)
+                .then(resultInit => {
+                    console.log('Bot bet success', resultInit);
+                    success += 1;
+                    resolve();
+                })
+                .catch(e => {
+                    console.error('bet error: ', e);
+                    resolve();
+                })
+            }));
+        });
+        Promise.all(tnx_tasks)
+        .then(result => {
+            return resolve(`${success}/${total}`);
+        })
+        .catch(reject);
+    });
+};
+
 async function asyncScanEventLog(contract, contractAddress, eventName) {
     let lastEventLog = await eventDAO.getLastLogByName(contractAddress, eventName);
     var fromBlock = 0;
@@ -160,36 +187,28 @@ async function asyncScanEventLog(contract, contractAddress, eventName) {
 
 function asyncScanOddsNull() {
     return new Promise(async (resolve, reject) => {
-        const againsts = await oddsDAO.getAgainstOddsNull();
         const supports = await oddsDAO.getSupportOddsNull();
+        const againsts = await oddsDAO.getAgainstOddsNull();
 
-        let dataInit = {
-            hids: [],
-            sides: [],
-            payouts: [],
-            offchains: [],
-            values: [],
-        };
-
+        let dataInit = [];
         const tasks = [];
+
         const submitInit = (arr, side) => {
             arr.forEach(item => {
                 tasks.push(new Promise(async (_resolve, _reject) => {
                     const match = await matchDAO.getMatchById(item.match_id);
                     const amount = '0.1';
                     resource
-                        .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4, amount)
+                        .submitInit(item, match.toJSON(), configs.network[network_id].ownerAddress, side, network_id, amount)
                         .then(response => {
                             if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
-                                const hid = item.hid;
-                                const payout = web3.utils.toWei(response.data[0].odds + "");
-                                const value = web3.utils.toWei(amount);
-                                const offchain = response.data[0].offchain;
-                                dataInit.hids.push(hid);
-                                dataInit.sides.push(side);
-                                dataInit.payouts.push(payout);
-                                dataInit.offchains.push(offchain);
-                                dataInit.values.push(value);
+                                dataInit.push({
+                                    hid: item.hid,
+                                    payout: web3.utils.toWei(response.data[0].odds + ""),
+                                    value: web3.utils.toWei(amount),
+                                    offchain: response.data[0].offchain,
+                                    side: side
+                                });
                             }
                             _resolve(null)
                         })
@@ -207,79 +226,21 @@ function asyncScanOddsNull() {
         if (supports) {
             submitInit(supports, 1);
         }
+
         if (tasks.length > 0) {
             Promise
                 .all(tasks)
-                .then(async () => {
-                    if (dataInit.hids.length > 0) {
-                        let success = 0;
-                        for (var i = 0; i < dataInit.hids.length; i++) {
-                            try {
-                                const receipt = await predictionContract.submitInitTransaction(dataInit.hids[i], dataInit.sides[i], dataInit.payouts[i], dataInit.offchains[i], dataInit.values[i]);
-                                console.log('Bot bet success', receipt);
-                                success += 1;
-                            } catch (e) {
-                                console.log('Bot bet error', e);
-                            }
-                        }
-                        resolve(success);
-                    } else {
-                        resolve(0);
+                .then(() => {
+                    if (dataInit.length === 0) {
+                        return resolve(0);
                     }
+                    let success = 0;
+                    submitInitTransactions(dataInit, tasks.length, success).then(resolve).catch(reject);
                 })
                 .catch(reject);
         } else {
             resolve(0);
         }
-
-        // let dataInit = {
-        //     hids: [],
-        //     sides: [],
-        //     payouts: [],
-        //     offchains: []
-        // };
-
-        // const tasks = [];
-        // const submitInit = (arr, side) => {
-        //     (arr || []).forEach(item => {
-        //         if (item) {
-        //             const task = new Promise (async (resolve, reject) => {
-        //                 const match = await matchDAO.getMatchById(item.match_id);
-        //                 resource
-        //                 .submitInit(item, match.toJSON(), configs.network[4].ownerAddress, side, 4)
-        //                 .then(response => {
-        //                     console.log(response);
-        //                     if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
-        //                         dataInit.hids.push(item.hid);
-        //                         dataInit.sides.push(side);
-        //                         // dataInit.payouts.push(web3.utils.toHex(web3.utils.toWei(response.data[0].odds)));
-        //                         dataInit.payouts.push(web3.utils.toWei(response.data[0].odds));
-        //                         dataInit.offchains.push(web3.utils.fromUtf8(response.data[0].offchain));
-        //                     }
-        //                     return resolve(response);
-        //                 })
-        //                 .catch(reject);
-        //             });
-        //             tasks.push(task);
-        //         }
-        //     });
-        // };
-
-        // submitInit(againsts, 2);
-        // submitInit(supports, 1);
-
-        // Promise.all(tasks)
-        // .then(results => {
-        //     if (dataInit.hids.length) {
-        //         predictionContract
-        //         .submitMultiInitTransaction(dataInit.hids, dataInit.sides, dataInit.payouts, dataInit.offchains)
-        //         .then(resolve)
-        //         .catch(reject);
-        //     } else {
-        //         return resolve('Data is empty');
-        //     }
-        // })
-        // .catch(reject);
     });
 }
 
@@ -288,17 +249,20 @@ function asyncScanOutcomeNull() {
         const outcomes = await outcomeDAO.getOutcomesNullHID();
         if (outcomes.length > 0) {
             tasks = []
-            outcomes.forEach((outcome) => {
-                const task = new Promise((resolve, reject) => {
-                    const match = matchDAO.getMatchById(outcome.match_id);
+            outcomes.forEach((outcome, index) => {
+                const task = new Promise(async(resolve, reject) => {
+                    const match = await matchDAO.getMatchById(outcome.match_id);
                     const fee = match.market_fee;
-                    const closingTime = new Date().getTime() - match.date;
-                    const reportTime = closingTime + (60 * 60 * 4);
-                    const offchain = `cryptosign_${match.id}`;
+                    const closingTime = match.date - Math.floor(+moment.utc()/1000);
+                    const reportTime = closingTime + (4 * 60 * 60);
+                    const dispute = reportTime + (4 * 60 * 60);
+                    const offchain = `createMarket_${outcome.id}`;
+                    const source = match.source;
+
                     predictionContract
-                        .createMarketTransaction(fee, reporter, closingTime, reportTime, offchain)
-                        .then((hash) => {
-                            console.log(`Create outcome ${outcome.id} success, Hash: ${hash}`);
+                        .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
+                        .then((receipt) => {
+                            console.log(`Create outcome ${outcome.id} success, Receipt: ${receipt}`);
                             resolve(hash);
                         })
                         .catch((e) => {
@@ -349,8 +313,8 @@ function runBettingCron() {
 
 function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
-    cron.schedule('*/30 * * * * *', async function() {
-		console.log('odds cron running a task every 30s at ' + new Date());
+    cron.schedule('*/1 * * * *', async function() {
+		console.log('odds cron running a task every 1m at ' + new Date());
 		try {
 			if (isRunningOdds === false) {
                 isRunningOdds = true;
@@ -377,8 +341,7 @@ function runOddsCron() {
 }
 
 function runCreateMarketCron() {
-    // run every 1 min
-    cron.schedule('*/2 * * * *', async function() {
+    cron.schedule('*/1 * * * *', async function() {
 		console.log('create market cron running a task every 2m at ' + new Date());
 		try {
 			if (isRunningCreateMarket === false) {
@@ -402,5 +365,5 @@ function runCreateMarketCron() {
 }
 
 runBettingCron();
-// runOddsCron();
-// runCreateMarketCron();
+runOddsCron();
+runCreateMarketCron();

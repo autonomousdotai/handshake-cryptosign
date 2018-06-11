@@ -22,6 +22,7 @@ const baseConfig = {
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
+  network_id: 4,
   network: {
     '1': {
       basicHandshakeAddress: '',
@@ -65,4 +66,4 @@ if (envs[env]) {
   }
 }
 
-module.exports = Object.assign({}, baseConfig, envConfig, localConfig);
+module.exports = Object.assign({}, baseConfig, envConfig, localConfig, { env: env });

@@ -3,17 +3,18 @@ const Web3 = require('web3');
 const configs = require('../configs');
 const httpRequest = require('../libs/http');
 const PredictionHandshake = require('../contracts/PredictionHandshake.json');
-var web3 = new Web3(new Web3.providers.HttpProvider(configs.network[4].blockchainNetwork));
-var contractPredictionAddress = configs.network[4].predictionHandshakeAddress;
-var ownerAddress = configs.network[4].ownerAddress;
-var privateKey = configs.network[4].privateKey;
-var gasLimit = configs.network[4].gasLimit;
 
-var contractPredictionHandshake = new web3.eth.Contract(PredictionHandshake.abi, contractPredictionAddress);
+const network_id = configs.network_id;
+const web3 = new Web3(new Web3.providers.HttpProvider(configs.network[network_id].blockchainNetwork));
+const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddress;
+const ownerAddress = configs.network[network_id].ownerAddress;
+const privateKey = configs.network[network_id].privateKey;
+const gasLimit = configs.network[network_id].gasLimit;
+
+const contractPredictionHandshake = new web3.eth.Contract(PredictionHandshake.abi, bettingHandshakeAddress);
 
 const ethTx = require('ethereumjs-tx');
 const PredictionABI = require('../contracts/PredictionHandshake.json').abi;
-
 
 const padLeftEven = (hex) => {
   hex = hex.length % 2 !== 0 ? '0' + hex : hex;
@@ -64,28 +65,39 @@ const sanitizeHex = (hex) => {
 };
 
 const getNonce = async (address, status) => {
-  const options = {
-    hostname: 'ninja.org',
-    path: `/api/nonce/get?address=${address}&network_id=4`,
-    method: 'GET',
-    isHttps: true,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-  try {
-    response = await httpRequest.request(options);
-    if (response.status == 1) {
-      return response.data;
-    } else {
-      throw Error("Cannot get Nonce.")
-    }
-  } catch (e) {
-    console.log(e);
-    throw e
-  }
-  // status = status ? status : 'latest';
-  // return web3.eth.getTransactionCount(address, status);
+  status = status ? status : 'latest';
+  return web3.eth.getTransactionCount(address, status);
+}
+
+const getNonceFromAPI = (index, address, status) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      /*
+      const options = {
+        hostname: configs.env === 'default' ? 'ninja.org' : configs.restApiEndpoint,
+        path: `${configs.env === 'default' ? '/api' : '' }/nonce/get?address=${address}&network_id=${network_id}`,
+        method: 'GET',
+        isHttps: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+      httpRequest.request(options)
+      .then(response => {
+        if (response.status == 1) {
+          return resolve(response.data);
+        } else {
+          return reject('Cannot get Nonce.');
+        }
+      })
+      .catch(e => {
+        console.log(e);
+        return reject(e);
+      });
+      */
+      getNonce(address).then(resolve).catch(reject);
+    }, (index + 1) * 20000);
+  });
 };
 
 const getGasPrice = async () => {
@@ -95,18 +107,17 @@ const getGasPrice = async () => {
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
+const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) => {
   return new Promise(async(resolve, reject) => {
     try {
-      const contractAddress = contractPredictionAddress;
+      const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      // const gasPriceWei     = await getGasPrice();
+      const nonce           = await getNonceFromAPI(_index, ownerAddress);
       const gasPriceWei     = web3.utils.toWei('100', 'gwei');
-      const nonce           = await getNonce(ownerAddress);
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
-    
+      console.log('NONCE: ', nonce);
       const rawTransaction = {
           'from'    : ownerAddress,
           'nonce'   : '0x' + nonce.toString(16),
@@ -114,155 +125,53 @@ const submitInitTransaction = (_hid, _side, _payout, _offchain, _value) => {
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
           'value'   : web3.utils.toHex(_value),
-          'data'    : contract.methods.init(_hid, _side, _payout, web3.utils.fromUtf8(_offchain)).encodeABI()
+          'data'    : contract.methods.init(1, 1, 1000, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
-
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();
-      let transactionHash    = '-';
-      
-      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
-        if (err) {
-          console.log('submitInit', err);
-        }
-        resolve({
+      /*
+      const batch = new web3.BatchRequest();
+      batch.add(web3.eth.sendSignedTransaction.request(`0x${serializedTx.toString('hex')}`,'receipt', console.log));
+      batch.execute();
+      */
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        return resolve({
           raw: rawTransaction,
           hash: hash,
         });
       })
+      .on('receipt', (receipt) => {
+        console.log(receipt);
+      })
+      .on('error', err => {
+        console.log(err);
+        return reject(err);
+      });
     } catch (e) {
       reject(e);
     }
-    // .on('transactionHash', (hash) => {
-    //     transactionHash = hash;
-    //     console.log('transactionHash: ', transactionHash);
-    // })
-    // .on('receipt', (receipt) => {
-    //   return resolve(receipt);
-    // })
-    // .catch((err) => {
-    //     const error = err.toString();
-    //     let _err = {};
-    //     if (error.indexOf('Transaction was not mined within 50 blocks') > 0) {
-    //         _err = {
-    //             status: '0x2',
-    //             error : err.toString(),
-    //             data  : rawTransaction,
-    //             transactionHash  : transactionHash
-    //         };
-    //     }
-    //     else if (error.indexOf('known transaction') > 0) {
-    //       _err = {
-    //             status: '0x3',
-    //             error : err.toString(),
-    //             data  : rawTransaction,
-    //             transactionHash  : transactionHash
-    //         };
-    //     }
-    //     else if (error.indexOf('Failed to check for transaction receipt') > 0) {
-    //       _err = {
-    //             status: '0x4',
-    //             error : err.toString(),
-    //             data  : rawTransaction,
-    //             transactionHash  : transactionHash
-    //         };
-    //     }
-    //     else {
-    //       _err = {
-    //         status: '0x0',
-    //         error : err.toString(),
-    //         data  : rawTransaction,
-    //         transactionHash  : transactionHash
-    //       };
-    //     }
-    //     return reject(_err);
-    // });
-  });
-};
-
-const submitMultiInitTransaction = (_hids, _sides, _payouts, _offchains) => {
-  return new Promise(async(resolve, reject) => {
-    const contractAddress = contractPredictionAddress;
-    const privKey         = Buffer.from(privateKey, 'hex');
-    const gasPriceWei     = await getGasPrice();
-    const nonce           = await getNonce(ownerAddress);
-    const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
-        from: ownerAddress
-    });
-
-    const rawTransaction = {
-        'from'    : ownerAddress,
-        'nonce'   : '0x' + nonce.toString(16),
-        'gasPrice': web3.utils.toHex(gasPriceWei),
-        'gasLimit': web3.utils.toHex(gasLimit),
-        'to'      : contractAddress,
-        'value'   : '0x0',
-        'data'    : contract.methods.multiInit(_hids, _sides, _payouts, _offchains).encodeABI()
-    };
-
-    const tx                    = new ethTx(rawTransaction);
-    tx.sign(privKey);
-    const serializedTx          = tx.serialize();
-    let transactionHash    = '-';
-
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-    .on('transactionHash', (hash) => {
-        transactionHash = hash;
-        console.log('transactionHash: ', transactionHash);
-    })
-    .on('receipt', (receipt) => {
-      return resolve(receipt);
-    })
-    .catch((err) => {
-        const error = err.toString();
-        let _err = {};
-        if (error.indexOf('Transaction was not mined within 50 blocks') > 0) {
-            _err = {
-                status: '0x2',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else if (error.indexOf('known transaction') > 0) {
-          _err = {
-                status: '0x3',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else if (error.indexOf('Failed to check for transaction receipt') > 0) {
-          _err = {
-                status: '0x4',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else {
-          _err = {
-            status: '0x0',
-            error : err.toString(),
-            data  : rawTransaction,
-            transactionHash  : transactionHash
-          };
-        }
-        return reject(_err);
-    });
   });
 };
 
 /**
  * Create Market
+ * 
+  uint fee, 
+  bytes32 source,
+  uint closingWindow, 
+  uint reportWindow, 
+  uint disputeWindow,
+  bytes32 offchain
  */
-const createMarketTransaction = (fee, closingTime, reportTime, offchain) => {
+
+const createMarketTransaction = (index, fee, source, closingTime, reportTime, dispute, offchain) => {
   return new Promise(async(resolve, reject) => {
-    const contractAddress = contractPredictionAddress;
+    const contractAddress = bettingHandshakeAddress;
     const privKey         = Buffer.from(privateKey, 'hex');
-    const gasPriceWei     = await getGasPrice();
-    const nonce           = await getNonce(ownerAddress);
+    const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+    const nonce           = await getNonceFromAPI(index, ownerAddress);
     const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
         from: ownerAddress
     });
@@ -274,60 +183,27 @@ const createMarketTransaction = (fee, closingTime, reportTime, offchain) => {
         'gasLimit': web3.utils.toHex(gasLimit),
         'to'      : contractAddress,
         'value'   : '0x0',
-        'data'    : contract.methods.createMarket(fee, ownerAddress, closingTime, reportTime, web3.utils.fromUtf8(offchain)).encodeABI()
+        'data'    : contract.methods.createMarket(fee, web3.utils.fromUtf8(source), closingTime, reportTime, dispute, web3.utils.fromUtf8(offchain)).encodeABI()
     };
 
     const tx                    = new ethTx(rawTransaction);
     tx.sign(privKey);
     const serializedTx          = tx.serialize();
-    let transactionHash    = '-';
 
     web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-    .on('transactionHash', (hash) => {
-        transactionHash = hash;
-        console.log('transactionHash: ', transactionHash);
-    })
-    .on('receipt', (receipt) => {
-      return resolve(receipt);
-    })
-    .catch((err) => {
-        const error = err.toString();
-        let _err = {};
-        if (error.indexOf('Transaction was not mined within 50 blocks') > 0) {
-            _err = {
-                status: '0x2',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else if (error.indexOf('known transaction') > 0) {
-          _err = {
-                status: '0x3',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else if (error.indexOf('Failed to check for transaction receipt') > 0) {
-          _err = {
-                status: '0x4',
-                error : err.toString(),
-                data  : rawTransaction,
-                transactionHash  : transactionHash
-            };
-        }
-        else {
-          _err = {
-            status: '0x0',
-            error : err.toString(),
-            data  : rawTransaction,
-            transactionHash  : transactionHash
-          };
-        }
-        return reject(_err);
-    });
+      .on('transactionHash', (hash) => {
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+      .on('receipt', (receipt) => {
+      })
+      .on('error', err => {
+        console.log(err);
+        return reject(err);
+      });
   });
 };
 
-module.exports = { submitInitTransaction, submitMultiInitTransaction };
+module.exports = { submitInitTransaction, createMarketTransaction };

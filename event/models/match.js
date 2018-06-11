@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
     modified_user_id: DataTypes.INTEGER,
     created_user_id: DataTypes.INTEGER,
     name: DataTypes.STRING,
-    market_fee: DataTypes.INTEGER
+    market_fee: DataTypes.INTEGER,
+    source: DataTypes.STRING
   }, {
     tableName: 'match',
     timestamps: false,

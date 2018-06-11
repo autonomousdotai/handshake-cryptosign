@@ -8,5 +8,11 @@ module.exports = {
                     hid: null
                 }
             });
+    },
+    updateOutcomeHID: function (outcome, hid) {
+        return outcome
+            .update({
+                hid: hid
+            });
     }
 };

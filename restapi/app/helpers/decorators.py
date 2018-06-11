@@ -8,7 +8,7 @@ from app.models import User
 
 
 trusted_proxies = ('127.0.0.1')
-white_ips = ('192.168.0.47')
+white_ips = ('192.168.0.46', '127.0.0.1')
 
 
 def admin_required(f):
@@ -16,7 +16,7 @@ def admin_required(f):
     def wrap(*args, **kwargs):
         remote = request.remote_addr
         route = list(request.access_route)
-        while remote in trusted_proxies:
+        while remote not in trusted_proxies:
             remote = route.pop()
 
         if remote not in white_ips:

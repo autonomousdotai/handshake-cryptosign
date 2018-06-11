@@ -1,3 +1,4 @@
+import os
 import json
 import app.constants as CONST
 import app.bl.match as match_bl
@@ -46,6 +47,8 @@ def add():
 			raise Exception(MESSAGE.INVALID_DATA)
 
 		matches = []
+		outcomes = []
+		response_json = []
 		for item in data:
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -55,14 +58,67 @@ def add():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
+				source=item['source'],
 				market_fee=int(item['market_fee']),
 				date=parse_date_string_to_timestamp(item['date'])
 			)
 			matches.append(match)
+			db.session.add(match)
+			db.session.flush()
 
-		db.session.add_all(matches)
+			if 'outcomes' in item:
+				for outcome_data in item['outcomes']:
+					outcome = Outcome(
+						name=outcome_data['name'],
+						match_id=match.id
+					)
+					outcomes.append(outcome)
+			response_json.append(match.to_json())
+
+		db.session.add_all(outcomes)
 		db.session.commit()
 
+		return response_ok(response_json)
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@match_routes.route('/create_market', methods=['POST'])
+@admin_required
+def create_market():
+	try:
+		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
+		data = {}
+		with open(fixtures_path, 'r') as f:
+			data = json.load(f)
+
+		matches = []
+		outcomes = []
+		if 'fixtures' in data:
+			fixtures = data['fixtures']
+			for item in fixtures:
+				if len(item['homeTeamName']) > 0 and len(item['awayTeamName']) > 0:
+					match = Match(
+								homeTeamName=item['homeTeamName'],
+								awayTeamName=item['awayTeamName'],
+								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
+								source='football-data.org',
+								market_fee=0,
+								date=parse_date_string_to_timestamp(item['date'])
+							)
+					matches.append(match)
+					db.session.add(match)
+					db.session.flush()
+					
+					outcome = Outcome(
+						name='{} wins'.format(item['homeTeamName']),
+						match_id=match.id
+					)
+					outcomes.append(outcome)
+
+		db.session.add_all(outcomes)
+		db.session.commit()
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
@@ -71,6 +127,7 @@ def add():
 
 @match_routes.route('/remove/<int:id>', methods=['POST'])
 @login_required
+# @admin_required
 def remove(id):
 	try:
 		match = Match.find_match_by_id(id)

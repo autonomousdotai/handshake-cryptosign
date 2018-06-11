@@ -168,41 +168,45 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
 
 const createMarketTransaction = (index, fee, source, closingTime, reportTime, dispute, offchain) => {
   return new Promise(async(resolve, reject) => {
-    const contractAddress = bettingHandshakeAddress;
-    const privKey         = Buffer.from(privateKey, 'hex');
-    const gasPriceWei     = web3.utils.toWei('100', 'gwei');
-    const nonce           = await getNonceFromAPI(index, ownerAddress);
-    const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
-        from: ownerAddress
-    });
-
-    const rawTransaction = {
-        'from'    : ownerAddress,
-        'nonce'   : '0x' + nonce.toString(16),
-        'gasPrice': web3.utils.toHex(gasPriceWei),
-        'gasLimit': web3.utils.toHex(gasLimit),
-        'to'      : contractAddress,
-        'value'   : '0x0',
-        'data'    : contract.methods.createMarket(fee, web3.utils.fromUtf8(source), closingTime, reportTime, dispute, web3.utils.fromUtf8(offchain)).encodeABI()
-    };
-
-    const tx                    = new ethTx(rawTransaction);
-    tx.sign(privKey);
-    const serializedTx          = tx.serialize();
-
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-      .on('transactionHash', (hash) => {
-        return resolve({
-          raw: rawTransaction,
-          hash: hash,
-        });
-      })
-      .on('receipt', (receipt) => {
-      })
-      .on('error', err => {
-        console.log(err);
-        return reject(err);
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const nonce           = await getNonceFromAPI(index, ownerAddress);
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
       });
+
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : '0x0',
+          'data'    : contract.methods.createMarket(fee, web3.utils.fromUtf8(source), closingTime, reportTime, dispute, web3.utils.fromUtf8(offchain)).encodeABI()
+      };
+
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+        .on('transactionHash', (hash) => {
+          return resolve({
+            raw: rawTransaction,
+            hash: hash,
+          });
+        })
+        .on('receipt', (receipt) => {
+        })
+        .on('error', err => {
+          console.log(err);
+          return reject(err);
+        });
+    } catch (e) {
+      reject(e);
+    }
   });
 };
 

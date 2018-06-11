@@ -314,6 +314,7 @@ function runBettingCron() {
 function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
     cron.schedule('*/1 * * * *', async function() {
+        console.log(configs);
 		console.log('odds cron running a task every 1m at ' + new Date());
 		try {
 			if (isRunningOdds === false) {
@@ -342,6 +343,7 @@ function runOddsCron() {
 
 function runCreateMarketCron() {
     cron.schedule('*/1 * * * *', async function() {
+        console.log(configs);
 		console.log('create market cron running a task every 2m at ' + new Date());
 		try {
 			if (isRunningCreateMarket === false) {
@@ -365,5 +367,5 @@ function runCreateMarketCron() {
 }
 
 runBettingCron();
-runOddsCron();
+// runOddsCron();
 runCreateMarketCron();

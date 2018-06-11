@@ -6,7 +6,6 @@ var https = require('https');
 // import { request as httpsRequest } from 'https';
 
 const request = (params) => {
-    console.log(params);
     return new Promise((resolve, reject) => {
         const postData = JSON.stringify(params.data) || '';
         let headers = {

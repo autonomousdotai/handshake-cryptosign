@@ -77,7 +77,7 @@ const getNonceFromAPI = (index, address, status) => {
         hostname: configs.env === 'default' ? 'ninja.org' : configs.restApiEndpoint,
         path: `${configs.env === 'default' ? '/api' : '' }/nonce/get?address=${address}&network_id=${network_id}`,
         method: 'GET',
-        isHttps: true,
+        isHttps: configs.env === 'default',
         headers: {
           'Content-Type': 'application/json',
         },

@@ -1,11 +1,11 @@
 
 const configs = require('../configs');
-const httpRequest = require('../libs/http');
+const axios = require('axios');
 /*
  @oddData: outcome model
 */
 /*
-{"id":3,"date_created":null,"date_modified":null,"deleted":0,"name":"Spain wins","match_id":5,"hid":2,"result":-1,"tx":null,"modified_user_id":null,"created_user_id":null}
+
 */
 const submitInit = (outcome, match, address, side, chainId, amount) => {
     return new Promise((resolve, reject) => {
@@ -27,25 +27,16 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             from_address: address
         };
 
-        const options = {
-            hostname: configs.restApiEndpoint,
-            path: `${configs.env === 'default' ? '/api' : '' }/cryptosign/handshake/init`,
-            method: 'POST',
-            port: configs.restApiEndpointPort,
-            isHttps: false,
+        axios.post(`${configs.restApiEndpoint}/cryptosign/handshake/init`, dataRequest, {
             headers: {
-              'Content-Type': 'application/json',
-              'Payload': configs.payload,
-              'Fcm-Token': '',
-              'Uid': '1234567890'
+                'Content-Type': 'application/json',
+                'Payload': configs.payload,
             },
-            data: dataRequest
-        };
-        console.log(options);
-        httpRequest.request(options).then(result => {
-            return resolve(result);
-        }).catch(err => {
-            console.log(err);
+        })
+        .then((response) => {
+            return resolve(response.data);
+        })
+        .catch((error) => {
             return reject(err);
         });
     });

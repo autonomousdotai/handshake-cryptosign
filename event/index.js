@@ -266,11 +266,11 @@ function asyncScanOutcomeNull() {
                             predictionContract
                                 .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
                                 .then((hash) => {
-                                    console.log(`Create outcome ${outcome.id} success, hash: ${hash}`);
+                                    console.log(`Create outcome_id ${outcome.id} success, hash: ${hash}`);
                                     resolve(hash);
                                 })
                                 .catch((e) => {
-                                    console.log(`Create outcome ${outcome.id} fail: ${e.message}`);
+                                    console.log(`Create outcome_id ${outcome.id} fail: ${e.message}`);
                                     resolve(null);
                                 });
                         } catch (e) {

@@ -1,9 +1,9 @@
 module.exports = {
   db: {
-    database: 'cryptosign',
-    username: 'root',
-    password: 'OyvamIDnxkLFysag',
-    host: '35.230.25.234',
+    database: '',
+    username: '',
+    password: '',
+    host: '',
     dialect: 'mysql',
     pool: {
       max: 5,
@@ -15,7 +15,7 @@ module.exports = {
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'localhost',
   restApiEndpointPort: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT_PORT || 5000,
-  payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || 'ujekkxSE-ce1MwmLkKyUa371JFAGUHFcG0NWi-jo-RVODJcRSHN6sMnaSQ==',
+  payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
   network_id: 4,
   network: {
     '1': {

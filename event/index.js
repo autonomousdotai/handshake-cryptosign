@@ -21,6 +21,7 @@ var contractBettingHandshake = new web3.eth.Contract(BettingHandshake.abi, contr
 
 
 const allEvents = [
+    '__createMarket',
 	'__init',
 	'__uninit',
 	'__shake',
@@ -85,6 +86,7 @@ async function processEventObj(contractAddress, eventName, eventObj) {
         switch (contractAddress) {
             case contractBettingAddress: {
                 switch (eventName) {
+                    case '__createMarket':
                     case '__init':
                     case '__shake':
                     case '__uninit':

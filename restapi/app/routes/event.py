@@ -25,13 +25,13 @@ def event():
 		offchain = data['offchain']
 		hid = int(data['hid'])
 
-		if 'createMaket' in offchain:
-			offchain = offchain.replace('createMaket', '')
-			match = Match.find_match_by_id(offchain)
-			if match is None:
-				return response_error(MESSAGE.MATCH_NOT_FOUND)
+		if '__createMarket' in event_name:
+			offchain = int(offchain.replace('createMarket', ''))
+			outcome = Outcome.find_outcome_by_id(offchain)
+			if outcome is None:
+				return response_error(MESSAGE.INVALID_OUTCOME)
 			else:
-				match.hid = hid
+				outcome.hid = hid
 				db.session.flush()
 
 		else:
@@ -39,7 +39,7 @@ def event():
 			if outcome is None:
 				return response_error(MESSAGE.INVALID_BET)
 	
-		handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
+			handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
 		db.session.commit()
 
 		return response_ok()

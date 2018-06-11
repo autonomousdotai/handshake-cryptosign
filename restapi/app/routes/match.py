@@ -85,7 +85,7 @@ def add():
 
 
 @match_routes.route('/create_market', methods=['POST'])
-# @admin_required
+@admin_required
 def create_market():
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'

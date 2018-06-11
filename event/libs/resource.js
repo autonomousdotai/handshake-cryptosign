@@ -32,7 +32,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             path: `${configs.env === 'default' ? '/api' : '' }/cryptosign/handshake/init`,
             method: 'POST',
             port: configs.restApiEndpointPort,
-            isHttps: configs.env === 'default',
+            isHttps: false,
             headers: {
               'Content-Type': 'application/json',
               'Payload': configs.payload

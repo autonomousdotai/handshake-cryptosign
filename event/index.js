@@ -246,43 +246,55 @@ function asyncScanOddsNull() {
 
 function asyncScanOutcomeNull() {
     return new Promise(async(resolve, reject) => {
-        const outcomes = await outcomeDAO.getOutcomesNullHID();
-        if (outcomes.length > 0) {
-            tasks = []
-            outcomes.forEach((outcome, index) => {
-                const task = new Promise(async(resolve, reject) => {
-                    const match = await matchDAO.getMatchById(outcome.match_id);
-                    const fee = match.market_fee;
-                    const closingTime = match.date - Math.floor(+moment.utc()/1000);
-                    const reportTime = closingTime + (4 * 60 * 60);
-                    const dispute = reportTime + (4 * 60 * 60);
-                    const offchain = `createMarket_${outcome.id}`;
-                    const source = match.source;
+        try
+        {
+            const outcomes = await outcomeDAO.getOutcomesNullHID();
+            if (outcomes.length > 0) {
+                let tasks = [];
+                outcomes.forEach((outcome, index) => {
+                    const task = new Promise(async(resolve, reject) => {
+                        try {
+                            const match = await matchDAO.getMatchById(outcome.match_id);
 
-                    predictionContract
-                        .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
-                        .then((receipt) => {
-                            console.log(`Create outcome ${outcome.id} success, Receipt: ${receipt}`);
-                            resolve(hash);
-                        })
-                        .catch((e) => {
-                            console.log(`Create outcome ${outcome.id} fail: ${e.message}`);
-                            resolve(null);
-                        });
+                            const fee = match.market_fee;
+                            const closingTime = match.date - Math.floor(+moment.utc()/1000);
+                            const reportTime = closingTime + (4 * 60 * 60);
+                            const dispute = reportTime + (4 * 60 * 60);
+                            const offchain = `createMarket_${outcome.id}`;
+                            const source = match.source;
+                            console.log(index, fee, source, closingTime, reportTime, dispute, offchain);
+                            predictionContract
+                                .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
+                                .then((receipt) => {
+                                    console.log(`Create outcome ${outcome.id} success, Receipt: ${receipt}`);
+                                    resolve(hash);
+                                })
+                                .catch((e) => {
+                                    console.log(`Create outcome ${outcome.id} fail: ${e.message}`);
+                                    resolve(null);
+                                });
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+
+                    tasks.push(task);
                 });
-                tasks.add(task);
-            });
-            Promise.all(tasks).then((results) => {
-                let success = 0;
-                (results || []).forEach((hash) => {
-                    if (hash) {
-                        success += 1
-                    }
-                });
-                resolve(success);
-            })
-        } else {
-            resolve(0)
+                Promise.all(tasks).then((results) => {
+                    let success = 0;
+                    (results || []).forEach((hash) => {
+                        if (hash) {
+                            success += 1
+                        }
+                    });
+                    resolve(success);
+                })
+            } else {
+                resolve(0)
+            }
+        } catch (e) {
+            console.log('=======', e);
+            reject(e);
         }
     });
 }

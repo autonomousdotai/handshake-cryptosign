@@ -28,7 +28,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
         };
 
         const options = {
-            hostname: configs.env === 'default' ? 'ninja.org' : configs.restApiEndpoint,
+            hostname: configs.restApiEndpoint,
             path: `${configs.env === 'default' ? '/api' : '' }/cryptosign/handshake/init`,
             method: 'POST',
             port: configs.restApiEndpointPort,

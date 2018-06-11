@@ -262,7 +262,7 @@ function asyncScanOutcomeNull() {
                             const dispute = reportTime + (4 * 60 * 60);
                             const offchain = `crytosign_createMarket_${outcome.id}`;
                             const source = match.source;
-                            console.log(index, fee, source, closingTime, reportTime, dispute, offchain);
+
                             predictionContract
                                 .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
                                 .then((hash) => {
@@ -326,7 +326,6 @@ function runBettingCron() {
 function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
     cron.schedule('*/1 * * * *', async function() {
-        console.log(configs);
 		console.log('odds cron running a task every 1m at ' + new Date());
 		try {
 			if (isRunningOdds === false) {
@@ -355,7 +354,6 @@ function runOddsCron() {
 
 function runCreateMarketCron() {
     cron.schedule('*/1 * * * *', async function() {
-        console.log(configs);
 		console.log('create market cron running a task every 2m at ' + new Date());
 		try {
 			if (isRunningCreateMarket === false) {

@@ -20,7 +20,7 @@ const baseConfig = {
   },
   port: 5000,
   timeAlive: 60,
-  restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
+  restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'localhost',
   restApiEndpointPort: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT_PORT || 5000,
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
   network_id: 4,

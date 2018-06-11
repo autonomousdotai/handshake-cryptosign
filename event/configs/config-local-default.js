@@ -14,6 +14,7 @@ module.exports = {
   port: 5000,
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
+  restApiEndpointPort: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT_PORT || 5000,
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || 'ujekkxSE-ce1MwmLkKyUa371JFAGUHFcG0NWi-jo-RVODJcRSHN6sMnaSQ==',
   network_id: 4,
   network: {

@@ -123,7 +123,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json['support']), 1)
 
-            self.assertEqual(data_json['support'][0]['odds'], '1.25')
+            self.assertEqual(data_json['support'][0]['odds'], 1.25)
             self.assertEqual(response.status_code, 200)
 
         for handshake in arr_hs:
@@ -197,394 +197,394 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_init_handshake_case_2(self):
-        self.clear_data_before_test()
+    # def test_init_handshake_case_2(self):
+    #     self.clear_data_before_test()
 
-        # Support
-        #   amount          odds
-        #   0.2               3         1.5
-        #   0.1               2.9       1.52
-        #   0.3               2.8       1.55  
-        # Shake with 1.25 ETH, odds: 1.4
-        # Expected: 
-        #   Maker:  
-        #          remaining_amount = 0
-        #          list handshake is now empty
-        #  Shaker:
-        #          match 3 handshakes
-        #          create 1 handshakes
+    #     # Support
+    #     #   amount          odds
+    #     #   0.2               3         1.5
+    #     #   0.1               2.9       1.52
+    #     #   0.3               2.8       1.55  
+    #     # Shake with 1.25 ETH, odds: 1.4
+    #     # Expected: 
+    #     #   Maker:  
+    #     #          remaining_amount = 0
+    #     #          list handshake is now empty
+    #     #  Shaker:
+    #     #          match 3 handshakes
+    #     #          create 1 handshakes
 
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=3,
-				amount=0.2,
-				currency='ETH',
-				side=1,
-				win_value=0.6,
-				remaining_amount=0.2,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     self.clear_data_before_test()
+    #     arr_hs = []
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=3,
+	# 			amount=0.2,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.6,
+	# 			remaining_amount=0.2,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=2.9,
-				amount=0.1,
-				currency='ETH',
-				side=1,
-				win_value=0.29,
-				remaining_amount=0.1,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=2.9,
+	# 			amount=0.1,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.29,
+	# 			remaining_amount=0.1,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=109,
-				outcome_id=88,
-				odds=2.8,
-				amount=0.3,
-				currency='ETH',
-				side=1,
-				win_value=0.84,
-				remaining_amount=0.3,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=109,
+	# 			outcome_id=88,
+	# 			odds=2.8,
+	# 			amount=0.3,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.84,
+	# 			remaining_amount=0.3,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        with self.client:
-            Uid = 66
+    #     with self.client:
+    #         Uid = 66
 
-            params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "TESTING MODE",
-                "outcome_id": 88,
-                "odds": 1.4,
-                "amount": 1.25,
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 2,
-                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
-            }
-            response = self.client.post(
-                                    '/handshake/init',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
+    #         params = {
+    #             "type": 3,
+    #             "extra_data": "",
+    #             "description": "TESTING MODE",
+    #             "outcome_id": 88,
+    #             "odds": 1.4,
+    #             "amount": 1.25,
+    #             "currency": "ETH",
+    #             "chain_id": 4,
+    #             "side": 2,
+    #             "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+    #         }
+    #         response = self.client.post(
+    #                                 '/handshake/init',
+    #                                 data=json.dumps(params), 
+    #                                 content_type='application/json',
+    #                                 headers={
+    #                                     "Uid": "{}".format(Uid),
+    #                                     "Fcm-Token": "{}".format(123),
+    #                                     "Payload": "{}".format(123),
+    #                                 })
 
-            data = json.loads(response.data.decode()) 
-            data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(data_json), 4)
-            self.assertEqual(response.status_code, 200)
+    #         data = json.loads(response.data.decode()) 
+    #         data_json = data['data']
+    #         self.assertTrue(data['status'] == 1)
+    #         self.assertEqual(len(data_json), 4)
+    #         self.assertEqual(response.status_code, 200)
 
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-
-    def test_init_handshake_case_3(self):
-        self.clear_data_before_test()
-
-        # Against
-        #   amount          odds
-        #   0.2               1.5           3
-        #   0.1               1.4           3.5
-        #   0.3               1.3           4.33
-        # Shake with 0.25 ETH, odds: 5
-        # Expected:
-        #   Against:            
-        #      has 2 
-
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.5,
-				amount=0.2,
-				currency='ETH',
-				side=2,
-				win_value=0.3,
-				remaining_amount=0.2,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.4,
-				amount=0.1,
-				currency='ETH',
-				side=2,
-				win_value=0.14,
-				remaining_amount=0.1,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=109,
-				outcome_id=88,
-				odds=1.3,
-				amount=0.3,
-				currency='ETH',
-				side=1,
-				win_value=0.39,
-				remaining_amount=0.3,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        with self.client:
-            Uid = 66
-
-            params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "TESTING MODE",
-                "outcome_id": 88,
-                "odds": 5,
-                "amount": 0.25,
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 1,
-                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
-            }
-            response = self.client.post(
-                                    '/handshake/init',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(data_json), 3)
-
-            shaker1 = data_json[0]
-            self.assertEqual(float(shaker1['remaining_amount']), 0)
-
-            print shaker1
-            self.assertEqual(len(shaker1['shakers']), 1)
-
-            shaker2 = data_json[1]
-            shaker3 = data_json[2]
-            self.assertEqual(response.status_code, 200)
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
+    #     for handshake in arr_hs:
+    #         db.session.delete(handshake)
+    #         db.session.commit()
 
 
-    ef test_init_handshake_case_4(self):
-        self.clear_data_before_test()
+    # def test_init_handshake_case_3(self):
+    #     self.clear_data_before_test()
 
-        # DEBUG
-        # Against
-        #   amount          odds
-        #   0.7               6           1.2
-        #   0.007             1.5         3
-        #   0.003             1.25        5
-        # Shake with 0.001 ETH, odds: 1.20, side 1
-        # Expected:
+    #     # Against
+    #     #   amount          odds
+    #     #   0.2               1.5           3
+    #     #   0.1               1.4           3.5
+    #     #   0.3               1.3           4.33
+    #     # Shake with 0.25 ETH, odds: 5
+    #     # Expected:
+    #     #   Against:            
+    #     #      has 2 
 
-        amount tra ve 0.001456465: RECHECK
+    #     self.clear_data_before_test()
+    #     arr_hs = []
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=1.5,
+	# 			amount=0.2,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=0.3,
+	# 			remaining_amount=0.2,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=1.4,
+	# 			amount=0.1,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			win_value=0.14,
+	# 			remaining_amount=0.1,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=109,
+	# 			outcome_id=88,
+	# 			odds=1.3,
+	# 			amount=0.3,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.39,
+	# 			remaining_amount=0.3,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
+
+    #     with self.client:
+    #         Uid = 66
+
+    #         params = {
+    #             "type": 3,
+    #             "extra_data": "",
+    #             "description": "TESTING MODE",
+    #             "outcome_id": 88,
+    #             "odds": 5,
+    #             "amount": 0.25,
+    #             "currency": "ETH",
+    #             "chain_id": 4,
+    #             "side": 1,
+    #             "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+    #         }
+    #         response = self.client.post(
+    #                                 '/handshake/init',
+    #                                 data=json.dumps(params), 
+    #                                 content_type='application/json',
+    #                                 headers={
+    #                                     "Uid": "{}".format(Uid),
+    #                                     "Fcm-Token": "{}".format(123),
+    #                                     "Payload": "{}".format(123),
+    #                                 })
+
+    #         data = json.loads(response.data.decode()) 
+    #         data_json = data['data']
+    #         self.assertTrue(data['status'] == 1)
+    #         self.assertEqual(len(data_json), 3)
+
+    #         shaker1 = data_json[0]
+    #         self.assertEqual(float(shaker1['remaining_amount']), 0)
+
+    #         print shaker1
+    #         self.assertEqual(len(shaker1['shakers']), 1)
+
+    #         shaker2 = data_json[1]
+    #         shaker3 = data_json[2]
+    #         self.assertEqual(response.status_code, 200)
+
+    #     for handshake in arr_hs:
+    #         db.session.delete(handshake)
+    #         db.session.commit()
 
 
-        # DEBUG
-        # Against
-        #   amount          odds
-        #   0.7               6           1.2
-        #   0.007             1.5         3
-        #   0.003             1.25        5
-        # Shake with 0.008 ETH, odds: 4, side: 1
-        # Expected:
+    # def test_init_handshake_case_4(self):
+    #     self.clear_data_before_test()
 
-        match voi thang 1.25
+    #     # DEBUG
+    #     # Against
+    #     #   amount          odds
+    #     #   0.7               6           1.2
+    #     #   0.007             1.5         3
+    #     #   0.003             1.25        5
+    #     # Shake with 0.001 ETH, odds: 1.20, side 1
+    #     # Expected:
 
-
-        # DEBUG
-        # Support
-        #   amount          odds
-        #   0.004           5           1.25
-        #   0.009           8.0         1.14
-        # Shake with 0.008 ETH, odds: 1.14, side: 2
-        # Expected:
-
-        match voi thang 8
+    #     amount tra ve 0.001456465: RECHECK
 
 
-        # Support
-        #   amount          odds
-        #   0.004             3           1.5
-        #   0.001             2           2
-        #   0.005             2           2
-        # Shake with 0.005 ETH, odds: 2
-        # Expected:
-        #   Against:            
-        #      has 2 
+    #     # DEBUG
+    #     # Against
+    #     #   amount          odds
+    #     #   0.7               6           1.2
+    #     #   0.007             1.5         3
+    #     #   0.003             1.25        5
+    #     # Shake with 0.008 ETH, odds: 4, side: 1
+    #     # Expected:
 
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=3,
-				amount=0.004,
-				currency='ETH',
-				side=1,
-				win_value=0.012,
-				remaining_amount=0.004,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     match voi thang 1.25
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=2,
-				amount=0.001,
-				currency='ETH',
-				side=1,
-				win_value=0.002,
-				remaining_amount=0.001,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=109,
-				outcome_id=88,
-				odds=2,
-				amount=0.005,
-				currency='ETH',
-				side=1,
-				win_value=0.1,
-				remaining_amount=0.005,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
+    #     # DEBUG
+    #     # Support
+    #     #   amount          odds
+    #     #   0.004           5           1.25
+    #     #   0.009           8.0         1.14
+    #     # Shake with 0.008 ETH, odds: 1.14, side: 2
+    #     # Expected:
 
-        with self.client:
-            Uid = 66
+    #     match voi thang 8
 
-            params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "TESTING MODE",
-                "outcome_id": 88,
-                "odds": 5,
-                "amount": 0.25,
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 1,
-                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
-            }
-            response = self.client.post(
-                                    '/handshake/init',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
 
-            data = json.loads(response.data.decode()) 
-            data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(data_json), 3)
+    #     # Support
+    #     #   amount          odds
+    #     #   0.004             3           1.5
+    #     #   0.001             2           2
+    #     #   0.005             2           2
+    #     # Shake with 0.005 ETH, odds: 2
+    #     # Expected:
+    #     #   Against:            
+    #     #      has 2 
 
-            shaker1 = data_json[0]
-            self.assertEqual(float(shaker1['remaining_amount']), 0)
+    #     self.clear_data_before_test()
+    #     arr_hs = []
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=88,
+	# 			outcome_id=88,
+	# 			odds=3,
+	# 			amount=0.004,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.012,
+	# 			remaining_amount=0.004,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-            print shaker1
-            self.assertEqual(len(shaker1['shakers']), 1)
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=99,
+	# 			outcome_id=88,
+	# 			odds=2,
+	# 			amount=0.001,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.002,
+	# 			remaining_amount=0.001,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-            shaker2 = data_json[1]
-            shaker3 = data_json[2]
-            self.assertEqual(response.status_code, 200)
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=109,
+	# 			outcome_id=88,
+	# 			odds=2,
+	# 			amount=0.005,
+	# 			currency='ETH',
+	# 			side=1,
+	# 			win_value=0.1,
+	# 			remaining_amount=0.005,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     arr_hs.append(handshake)
+    #     db.session.add(handshake)
+    #     db.session.commit()
 
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
+    #     with self.client:
+    #         Uid = 66
+
+    #         params = {
+    #             "type": 3,
+    #             "extra_data": "",
+    #             "description": "TESTING MODE",
+    #             "outcome_id": 88,
+    #             "odds": 5,
+    #             "amount": 0.25,
+    #             "currency": "ETH",
+    #             "chain_id": 4,
+    #             "side": 1,
+    #             "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+    #         }
+    #         response = self.client.post(
+    #                                 '/handshake/init',
+    #                                 data=json.dumps(params), 
+    #                                 content_type='application/json',
+    #                                 headers={
+    #                                     "Uid": "{}".format(Uid),
+    #                                     "Fcm-Token": "{}".format(123),
+    #                                     "Payload": "{}".format(123),
+    #                                 })
+
+    #         data = json.loads(response.data.decode()) 
+    #         data_json = data['data']
+    #         self.assertTrue(data['status'] == 1)
+    #         self.assertEqual(len(data_json), 3)
+
+    #         shaker1 = data_json[0]
+    #         self.assertEqual(float(shaker1['remaining_amount']), 0)
+
+    #         print shaker1
+    #         self.assertEqual(len(shaker1['shakers']), 1)
+
+    #         shaker2 = data_json[1]
+    #         shaker3 = data_json[2]
+    #         self.assertEqual(response.status_code, 200)
+
+    #     for handshake in arr_hs:
+    #         db.session.delete(handshake)
+    #         db.session.commit()
 
 
     def test_init_handshake_with_win_value_equal_amount(self):

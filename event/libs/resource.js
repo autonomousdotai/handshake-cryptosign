@@ -44,7 +44,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             from_address: address
         };
 
-        axios.post(`${configs.restApiEndpoint}/cryptosign/handshake/init`, dataRequest, {
+        axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
             headers: {
                 'Content-Type': 'application/json',
                 'Payload': configs.payload,

@@ -493,6 +493,9 @@ def create_bet():
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
 			raise Exception(MESSAGE.INVALID_OUTCOME)
+		elif outcome.hid is None:
+			raise Exception(MESSAGE.INVALID_OUTCOME)
+			
 
 		handshake = Handshake(
 			hs_type=hs_type,
@@ -518,7 +521,8 @@ def create_bet():
 		user.free_bet += 1
 		db.session.commit()
 
-		return response_ok()
+		update_feed.delay(handshake.id)
+		return response_ok(handshake.to_json())
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

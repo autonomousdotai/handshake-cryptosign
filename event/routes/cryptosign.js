@@ -6,21 +6,21 @@ const predictionContract = require('../libs/smartcontract');
 router.post('/init', async function(req, res, next) {
     try {
         const requestObject = req.body;
-        const hid = requestObject.hid;
-        const side = requestObject.side;
-        const odds = requestObject.odds;
+        const hid = parseInt(requestObject.hid);
+        const side = parseInt(requestObject.side);
+        const odds = parseInt(requestObject.odds);
         const address = requestObject.address;
         const offchain = requestObject.offchain;
+
+        console.log('[DEBUG] --> ', offchain)
 
         predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain)
                             .then((hash) => {
                                 console.log(`Init test drive ${offchain} success, hash: ${hash}`);
-                                resolve(hash);
                                 res.ok(hash);
                             })
                             .catch((e) => {
                                 console.log(`Init test drive ${offchain} fail, ${e.message}`);
-                                resolve(null);
                                 res.notok(e.message);
                             });
 

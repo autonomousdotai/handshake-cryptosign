@@ -73,7 +73,7 @@ function asyncScanOutcomeNull() {
 
 
 function runCreateMarketCron() {
-    cron.schedule('*/1 * * * *', async function() {
+    cron.schedule('*/5 * * * *', async function() {
 		console.log('create market cron running a task every 2m at ' + new Date());
 		try {
 			if (isRunningCreateMarket === false) {

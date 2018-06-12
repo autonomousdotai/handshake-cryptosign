@@ -50,7 +50,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
                 'Content-Type': 'application/json',
                 'Payload': configs.payload,
                 'UID': `${+moment.utc()}`,
-                'FCM_TOKEN': ''
+                "Fcm-Token": '{}',
             },
         })
         .then((response) => {

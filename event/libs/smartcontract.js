@@ -3,6 +3,7 @@ const Web3 = require('web3');
 const configs = require('../configs');
 const httpRequest = require('../libs/http');
 const PredictionHandshake = require('../contracts/PredictionHandshake.json');
+const axios = require('axios');
 
 const network_id = configs.network_id;
 const web3 = new Web3(new Web3.providers.HttpProvider(configs.network[network_id].blockchainNetwork));
@@ -73,18 +74,13 @@ const getNonceFromAPI = (index, address, status) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       /*
-      const options = {
-        hostname: configs.env === 'default' ? 'ninja.org' : configs.restApiEndpoint,
-        path: `${configs.env === 'default' ? '/api' : '' }/nonce/get?address=${address}&network_id=${network_id}`,
-        method: 'GET',
-        isHttps: configs.env === 'default',
-        headers: {
+      axios.get(`${configs.restApiEndpoint}/nonce/get?address=${address}&network_id=${network_id}`, {
+      headers: {
           'Content-Type': 'application/json',
-        },
-      };
-      httpRequest.request(options)
+      }
+      })
       .then(response => {
-        if (response.status == 1) {
+        if (response.data && response.data.status == 1) {
           return resolve(response.data);
         } else {
           return reject('Cannot get Nonce.');
@@ -193,10 +189,7 @@ const createMarketTransaction = (index, fee, source, closingTime, reportTime, di
 
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
         .on('transactionHash', (hash) => {
-          return resolve({
-            raw: rawTransaction,
-            hash: hash,
-          });
+          return resolve(hash);
         })
         .on('receipt', (receipt) => {
         })

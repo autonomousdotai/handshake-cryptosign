@@ -54,7 +54,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             return resolve(response.data);
         })
         .catch((error) => {
-            return reject(err);
+            return reject(error);
         });
     });
 };

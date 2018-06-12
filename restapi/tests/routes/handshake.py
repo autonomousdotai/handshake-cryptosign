@@ -726,6 +726,9 @@ class TestHandshakeBluePrint(BaseTestCase):
 
     def test_rollback_handshake_with_refund_state(self):
         pass
+
+    def test_create_bet(self):
+        pass
     
 if __name__ == '__main__':
     unittest.main()

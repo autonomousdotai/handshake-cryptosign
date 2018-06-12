@@ -77,6 +77,7 @@ function asyncScanOddsNull() {
                                     });
                                 } else {
                                     console.error(response);
+                                    console.log(item);
                                 }
                                 _resolve(null)
                             })

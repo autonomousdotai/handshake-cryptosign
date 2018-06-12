@@ -1,9 +1,9 @@
 
 const cron = require('./cron');
 setTimeout( () => {
-    // cron.bettingCron.runBettingCron();
+    cron.bettingCron.runBettingCron();
     cron.oddsCron.runOddsCron();
-    // cron.createMarketCron.runCreateMarketCron();
+    cron.createMarketCron.runCreateMarketCron();
 }, 1)
 
 var logger = require('morgan');

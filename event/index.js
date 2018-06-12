@@ -1,8 +1,8 @@
 
 const cron = require('./cron');
-cron.runBettingCron;
-cron.runOddsCron;
-cron.runCreateMarketCron;
+cron.bettingCron.runBettingCron();
+cron.oddsCron.runOddsCron();
+cron.createMarketCron.runCreateMarketCron();
 
 // runBettingCron();
 // runOddsCron();

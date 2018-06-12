@@ -19,6 +19,7 @@ def matches():
 	try:
 		matches = Match.query.all()
 		data = []
+
 		for match in matches:
 			#  find best odds which match against
 			match_json = match.to_json()
@@ -105,7 +106,7 @@ def create_market():
 								awayTeamName=item['awayTeamName'],
 								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
 								source='football-data.org',
-								market_fee=2,
+								market_fee=0,
 								date=parse_date_string_to_timestamp(item['date'])
 							)
 					matches.append(match)

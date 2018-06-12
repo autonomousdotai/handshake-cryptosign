@@ -7,6 +7,9 @@ class User(BaseModel):
 
 	fcm_token = db.Column(db.Text)
 	payload = db.Column(db.Text)
+	free_bet = db.Column(db.Integer,
+						server_default=str(0),
+						default=0)
 	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
 	                             lazy='dynamic')
 

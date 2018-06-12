@@ -11,7 +11,7 @@ module.exports = {
       idle: 10000
     }
   },
-  port: 5000,
+  port: 3000,
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',

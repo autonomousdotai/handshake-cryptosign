@@ -205,7 +205,6 @@ def init():
 					amount=subtracted_amount_for_shaker,
 					currency=currency,
 					odds=odds,
-					win_value=odds*subtracted_amount_for_shaker,
 					side=side,
 					handshake_id=handshake.id
 				)
@@ -241,7 +240,6 @@ def init():
 					amount=shaker_amount,
 					currency=currency,
 					side=side,
-					win_value=odds*shaker_amount,
 					remaining_amount=shaker_amount,
 					from_address=from_address
 				)
@@ -458,6 +456,7 @@ def createBet():
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
+		
 
 		return response_ok()
 	except Exception, ex:

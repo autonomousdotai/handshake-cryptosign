@@ -209,7 +209,7 @@ function asyncScanOddsNull() {
                                     side: side
                                 });
                             } else {
-                                console.error(response.message);
+                                console.error(response);
                             }
                             _resolve(null)
                         })

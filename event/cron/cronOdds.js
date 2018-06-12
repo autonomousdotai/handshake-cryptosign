@@ -15,7 +15,7 @@ const ownerAddress = configs.network[configs.network_id].ownerAddress;
 let isRunningOdds = false;
 
 function submitInitTransactions(dataInit, total, success) {
-    return new Promise(function (resolve, reject) {
+    return new Promise( async (resolve, reject) => {
         try
         {
             const nonce = await resource.getNonceFromAPI(ownerAddress, dataInit.length);

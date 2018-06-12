@@ -93,7 +93,6 @@ class TestMatchBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.25,
 				remaining_amount=1,
 				from_address='0x123',
                 status=0
@@ -102,7 +101,6 @@ class TestMatchBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.25)
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -114,7 +112,6 @@ class TestMatchBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.10,
 				remaining_amount=1,
 				from_address='0x1234',
                 status=0
@@ -124,9 +121,10 @@ class TestMatchBl(BaseTestCase):
         db.session.commit()
 
 
-        expected = 11
+        expected_odds = 11
+        expected_amount = handshake.amount * (handshake.odds - 1)
         actual_odds, actual_amount = match_bl.find_best_odds_which_match_support_side(88)
-        self.assertEqual(expected, actual_odds)
+        self.assertEqual(expected_odds, actual_odds)
         
 
 if __name__ == '__main__':

@@ -403,7 +403,6 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 					amount=row['amount'],
 					currency=row['currency'],
 					side=row['side'],
-					win_value=row['win_value'],
 					remaining_amount=row['remaining_amount'],
 					from_address=row['from_address'],
 					shake_count=row['shake_count'],

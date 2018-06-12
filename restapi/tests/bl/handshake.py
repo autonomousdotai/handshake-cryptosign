@@ -87,7 +87,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.25,
 				remaining_amount=1,
 				from_address='0x123',
                 status=0
@@ -96,7 +95,6 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.25)
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -108,7 +106,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.10,
 				remaining_amount=1,
 				from_address='0x1234',
                 status=0
@@ -116,8 +113,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.10)
         
         handshakes = handshake_bl.find_all_matched_handshakes(side=2, odds=5.0, outcome_id=88, amount=0.25)
 
@@ -145,7 +140,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.25,
 				remaining_amount=1,
 				from_address='0x123',
                 status=0
@@ -154,7 +148,6 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.25)
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -166,7 +159,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.40,
 				remaining_amount=1,
 				from_address='0x1234',
                 status=0
@@ -174,8 +166,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.40)
         
         handshakes = handshake_bl.find_all_matched_handshakes(side=1, odds=5.0, outcome_id=88, amount=0.25)
         self.assertEqual(len(handshakes), 1)
@@ -201,7 +191,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.25,
 				remaining_amount=1,
 				from_address='0x123',
                 status=0
@@ -210,7 +199,6 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.25)
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -222,7 +210,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.10,
 				remaining_amount=1,
 				from_address='0x1234',
                 status=0
@@ -230,8 +217,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.1)
         
         handshakes = handshake_bl.find_all_joined_handshakes(side=1, outcome_id=88)
         self.assertEqual(len(handshakes), 1)
@@ -248,7 +233,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.10,
 				remaining_amount=1,
 				from_address='0x1234',
                 status=0
@@ -283,7 +267,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.25,
 				remaining_amount=1,
 				from_address='0x123',
                 status=0
@@ -292,7 +275,6 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        self.assertEqual(float(handshake.win_value), 1.25)
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -304,7 +286,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.10,
 				remaining_amount=1,
 				from_address='0x1234',
                 status=0
@@ -312,8 +293,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.1)
         
         handshakes = handshake_bl.find_all_joined_handshakes(side=2, outcome_id=88)
         self.assertEqual(len(handshakes), 1)
@@ -331,7 +310,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.24,
 				remaining_amount=1,
 				from_address='0x123',
                 status=0
@@ -339,8 +317,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.24)
         
         handshakes = handshake_bl.find_all_joined_handshakes(side=2, outcome_id=88)
         self.assertEqual(len(handshakes), 2)
@@ -368,7 +344,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.25,
 				remaining_amount=0.25,
 				from_address='0x123',
                 status=0
@@ -376,8 +351,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.25)
 
         # -----
         handshake = Handshake(
@@ -390,7 +363,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=0.25,
 				currency='ETH',
 				side=1,
-				win_value=0.3125,
 				remaining_amount=0.0625,
 				from_address='0x123',
                 status=0
@@ -398,8 +370,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 0.3125)
 
         # -----
         handshake = Handshake(
@@ -412,7 +382,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.10,
 				remaining_amount=0.10,
 				from_address='0x1234',
                 status=0
@@ -420,8 +389,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.10)
 
         # -----
         handshake = Handshake(
@@ -434,7 +401,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=0.1,
 				currency='ETH',
 				side=1,
-				win_value=0.11,
 				remaining_amount=0.01,
 				from_address='0x1234',
                 status=0
@@ -455,7 +421,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
-				win_value=1.11,
 				remaining_amount=0.1,
 				from_address='0x12345',
                 status=0
@@ -463,8 +428,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.11)
 
         handshakes = handshake_bl.find_available_support_handshakes(outcome_id=88)
         self.assertEqual(len(handshakes), 2)
@@ -492,7 +455,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.25,
 				remaining_amount=0.25,
 				from_address='0x123',
                 status=0
@@ -500,8 +462,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.25)
 
         # -----
         handshake = Handshake(
@@ -514,7 +474,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=0.25,
 				currency='ETH',
 				side=2,
-				win_value=0.3125,
 				remaining_amount=0.0625,
 				from_address='0x123',
                 status=0
@@ -522,8 +481,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 0.3125)
 
         # -----
         handshake = Handshake(
@@ -536,7 +493,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.10,
 				remaining_amount=0.10,
 				from_address='0x1234',
                 status=0
@@ -544,8 +500,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.10)
 
         # -----
         handshake = Handshake(
@@ -558,7 +512,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=0.1,
 				currency='ETH',
 				side=2,
-				win_value=0.11,
 				remaining_amount=0.01,
 				from_address='0x1234',
                 status=0
@@ -579,7 +532,6 @@ class TestHandshakeBl(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=2,
-				win_value=1.11,
 				remaining_amount=0.1,
 				from_address='0x12345',
                 status=0
@@ -587,8 +539,6 @@ class TestHandshakeBl(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
-        self.assertEqual(float(handshake.win_value), 1.11)
 
         handshakes = handshake_bl.find_available_against_handshakes(outcome_id=88)
         self.assertEqual(len(handshakes), 2)

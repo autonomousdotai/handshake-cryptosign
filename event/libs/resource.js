@@ -49,7 +49,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Payload': configs.payload,
-                'UID': `${+moment.utc()}`,
+                'UID': 0,
                 "Fcm-Token": '{}',
             },
         })

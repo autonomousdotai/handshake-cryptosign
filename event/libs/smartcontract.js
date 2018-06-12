@@ -101,7 +101,9 @@ const getGasPrice = async () => {
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_nonce, _hid, _side, _payout, _offchain, _value) => {
+const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) => {
+  console.log('AAAAAAA');
+  console.log(_nonce, _hid, _side, _odds, _offchain, _value);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
@@ -119,7 +121,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _payout, _offchain, _value) 
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
           'value'   : web3.utils.toHex(_value),
-          'data'    : contract.methods.init(1, 1, 1000, web3.utils.fromUtf8(_offchain)).encodeABI()
+          'data'    : contract.methods.init(_hid, _side, _odds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);

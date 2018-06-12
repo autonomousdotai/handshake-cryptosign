@@ -23,7 +23,7 @@ function submitInitTransactions(dataInit, total, success) {
             dataInit.forEach((item, index) => {
                 tnx_tasks.push(new Promise((resolve, reject) => {
                     predictionContract
-                    .submitInitTransaction(nonce + index, item.hid, item.side, item.payout, item.offchain, item.value)
+                    .submitInitTransaction(nonce + index, item.hid, item.side, item.odds, item.offchain, item.value)
                     .then(resultInit => {
                         console.log('Bot bet success', resultInit);
                         success += 1;
@@ -69,7 +69,7 @@ function asyncScanOddsNull() {
                                 if (response.status == 1 && response.data.length != 0) {
                                     dataInit.push({
                                         hid: item.outcome.hid,
-                                        payout: web3.utils.toWei(response.data[0].odds + ""),
+                                        odds: web3.utils.toWei( (parseInt(response.data[0].odds) * 100) + ''),
                                         value: web3.utils.toWei(amount),
                                         offchain: response.data[0].offchain,
                                         side: side

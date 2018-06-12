@@ -109,7 +109,7 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = await getNonceFromAPI(_index, ownerAddress);
-      const gasPriceWei     = web3.utils.toWei('110', 'gwei');
+      const gasPriceWei     = web3.utils.toWei('200', 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
@@ -162,7 +162,7 @@ const createMarketTransaction = (index, fee, source, closingTime, reportTime, di
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const gasPriceWei     = web3.utils.toWei('110', 'gwei');
+      const gasPriceWei     = web3.utils.toWei('200', 'gwei');
       const nonce           = await getNonceFromAPI(index, ownerAddress);
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress

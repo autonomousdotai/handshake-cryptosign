@@ -50,62 +50,97 @@ function submitInitTransactions(dataInit, total, success) {
 
 function asyncScanOddsNull() {
     return new Promise(async (resolve, reject) => {
-        const supports = await handshakeDAO.getSupportOddsNull();
-        const againsts = await handshakeDAO.getAgainstOddsNull();
+        try {
+            const supportsNull = await handshakeDAO.getSupportOddsNull();
+            const againstsNull = await handshakeDAO.getAgainstOddsNull();
+            const allNull = await handshakeDAO.getOddsNull();
 
-        let dataInit = [];
-        const tasks = [];
+            let dataInit = [];
+            const tasks = [];
 
-        const submitInit = (arr, side) => {
-            arr.forEach(item => {
-                tasks.push(new Promise(async (_resolve, _reject) => {
-                    const match = await matchDAO.getMatchById(item.match_id);
-                    const amount = '0.1';
-                    resource
-                        .submitInit(item, match.toJSON(), configs.network[configs.network_id].ownerAddress, side, configs.network_id, amount)
-                        .then(response => {
-                            if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
-                                dataInit.push({
-                                    hid: item.hid,
-                                    payout: web3.utils.toWei(response.data[0].odds + ""),
-                                    value: web3.utils.toWei(amount),
-                                    offchain: response.data[0].offchain,
-                                    side: side
-                                });
-                            } else {
-                                console.error(response);
-                            }
-                            _resolve(null)
-                        })
-                        .catch((e) => {
-                            console.log('Bot bet error', item, e);
-                            _resolve(null);
-                        }); 
-                }))   
-            });
-        };
-
-        if (againsts) {
-            submitInit(againsts, 2);
-        }
-        if (supports) {
-            submitInit(supports, 1);
-        }
-
-        if (tasks.length > 0) {
-            Promise
-                .all(tasks)
-                .then(() => {
-                    if (dataInit.length === 0) {
-                        return resolve(0);
+            const submitInit = (arr, side) => {
+                arr.forEach(item => {
+                    if (item ) {
+                        tasks.push(new Promise(async (_resolve, _reject) => {
+                            const match = await matchDAO.getMatchById(item.outcome.match_id);
+                            const amount = '0.1';
+                            resource
+                            .submitInit(item.outcome, match.toJSON(), configs.network[configs.network_id].ownerAddress, side, configs.network_id, amount, item.odds)
+                            .then(response => {
+                                if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
+                                    dataInit.push({
+                                        hid: item.outcome.hid,
+                                        payout: web3.utils.toWei(response.data[0].odds + ""),
+                                        value: web3.utils.toWei(amount),
+                                        offchain: response.data[0].offchain,
+                                        side: side
+                                    });
+                                } else {
+                                    console.error(response);
+                                }
+                                _resolve(null)
+                            })
+                            .catch((e) => {
+                                console.log('Bot bet error', item, e);
+                                _resolve(null);
+                            }); 
+                        }));
                     }
-                    let success = 0;
-                    submitInitTransactions(dataInit, tasks.length, success).then(resolve).catch(reject);
-                })
-                .catch(reject);
-        } else {
-            resolve(0);
-        }
+                });
+            };
+
+            if (supportsNull) {
+                const supArr = await resource.gennerateOddsArr(supportsNull, true);
+                // console.log('SUPP');
+                // console.log(supArr);
+                submitInit(supArr, 1);
+            }
+            if (againstsNull) {
+                const agaArr = await resource.gennerateOddsArr(againstsNull, false);
+                // console.log('AGAINST');
+                // console.log(agaArr);
+                submitInit(agaArr, 2);
+            }
+            if (allNull) {
+                const sups = [];
+                const agas = [];
+                (allNull || []).forEach(outcome => {
+                    sups.push({
+                        odds: resource.randomOdds(1),
+                        outcome: outcome,
+                        isSup: true
+                    });
+                    agas.push({
+                        odds: resource.randomOdds(2),
+                        outcome: outcome,
+                        isSup: false
+                    });
+                });
+                // console.log('============');
+                // console.log(sups);
+                // console.log(agas);
+                submitInit(sups, 1);
+                submitInit(agas, 2);
+            }
+
+            if (tasks.length > 0) {
+                Promise
+                    .all(tasks)
+                    .then(() => {
+                        if (dataInit.length === 0) {
+                            return resolve(0);
+                        }
+                        let success = 0;
+                        submitInitTransactions(dataInit, tasks.length, success).then(resolve).catch(reject);
+                    })
+                    .catch(reject);
+            } else {
+                resolve(0);
+            }
+        } catch (e) {
+            console.error(e);
+            reject(e);
+		}
     });
 }
 
@@ -125,7 +160,6 @@ function runOddsCron() {
                         console.log('EXIT ODDS: ', e);
                         isRunningOdds = false;
                     });
-
 			} else {
                 console.log('CRON JOB IS RUNNING!');
             }

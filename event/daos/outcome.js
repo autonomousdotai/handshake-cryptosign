@@ -6,6 +6,7 @@ module.exports = {
         return models.Outcome
             .findAll({
                 where: {
+                    deleted: 0,
                     hid: null
                 },
                 limit: 20

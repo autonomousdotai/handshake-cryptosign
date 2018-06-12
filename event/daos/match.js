@@ -5,7 +5,8 @@ module.exports = {
     return models.Match
         .findOne({
             where: {
-                id: match_id
+                id: match_id,
+                deleted: 0
             }
         });
   }

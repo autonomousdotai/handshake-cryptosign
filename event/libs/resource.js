@@ -2,18 +2,76 @@
 const configs = require('../configs');
 const axios = require('axios');
 const moment = require('moment');
-const outcomeDAO = require('../daos/handshake');
 const web3 = require('../configs/web3').getWeb3();
+const handshakeDAO = require('../daos/handshake');
 
-const randomOddsSupport = async (match) => {
-    const maxOddSupport = await outcomeDAO.findOddByMatchID(match.id, true);
 
+const gennerateOddsArr = (outcomes, isGenSup) => {
+    return new Promise((resolve, reject) => {
+        var tasks = [];
+        (outcomes || []).forEach(outcome => {
+            tasks.push(new Promise(async (resolve, reject) => {
+                (isGenSup ? gennerateOddsSupport : gennerateOddsAgainst)(outcome.id)
+                .then(result => {
+                    if (!result) {
+                        return resolve(null);
+                    }
+                    return resolve({
+                        odds: result,
+                        outcome: outcome,
+                        isSup: isGenSup
+                    });
+                })
+                .catch(reject)
+            }));
+        })
+        Promise.all(tasks)
+        .then(resolve)
+        .catch(reject);
+    });
 }
 
-const randomOddsAgainst = async (match) => {
-    const minOddAgainst = await outcomeDAO.findOddByMatchID(match.id, true);
-    const minOddSupport = await outcomeDAO.findOddByMatchID(match.id, false);
+const gennerateOddsSupport = (outcomeId) => {
+    return new Promise((resolve, reject) => {
+        // get max odds of againt by outcomeId
+        handshakeDAO.findByOutcomeID(outcomeId, false, true)
+        .then(result => {
+            if (!result || !result.toJSON() || !result.toJSON().odds || result.toJSON().odds <= 1) {
+                return resolve(null);
+            }
 
+            return resolve(result.toJSON().odds + 0.1 * (Math.floor(Math.random() * 9) + 1));
+        })
+        .catch((error) => {
+            console.error('DB: random Odds Support err: ', error);
+            return reject(error);
+        });
+    });
+}
+
+const gennerateOddsAgainst = (outcomeId) => {
+    return new Promise((resolve, reject) => {
+        //get min odds of support by outcomeId
+        handshakeDAO.findByOutcomeID(outcomeId, true, false)
+        .then(result => {
+            if (!result || !result.toJSON() || !result.toJSON().odds || result.toJSON().odds <= 1) {
+                return resolve(null);
+            }
+            const minOddSupport = result.toJSON().odds;
+            return resolve(minOddSupport / (minOddSupport - 0.1));
+        })
+        .catch((error) => {
+            console.error('DB: random Odds Support err: ', error);
+            return reject(error);
+        });
+    });
+}
+
+const randomOdds = (side) => {
+    const oddSupportValue = [2.9, 2.8, 2.7];
+    const oddAgainstValue = [1.8, 1.7, 1.6];
+    const index = Math.floor((Math.random() * (oddAgainstValue.length - 1)) + 1);
+    return (side === 1 ? oddSupportValue : oddAgainstValue)[index];
 }
 
 const getNonceFromAPI = (address, length) => {
@@ -72,19 +130,8 @@ const getNonceFromAPI = (address, length) => {
 /*
  @oddData: outcome model
 */
-const submitInit = (outcome, match, address, side, chainId, amount) => {
+const submitInit = (outcome, match, address, side, chainId, amount, odds) => {
     return new Promise((resolve, reject) => {
-        const oddSupportValue = [2.9, 2.8, 2.7];
-        const oddAgainstValue = [1.8, 1.7, 1.6];
-        const index = Math.floor((Math.random() * (oddAgainstValue.length - 1)) + 1);
-        const odds = (side === 1 ? oddSupportValue : oddAgainstValue)[index];
-
-        if (side === 1) { // support
-            
-        } else { // against
-            
-        }
-
         const dataRequest = {
             type: 3,
             extra_data: `{"event_name":"${match.name}","event_predict":"${outcome.name}"}`,
@@ -115,4 +162,11 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
     });
 };
 
-module.exports = { submitInit, getNonceFromAPI };
+module.exports = {
+    submitInit,
+    getNonceFromAPI,
+    gennerateOddsSupport,
+    gennerateOddsAgainst,
+    gennerateOddsArr,
+    randomOdds
+};

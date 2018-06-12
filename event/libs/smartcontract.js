@@ -11,6 +11,7 @@ const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddr
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
 const gasLimit = configs.network[network_id].gasLimit;
+console.log(configs);
 
 const contractPredictionHandshake = new web3.eth.Contract(PredictionHandshake.abi, bettingHandshakeAddress);
 

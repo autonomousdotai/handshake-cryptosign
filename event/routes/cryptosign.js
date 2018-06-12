@@ -1,47 +1,29 @@
 const express = require('express');
 const router  = express.Router();
 const configs = require('../configs');
-
+const predictionContract = require('../libs/smartcontract');
 
 router.post('/init', async function(req, res, next) {
     try {
         const requestObject = req.body;
+        const hid = requestObject.hid;
+        const side = requestObject.side;
+        const odds = requestObject.odds;
         const address = requestObject.address;
-        const privateKey = requestObject.privateKey;
-        const value = requestObject.value;
-        const term = parseInt(requestObject.term);
-        const deliveryDate = requestObject.delivery_date;
-        const toAddress = requestObject.to_address;
         const offchain = requestObject.offchain;
 
-        const neuronInstanceName = terms[term] || 'basicHandshake';
-        const handshakeInstance = neuron[neuronInstanceName];
-        
-        let result = {};
-        if (term === PAYABLE_HANDSHAKE_TERM) {
-            console.log('case payable handshake');
-            const method = 'init';
-            if (!handshakeInstance[method]) {
-            res.notok(new Error('Unknown ' + method + ' for your handshake'));
-            }
-            result = await handshakeInstance[method](address, privateKey, toAddress, value, deliveryDate, offchain);
-            // save info to result
-            result['contractName'] = handshakeInstance.constructor.name;
-            result['contractAddress'] = handshakeInstance.instance.options.address;
-            result['contractMethod'] = method;
-        } else {
-            const method = 'init';
-            if (!handshakeInstance[method]) {
-            res.notok(new Error('Unknown ' + method + ' for your handshake'));
-            }
-            result = await handshakeInstance[method](address, privateKey, toAddress, offchain);
-            // save info to result
-            result['contractName'] = handshakeInstance.constructor.name;
-            result['contractAddress'] = handshakeInstance.instance.options.address;
-            result['contractMethod'] = method;
-        }
-    
-        res.ok(result);
+        predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain)
+                            .then((hash) => {
+                                console.log(`Init test drive ${offchain} success, hash: ${hash}`);
+                                resolve(hash);
+                                res.ok(hash);
+                            })
+                            .catch((e) => {
+                                console.log(`Init test drive ${offchain} fail, ${e.message}`);
+                                resolve(null);
+                                res.notok(e.message);
+                            });
+
     } catch (err) {
         console.log('route init throw exception');
         next(err);

@@ -144,6 +144,52 @@ const submitInitTransaction = (_nonce, _hid, _side, _payout, _offchain, _value) 
   });
 };
 
+// /*
+//     submit init test drive transaction
+// */
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const nonce           = await getNonce(ownerAddress);
+      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : web3.utils.toHex(web3.utils.toWei(0.01, 'ether')),
+          'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+      .on('receipt', (receipt) => {
+        console.log(receipt);
+      })
+      .on('error', err => {
+        console.log(err);
+        return reject(err);
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
 /**
  * Create Market
  * 
@@ -200,4 +246,4 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
   });
 };
 
-module.exports = { submitInitTransaction, createMarketTransaction };
+module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction };

@@ -180,6 +180,7 @@ def init():
 				handshake.shake_count += 1
 
 				print '----------------------------------------------'
+				print 'handshake_remaining_value --> {}'.format(handshake.remaining_amount)
 				handshake_win_value = handshake.remaining_amount*handshake.odds
 				print 'handshake_win_value --> {}'.format(handshake_win_value)
 				shaker_win_value = shaker_amount*odds

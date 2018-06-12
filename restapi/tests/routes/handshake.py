@@ -540,7 +540,10 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(len(handshake['shakers']), 1)
             self.assertEqual(handshake['amount'], 0.003)
 
-            
+            #  match 0.007 - 1.5
+            self.assertEqual(float(handshake1['remaining_amount']), 0.006984)
+            self.assertEqual(len(handshake1['shakers']), 1)
+            self.assertEqual(handshake1['amount'], 0.007)
 
 
         for handshake in arr_hs:

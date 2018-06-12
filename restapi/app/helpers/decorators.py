@@ -34,21 +34,27 @@ def login_required(f):
         if not request.headers["Uid"]:
             return response_error("Please login first!")
         else:
-            uid = int(request.headers["Uid"])
-            token = request.headers['Fcm-Token'] if 'Fcm-Token' in request.headers else ''
-            payload = request.headers['Payload'] if 'Payload' in request.headers else ''
-            user = User.find_user_with_id(uid)
-            if user is None:
-                user = User(
-                    id=uid,
-                    fcm_token=token,
-                    payload=payload
-                )
-                db.session.add(user)
-                db.session.commit()
-            elif user.fcm_token != token:
-                user.fcm_token = token
-                db.session.commit()
+            try:
+                uid = int(request.headers["Uid"])
+                token = request.headers['Fcm-Token'] if 'Fcm-Token' in request.headers else ''
+                payload = request.headers['Payload'] if 'Payload' in request.headers else ''
+                user = User.find_user_with_id(uid)
+                if user is None:
+                    user = User(
+                        id=uid,
+                        fcm_token=token,
+                        payload=payload
+                    )
+                    db.session.add(user)
+                    db.session.commit()
+                elif user.fcm_token != token:
+                    user.fcm_token = token
+                    db.session.commit()
+            except Exception as ex:
+                db.session.rollback()
+                print(str(ex))
+
+            
 
         return f(*args, **kwargs)
     return wrap

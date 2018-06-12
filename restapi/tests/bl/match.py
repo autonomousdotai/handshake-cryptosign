@@ -125,8 +125,8 @@ class TestMatchBl(BaseTestCase):
 
 
         expected = 11
-        actual = match_bl.find_best_odds_which_match_support_side(88)
-        self.assertEqual(expected, actual)
+        actual_odds, actual_amount = match_bl.find_best_odds_which_match_support_side(88)
+        self.assertEqual(expected, actual_odds)
         
 
 if __name__ == '__main__':

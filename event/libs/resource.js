@@ -1,6 +1,7 @@
 
 const configs = require('../configs');
 const axios = require('axios');
+const moment = require('moment');
 const outcomeDAO = require('../daos/outcome');
 
 
@@ -44,10 +45,12 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             from_address: address
         };
 
-        axios.post(`${configs.restApiEndpoint}/cryptosign/handshake/init`, dataRequest, {
+        axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
             headers: {
                 'Content-Type': 'application/json',
                 'Payload': configs.payload,
+                'UID': 0,
+                "Fcm-Token": '{}',
             },
         })
         .then((response) => {

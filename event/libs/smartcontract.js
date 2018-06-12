@@ -1,12 +1,12 @@
 
-const Web3 = require('web3');
 const configs = require('../configs');
 const httpRequest = require('../libs/http');
 const PredictionHandshake = require('../contracts/PredictionHandshake.json');
 const axios = require('axios');
 
+const web3 = require('../configs/web3').getWeb3();
+
 const network_id = configs.network_id;
-const web3 = new Web3(new Web3.providers.HttpProvider(configs.network[network_id].blockchainNetwork));
 const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddress;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
@@ -109,7 +109,7 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = await getNonceFromAPI(_index, ownerAddress);
-      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const gasPriceWei     = web3.utils.toWei('110', 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
@@ -162,7 +162,7 @@ const createMarketTransaction = (index, fee, source, closingTime, reportTime, di
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const gasPriceWei     = web3.utils.toWei('110', 'gwei');
       const nonce           = await getNonceFromAPI(index, ownerAddress);
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress

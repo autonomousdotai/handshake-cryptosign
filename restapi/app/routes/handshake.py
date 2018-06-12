@@ -187,9 +187,9 @@ def init():
 				final_win_value = min(handshake_win_value, shaker_win_value)
 				print 'final_win_value --> {}'.format(final_win_value)
 				subtracted_amount_for_shaker = final_win_value/handshake.odds
-				print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
-				subtracted_amount_for_handshake = final_win_value - subtracted_amount_for_handshake
 				print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
+				subtracted_amount_for_handshake = final_win_value - subtracted_amount_for_shaker
+				print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
@@ -440,6 +440,21 @@ def refund():
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@handshake_routes.route('/create_bet', methods=['POST'])
+@login_required
+def createBet():
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
 
 		return response_ok()
 	except Exception, ex:

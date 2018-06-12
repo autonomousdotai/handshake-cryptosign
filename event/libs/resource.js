@@ -1,11 +1,22 @@
 
 const configs = require('../configs');
 const axios = require('axios');
+const outcomeDAO = require('../daos/outcome');
+
+
+const randomOddsSupport = async (match) => {
+    const maxOddSupport = await outcomeDAO.findOddByMatchID(match.id, true);
+
+}
+
+const randomOddsAgainst = async (match) => {
+    const minOddAgainst = await outcomeDAO.findOddByMatchID(match.id, true);
+    const minOddSupport = await outcomeDAO.findOddByMatchID(match.id, false);
+
+}
+
 /*
  @oddData: outcome model
-*/
-/*
-
 */
 const submitInit = (outcome, match, address, side, chainId, amount) => {
     return new Promise((resolve, reject) => {
@@ -13,6 +24,12 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
         const oddAgainstValue = [1.8, 1.7, 1.6];
         const index = Math.floor((Math.random() * (oddAgainstValue.length - 1)) + 1);
         const odds = (side === 1 ? oddSupportValue : oddAgainstValue)[index];
+
+        if (side === 1) { // support
+            
+        } else { // against
+            
+        }
 
         const dataRequest = {
             type: 3,

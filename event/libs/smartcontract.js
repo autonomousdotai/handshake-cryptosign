@@ -113,7 +113,6 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
-      console.log('NONCE: ', nonce);
       const rawTransaction = {
           'from'    : ownerAddress,
           'nonce'   : '0x' + nonce.toString(16),
@@ -126,11 +125,7 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();
-      /*
-      const batch = new web3.BatchRequest();
-      batch.add(web3.eth.sendSignedTransaction.request(`0x${serializedTx.toString('hex')}`,'receipt', console.log));
-      batch.execute();
-      */
+
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         return resolve({

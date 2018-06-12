@@ -10,7 +10,6 @@ const models = require('./models');
 // daos
 const txDAO = require('./daos/tx');
 const eventDAO = require('./daos/event');
-const oddsDAO = require('./daos/odds');
 const matchDAO = require('./daos/match');
 const outcomeDAO = require('./daos/outcome');
 
@@ -187,8 +186,8 @@ async function asyncScanEventLog(contract, contractAddress, eventName) {
 
 function asyncScanOddsNull() {
     return new Promise(async (resolve, reject) => {
-        const supports = await oddsDAO.getSupportOddsNull();
-        const againsts = await oddsDAO.getAgainstOddsNull();
+        const supports = await outcomeDAO.getSupportOddsNull();
+        const againsts = await outcomeDAO.getAgainstOddsNull();
 
         let dataInit = [];
         const tasks = [];
@@ -209,6 +208,8 @@ function asyncScanOddsNull() {
                                     offchain: response.data[0].offchain,
                                     side: side
                                 });
+                            } else {
+                                console.err(response.message);
                             }
                             _resolve(null)
                         })
@@ -293,7 +294,7 @@ function asyncScanOutcomeNull() {
                 resolve(0)
             }
         } catch (e) {
-            console.log('=======', e);
+            console.error('Create outcome err: ', e);
             reject(e);
         }
     });
@@ -377,5 +378,5 @@ function runCreateMarketCron() {
 }
 
 runBettingCron();
-// runOddsCron();
+runOddsCron();
 runCreateMarketCron();

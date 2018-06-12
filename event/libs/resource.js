@@ -95,7 +95,8 @@ const getNonceFromAPI = (address, length) => {
                         return resolve(tnxCount);
                     }
 
-                    const newNonce = response.data.data.nonce > tnxCount ? tnxCount : response.data.data.nonce;
+                    // const newNonce = response.data.data.nonce > tnxCount ? tnxCount : response.data.data.nonce;
+                    const newNonce = tnxCount;
                     // Set new nonce to API
                     // axios.post(`${configs.restApiEndpoint}/nonce/set?${path}&nonce=${(newNonce + (length || 0))}`, {}, {
                     axios.post(`https://staging.ninja.org/api/nonce/set?${path}&nonce=${(newNonce + (length || 0))}`, {}, {

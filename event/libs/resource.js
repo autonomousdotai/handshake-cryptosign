@@ -40,7 +40,7 @@ const gennerateOddsSupport = (outcomeId) => {
                 return resolve(null);
             }
 
-            return resolve(result.toJSON().odds + 0.1 * (Math.floor(Math.random() * 9) + 1));
+            return parseInt(resolve(result.toJSON().odds || 0) + 0.1 * (Math.floor(Math.random() * 9) + 1));
         })
         .catch((error) => {
             console.error('DB: random Odds Support err: ', error);
@@ -57,7 +57,7 @@ const gennerateOddsAgainst = (outcomeId) => {
             if (!result || !result.toJSON() || !result.toJSON().odds || result.toJSON().odds <= 1) {
                 return resolve(null);
             }
-            const minOddSupport = result.toJSON().odds;
+            const minOddSupport = parseInt(result.toJSON().odds || 0);
             return resolve(minOddSupport / (minOddSupport - 0.1));
         })
         .catch((error) => {

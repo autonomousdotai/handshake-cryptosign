@@ -111,7 +111,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _payout, _offchain, _value) 
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
-      console.log('>>>>>>>>>>>> ', _nonce);
+
       const rawTransaction = {
           'from'    : ownerAddress,
           'nonce'   : '0x' + nonce.toString(16),

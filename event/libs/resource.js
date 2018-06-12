@@ -75,6 +75,7 @@ const randomOdds = (side) => {
 }
 
 const getNonceFromAPI = (address, length) => {
+    console.log('???? ', address);
     return new Promise((resolve, reject) => {
         setTimeout( async () => {
             try {
@@ -92,6 +93,7 @@ const getNonceFromAPI = (address, length) => {
                 .then(response => {
                     if (!response.data || response.data.status !== 1) {
                         console.error('Cannot get Nonce.');
+                        console.log('aaaa: ', tnxCount);
                         return resolve(tnxCount);
                     }
 
@@ -109,6 +111,7 @@ const getNonceFromAPI = (address, length) => {
                         if (!response.data || response.data.status !== 1) {
                             return reject('Cannot set Nonce.');
                         }
+                        console.log('aaaa: ', newNonce);
                         return resolve(newNonce);
                     })
                     .catch(e => {

@@ -18,13 +18,12 @@ function submitInitTransactions(dataInit, total, success) {
     return new Promise(function (resolve, reject) {
         try
         {
-            // const nonce = await resource.getNonceFromAPI(ownerAddress, dataInit.length);
-
+            const nonce = await resource.getNonceFromAPI(ownerAddress, dataInit.length);
             const tnx_tasks = [];
             dataInit.forEach((item, index) => {
                 tnx_tasks.push(new Promise((resolve, reject) => {
                     predictionContract
-                    .submitInitTransaction(index, item.hid, item.side, item.payout, item.offchain, item.value)
+                    .submitInitTransaction(nonce + index, item.hid, item.side, item.payout, item.offchain, item.value)
                     .then(resultInit => {
                         console.log('Bot bet success', resultInit);
                         success += 1;

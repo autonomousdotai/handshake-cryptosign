@@ -317,9 +317,9 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # Against
         #   amount          odds
-        #   0.3               1.3           4.33
-        #   0.1               1.4           3.5
         #   0.2               1.5           3
+        #   0.1               1.4           3.5
+        #   0.3               1.3           4.33
         # Shake with 0.25 ETH, odds: 5
         # Expected:
         #   Against:            
@@ -428,8 +428,6 @@ class TestHandshakeBluePrint(BaseTestCase):
 
 
     def test_init_handshake_case_4(self):
-        self.clear_data_before_test()
-
         # DEBUG
         # Against
         #   amount          odds
@@ -438,43 +436,8 @@ class TestHandshakeBluePrint(BaseTestCase):
         #   0.003             1.25        5
         # Shake with 0.001 ETH, odds: 1.20, side 1
         # Expected:
-
-        amount tra ve 0.001456465: RECHECK
-
-
-        # DEBUG
-        # Against
-        #   amount          odds
-        #   0.7               6           1.2
-        #   0.007             1.5         3
-        #   0.003             1.25        5
-        # Shake with 0.008 ETH, odds: 4, side: 1
-        # Expected:
-
-        match voi thang 1.25
-
-
-        # DEBUG
-        # Support
-        #   amount          odds
-        #   0.004           5           1.25
-        #   0.009           8.0         1.14
-        # Shake with 0.008 ETH, odds: 1.14, side: 2
-        # Expected:
-
-        match voi thang 8
-
-
-        # Support
-        #   amount          odds
-        #   0.004             3           1.5
-        #   0.001             2           2
-        #   0.005             2           2
-        # Shake with 0.005 ETH, odds: 2
-        # Expected:
-        #   Against:            
-        #      has 2 
-
+        #   Response:
+        #       Amount: 0.001
         self.clear_data_before_test()
         arr_hs = []
         # -----
@@ -484,12 +447,12 @@ class TestHandshakeBluePrint(BaseTestCase):
 				is_private=1,
 				user_id=88,
 				outcome_id=88,
-				odds=3,
-				amount=0.004,
+				odds=6,
+				amount=0.7,
 				currency='ETH',
-				side=1,
-				win_value=0.012,
-				remaining_amount=0.004,
+				side=2,
+				win_value=4.2,
+				remaining_amount=0.7,
 				from_address='0x123',
                 status=0
         )
@@ -504,12 +467,12 @@ class TestHandshakeBluePrint(BaseTestCase):
 				is_private=1,
 				user_id=99,
 				outcome_id=88,
-				odds=2,
-				amount=0.001,
+				odds=1.5,
+				amount=0.007,
 				currency='ETH',
-				side=1,
-				win_value=0.002,
-				remaining_amount=0.001,
+				side=2,
+				win_value=0.0105,
+				remaining_amount=0.0105,
 				from_address='0x123',
                 status=0
         )
@@ -524,12 +487,12 @@ class TestHandshakeBluePrint(BaseTestCase):
 				is_private=1,
 				user_id=109,
 				outcome_id=88,
-				odds=2,
-				amount=0.005,
+				odds=1.25,
+				amount=0.003,
 				currency='ETH',
-				side=1,
-				win_value=0.1,
-				remaining_amount=0.005,
+				side=2,
+				win_value=0.00375,
+				remaining_amount=0.003,
 				from_address='0x123',
                 status=0
         )
@@ -545,8 +508,8 @@ class TestHandshakeBluePrint(BaseTestCase):
                 "extra_data": "",
                 "description": "TESTING MODE",
                 "outcome_id": 88,
-                "odds": 5,
-                "amount": 0.25,
+                "odds": 1.20,
+                "amount": 0.001,
                 "currency": "ETH",
                 "chain_id": 4,
                 "side": 1,
@@ -567,15 +530,11 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 3)
 
-            shaker1 = data_json[0]
-            self.assertEqual(float(shaker1['remaining_amount']), 0)
+            # handshake = data_json[0]
+            # self.assertEqual(float(handshake['remaining_amount']), 0.001)
+            # self.assertEqual(len(handshake['shakers']), 0)
+            # self.assertEqual(handshake['amount'], 0.001)
 
-            print shaker1
-            self.assertEqual(len(shaker1['shakers']), 1)
-
-            shaker2 = data_json[1]
-            shaker3 = data_json[2]
-            self.assertEqual(response.status_code, 200)
 
         for handshake in arr_hs:
             db.session.delete(handshake)

@@ -34,9 +34,8 @@ module.exports = {
                 order: [
                     ['odds', isDesc ? 'DESC' : 'ASC']],
                 where: {
-                    match_id: matchId,
-
+                    match_id: matchId
                 }
             });
-    }
+      }
 };

@@ -96,7 +96,6 @@ def update_feed(handshake_id, shake_id=-1):
 			"odds_f": float(handshake.odds),
 			"currency_s": handshake.currency,
 			"side_i": handshake.side,
-			"win_value_f": float(handshake.win_value),
 			"from_address_s": handshake.from_address,
 			"result_i": outcome.result
 		}

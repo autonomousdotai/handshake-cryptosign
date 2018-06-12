@@ -44,7 +44,6 @@ class Handshake(BaseModel):
 	odds = db.Column(db.Numeric(20, 2))
 	amount = db.Column(db.Numeric(20, 18))
 	remaining_amount = db.Column(db.Numeric(20, 18))
-	win_value = db.Column(db.Numeric(20, 18))
 	currency = db.Column(db.String(10))
 	side = db.Column(db.Integer,
 						server_default=str(CONST.SIDE_TYPE['SUPPORT']),

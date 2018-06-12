@@ -153,7 +153,6 @@ def init():
 				amount=amount,
 				currency=currency,
 				side=side,
-				win_value=odds*amount,
 				remaining_amount=amount,
 				from_address=from_address
 			)
@@ -387,6 +386,10 @@ def collect():
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
+	# rollback shake
+	# rollback uninit
+	# rollback collect
+	# rollback refund
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

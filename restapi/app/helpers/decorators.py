@@ -54,7 +54,5 @@ def login_required(f):
                 db.session.rollback()
                 print(str(ex))
 
-            
-
         return f(*args, **kwargs)
     return wrap

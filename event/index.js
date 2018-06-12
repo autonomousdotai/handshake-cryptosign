@@ -200,6 +200,7 @@ function asyncScanOddsNull() {
                     resource
                         .submitInit(item, match.toJSON(), configs.network[network_id].ownerAddress, side, network_id, amount)
                         .then(response => {
+                            console.log(response);
                             if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
                                 dataInit.push({
                                     hid: item.hid,

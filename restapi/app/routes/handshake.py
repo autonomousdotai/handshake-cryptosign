@@ -178,18 +178,33 @@ def init():
 
 				handshake.shake_count += 1
 
-				print '----------------------------------------------'
+				print '---------------------------------------------------------------------'
 				print 'handshake_remaining_value --> {}'.format(handshake.remaining_amount)
+
 				handshake_win_value = handshake.remaining_amount*handshake.odds
 				print 'handshake_win_value --> {}'.format(handshake_win_value)
+
 				shaker_win_value = shaker_amount*odds
 				print 'shaker_win_value --> {}'.format(shaker_win_value)
-				final_win_value = min(handshake_win_value, shaker_win_value)
-				print 'final_win_value --> {}'.format(final_win_value)
-				subtracted_amount_for_shaker = final_win_value/handshake.odds
-				print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-				subtracted_amount_for_handshake = final_win_value - subtracted_amount_for_shaker
-				print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+				subtracted_amount_for_shaker = 0
+				subtracted_amount_for_handshake = 0
+
+				if handshake_win_value >= shaker_win_value:
+					print '--> use shaker amount'
+					subtracted_amount_for_shaker = shaker_amount
+					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
+
+					subtracted_amount_for_handshake = shaker_win_value - subtracted_amount_for_shaker
+					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+				else:
+					print '--> use maker amount'
+					subtracted_amount_for_handshake = handshake.remaining_amount
+					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+					subtracted_amount_for_shaker = shaker_win_value - subtracted_amount_for_handshake
+					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
@@ -197,7 +212,7 @@ def init():
 				db.session.merge(handshake)
 				print 'shaker_amount = {}'.format(shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN))				
 				print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
-				print '----------------------------------------------'
+				print '---------------------------------------------------------------------'
 
 				# create shaker
 				shaker = Shaker(
@@ -450,13 +465,71 @@ def refund():
 
 @handshake_routes.route('/create_bet', methods=['POST'])
 @login_required
-def createBet():
+def create_bet():
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
-		
+		if user.free_bet > 0:
+			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
+
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		hs_type = data.get('type', -1)
+		extra_data = data.get('extra_data', '')
+		description = data.get('description', '')
+		is_private = data.get('is_private', 1)
+		outcome_id = data.get('outcome_id')
+		odds = Decimal(data.get('odds'))
+		currency = data.get('currency', 'ETH')
+		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		from_address = data.get('from_address', '')
+		amount = 0.01
+
+		handshake = Handshake(
+			hs_type=hs_type,
+			extra_data=extra_data,
+			description=description,
+			chain_id=chain_id,
+			is_private=is_private,
+			user_id=user.id,
+			outcome_id=outcome_id,
+			odds=odds,
+			amount=amount,
+			currency=currency,
+			side=side,
+			remaining_amount=amount,
+			from_address=from_address
+		)
+
+		db.session.add(handshake)
+		db.session.flush()
+
+		handshake_bl.add_free_bet(handshake)
+
+		user.free_bet += 1
+		db.session.commit()
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@handshake_routes.route('/check_free_bet', methods=['GET'])
+@login_required
+def has_received_free_bet():
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
+		if user.free_bet > 0:
+			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		return response_ok()
 	except Exception, ex:

@@ -24,6 +24,7 @@ class MESSAGE(object):
 	USER_NEED_PURCHASE_PRODUCT = 'Please purchase to sign more.'
 	USER_INVALID_ACCESS_TOKEN = 'Invalid user'
 	USER_INVALID_SOURCE = 'Please login with google+ or facebook account.'
+	USER_RECEIVED_FREE_BET_ALREADY = 'You have received free bet already!'
 
 	# HANSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = 'You\'re out of gas! Please wait while we add ETH to your account.'

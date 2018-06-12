@@ -436,3 +436,21 @@ def find_available_against_handshakes(outcome_id):
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
+
+
+def add_free_bet(handshake):
+	bc_data = {
+		'hid': wallet.address,
+		'side': wallet.private_key,
+		'odds': handshake.value,
+		'maker': handshake.term,
+		'offchain': CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id)
+	}
+
+	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', data=bc_data, params={'chain_id': handshake.chain_id})
+	bc_json = bc_res.json()
+	print "bc_json=>", bc_json
+	if bc_json['status'] != 1:
+		raise BcException(bc_json['message'])
+
+	return bc_res

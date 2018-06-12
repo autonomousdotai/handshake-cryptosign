@@ -49,7 +49,8 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Payload': configs.payload,
-                'UID': `${+moment.utc()}`
+                'UID': `${+moment.utc()}`,
+                'FCM_TOKEN': `${+moment.utc()}`
             },
         })
         .then((response) => {

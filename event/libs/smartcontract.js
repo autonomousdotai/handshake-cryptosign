@@ -11,7 +11,6 @@ const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddr
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
 const gasLimit = configs.network[network_id].gasLimit;
-console.log(configs);
 
 const contractPredictionHandshake = new web3.eth.Contract(PredictionHandshake.abi, bettingHandshakeAddress);
 
@@ -112,6 +111,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _payout, _offchain, _value) 
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
+      console.log('>>>>>>>>>>>> ', _nonce);
       const rawTransaction = {
           'from'    : ownerAddress,
           'nonce'   : '0x' + nonce.toString(16),

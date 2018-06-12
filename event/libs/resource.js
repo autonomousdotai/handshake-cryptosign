@@ -2,7 +2,7 @@
 const configs = require('../configs');
 const axios = require('axios');
 const moment = require('moment');
-const outcomeDAO = require('../daos/outcome');
+const outcomeDAO = require('../daos/handshake');
 const web3 = require('../configs/web3').getWeb3();
 
 const randomOddsSupport = async (match) => {
@@ -98,8 +98,8 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Payload': configs.payload,
-                'UID': 0,
-                "Fcm-Token": '{}',
+                'UID': configs.uid,
+                'Fcm-Token': configs.fcm_token
             }
         })
         .then((response) => {

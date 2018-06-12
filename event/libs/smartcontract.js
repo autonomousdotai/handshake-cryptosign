@@ -101,12 +101,12 @@ const getGasPrice = async () => {
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) => {
+const submitInitTransaction = (_nonce, _hid, _side, _payout, _offchain, _value) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = await getNonceFromAPI(_index, ownerAddress);
+      const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei('100', 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress

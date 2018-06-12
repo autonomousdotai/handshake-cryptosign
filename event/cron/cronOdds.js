@@ -6,35 +6,45 @@ const matchDAO = require('../daos/match');
 const handshakeDAO = require('../daos/handshake');
 
 const resource = require('../libs/resource')
+const predictionContract = require('../libs/smartcontract');
 
 const web3 = require('../configs/web3').getWeb3();
 
+const ownerAddress = configs.network[configs.network_id].ownerAddress;
 // mark as running
 let isRunningOdds = false;
 
 function submitInitTransactions(dataInit, total, success) {
     return new Promise(function (resolve, reject) {
-        const tnx_tasks = [];
-        dataInit.forEach((item, index) => {
-            tnx_tasks.push(new Promise((resolve, reject) => {
-                predictionContract
-                .submitInitTransaction(index, item.hid, item.side, item.payout, item.offchain, item.value)
-                .then(resultInit => {
-                    console.log('Bot bet success', resultInit);
-                    success += 1;
-                    resolve();
-                })
-                .catch(e => {
-                    console.error('bet error: ', e);
-                    resolve();
-                })
-            }));
-        });
-        Promise.all(tnx_tasks)
-        .then(result => {
-            return resolve(`${success}/${total}`);
-        })
-        .catch(reject);
+        try
+        {
+            // const nonce = await resource.getNonceFromAPI(ownerAddress, dataInit.length);
+
+            const tnx_tasks = [];
+            dataInit.forEach((item, index) => {
+                tnx_tasks.push(new Promise((resolve, reject) => {
+                    predictionContract
+                    .submitInitTransaction(index, item.hid, item.side, item.payout, item.offchain, item.value)
+                    .then(resultInit => {
+                        console.log('Bot bet success', resultInit);
+                        success += 1;
+                        resolve();
+                    })
+                    .catch(e => {
+                        console.error('bet error: ', e);
+                        resolve();
+                    })
+                }));
+            });
+            Promise.all(tnx_tasks)
+            .then(result => {
+                return resolve(`${success}/${total}`);
+            })
+            .catch(reject);
+        } catch (e) {
+            console.error('submit InitTransactions err: ', e);
+            reject(e);
+        }
     });
 };
 

@@ -14,13 +14,14 @@ module.exports = {
         { type: models.sequelize.QueryTypes.SELECT, raw: true }
       );
     },
-    findOddByMatchID: function (matchId, isDesc) {
-        return models.Outcome
+    findOddByMatchID: function (matchId, idSupport, isDesc) {
+        return models.Handshake
             .findOne({
                 order: [
                     ['odds', isDesc ? 'DESC' : 'ASC']],
                 where: {
-                    match_id: matchId
+                    match_id: matchId,
+                    side: idSupport ? 1 : 2
                 }
             });
     }

@@ -67,7 +67,7 @@ function asyncScanOddsNull() {
                             resource
                             .submitInit(item.outcome, match.toJSON(), configs.network[configs.network_id].ownerAddress, side, configs.network_id, amount, item.odds)
                             .then(response => {
-                                if (response.status == 1 && response.status_code == 200 && response.data.length != 0) {
+                                if (response.status == 1 && response.data.length != 0) {
                                     dataInit.push({
                                         hid: item.outcome.hid,
                                         payout: web3.utils.toWei(response.data[0].odds + ""),

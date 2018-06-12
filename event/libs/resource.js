@@ -82,7 +82,7 @@ const getNonceFromAPI = (address, length) => {
                 const tnxCount = await web3.eth.getTransactionCount(address, 'latest');
 
                 // Get nonce from API
-                axios.get(`https://stag-handshake.autonomous.ai/api/nonce/get?address=${address}&network_id=${configs.network_id}`, {
+                axios.get(`https://staging.ninja.org/api/nonce/get?address=${address}&network_id=${configs.network_id}`, {
                 // axios.get(`${configs.restApiEndpoint}/nonce/get?address=${address}&network_id=${configs.network_id}`, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ const getNonceFromAPI = (address, length) => {
                     const newNonce = response.data.data.nonce > tnxCount ? tnxCount : response.data.data.nonce;
                     // Set new nonce to API
                     // axios.post(`${configs.restApiEndpoint}/nonce/set?${path}&nonce=${(newNonce + (length || 0))}`, {}, {
-                    axios.post(`https://stag-handshake.autonomous.ai/api/nonce/set?${path}&nonce=${(newNonce + (length || 0))}`, {}, {
+                    axios.post(`https://staging.ninja.org/api/nonce/set?${path}&nonce=${(newNonce + (length || 0))}`, {}, {
                         headers: {
                             'Content-Type': 'application/json',
                             'Payload': 'Rz_oUgtEt0hJbcFzD_OEaePbzjDKH_aP484G6USgcmlRVD_NXk1DfmYgIQ=='

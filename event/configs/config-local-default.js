@@ -15,8 +15,6 @@ module.exports = {
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
-  fcm_token: process.env.CRYPTOSIGN_RESTAPI_FCM_TOKEN || '',
-  uid: process.env.CRYPTOSIGN_RESTAPI_UID || 0,
   network_id: 4,
   network: {
     '1': {

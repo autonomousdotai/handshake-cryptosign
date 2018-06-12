@@ -7,7 +7,8 @@ module.exports = {
             .findAll({
                 where: {
                     hid: null
-                }
+                },
+                limit: 20
             });
     },
     updateOutcomeHID: function (outcome, hid) {

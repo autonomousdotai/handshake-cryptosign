@@ -54,7 +54,7 @@ function callEvent(eventName, eventObj) {
         console.log("missing parameters");
         return;
     }
-    let offchainStr = Web3.utils.toAscii(offchain);
+    let offchainStr = web3.utils.toAscii(offchain);
     let offchains = parseOffchain(offchainStr);
     console.log("offchains", offchains);
     if (offchains !== null) {

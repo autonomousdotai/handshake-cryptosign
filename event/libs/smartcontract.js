@@ -69,11 +69,10 @@ const getNonce = async (address, status) => {
   status = status ? status : 'latest';
   return web3.eth.getTransactionCount(address, status);
 }
-
+/*
 const getNonceFromAPI = (index, address, status) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      /*
       axios.get(`${configs.restApiEndpoint}/nonce/get?address=${address}&network_id=${network_id}`, {
       headers: {
           'Content-Type': 'application/json',
@@ -90,12 +89,11 @@ const getNonceFromAPI = (index, address, status) => {
         console.log(e);
         return reject(e);
       });
-      */
-      getNonce(address).then(resolve).catch(reject);
-    }, (index + 1) * 20000);
+      // getNonce(address).then(resolve).catch(reject);
+    }, (index + 1) * 10000);
   });
 };
-
+*/
 const getGasPrice = async () => {
   return await web3.eth.getGasPrice();
 };
@@ -109,7 +107,7 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = await getNonceFromAPI(_index, ownerAddress);
-      const gasPriceWei     = web3.utils.toWei('200', 'gwei');
+      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
@@ -157,13 +155,13 @@ const submitInitTransaction = (_index, _hid, _side, _payout, _offchain, _value) 
   bytes32 offchain
  */
 
-const createMarketTransaction = (index, fee, source, closingTime, reportTime, dispute, offchain) => {
+const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const gasPriceWei     = web3.utils.toWei('200', 'gwei');
-      const nonce           = await getNonceFromAPI(index, ownerAddress);
+      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const nonce           = _nonce;
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
@@ -184,9 +182,13 @@ const createMarketTransaction = (index, fee, source, closingTime, reportTime, di
 
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
         .on('transactionHash', (hash) => {
+          console.log('nonce: ', _nonce);
+          console.log(rawTransaction);
           return resolve(hash);
         })
         .on('receipt', (receipt) => {
+          console.log('createMarketTransactionReceipt');
+          console.log(receipt);
         })
         .on('error', err => {
           console.log(err);

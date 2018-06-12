@@ -3,7 +3,7 @@ const configs = require('../configs');
 const axios = require('axios');
 const moment = require('moment');
 const outcomeDAO = require('../daos/outcome');
-
+const web3 = require('../configs/web3').getWeb3();
 
 const randomOddsSupport = async (match) => {
     const maxOddSupport = await outcomeDAO.findOddByMatchID(match.id, true);
@@ -15,6 +15,55 @@ const randomOddsAgainst = async (match) => {
     const minOddSupport = await outcomeDAO.findOddByMatchID(match.id, false);
 
 }
+
+const getNonceFromAPI = (address, length) => {
+    return new Promise((resolve, reject) => {
+        setTimeout( async () => {
+            try {
+                const path = `address=${address}&network_id=${configs.network_id}`;
+                const tnxCount = await web3.eth.getTransactionCount(address, 'latest');
+
+                // Get nonce from API
+                axios.get(`${configs.restApiEndpoint}/nonce/get?address=${address}&network_id=${configs.network_id}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (!response.data || response.data.status !== 1) {
+                        console.error('Cannot get Nonce.');
+                        return resolve(tnxCount);
+                    }
+
+                    const newNonce = response.data.data.nonce > tnxCount ? tnxCount : response.data.data.nonce;
+                    // Set new nonce to API
+                    axios.post(`${configs.restApiEndpoint}/nonce/set?${path}&nonce=${(newNonce + (length || 0))}`, {}, {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.data || response.data.status !== 1) {
+                            return reject('Cannot set Nonce.');
+                        }
+                        return resolve(newNonce);
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        return reject(e);
+                    });
+                })
+                .catch(e => {
+                    console.error(e);
+                    return reject(e);
+                });
+            } catch (e) {
+                console.error('Get nonce err: ', e);
+                reject(e);
+            }
+        }, 20000);
+    });
+};
 
 /*
  @oddData: outcome model
@@ -51,7 +100,7 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
                 'Payload': configs.payload,
                 'UID': 0,
                 "Fcm-Token": '{}',
-            },
+            }
         })
         .then((response) => {
             return resolve(response.data);
@@ -62,4 +111,4 @@ const submitInit = (outcome, match, address, side, chainId, amount) => {
     });
 };
 
-module.exports = { submitInit };
+module.exports = { submitInit, getNonceFromAPI };

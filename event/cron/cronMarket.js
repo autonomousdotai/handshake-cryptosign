@@ -1,17 +1,19 @@
 const cron = require('node-cron');
+const moment = require('moment');
+const axios = require('axios');
 
 const configs = require('../configs');
-const moment = require('moment');
+const resource = require('../libs/resource');
 
 // daos
 const matchDAO = require('../daos/match');
 const outcomeDAO = require('../daos/outcome');
 
 const predictionContract = require('../libs/smartcontract');
+const ownerAddress = configs.network[configs.network_id].ownerAddress;
 
 // mark as running
 let isRunningCreateMarket = false;
-
 
 function asyncScanOutcomeNull() {
     return new Promise(async(resolve, reject) => {
@@ -19,6 +21,7 @@ function asyncScanOutcomeNull() {
         {
             const outcomes = await outcomeDAO.getOutcomesNullHID();
             if (outcomes.length > 0) {
+                const nonce = await resource.getNonceFromAPI(ownerAddress, outcomes.length);
                 let tasks = [];
                 outcomes.forEach((outcome, index) => {
                     const task = new Promise(async(resolve, reject) => {
@@ -33,7 +36,7 @@ function asyncScanOutcomeNull() {
                             const source = match.source;
 
                             predictionContract
-                                .createMarketTransaction(index, fee, source, closingTime, reportTime, dispute, offchain)
+                                .createMarketTransaction(nonce + index, fee, source, closingTime, reportTime, dispute, offchain)
                                 .then((hash) => {
                                     console.log(`Create outcome_id ${outcome.id} success, hash: ${hash}`);
                                     resolve(hash);

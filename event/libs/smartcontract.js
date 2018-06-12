@@ -1,12 +1,12 @@
 
-const Web3 = require('web3');
 const configs = require('../configs');
 const httpRequest = require('../libs/http');
 const PredictionHandshake = require('../contracts/PredictionHandshake.json');
 const axios = require('axios');
 
+const web3 = require('../configs/web3').getWeb3();
+
 const network_id = configs.network_id;
-const web3 = new Web3(new Web3.providers.HttpProvider(configs.network[network_id].blockchainNetwork));
 const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddress;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;

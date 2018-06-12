@@ -399,14 +399,13 @@ def rollback():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		offchain = data.get('outcome_id')
+		offchain = data.get('offchain')
 		if offchain is None or len(offchain) == 0:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		# TODO: rollback money
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		if 'm' in offchain:
-			offchain = offchain.replace('m', '')
+			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
 			if handshake is not None:
 				if handshake.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
@@ -419,14 +418,14 @@ def rollback():
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
 		else:
-			offchain = offchain.replace('s', '')
+			offchain = int(offchain.replace('m', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
 			if shaker is not None:
 				if shaker.status == CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']:
 					shaker.status = shaker.bk_status
 					db.session.commit()
 
-					update_feed.delay(shaker.handshake_id, shaker.id)
+					update_feed.delay(shaker.handshake_id, shaker.id)					
 					return response_ok(shaker.to_json())
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)

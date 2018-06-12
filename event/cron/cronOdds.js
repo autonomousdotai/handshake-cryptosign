@@ -146,7 +146,7 @@ function asyncScanOddsNull() {
 
 function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
-    cron.schedule('*/1 * * * *', async function() {
+    cron.schedule('*/2 * * * *', async function() {
 		console.log('odds cron running a task every 1m at ' + new Date());
 		try {
 			if (isRunningOdds === false) {

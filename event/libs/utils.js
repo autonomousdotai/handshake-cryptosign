@@ -6,6 +6,14 @@ const web3 = require('../configs/web3').getWeb3();
 const handshakeDAO = require('../daos/handshake');
 
 
+const gennerateExtraData = (match, outcome) => {
+    return JSON.stringify({
+        event_name: match.name,
+        event_predict: outcome.name,
+        date: moment((match.date || 0) * 1000).format("MMM DD")
+    });
+};
+
 const gennerateOddsArr = (outcomes, isGenSup) => {
     return new Promise((resolve, reject) => {
         var tasks = [];
@@ -135,7 +143,7 @@ const submitInit = (outcome, match, address, side, chainId, amount, odds) => {
     return new Promise((resolve, reject) => {
         const dataRequest = {
             type: 3,
-            extra_data: `{"event_name":"${match.name}","event_predict":"${outcome.name}"}`,
+            extra_data: gennerateExtraData(match, outcome),
             description: 'cron job',
             outcome_id: outcome.id,
             odds: odds,
@@ -169,5 +177,6 @@ module.exports = {
     gennerateOddsSupport,
     gennerateOddsAgainst,
     gennerateOddsArr,
-    randomOdds
+    randomOdds,
+    gennerateExtraData
 };

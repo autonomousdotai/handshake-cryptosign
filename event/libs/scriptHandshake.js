@@ -2,25 +2,45 @@
 const web3 = require('../configs/web3').getWeb3();
 const axios = require('axios');
 const configs = require('../configs');
+const utils = require('../libs/utils');
 const outcomeDAO = require('../daos/outcome');
+const matchDAO = require('../daos/match');
 const smartContract = require('./smartcontract');
 const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
 
 const genData = () => {
-    const arr = [];
-    oddsData.forEach( i => {
-        i.outcomes.forEach(o => {
-            arr.push({
-                outcome_id: i.outcome_id,
-                name: i.name,
-                extra_data: i.extra_data,
-                side: o.side,
-                odds: o.odds.replace(',','.')
-              });
+    return new Promise((resolve, reject) => {
+        const arr = [];
+        const tasks = [];
+        oddsData.forEach( i => {
+            tasks.push(new Promise((resolve, reject) => {
+                matchDAO.getMatchByName(i.name)
+                .then(match => {
+                    outcomeDAO.getByMatchId(match.id)
+                    .then(outcome => {
+                        i.outcomes.forEach(o => {
+                            arr.push({
+                                outcome_id: outcome.id,
+                                name: i.name,
+                                extra_data: utils.gennerateExtraData(match, outcome),
+                                side: o.side,
+                                odds: o.odds.replace(',','.')
+                            });
+                        });
+                        return resolve();
+                    })
+                    .catch(reject);
+                })
+                .catch(reject);
+            }));
         });
+        Promise.all(tasks)
+        .then(result => {
+            resolve(arr);
+        })
+        .catch(reject);
     });
-    return arr;
 }
 
 const submitInitAPI = (arr) => {
@@ -80,9 +100,9 @@ const submitInitAPI = (arr) => {
     });
 };
 
-const initHandshake = () => {
+const initHandshake = async () => {
     try {
-        const arr = genData();
+        const arr = await genData();
         submitInitAPI(arr)
         .then(async tnxDataArr => {
             const nonce = await smartContract.getNonce(ownerAddress);
@@ -107,8 +127,9 @@ const initHandshake = () => {
         })
         .catch(console.error);
     } catch (e) {
-        console.log(err);
+        console.log(e);
     }
 };
 
 module.exports = { initHandshake };
+

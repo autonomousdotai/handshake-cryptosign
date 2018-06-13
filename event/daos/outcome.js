@@ -9,6 +9,13 @@ module.exports = {
             }
         });
     },
+    getByMatchId: function (matchId) {
+        return models.Outcome.findOne({
+            where: {
+                match_id: matchId
+            }
+        });
+    },
     getAll: function () {
         return models.Outcome.findAll({});
     },

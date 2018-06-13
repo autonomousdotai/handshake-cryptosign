@@ -203,7 +203,7 @@ def init():
 					subtracted_amount_for_handshake = handshake.remaining_amount
 					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 
-					subtracted_amount_for_shaker = shaker_win_value - subtracted_amount_for_handshake
+					subtracted_amount_for_shaker = handshake_win_value - subtracted_amount_for_handshake
 					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
@@ -400,8 +400,8 @@ def collect():
 @login_required
 def rollback():
 	# rollback shake
-	# rollback uninit
-	# rollback collect
+	# rollback uninit: DONE
+	# rollback collect: DONE
 	# rollback refund
 	try:
 		uid = int(request.headers['Uid'])

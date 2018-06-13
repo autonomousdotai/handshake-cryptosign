@@ -57,7 +57,7 @@ const submitInitAPI = (arr) => {
                         arrTnxSubmit.push({
                             hid: _outcome.hid,
                             odds: web3.utils.toWei( (parseInt(item.odds) * 100) + ''),
-                            value: web3.utils.toWei(item.amount),
+                            value: web3.utils.toWei(dataRequest.amount),
                             offchain: response.data.data[0].offchain,
                             side: item.side
                         });

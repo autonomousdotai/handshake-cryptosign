@@ -6,3 +6,4 @@ from shaker import *
 from history import *
 from event import *
 from tx import *
+from setting import *

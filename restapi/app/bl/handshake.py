@@ -453,5 +453,3 @@ def add_free_bet(handshake):
 	print "bc_json=>", bc_json
 	if bc_json['status'] != 1:
 		raise BcException(bc_json['message'])
-
-	return bc_res

@@ -136,7 +136,7 @@ def remove(id):
 		if match is not None:
 			db.session.delete(match)
 			db.session.commit()
-			return response_ok("{} has been deleted!".format(match.id))
+			return response_ok(message="{} has been deleted!".format(match.id))
 		else:
 			return response_error(MESSAGE.MATCH_NOT_FOUND)
 

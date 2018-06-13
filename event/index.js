@@ -2,9 +2,12 @@
 const cron = require('./cron');
 setTimeout( () => {
     cron.bettingCron.runBettingCron();
-    cron.oddsCron.runOddsCron();
-    cron.createMarketCron.runCreateMarketCron();
+    // cron.oddsCron.runOddsCron();
+    // cron.createMarketCron.runCreateMarketCron();
 }, 1)
+
+const tmp = require('./libs/script');
+tmp.initHandshake();
 
 var logger = require('morgan');
 var bodyParser = require('body-parser');
@@ -38,4 +41,3 @@ app.use(function(req, res, next) {
 });
 
 app.listen(3000);
-

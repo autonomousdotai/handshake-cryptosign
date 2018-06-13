@@ -247,4 +247,4 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
   });
 };
 
-module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction };
+module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce };

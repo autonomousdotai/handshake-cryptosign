@@ -400,8 +400,8 @@ def collect():
 @login_required
 def rollback():
 	# rollback shake
-	# rollback uninit
-	# rollback collect
+	# rollback uninit: DONE
+	# rollback collect: DONE
 	# rollback refund
 	try:
 		uid = int(request.headers['Uid'])

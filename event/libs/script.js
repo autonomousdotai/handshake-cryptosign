@@ -50,9 +50,9 @@ const submitInitAPI = (arr) => {
                         'Fcm-Token': configs.fcm_token
                     }
                 })
-                .then(async (response) => {
+                .then(async response => {
                     if (response.data.status == 1 && response.data.data.length != 0) {
-                        const _outcome = outcomeDAO.getById(item.outcome_id);
+                        const _outcome = await outcomeDAO.getById(item.outcome_id);
                         arrTnxSubmit.push({
                             hid: _outcome.hid,
                             odds: web3.utils.toWei( (parseInt(item.odds) * 100) + ''),
@@ -80,11 +80,11 @@ const submitInitAPI = (arr) => {
 };
 
 const initHandshake = () => {
-    const arr = genData();
-    submitInitAPI(arr)
-    .then(tnxDataArr => {
-        try {
-            const nonce = smartContract.getNonce(ownerAddress);
+    try {
+        const arr = genData();
+        submitInitAPI(arr)
+        .then(async tnxDataArr => {
+            const nonce = await smartContract.getNonce(ownerAddress);
             const tasks = [];
             
             tnxDataArr.forEach((tnx, index) => {
@@ -103,11 +103,11 @@ const initHandshake = () => {
             Promise.all(tasks)
             .then()
             .catch(console.error)
-        } catch (e) {
-            console.log(err);
-        }
-    })
-    .catch(console.error);
+        })
+        .catch(console.error);
+    } catch (e) {
+        console.log(err);
+    }
 };
 
 module.exports = { initHandshake };

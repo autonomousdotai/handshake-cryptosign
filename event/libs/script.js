@@ -53,7 +53,6 @@ const submitInitAPI = (arr) => {
                 .then(async (response) => {
                     if (response.data.status == 1 && response.data.data.length != 0) {
                         const _outcome = outcomeDAO.getById(item.outcome_id);
-                        console.log(item);
                         arrTnxSubmit.push({
                             hid: _outcome.hid,
                             odds: web3.utils.toWei( (parseInt(item.odds) * 100) + ''),
@@ -64,7 +63,6 @@ const submitInitAPI = (arr) => {
                     } else {
                         console.log('===== ERROR =====');
                         console.log(dataRequest);
-                        console.error(response.data);
                     }
                     return resolve();
                 })
@@ -84,12 +82,27 @@ const submitInitAPI = (arr) => {
 const initHandshake = () => {
     const arr = genData();
     submitInitAPI(arr)
-    .then(async tnxDataArr => {
+    .then(tnxDataArr => {
         try {
-            const results = await tnxDataArr.map(async tnx => {
-                return await smartContract.submitInitTransaction();
+            const nonce = smartContract.getNonce(ownerAddress);
+            const tasks = [];
+            
+            tnxDataArr.forEach((tnx, index) => {
+                tasks.push(new Promise((resolve, reject) => {
+                    smartContract.submitInitTransaction(nonce + index, tnx.hid, tnx.side, tnx.odds, tnx.offchain, tnx.value)
+                    .then(result => {
+                        console.log(result);
+                        resolve();
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        reject(err);
+                    });
+                }));
             });
-            console.log(results);
+            Promise.all(tasks)
+            .then()
+            .catch(console.error)
         } catch (e) {
             console.log(err);
         }

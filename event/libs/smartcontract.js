@@ -102,6 +102,7 @@ const getGasPrice = async () => {
 //     submit init transaction
 // */
 const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) => {
+  console.log(_nonce, _hid, _side, _odds, _offchain, _value);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;

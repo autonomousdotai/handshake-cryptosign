@@ -65,6 +65,9 @@ class TestHandshakeBl(BaseTestCase):
             )
             db.session.add(outcome)
             db.session.commit()
+        else:
+            outcome.result = -1
+            db.session.commit()
 
     def clear_data_before_test(self):
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
@@ -542,13 +545,19 @@ class TestHandshakeBl(BaseTestCase):
 
         handshakes = handshake_bl.find_available_against_handshakes(outcome_id=88)
         self.assertEqual(len(handshakes), 2)
-        self.assertEqual(float(handshakes[0].amount), 0.21)
-        self.assertEqual(float(handshakes[1].amount), 0.3125)
+        self.assertEqual(float(handshakes[0].amount), 0.3125)
+        self.assertEqual(float(handshakes[1].amount), 0.21)
 
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
+
+    def test_save_collect_state_for_shaker(self):
+        pass
+
+    def test_save_collect_state_for_maker(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()

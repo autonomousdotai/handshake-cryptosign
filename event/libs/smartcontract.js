@@ -11,7 +11,7 @@ const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddr
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
 const gasLimit = configs.network[network_id].gasLimit;
-const gasPrice = configs.network[network_id].gasPrice;
+const gasPrice = `${configs.network[network_id].gasPrice}`;
 
 const contractPredictionHandshake = new web3.eth.Contract(PredictionHandshake.abi, bettingHandshakeAddress);
 
@@ -182,8 +182,6 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
  */
 
 const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain) => {
-  console.log('createMarketTransaction');
-  console.log(_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, gasLimit);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;

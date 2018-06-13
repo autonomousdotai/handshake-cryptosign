@@ -439,11 +439,12 @@ def find_available_against_handshakes(outcome_id):
 
 
 def add_free_bet(handshake):
+	outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 	bc_data = {
-		'hid': wallet.address,
-		'side': wallet.private_key,
-		'odds': handshake.value,
-		'maker': handshake.term,
+		'hid': outcome.hid,
+		'side': handshake.side,
+		'odds': int(handshake.odds * 100),
+		'address': handshake.from_address,
 		'offchain': CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id)
 	}
 

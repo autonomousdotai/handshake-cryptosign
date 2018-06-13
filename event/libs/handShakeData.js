@@ -8,6 +8,10 @@ module.exports = [
         "odds": "3.10"
       },
       {
+        "side": 1,
+        "odds": "3"
+      },
+      {
         "side": 2,
         "odds": "2.40"
       }

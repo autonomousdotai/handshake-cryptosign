@@ -184,6 +184,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
 const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain) => {
   return new Promise(async(resolve, reject) => {
     try {
+      console.log('>>>>> ', gasPrice);
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');

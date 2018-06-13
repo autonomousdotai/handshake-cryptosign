@@ -16,7 +16,7 @@ const genData = () => {
                 name: i.name,
                 extra_data: i.extra_data,
                 side: o.side,
-                odds: typeof(o.odds) === 'number' ? o.odds : (parseInt(o.odds.replace(',','.')))
+                odds: o.odds.replace(',','.')
               });
         });
     });

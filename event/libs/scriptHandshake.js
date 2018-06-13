@@ -4,7 +4,7 @@ const axios = require('axios');
 const configs = require('../configs');
 const outcomeDAO = require('../daos/outcome');
 const smartContract = require('./smartcontract');
-const oddsData = require('./dataOdds');
+const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
 
 const genData = () => {

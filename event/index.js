@@ -6,9 +6,6 @@ setTimeout( () => {
     // cron.createMarketCron.runCreateMarketCron();
 }, 1)
 
-const tmp = require('./libs/script');
-tmp.initHandshake();
-
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 var responseEnhancer = require('./middlewares/response-enhancer');

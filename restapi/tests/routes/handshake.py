@@ -700,7 +700,7 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             handshake = data_json[0]
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(len(handshake['shakers']), 0)
 
         for handshake in arr_hs:
             db.session.delete(handshake)

@@ -383,7 +383,8 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 		win_value = amount*odds
 		if win_value - amount > 0:
 			# calculate matched odds
-			v = round_down(odds/(odds-1),2)
+			v = odds/(odds-1)
+			v = float(Decimal(str(v)).quantize(Decimal('.01'), rounding=ROUND_FLOOR))
 			print 'matched odds --> {}'.format(v)
 			query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
 			print query

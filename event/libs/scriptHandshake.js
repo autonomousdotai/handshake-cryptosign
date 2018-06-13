@@ -31,7 +31,7 @@ const genData = () => {
                                 name: i.name,
                                 extra_data: utils.gennerateExtraData(match, outcome),
                                 side: o.side,
-                                odds: o.odds.replace(',','.')
+                                odds: o.odds
                             });
                         });
                         return resolve();

@@ -3,7 +3,7 @@ const moment = require('moment');
 const axios = require('axios');
 
 const configs = require('../configs');
-const resource = require('../libs/resource');
+const resource = require('../libs/utils');
 
 // daos
 const matchDAO = require('../daos/match');

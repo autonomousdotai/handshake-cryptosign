@@ -5,7 +5,7 @@ const configs = require('../configs');
 const matchDAO = require('../daos/match');
 const handshakeDAO = require('../daos/handshake');
 
-const resource = require('../libs/resource')
+const resource = require('../libs/utils')
 const predictionContract = require('../libs/smartcontract');
 
 const web3 = require('../configs/web3').getWeb3();

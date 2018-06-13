@@ -85,7 +85,7 @@ module.exports = [
       },
       {
         "side": 2,
-        "odds": "11.00"
+        "odds": "11.0"
       }
     ]
   },
@@ -175,7 +175,7 @@ module.exports = [
       },
       {
         "side": 2,
-        "odds": "19,50"
+        "odds": "19.50"
       }
     ]
   },
@@ -416,6 +416,306 @@ module.exports = [
       {
         "side": 2,
         "odds": "1.80"
+      }
+    ]
+  },
+  {
+    "outcome_id": 202,
+    "name": "England vs Panama",
+    "extra_data": "{\"event_name\":\"England vs Panama\",\"event_predict\":\"England wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "1.18"
+      },
+      {
+        "side": 2,
+        "odds": "17.00"
+      }
+    ]
+  },
+  {
+    "outcome_id": 203,
+    "name": "Japan vs Senegal",
+    "extra_data": "{\"event_name\":\"Japan vs Senegal\",\"event_predict\":\"Japan wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "3.50"
+      },
+      {
+        "side": 2,
+        "odds": "2.10"
+      }
+    ]
+  },
+  {
+    "outcome_id": 204,
+    "name": "Poland vs Colombia",
+    "extra_data": "{\"event_name\":\"Poland vs Colombia\",\"event_predict\":\"Poland wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "3.25"
+      },
+      {
+        "side": 2,
+        "odds": "2.25"
+      }
+    ]
+  },
+  {
+    "outcome_id": 205,
+    "name": "Saudi Arabia vs Egypt",
+    "extra_data": "{\"event_name\":\"Saudi Arabia vs Egypt\",\"event_predict\":\"Saudi Arabia wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "5.00"
+      },
+      {
+        "side": 2,
+        "odds": "1.75"
+      }
+    ]
+  },
+  {
+    "outcome_id": 201,
+    "name": "Germany vs Sweden",
+    "extra_data": "{\"event_name\":\"Germany vs Sweden\",\"event_predict\":\"Germany wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "1.42"
+      },
+      {
+        "side": 2,
+        "odds": "7.25"
+      }
+    ]
+  },
+  {
+    "outcome_id": 206,
+    "name": "Uruguay vs Russia",
+    "extra_data": "{\"event_name\":\"Uruguay vs Russia\",\"event_predict\":\"Uruguay wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "2.25"
+      },
+      {
+        "side": 2,
+        "odds": "3.20"
+      }
+    ]
+  },
+  {
+    "outcome_id": 208,
+    "name": "Spain vs Morocco",
+    "extra_data": "{\"event_name\":\"Spain vs Morocco\",\"event_predict\":\"Spain wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "1.36"
+      },
+      {
+        "side": 2,
+        "odds": "10.50"
+      }
+    ]
+  },
+  {
+    "outcome_id": 207,
+    "name": "Iran vs Portugal",
+    "extra_data": "{\"event_name\":\"Iran vs Portugal\",\"event_predict\":\"Iran wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "8.25"
+      },
+      {
+        "side": 2,
+        "odds": "1.40"
+      }
+    ]
+  },
+  {
+    "outcome_id": 209,
+    "name": "Denmark vs France",
+    "extra_data": "{\"event_name\":\"Denmark vs France\",\"event_predict\":\"Denmark wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "5.00"
+      },
+      {
+        "side": 2,
+        "odds": "1.65"
+      }
+    ]
+  },
+  {
+    "outcome_id": 210,
+    "name": "Australia vs Peru",
+    "extra_data": "{\"event_name\":\"Australia vs Peru\",\"event_predict\":\"Australia wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "3.60"
+      },
+      {
+        "side": 2,
+        "odds": "2.10"
+      }
+    ]
+  },
+  {
+    "outcome_id": 211,
+    "name": "Nigeria vs Argentina",
+    "extra_data": "{\"event_name\":\"Nigeria vs Argentina\",\"event_predict\":\"Nigeria wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "7.25"
+      },
+      {
+        "side": 2,
+        "odds": "1.45"
+      }
+    ]
+  },
+  {
+    "outcome_id": 212,
+    "name": "Iceland vs Croatia",
+    "extra_data": "{\"event_name\":\"Iceland vs Croatia\",\"event_predict\":\"Iceland wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "4.33"
+      },
+      {
+        "side": 2,
+        "odds": "1.80"
+      }
+    ]
+  },
+  {
+    "outcome_id": 213,
+    "name": "Mexico vs Sweden",
+    "extra_data": "{\"event_name\":\"Mexico vs Sweden\",\"event_predict\":\"Mexico wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "2.45"
+      },
+      {
+        "side": 2,
+        "odds": "2.85"
+      }
+    ]
+  },
+  {
+    "outcome_id": 214,
+    "name": "Korea Republic vs Germany",
+    "extra_data": "{\"event_name\":\"Korea Republic vs Germany\",\"event_predict\":\"Korea Republic wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "12.50"
+      },
+      {
+        "side": 2,
+        "odds": "1.28"
+      }
+    ]
+  },
+  {
+    "outcome_id": 215,
+    "name": "Serbia vs Brazil",
+    "extra_data": "{\"event_name\":\"Serbia vs Brazil\",\"event_predict\":\"Serbia wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "8.25"
+      },
+      {
+        "side": 2,
+        "odds": "1.36"
+      }
+    ]
+  },
+  {
+    "outcome_id": 216,
+    "name": "Switzerland vs Costa Rica",
+    "extra_data": "{\"event_name\":\"Switzerland vs Costa Rica\",\"event_predict\":\"Switzerland wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "1.91"
+      },
+      {
+        "side": 2,
+        "odds": "4.20"
+      }
+    ]
+  },
+  {
+    "outcome_id": 217,
+    "name": "Japan vs Poland",
+    "extra_data": "{\"event_name\":\"Japan vs Poland\",\"event_predict\":\"Japan wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "4.20"
+      },
+      {
+        "side": 2,
+        "odds": "1.87"
+      }
+    ]
+  },
+  {
+    "outcome_id": 218,
+    "name": "Senegal vs Colombia",
+    "extra_data": "{\"event_name\":\"Senegal vs Colombia\",\"event_predict\":\"Senegal wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "3.80"
+      },
+      {
+        "side": 2,
+        "odds": "2.00"
+      }
+    ]
+  },
+  {
+    "outcome_id": 219,
+    "name": "Panama vs Tunisia",
+    "extra_data": "{\"event_name\":\"Panama vs Tunisia\",\"event_predict\":\"Panama wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "3.50"
+      },
+      {
+        "side": 2,
+        "odds": "2.15"
+      }
+    ]
+  },
+  {
+    "outcome_id": 220,
+    "name": "England vs Belgium",
+    "extra_data": "{\"event_name\":\"England vs Belgium\",\"event_predict\":\"England wins\"}",
+    "outcomes": [
+      {
+        "side": 1,
+        "odds": "2.90"
+      },
+      {
+        "side": 2,
+        "odds": "2.40"
       }
     ]
   }

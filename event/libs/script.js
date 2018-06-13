@@ -51,13 +51,13 @@ const submitInitAPI = (arr) => {
                     }
                 })
                 .then(async (response) => {
-                    if (response.status == 1 && response.data.length != 0) {
+                    if (response.status == 1 && response.data.data.length != 0) {
                         const _outcome = outcomeDAO.getById(item.outcome_id);
                         arrTnxSubmit.push({
                             hid: _outcome.hid,
                             odds: web3.utils.toWei( (parseInt(item.odds) * 100) + ''),
                             value: web3.utils.toWei(item.amount),
-                            offchain: response.data[0].offchain,
+                            offchain: response.data.data[0].offchain,
                             side: item.side
                         });
                     } else {

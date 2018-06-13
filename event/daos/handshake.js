@@ -4,13 +4,13 @@ const models = require('../models');
 module.exports = {
     getAgainstOddsNull: function () {
         return models.sequelize.query(
-            `SELECT outcome.* FROM outcome WHERE outcome.hid != -1 AND outcome.deleted = 0 AND NOT EXISTS(SELECT * FROM handshake WHERE handshake.outcome_id = outcome.id AND handshake.side = 2 AND handshake.remaining_amount > 0 AND handshake.deleted = 0) LIMIT 10`,
+            `SELECT outcome.* FROM outcome WHERE outcome.hid IS NOT NULL AND outcome.deleted = 0 AND NOT EXISTS(SELECT * FROM handshake WHERE handshake.outcome_id = outcome.id AND handshake.side = 2 AND handshake.remaining_amount > 0 AND handshake.deleted = 0) LIMIT 10`,
             { type: models.sequelize.QueryTypes.SELECT, raw: true }
         );
     },
     getSupportOddsNull: function () {
         return models.sequelize.query(
-            `SELECT outcome.* FROM outcome WHERE outcome.hid != -1 AND outcome.deleted = 0 AND NOT EXISTS(SELECT * FROM handshake WHERE handshake.outcome_id = outcome.id AND handshake.side = 1 AND handshake.remaining_amount > 0  AND handshake.deleted = 0) LIMIT 10`,
+            `SELECT outcome.* FROM outcome WHERE outcome.hid IS NOT NULL AND outcome.deleted = 0 AND NOT EXISTS(SELECT * FROM handshake WHERE handshake.outcome_id = outcome.id AND handshake.side = 1 AND handshake.remaining_amount > 0  AND handshake.deleted = 0) LIMIT 10`,
             { type: models.sequelize.QueryTypes.SELECT, raw: true }
         );
     },

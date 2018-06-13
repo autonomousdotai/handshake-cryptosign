@@ -496,7 +496,6 @@ def create_bet():
 		elif outcome.hid is None:
 			raise Exception(MESSAGE.INVALID_OUTCOME)
 			
-
 		handshake = Handshake(
 			hs_type=hs_type,
 			extra_data=extra_data,

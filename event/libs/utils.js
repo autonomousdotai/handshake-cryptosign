@@ -48,7 +48,7 @@ const gennerateOddsSupport = (outcomeId) => {
                 return resolve(null);
             }
 
-            return parseInt(resolve(result.toJSON().odds || 0) + 0.1 * (Math.floor(Math.random() * 9) + 1));
+            return resolve((parseFloat(result.toJSON().odds || 0) + 0.1 * (Math.floor(Math.random() * 9) + 1)).toFixed(2));
         })
         .catch((error) => {
             console.error('DB: random Odds Support err: ', error);

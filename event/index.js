@@ -1,13 +1,12 @@
 
+const configs = require('./configs');
 const cron = require('./cron');
+
 setTimeout( () => {
     cron.bettingCron.runBettingCron();
-    // cron.oddsCron.runOddsCron();
-    // cron.createMarketCron.runCreateMarketCron();
+    cron.oddsCron.runOddsCron();
+    cron.createMarketCron.runCreateMarketCron();
 }, 1)
-
-const tmp = require('./libs/script');
-tmp.initHandshake();
 
 var logger = require('morgan');
 var bodyParser = require('body-parser');
@@ -40,4 +39,4 @@ app.use(function(req, res, next) {
     res.notok(new Error('Not found'));
 });
 
-app.listen(3000);
+app.listen(configs.port);

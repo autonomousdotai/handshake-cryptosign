@@ -9,6 +9,7 @@ const models = require('../models');
 
 // daos
 const eventDAO = require('../daos/event');
+const settingDAO = require('../daos/setting');
 
 // Add the web3 node module
 const web3 = require('../configs/web3').getWeb3();
@@ -151,6 +152,17 @@ function runBettingCron() {
 	cron.schedule('*/40 * * * * *', async function() {
 		console.log('running a task every 40s at ' + new Date());
 		try {
+            const setting = await settingDAO.getByName('BettingCronJob');
+            if (!setting) {
+                console.log('BettingCronJob is null. Exit!');
+                return;
+            }
+            if(!setting.status) {
+                console.log('Exit BettingCronJob with status: ' + setting.status);
+                return;
+            }
+            console.log('Begin run BettingCronJob!');
+
 			if (isRunning === false) {
 				isRunning = true;
 				if (contractBettingHandshake && contractBettingHandshake != '') {

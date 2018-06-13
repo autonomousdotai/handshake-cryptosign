@@ -4,7 +4,7 @@ const axios = require('axios');
 const configs = require('../configs');
 const outcomeDAO = require('../daos/outcome');
 const smartContract = require('./smartcontract');
-const oddsData = require('./dataOdds');
+const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
 
 const genData = () => {
@@ -16,7 +16,7 @@ const genData = () => {
                 name: i.name,
                 extra_data: i.extra_data,
                 side: o.side,
-                odds: o.odds
+                odds: o.odds.replace(',','.')
               });
         });
     });
@@ -41,7 +41,7 @@ const submitInitAPI = (arr) => {
                     side: item.side,
                     from_address: ownerAddress
                 };
-    
+
                 axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -50,19 +50,19 @@ const submitInitAPI = (arr) => {
                         'Fcm-Token': configs.fcm_token
                     }
                 })
-                .then(async (response) => {
+                .then(async response => {
                     if (response.data.status == 1 && response.data.data.length != 0) {
-                        const _outcome = outcomeDAO.getById(item.outcome_id);
+                        const _outcome = await outcomeDAO.getById(item.outcome_id);
                         arrTnxSubmit.push({
                             hid: _outcome.hid,
                             odds: web3.utils.toWei( (parseInt(item.odds) * 100) + ''),
-                            value: web3.utils.toWei(item.amount),
+                            value: web3.utils.toWei(dataRequest.amount),
                             offchain: response.data.data[0].offchain,
                             side: item.side
                         });
                     } else {
                         console.log('===== ERROR =====');
-                        console.error(response.data);
+                        console.log(dataRequest);
                     }
                     return resolve();
                 })
@@ -80,19 +80,34 @@ const submitInitAPI = (arr) => {
 };
 
 const initHandshake = () => {
-    const arr = genData();
-    submitInitAPI(arr)
-    .then(async tnxDataArr => {
-        try {
-            const results = await tnxDataArr.map(async tnx => {
-                return await smartContract.submitInitTransaction();
+    try {
+        const arr = genData();
+        submitInitAPI(arr)
+        .then(async tnxDataArr => {
+            const nonce = await smartContract.getNonce(ownerAddress);
+            const tasks = [];
+            
+            tnxDataArr.forEach((tnx, index) => {
+                tasks.push(new Promise((resolve, reject) => {
+                    smartContract.submitInitTransaction(nonce + index, tnx.hid, tnx.side, tnx.odds, tnx.offchain, tnx.value)
+                    .then(result => {
+                        console.log(result);
+                        resolve();
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        reject(err);
+                    });
+                }));
             });
-            console.log(results);
-        } catch (e) {
-            console.log(err);
-        }
-    })
-    .catch(console.error);
+            Promise.all(tasks)
+            .then()
+            .catch(console.error)
+        })
+        .catch(console.error);
+    } catch (e) {
+        console.log(err);
+    }
 };
 
 module.exports = { initHandshake };

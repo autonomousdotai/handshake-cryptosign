@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const configs = require('../configs');
 const predictionContract = require('../libs/smartcontract');
+const scriptInitHandshake = require('../libs/scriptHandshake');
 
 router.post('/init', async function(req, res, next) {
     try {
@@ -26,6 +27,15 @@ router.post('/init', async function(req, res, next) {
 
     } catch (err) {
         console.log('route init throw exception');
+        next(err);
+    }
+});
+
+router.post('odds/init', (req, res, next) => {
+    try {
+        scriptInitHandshake.initHandshake();
+        res.ok('Init odds data.');
+    } catch (err) {
         next(err);
     }
 });

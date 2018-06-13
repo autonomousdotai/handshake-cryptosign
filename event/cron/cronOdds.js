@@ -4,8 +4,9 @@ const configs = require('../configs');
 // daos
 const matchDAO = require('../daos/match');
 const handshakeDAO = require('../daos/handshake');
+const settingDAO = require('../daos/setting');
 
-const resource = require('../libs/resource')
+const resource = require('../libs/utils')
 const predictionContract = require('../libs/smartcontract');
 
 const web3 = require('../configs/web3').getWeb3();
@@ -16,8 +17,18 @@ let isRunningOdds = false;
 
 function submitInitTransactions(dataInit, total, success) {
     return new Promise( async (resolve, reject) => {
-        try
-        {
+        try {
+            const setting = await settingDAO.getByName('MarketCronJob');
+            if (!setting) {
+                console.log('MarketCronJob is null. Exit!');
+                return;
+            }
+            if(!setting.status) {
+                console.log('Exit MarketCronJob with status: ' + setting.status);
+                return;
+            }
+            console.log('Begin run MarketCronJob!');
+
             const nonce = await resource.getNonceFromAPI(ownerAddress, dataInit.length);
             const tnx_tasks = [];
             dataInit.forEach((item, index) => {
@@ -148,7 +159,18 @@ function runOddsCron() {
     // cron.schedule('* 1 * * * *', async function() {
     cron.schedule('*/2 * * * *', async function() {
 		console.log('odds cron running a task every 1m at ' + new Date());
-		try {
+        try {
+            const setting = await settingDAO.getByName('BotsCronJob');
+            if (!setting) {
+                console.log('BotsCronJob is null. Exit!');
+                return;
+            }
+            if(!setting.status) {
+                console.log('Exit BotsCronJob with status: ' + setting.status);
+                return;
+            }
+            console.log('Begin run BotsCronJob!');
+
 			if (isRunningOdds === false) {
                 isRunningOdds = true;
                 

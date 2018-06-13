@@ -3,11 +3,12 @@ const moment = require('moment');
 const axios = require('axios');
 
 const configs = require('../configs');
-const resource = require('../libs/resource');
+const resource = require('../libs/utils');
 
 // daos
 const matchDAO = require('../daos/match');
 const outcomeDAO = require('../daos/outcome');
+const settingDAO = require('../daos/setting');
 
 const predictionContract = require('../libs/smartcontract');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
@@ -75,7 +76,18 @@ function asyncScanOutcomeNull() {
 function runCreateMarketCron() {
     cron.schedule('*/5 * * * *', async function() {
 		console.log('create market cron running a task every 2m at ' + new Date());
-		try {
+        try {
+            const setting = await settingDAO.getByName('MarketCronJob');
+            if (!setting) {
+                console.log('MarketCronJob is null. Exit!');
+                return;
+            }
+            if(!setting.status) {
+                console.log('Exit MarketCronJob with status: ' + setting.status);
+                return;
+            }
+            console.log('Begin run MarketCronJob!');
+
 			if (isRunningCreateMarket === false) {
                 isRunningCreateMarket = true;
                 

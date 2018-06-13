@@ -11,6 +11,7 @@ const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddr
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
 const gasLimit = configs.network[network_id].gasLimit;
+const gasPrice = configs.network[network_id].gasPrice;
 
 const contractPredictionHandshake = new web3.eth.Contract(PredictionHandshake.abi, bettingHandshakeAddress);
 
@@ -85,7 +86,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) =>
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = _nonce;
-      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
@@ -132,7 +133,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = await getNonce(ownerAddress);
-      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });
@@ -185,7 +186,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const gasPriceWei     = web3.utils.toWei('100', 'gwei');
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const nonce           = _nonce;
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress

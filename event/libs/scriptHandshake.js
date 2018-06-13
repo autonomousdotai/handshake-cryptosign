@@ -17,8 +17,14 @@ const genData = () => {
             tasks.push(new Promise((resolve, reject) => {
                 matchDAO.getMatchByName(i.name)
                 .then(match => {
+                    if (!match) {
+                        return resolve();
+                    }
                     outcomeDAO.getByMatchId(match.id)
                     .then(outcome => {
+                        if (!outcome) {
+                            return resolve();
+                        }
                         i.outcomes.forEach(o => {
                             arr.push({
                                 outcome_id: outcome.id,

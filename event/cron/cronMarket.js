@@ -75,7 +75,18 @@ function asyncScanOutcomeNull() {
 function runCreateMarketCron() {
     cron.schedule('*/5 * * * *', async function() {
 		console.log('create market cron running a task every 2m at ' + new Date());
-		try {
+        try {
+            const setting = await settingDAO.getByName('MarketCronJob');
+            if (!setting) {
+                console.log('MarketCronJob is null. Exit!');
+                return;
+            }
+            if(!setting.status) {
+                console.log('Exit MarketCronJob with status: ' + setting.status);
+                return;
+            }
+            console.log('Begin run MarketCronJob!');
+
 			if (isRunningCreateMarket === false) {
                 isRunningCreateMarket = true;
                 

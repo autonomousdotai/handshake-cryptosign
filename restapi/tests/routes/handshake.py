@@ -807,21 +807,11 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         with self.client:
             Uid = 88
-
             params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "TESTING MODE",
-                "outcome_id": 4,
-                "odds": 1,
-                "amount": 1,
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 2,
-                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+                "offchain": 'cryptosign_m{}'.format(handshake.id)
             }
             response = self.client.post(
-                                    '/handshake/init',
+                                    '/handshake/collect',
                                     data=json.dumps(params), 
                                     content_type='application/json',
                                     headers={
@@ -863,9 +853,14 @@ class TestHandshakeBluePrint(BaseTestCase):
         with self.client:
             Uid = 88
 
+            params = {
+                "offchain": 'cryptosign_m{}'.format(handshake.id)
+            }
+
             response = self.client.post(
                                     '/handshake/rollback',
                                     content_type='application/json',
+                                    data=json.dumps(params),
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
@@ -873,6 +868,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 

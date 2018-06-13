@@ -1,9 +1,11 @@
 from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
-from app.helpers.decorators import login_required
+from app.helpers.decorators import login_required, admin_required
 from app import db
 from app.models import User, Outcome, Match
 from app.helpers.message import MESSAGE
+
+import app.bl.outcome as outcome_bl
 
 outcome_routes = Blueprint('outcome', __name__)
 
@@ -16,6 +18,18 @@ def outcomes():
 		data = []
 		for outcome in outcomes:
 			data.append(outcome.to_json())
+
+		return response_ok(data)
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@outcome_routes.route('/init_default_outcomes', methods=['GET'])
+@login_required
+@admin_required
+def init_default_outcomes():
+	try:
+		outcome_bl.init_default_outcomes()
 
 		return response_ok(data)
 	except Exception, ex:

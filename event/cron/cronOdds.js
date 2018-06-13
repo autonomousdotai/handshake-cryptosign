@@ -62,7 +62,7 @@ function asyncScanOddsNull() {
                     if (item ) {
                         tasks.push(new Promise(async (_resolve, _reject) => {
                             const match = await matchDAO.getMatchById(item.outcome.match_id);
-                            const amount = '0.1';
+                            const amount = '0.01';
                             resource
                             .submitInit(item.outcome, match.toJSON(), configs.network[configs.network_id].ownerAddress, side, configs.network_id, amount, item.odds)
                             .then(response => {

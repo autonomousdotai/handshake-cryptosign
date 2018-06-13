@@ -2,6 +2,9 @@ const models = require('../models');
 
 // side: 0 (unknown), 1 (support), 2 (against)
 module.exports = {
+    getAll: function () {
+        return models.Outcome.findAll({});
+    },
     getOutcomesNullHID: function () {
         return models.Outcome
             .findAll({

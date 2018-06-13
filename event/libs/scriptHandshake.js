@@ -81,7 +81,7 @@ const submitInitAPI = (arr) => {
                         const _outcome = await outcomeDAO.getById(item.outcome_id);
                         arrTnxSubmit.push({
                             hid: _outcome.hid,
-                            odds: web3.utils.toWei( (parseInt(item.odds) * 100) + ''),
+                            odds: parseInt(item.odds) * 100,
                             value: web3.utils.toWei(dataRequest.amount),
                             offchain: response.data.data[0].offchain,
                             side: item.side

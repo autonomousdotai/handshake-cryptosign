@@ -2,6 +2,13 @@ const models = require('../models');
 
 // side: 0 (unknown), 1 (support), 2 (against)
 module.exports = {
+    getById: function (id) {
+        return models.Outcome.findOne({
+            where: {
+                id: id
+            }
+        });
+    },
     getAll: function () {
         return models.Outcome.findAll({});
     },

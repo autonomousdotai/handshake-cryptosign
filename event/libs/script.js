@@ -41,7 +41,7 @@ const submitInitAPI = (arr) => {
                     side: item.side,
                     from_address: ownerAddress
                 };
-    
+
                 axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -62,6 +62,7 @@ const submitInitAPI = (arr) => {
                         });
                     } else {
                         console.log('===== ERROR =====');
+                        console.log(dataRequest);
                         console.error(response.data);
                     }
                     return resolve();

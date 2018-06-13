@@ -65,7 +65,7 @@ const gennerateOddsAgainst = (outcomeId) => {
             if (!result || !result.toJSON() || !result.toJSON().odds || result.toJSON().odds <= 1) {
                 return resolve(null);
             }
-            const minOddSupport = parseInt(result.toJSON().odds || 0);
+            const minOddSupport = parseFloat(result.toJSON().odds || 0).toFixed(2);
             return resolve(minOddSupport / (minOddSupport - 0.1));
         })
         .catch((error) => {

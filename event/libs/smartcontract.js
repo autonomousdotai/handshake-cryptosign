@@ -69,31 +69,7 @@ const getNonce = async (address, status) => {
   status = status ? status : 'latest';
   return web3.eth.getTransactionCount(address, status);
 }
-/*
-const getNonceFromAPI = (index, address, status) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      axios.get(`${configs.restApiEndpoint}/nonce/get?address=${address}&network_id=${network_id}`, {
-      headers: {
-          'Content-Type': 'application/json',
-      }
-      })
-      .then(response => {
-        if (response.data && response.data.status == 1) {
-          return resolve(response.data);
-        } else {
-          return reject('Cannot get Nonce.');
-        }
-      })
-      .catch(e => {
-        console.log(e);
-        return reject(e);
-      });
-      // getNonce(address).then(resolve).catch(reject);
-    }, (index + 1) * 10000);
-  });
-};
-*/
+
 const getGasPrice = async () => {
   return await web3.eth.getGasPrice();
 };

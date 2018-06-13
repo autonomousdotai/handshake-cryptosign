@@ -86,6 +86,9 @@ const getNonceFromAPI = (address, length) => {
     return new Promise((resolve, reject) => {
         setTimeout( async () => {
             try {
+                const tnxCount = await web3.eth.getTransactionCount(address, 'latest');
+                return resolve(tnxCount);
+                /*
                 const path = `address=${address}&network_id=${configs.network_id}`;
                 const tnxCount = await web3.eth.getTransactionCount(address, 'latest');
 
@@ -128,6 +131,7 @@ const getNonceFromAPI = (address, length) => {
                     console.error(e);
                     return reject(e);
                 });
+                */
             } catch (e) {
                 console.error('Get nonce err: ', e);
                 reject(e);

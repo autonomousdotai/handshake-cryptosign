@@ -8,6 +8,7 @@ const resource = require('../libs/utils');
 // daos
 const matchDAO = require('../daos/match');
 const outcomeDAO = require('../daos/outcome');
+const settingDAO = require('../daos/setting');
 
 const predictionContract = require('../libs/smartcontract');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;

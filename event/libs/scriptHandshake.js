@@ -62,6 +62,7 @@ const submitInitAPI = (arr) => {
                         });
                     } else {
                         console.log('===== ERROR =====');
+                        console.log(response.data);
                         console.log(dataRequest);
                     }
                     return resolve();

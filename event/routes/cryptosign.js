@@ -31,7 +31,7 @@ router.post('/init', async function(req, res, next) {
     }
 });
 
-router.post('odds/init', (req, res, next) => {
+router.post('/odds/init', (req, res, next) => {
     try {
         scriptInitHandshake.initHandshake();
         res.ok('Init odds data.');

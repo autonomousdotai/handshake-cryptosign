@@ -26,12 +26,11 @@ def outcomes():
 
 @outcome_routes.route('/init_default_outcomes', methods=['GET'])
 @login_required
-@admin_required
+# @admin_required
 def init_default_outcomes():
 	try:
 		outcome_bl.init_default_outcomes()
-
-		return response_ok(data)
+		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)
 

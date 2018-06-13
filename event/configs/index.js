@@ -66,4 +66,4 @@ if (envs[env]) {
   }
 }
 
-module.exports = Object.assign({}, baseConfig, envConfig, localConfig, { env: env });
+module.exports = Object.assign({}, baseConfig, envConfig, localConfig);

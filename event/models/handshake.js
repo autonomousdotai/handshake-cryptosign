@@ -26,7 +26,6 @@ module.exports = (sequelize, DataTypes) => {
     odds: DataTypes.INTEGER,
     amount: DataTypes.INTEGER,
     remaining_amount: DataTypes.INTEGER,
-    win_value: DataTypes.INTEGER,
     currency: DataTypes.STRING,
     side: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,

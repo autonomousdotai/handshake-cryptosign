@@ -8,6 +8,11 @@ Subscription = {
 	'TIER_30': 50,
 }
 
+Tx = {
+	'STATUS_PENDING': -1,
+	'STATUS_DONE': 0
+}
+
 # handshake
 Handshake = {
 	'STATUS_BLOCKCHAIN_PENDING': -4,

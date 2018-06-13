@@ -7,6 +7,7 @@ module.exports = {
     database: config.db.database,
     host: config.db.host,
     dialect: config.db.dialect,
+    logging: false
   },
   staging: {
     username: config.db.username,
@@ -14,6 +15,7 @@ module.exports = {
     database: config.db.database,
     host: config.db.host,
     dialect: config.db.dialect,
+    logging: false
   },
   production: {
     username: config.db.username,
@@ -21,5 +23,6 @@ module.exports = {
     database: config.db.database,
     host: config.db.host,
     dialect: config.db.dialect,
+    logging: false
   }
 };

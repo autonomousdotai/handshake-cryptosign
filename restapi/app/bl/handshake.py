@@ -384,6 +384,7 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 		if win_value - amount > 0:
 			# calculate matched odds
 			v = odds/(odds-1)
+			v = float(Decimal(str(v)).quantize(Decimal('.01'), rounding=ROUND_FLOOR))
 			print 'matched odds --> {}'.format(v)
 			query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
 			print query
@@ -403,7 +404,6 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 					amount=row['amount'],
 					currency=row['currency'],
 					side=row['side'],
-					win_value=row['win_value'],
 					remaining_amount=row['remaining_amount'],
 					from_address=row['from_address'],
 					shake_count=row['shake_count'],
@@ -434,6 +434,23 @@ def find_available_support_handshakes(outcome_id):
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.asc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
+
+
+def add_free_bet(handshake):
+	outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+	bc_data = {
+		'hid': outcome.hid,
+		'side': handshake.side,
+		'odds': int(handshake.odds * 100),
+		'address': handshake.from_address,
+		'offchain': CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id)
+	}
+
+	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', data=bc_data, params={'chain_id': handshake.chain_id})
+	bc_json = bc_res.json()
+	print "bc_json=>", bc_json
+	if bc_json['status'] != 1:
+		raise BcException(bc_json['message'])

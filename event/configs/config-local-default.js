@@ -11,10 +11,12 @@ module.exports = {
       idle: 10000
     }
   },
-  port: 5000,
+  port: 3000,
   timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
+  fcm_token: process.env.CRYPTOSIGN_RESTAPI_FCM_TOKEN || '',
+  uid: process.env.CRYPTOSIGN_RESTAPI_UID || 1,
   network_id: 4,
   network: {
     '1': {

@@ -12,7 +12,13 @@ import app.bl.user as user_bl
 
 class TestEventBluePrint(BaseTestCase):
 
-    def test(self):
+    def setUp(self):
+        pass
+
+    def test_reiceive_init_event(self):
+        pass
+
+    def test_reiceive_uninit_event(self):
         pass
     
 if __name__ == '__main__':

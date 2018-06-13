@@ -80,7 +80,7 @@ function asyncScanOddsNull() {
                                 if (response.status == 1 && response.data.length != 0) {
                                     dataInit.push({
                                         hid: item.outcome.hid,
-                                        odds: web3.utils.toWei( (parseInt(response.data[0].odds) * 100) + ''),
+                                        odds: (parseInt(response.data[0].odds) * 100),
                                         value: web3.utils.toWei(amount),
                                         offchain: response.data[0].offchain,
                                         side: side

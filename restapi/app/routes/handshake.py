@@ -292,18 +292,22 @@ def uninit(handshake_id):
 			if len(handshake.shakers.all()) > 0:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
 			else:
-				handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
-				db.session.flush()
-
-				update_feed.delay(handshake.id)
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				if outcome.result != -1:
+					return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+				else:
+					handshake.status = CONST.Handshake['STATUS_BLOCKCHAIN_PENDING']
+					db.session.flush()
 
-				handshake_json = handshake.to_json()
-				handshake_json['hid'] = outcome.hid
-				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+					update_feed.delay(handshake.id)
+					
+					handshake_json = handshake.to_json()
+					handshake_json['hid'] = outcome.hid
+					handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 
-				db.session.commit()
-				return response_ok(handshake_json)
+					db.session.commit()
+					return response_ok(handshake_json)
+					
 		else:
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND)		
 	except Exception, ex:

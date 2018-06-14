@@ -967,50 +967,85 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_collect_handshake_fail_if_time_exceed_dispute_time(self):
         pass
 
-    # def test_collect_handshake(self):
-    #     self.clear_data_before_test()
-    #     arr_hs = []
-    #     # -----
-    #     handshake = Handshake(
-	# 			hs_type=3,
-	# 			chain_id=4,
-	# 			is_private=1,
-	# 			user_id=88,
-	# 			outcome_id=88,
-	# 			odds=6,
-	# 			amount=0.7,
-	# 			currency='ETH',
-	# 			side=2,
-	# 			remaining_amount=0.7,
-	# 			from_address='0x123',
-    #             status=0,
-    #             bk_status=0
-    #     )
-    #     arr_hs.append(handshake)
+    def test_collect_handshake(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=0,
+                bk_status=0
+        )
+        arr_hs.append(handshake)
 
-    #     outcome = Outcome.find_outcome_by_id(88)
-    #     outcome.result = 1
-    #     db.session.add(handshake)
-    #     db.session.commit()
+        db.session.add(handshake)
+        db.session.commit()
 
-    #     with self.client:
-    #         Uid = 88
-    #         params = {
-    #             "offchain": 'cryptosign_m{}'.format(handshake.id)
-    #         }
-    #         response = self.client.post(
-    #                                 '/handshake/collect',
-    #                                 data=json.dumps(params), 
-    #                                 content_type='application/json',
-    #                                 headers={
-    #                                     "Uid": "{}".format(Uid),
-    #                                     "Fcm-Token": "{}".format(123),
-    #                                     "Payload": "{}".format(123),
-    #                                 })
 
-    #         data = json.loads(response.data.decode()) 
-    #         self.assertTrue(data['status'] == 0)
-    #         self.assertEqual(response.status_code, 200)
+        with self.client:
+            Uid = 66
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "TESTING MODE",
+                "outcome_id": 88,
+                "odds": 1.2,
+                "amount": 6,
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 1,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            data_json = data['data']
+
+            handshake = data_json[0]
+            self.assertTrue(data['status'] == 1)
+            self.assertTrue(len(data_json), 2)
+            self.assertEqual(len(handshake['shakers']), 1)
+
+
+            # Uid = 88
+            # params = {
+            #     "offchain": 'cryptosign_m{}'.format(handshake.id)
+            # }
+            # response = self.client.post(
+            #                         '/handshake/collect',
+            #                         data=json.dumps(params), 
+            #                         content_type='application/json',
+            #                         headers={
+            #                             "Uid": "{}".format(Uid),
+            #                             "Fcm-Token": "{}".format(123),
+            #                             "Payload": "{}".format(123),
+            #                         })
+
+            # data = json.loads(response.data.decode()) 
+            # self.assertTrue(data['status'] == 0)
+            # self.assertEqual(response.status_code, 200)
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
 
     def test_rollback_handshake_with_shake_state(self):
         pass

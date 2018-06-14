@@ -113,3 +113,10 @@ def check_user_is_able_to_create_new_handshake(user):
 		if len(handshakes) >= user.subscription_type:
 			return MESSAGE.USER_NEED_PURCHASE_PRODUCT
 	return ''
+
+
+def check_user_is_able_to_create_new_free_bet():
+	users = db.session.query(User).filter(User.free_bet==1).all()
+	if len(users) > 100:
+		return False
+	return True

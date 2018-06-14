@@ -8,6 +8,7 @@ class MESSAGE(object):
 	INVALID_ADDRESS = 'Please provide valid wallet address!'
 	MISSING_OFFCHAIN = 'Missing offchain data!'
 	INVALID_ODDS = 'Odds shoule be large than 1'
+	MAXIMUM_FREE_BET = 'The maximum free bet is 100!'
 
 	# OUTCOME
 	INVALID_OUTCOME = 'Please check your outcome id'

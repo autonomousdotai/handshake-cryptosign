@@ -33,8 +33,8 @@ router.post('/init', async function(req, res, next) {
 
 router.post('/odds/init', (req, res, next) => {
     try {
-        const start = req.query.start;
-        const end = req.query.end;
+        const start = parseInt(req.query.start);
+        const end = parseInt(req.query.end);
         if (start >= end || start == null || start == undefined || end == null || end == undefined) {
             res.ok('Init odds data false.');
             return;

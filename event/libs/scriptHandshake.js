@@ -23,10 +23,6 @@ const genData = (start, end) => {
             tasks.push(new Promise((resolve, reject) => {
                 matchDAO.getMatchByName(i.name)
                 .then(match => {
-                    console.log('---------MATCH-----');
-                    console.log(match);
-                    console.log(i);
-                    console.log('---------END  ssMATCH-----');
                     if (!match) {
                         return resolve();
                     }
@@ -77,7 +73,7 @@ const submitInitAPI = (arr) => {
                     side: item.side,
                     from_address: ownerAddress
                 };
-
+console.log(`${configs.restApiEndpoint}/handshake/init`);
                 axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -104,6 +100,8 @@ const submitInitAPI = (arr) => {
                     return resolve();
                 })
                 .catch((error) => {
+                    console.log("CALLL  ");
+                    console.log(error);
                     return reject(error);
                 });
             }));

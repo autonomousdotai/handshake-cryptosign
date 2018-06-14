@@ -22,6 +22,9 @@ class TestUser(BaseTestCase):
     def test_insert_user(self):
         pass
 
+    def test_check_user_is_able_to_create_new_free_bet(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

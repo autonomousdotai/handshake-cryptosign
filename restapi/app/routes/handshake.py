@@ -345,8 +345,8 @@ def collect():
 					raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
 
 				# update status to STATUS_BLOCKCHAIN_PENDING
-				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
-				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
 				for handshake in handshakes:
 					handshake.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']
@@ -375,8 +375,8 @@ def collect():
 					raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
 
 				# update status to STATUS_BLOCKCHAIN_PENDING
-				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
-				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+				shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
 				for handshake in handshakes:
 					handshake.status = HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']

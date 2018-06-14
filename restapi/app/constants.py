@@ -15,6 +15,7 @@ Tx = {
 
 # handshake
 Handshake = {
+	'STATUS_MAKER_UNINIT_PENDING': -5,
 	'STATUS_BLOCKCHAIN_PENDING': -4,
 	'STATUS_NEW': -3,
 	'STATUS_TRANSACTION_FAILED': -2,

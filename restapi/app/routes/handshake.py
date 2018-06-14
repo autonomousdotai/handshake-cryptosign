@@ -11,6 +11,7 @@ import json
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
 import app.bl.match as match_bl
+import app.bl.user as user_bl
 
 from decimal import *
 from flask import Blueprint, request, g
@@ -484,50 +485,55 @@ def create_bet():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		hs_type = data.get('type', -1)
-		extra_data = data.get('extra_data', '')
-		description = data.get('description', '')
-		is_private = data.get('is_private', 1)
-		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
-		currency = data.get('currency', 'ETH')
-		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		from_address = data.get('from_address', '')
-		amount = 0.01
+		if user_bl.check_user_is_able_to_create_new_free_bet():
+			hs_type = data.get('type', -1)
+			extra_data = data.get('extra_data', '')
+			description = data.get('description', '')
+			is_private = data.get('is_private', 1)
+			outcome_id = data.get('outcome_id')
+			odds = Decimal(data.get('odds'))
+			currency = data.get('currency', 'ETH')
+			side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+			chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+			from_address = data.get('from_address', '')
+			amount = 0.01
 
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None:
-			raise Exception(MESSAGE.INVALID_OUTCOME)
-		elif outcome.hid is None:
-			raise Exception(MESSAGE.INVALID_OUTCOME)
-			
-		handshake = Handshake(
-			hs_type=hs_type,
-			extra_data=extra_data,
-			description=description,
-			chain_id=chain_id,
-			is_private=is_private,
-			user_id=user.id,
-			outcome_id=outcome_id,
-			odds=odds,
-			amount=amount,
-			currency=currency,
-			side=side,
-			remaining_amount=amount,
-			from_address=from_address
-		)
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+			if outcome is None:
+				raise Exception(MESSAGE.INVALID_OUTCOME)
+			elif outcome.hid is None:
+				raise Exception(MESSAGE.INVALID_OUTCOME)
+				
+			handshake = Handshake(
+				hs_type=hs_type,
+				extra_data=extra_data,
+				description=description,
+				chain_id=chain_id,
+				is_private=is_private,
+				user_id=user.id,
+				outcome_id=outcome_id,
+				odds=odds,
+				amount=amount,
+				currency=currency,
+				side=side,
+				remaining_amount=amount,
+				from_address=from_address
+			)
 
-		db.session.add(handshake)
-		db.session.flush()
+			db.session.add(handshake)
+			db.session.flush()
 
-		handshake_bl.add_free_bet(handshake)
+			handshake_bl.add_free_bet(handshake)
 
-		user.free_bet += 1
-		db.session.commit()
+			user.free_bet += 1
+			db.session.commit()
 
-		update_feed.delay(handshake.id)
-		return response_ok(handshake.to_json())
+			update_feed.delay(handshake.id)
+			return response_ok(handshake.to_json())
+
+		else:
+			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
+
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
@@ -543,6 +549,9 @@ def has_received_free_bet():
 
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
+
+		elif user_bl.check_user_is_able_to_create_new_free_bet():
+			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
 
 		return response_ok()
 	except Exception, ex:

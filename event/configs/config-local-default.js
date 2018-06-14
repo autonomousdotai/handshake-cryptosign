@@ -27,7 +27,7 @@ module.exports = {
       privateKey: '',
       gasLimit: 1000000,
       gasPrice: 4,
-      oddsValue: 0.01,
+      amountValue: 0.001,
       blockchainNetwork: 'https://mainnet.infura.io/',
     },
     '4': {
@@ -38,7 +38,7 @@ module.exports = {
       privateKey: '',
       gasLimit: 3000000,
       gasPrice: 100,
-      oddsValue: 0.01,
+      amountValue: 0.001,
       blockchainNetwork: 'https://rinkeby.infura.io/',
     },
     '5': { 
@@ -49,7 +49,7 @@ module.exports = {
       privateKey: '',
       gasLimit: 3000000,
       gasPrice: 2.1,
-      oddsValue: 0.01,
+      amountValue: 0.001,
       blockchainNetwork: 'http://localhost:8545',
     }
   }

@@ -486,7 +486,6 @@ def create_bet():
 			raise Exception(MESSAGE.INVALID_DATA)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
-
 			hs_type = data.get('type', -1)
 			extra_data = data.get('extra_data', '')
 			description = data.get('description', '')

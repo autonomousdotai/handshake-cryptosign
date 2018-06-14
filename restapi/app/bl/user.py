@@ -116,7 +116,7 @@ def check_user_is_able_to_create_new_handshake(user):
 
 
 def check_user_is_able_to_create_new_free_bet():
-	users = db.session.query(User).filter(and_(Handshake.free_bet==1)).all()
+	users = db.session.query(User).filter(User.free_bet==1).all()
 	if len(users) > 100:
 		return False
 	return True

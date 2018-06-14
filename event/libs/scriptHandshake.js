@@ -26,13 +26,25 @@ const genData = (start, end) => {
                     if (!match) {
                         return resolve();
                     }
+                    console.log("1111");
                     outcomeDAO.getByMatchId(match.id)
                     .then(outcome => {
+                        console.log("2222");
                         if (!outcome) {
+                            console.log("3333");
                             return resolve();
                         }
+                        console.log("44444");
                         i.outcomes.forEach(o => {
                             arr.push({
+                                outcome_id: outcome.id,
+                                name: i.name,
+                                extra_data: utils.gennerateExtraData(match, outcome),
+                                side: o.side,
+                                odds: o.odds
+                            });
+                            console.log("555555");
+                            console.log({
                                 outcome_id: outcome.id,
                                 name: i.name,
                                 extra_data: utils.gennerateExtraData(match, outcome),
@@ -49,6 +61,8 @@ const genData = (start, end) => {
         });
         Promise.all(tasks)
         .then(result => {
+            console.log("ARRRRRRRR");
+            console.log(arr);
             resolve(arr);
         })
         .catch(reject);

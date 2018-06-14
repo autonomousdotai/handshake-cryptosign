@@ -108,11 +108,10 @@ class TestUtils(BaseTestCase):
         local_time = (datetime.now()-datetime(1970,1,1)).total_seconds()
         self.assertGreater(local_time, actual + 6*60*60 )
 
-    # def test_utc_to_local(self):
-    #     actual = parse_date_string_to_timestamp('2018-06-14T15:00:00Z')
-    #     # UTC time
-    #     expected = 1528963200 
-    #     self.assertEqual(actual, expected)
+    def test_utc_to_local(self):
+        actual = utc_to_local(datetime.fromtimestamp(1528963200).timetuple())
+        local_time = (datetime.now()-datetime(1970,1,1)).total_seconds()
+        self.assertGreater(actual, local_time)
 
     def test_parse_shakers_array(self):
         shakers = []

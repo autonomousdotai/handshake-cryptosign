@@ -5,10 +5,10 @@
 
 from flask_testing import TestCase
 from tests.routes.base import BaseTestCase
-from app.helpers.utils import is_valid_email, isnumber, formalize_description, parse_str_to_array, parse_date_string_to_timestamp, parse_shakers_array
+from app.helpers.utils import *
 from app import db, app
 from app.models import Shaker
-
+from datetime import datetime
 
 class TestUtils(BaseTestCase):
 
@@ -102,6 +102,17 @@ class TestUtils(BaseTestCase):
         # UTC time
         expected = 1528963200 
         self.assertEqual(actual, expected)
+
+    def test_local_to_utc(self):
+        actual = local_to_utc(datetime.now().timetuple())
+        local_time = (datetime.now()-datetime(1970,1,1)).total_seconds()
+        self.assertGreater(local_time, actual + 6*60*60 )
+
+    # def test_utc_to_local(self):
+    #     actual = parse_date_string_to_timestamp('2018-06-14T15:00:00Z')
+    #     # UTC time
+    #     expected = 1528963200 
+    #     self.assertEqual(actual, expected)
 
     def test_parse_shakers_array(self):
         shakers = []

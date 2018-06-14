@@ -874,46 +874,56 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 
-    # def test_collect_handshake(self):
-    #     self.clear_data_before_test()
-    #     arr_hs = []
-    #     # -----
-    #     handshake = Handshake(
-	# 			hs_type=3,
-	# 			chain_id=4,
-	# 			is_private=1,
-	# 			user_id=88,
-	# 			outcome_id=88,
-	# 			odds=6,
-	# 			amount=0.7,
-	# 			currency='ETH',
-	# 			side=2,
-	# 			remaining_amount=0.7,
-	# 			from_address='0x123',
-    #             status=0
-    #     )
-    #     arr_hs.append(handshake)
-    #     db.session.add(handshake)
-    #     db.session.commit()
+    def test_collect_handshake_fail_if_result_not_match(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=0,
+                bk_status=0
+        )
+        arr_hs.append(handshake)
 
-    #     with self.client:
-    #         Uid = 88
-    #         params = {
-    #             "offchain": 'cryptosign_m{}'.format(handshake.id)
-    #         }
-    #         response = self.client.post(
-    #                                 '/handshake/collect',
-    #                                 data=json.dumps(params), 
-    #                                 content_type='application/json',
-    #                                 headers={
-    #                                     "Uid": "{}".format(Uid),
-    #                                     "Fcm-Token": "{}".format(123),
-    #                                     "Payload": "{}".format(123),
-    #                                 })
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+        db.session.add(handshake)
+        db.session.commit()
 
-    #         data = json.loads(response.data.decode()) 
-    #         self.assertTrue(data['status'] == 0)
-    #         self.assertEqual(response.status_code, 200)
+        with self.client:
+            Uid = 88
+            params = {
+                "offchain": 'cryptosign_m{}'.format(handshake.id)
+            }
+            response = self.client.post(
+                                    '/handshake/collect',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+    def test_collect_handshake_fail_if_time_exceed_report_time(self):
+        pass
+
+    def test_collect_handshake_fail_if_time_exceed_dispute_time(self):
+        pass
 
     def test_rollback_handshake_with_shake_state(self):
         pass

@@ -454,3 +454,6 @@ def add_free_bet(handshake):
 	print "bc_json=>", bc_json
 	if bc_json['status'] != 1:
 		raise BcException(bc_json['message'])
+
+def is_rollback_for_shake_state():
+	pass

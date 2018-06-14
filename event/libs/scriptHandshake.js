@@ -10,11 +10,16 @@ const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
 
-const genData = () => {
+const genData = (start, end) => {
     return new Promise((resolve, reject) => {
         const arr = [];
         const tasks = [];
-        oddsData.forEach( i => {
+        if (start >= end ) {
+            return reject(`error: ${start} >= ${end}`);
+        }
+        const oddsArr = oddsData.slice(start, end);
+        console.log(oddsArr);
+        oddsArr.forEach( i => {
             tasks.push(new Promise((resolve, reject) => {
                 matchDAO.getMatchByName(i.name)
                 .then(match => {
@@ -107,9 +112,9 @@ const submitInitAPI = (arr) => {
     });
 };
 
-const initHandshake = async () => {
+const initHandshake = async (start, end ) => {
     try {
-        const arr = await genData();
+        const arr = await genData(start, end);
         submitInitAPI(arr)
         .then(async tnxDataArr => {
             const nonce = await smartContract.getNonce(ownerAddress);

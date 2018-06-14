@@ -29,19 +29,14 @@ def outcomes():
 # @admin_required
 def init_default_outcomes():
 	try:
-		print '123'
 		data = request.json
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		print '1234'
 		start = data['start']
 		end = data['end']
 
-		print '1235'
 		outcome_bl.init_default_outcomes(start, end)
-
-		print '1236'
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

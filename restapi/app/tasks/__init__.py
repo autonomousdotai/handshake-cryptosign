@@ -55,7 +55,7 @@ def update_feed(handshake_id, shake_id=-1):
 		shake_user_infos = []
 		if shakers is not None:
 			for s in shakers:
-				shake_user_ids.append(s.id)	
+				shake_user_ids.append(s.shaker_id)	
 				shake_user_infos.append(s.to_json())
 
 		if shake_id != -1:

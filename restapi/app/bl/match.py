@@ -1,7 +1,10 @@
 from flask import g
+from datetime import *
 
 from app import db
 from app.models import User, Handshake, Match
+from app.helpers.utils import local_to_utc
+
 import app.constants as CONST
 
 
@@ -16,3 +19,19 @@ def find_best_odds_which_match_support_side(outcome_id):
 		best_amount = handshake.amount * (handshake.odds - 1)
 		return best_odds, best_amount
 	return 0, 0
+
+def is_exceed_report_time(match_id):
+	match = Match.find_match_by_id(match_id)
+	t = datetime.now().timetuple()
+	seconds = local_to_utc(t)
+
+	if seconds > match.date + 4*60*60: #4hrs later
+		return True
+
+def is_exceed_dispute_time(match_id):
+	match = Match.find_match_by_id(match_id)
+	t = datetime.now().timetuple()
+	seconds = local_to_utc(t)
+
+	if seconds > match.date + (4*60*60) * 2: #8hrs later
+		return True

@@ -3,6 +3,8 @@
 
 import re
 import json
+import time
+import calendar
 
 from fractions import Fraction
 from datetime import datetime
@@ -80,3 +82,11 @@ def parse_shakers_array(shakers):
 def parse_date_string_to_timestamp(date_str):
 	dt_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ').strftime('%s')
 	return int(dt_obj)
+
+def local_to_utc(t):
+    secs = time.mktime(t)
+    return calendar.timegm(time.gmtime(secs))
+
+def utc_to_local(t):
+    secs = calendar.timegm(t)
+    return time.localtime(secs)

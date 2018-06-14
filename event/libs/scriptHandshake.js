@@ -32,6 +32,7 @@ const genData = (start, end) => {
                         console.log("2222");
                         if (!outcome) {
                             console.log("3333");
+                            console.log("MATCH: ", match.id);
                             return resolve();
                         }
                         console.log("44444");

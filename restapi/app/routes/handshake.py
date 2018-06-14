@@ -10,10 +10,13 @@ import json
 
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
+import app.bl.match as match_bl
 
 from decimal import *
 from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text, func
+from datetime import datetime
+
 from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
@@ -21,7 +24,6 @@ from app.helpers.decorators import login_required
 from app import db, s3, ipfs
 from app.models import User, Handshake, Shaker, Outcome, Match
 from app.constants import Handshake as HandshakeStatus
-from datetime import datetime
 from app.tasks import update_feed
 
 handshake_routes = Blueprint('handshake', __name__)
@@ -368,9 +370,9 @@ def collect():
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake is not None:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-				if outcome.result != handshake.side:
+				if outcome.result != handshake.side or \
+					match_bl.is_exceed_report_time(outcome.match_id):
 					raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
-
 
 				# update status to STATUS_BLOCKCHAIN_PENDING
 				handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()

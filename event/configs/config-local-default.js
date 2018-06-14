@@ -22,10 +22,12 @@ module.exports = {
     '1': {
       basicHandshakeAddress: '',
       payableHandshakeAddress: '',
-      bettingHandshakeAddress: '',
+      bettingHandshakeAddress: '0x53d062575cef3df834d09f26784eff501b9550fa',
       ownerAddress: '',
       privateKey: '',
-      gasLimit: 3000000,
+      gasLimit: 1000000,
+      gasPrice: 4,
+      oddsValue: 0.01,
       blockchainNetwork: 'https://mainnet.infura.io/',
     },
     '4': {
@@ -35,6 +37,8 @@ module.exports = {
       ownerAddress: '',
       privateKey: '',
       gasLimit: 3000000,
+      gasPrice: 100,
+      oddsValue: 0.01,
       blockchainNetwork: 'https://rinkeby.infura.io/',
     },
     '5': { 
@@ -44,6 +48,8 @@ module.exports = {
       ownerAddress: '',
       privateKey: '',
       gasLimit: 3000000,
+      gasPrice: 2.1,
+      oddsValue: 0.01,
       blockchainNetwork: 'http://localhost:8545',
     }
   }

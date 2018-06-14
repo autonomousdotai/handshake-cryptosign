@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome, Match
+from app.models import Handshake, User, Outcome, Match, Shaker
 from app.helpers.message import MESSAGE
 from io import BytesIO
 
@@ -1024,25 +1024,44 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data_json), 2)
             self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['amount'], 0.7)
+            self.assertEqual(handshake['remaining_amount'], 0)
+
+            shaker = handshake['shakers'][0]
+            self.assertEqual(shaker['amount'], 3.5)
+
+            handshake1 = data_json[1]
+            self.assertEqual(len(handshake1['shakers']), 0)
+            self.assertEqual(handshake1['amount'], 2.5)
+            self.assertEqual(handshake1['remaining_amount'], 2.5)
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+        db.session.commit()
+
+        with self.client:
+            Uid = 66
+            params = {
+                "offchain": 'cryptosign_s{}'.format(shaker['id'])
+            }
+            response = self.client.post(
+                                    '/handshake/collect',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
 
 
-            # Uid = 88
-            # params = {
-            #     "offchain": 'cryptosign_m{}'.format(handshake.id)
-            # }
-            # response = self.client.post(
-            #                         '/handshake/collect',
-            #                         data=json.dumps(params), 
-            #                         content_type='application/json',
-            #                         headers={
-            #                             "Uid": "{}".format(Uid),
-            #                             "Fcm-Token": "{}".format(123),
-            #                             "Payload": "{}".format(123),
-            #                         })
+            shaker = Shaker.find_shaker_by_id(int(shaker['id']))
+            self.assertFalse(True)
 
-            # data = json.loads(response.data.decode()) 
-            # self.assertTrue(data['status'] == 0)
-            # self.assertEqual(response.status_code, 200)
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()

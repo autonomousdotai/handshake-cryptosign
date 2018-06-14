@@ -1,18 +1,18 @@
 module.exports = [
-  {
-    "name": "Russia vs Saudi Arabia",
-    "extra_data": "{\"event_name\":\"Russia vs Saudi Arabia\",\"event_predict\":\"Russia wins\"}",
-    "outcomes": [
-      {
-        "side": 1,
-        "odds": "1.44"
-      },
-      {
-        "side": 2,
-        "odds": "8.25"
-      }
-    ]
-  },
+  // {
+  //   "name": "Russia vs Saudi Arabia",
+  //   "extra_data": "{\"event_name\":\"Russia vs Saudi Arabia\",\"event_predict\":\"Russia wins\"}",
+  //   "outcomes": [
+  //     {
+  //       "side": 1,
+  //       "odds": "1.44"
+  //     },
+  //     {
+  //       "side": 2,
+  //       "odds": "8.25"
+  //     }
+  //   ]
+  // },
   {
     "name": "Egypt vs Uruguay",
     "extra_data": "{\"event_name\":\"Egypt vs Uruguay\",\"event_predict\":\"Egypt wins\"}",

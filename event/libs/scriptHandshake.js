@@ -6,7 +6,7 @@ const utils = require('../libs/utils');
 const outcomeDAO = require('../daos/outcome');
 const matchDAO = require('../daos/match');
 const smartContract = require('./smartcontract');
-const oddsData = require('./handShakeData2');
+const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
 

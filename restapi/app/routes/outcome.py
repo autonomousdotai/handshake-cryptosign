@@ -24,12 +24,19 @@ def outcomes():
 		return response_error(ex.message)
 
 
-@outcome_routes.route('/init_default_outcomes', methods=['GET'])
+@outcome_routes.route('/init_default_outcomes', methods=['POST'])
 @login_required
 # @admin_required
 def init_default_outcomes():
 	try:
-		outcome_bl.init_default_outcomes()
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		start = data['start']
+		end = data['end']
+
+		outcome_bl.init_default_outcomes(start, end)
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

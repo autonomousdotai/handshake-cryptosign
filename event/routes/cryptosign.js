@@ -33,7 +33,13 @@ router.post('/init', async function(req, res, next) {
 
 router.post('/odds/init', (req, res, next) => {
     try {
-        scriptInitHandshake.initHandshake();
+        const start = req.query.start;
+        const end = req.query.end;
+        if (start >= end || start == null || start == undefined || end == null || end == undefined) {
+            res.ok('Init odds data false.');
+            return;
+        }
+        scriptInitHandshake.initHandshake(start, end);
         res.ok('Init odds data.');
     } catch (err) {
         next(err);

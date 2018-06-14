@@ -5,6 +5,9 @@ const moment = require('moment');
 const web3 = require('../configs/web3').getWeb3();
 const handshakeDAO = require('../daos/handshake');
 
+const calulaOdds = (value) => {
+    return parseInt(response.data[0].odds  * 100);
+}
 
 const gennerateExtraData = (match, outcome) => {
     return JSON.stringify({

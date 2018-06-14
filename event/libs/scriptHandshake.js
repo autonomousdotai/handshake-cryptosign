@@ -23,6 +23,10 @@ const genData = (start, end) => {
             tasks.push(new Promise((resolve, reject) => {
                 matchDAO.getMatchByName(i.name)
                 .then(match => {
+                    console.log('---------MATCH-----');
+                    console.log(match);
+                    console.log(i);
+                    console.log('---------END  ssMATCH-----');
                     if (!match) {
                         return resolve();
                     }

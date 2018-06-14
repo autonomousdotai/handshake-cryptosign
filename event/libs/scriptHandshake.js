@@ -8,7 +8,7 @@ const matchDAO = require('../daos/match');
 const smartContract = require('./smartcontract');
 const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
-const oddsDefaultValue = configs.network[configs.network_id].oddsValue;
+const amountDefaultValue = configs.network[configs.network_id].amountValue;
 
 const genData = () => {
     return new Promise((resolve, reject) => {
@@ -62,7 +62,7 @@ const submitInitAPI = (arr) => {
                     description: 'data init',
                     outcome_id: item.outcome_id,
                     odds: item.odds,
-                    amount: oddsDefaultValue + '',
+                    amount: amountDefaultValue + '',
                     currency: 'ETH',
                     chain_id: configs.network_id,
                     side: item.side,

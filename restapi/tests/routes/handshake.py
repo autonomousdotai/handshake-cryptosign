@@ -838,6 +838,8 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            handshake = data['data']
+            self.assertEqual(handshake['status'], -8)
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 

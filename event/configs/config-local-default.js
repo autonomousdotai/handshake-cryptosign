@@ -22,7 +22,7 @@ module.exports = {
     '1': {
       basicHandshakeAddress: '',
       payableHandshakeAddress: '',
-      bettingHandshakeAddress: '0x53d062575cef3df834d09f26784eff501b9550fa',
+      bettingHandshakeAddress: '',
       ownerAddress: '',
       privateKey: '',
       gasLimit: 1000000,

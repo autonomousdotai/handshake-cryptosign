@@ -34,9 +34,10 @@ const genData = (start, end, outcome_data) => {
                         console.log('Not found match with outcome: ', i);
                         return resolve();
                     }
-                    outcomeDAO.getByMatchId(match.id)
+                    (i.outcome_id ? outcomeDAO.getById(i.outcome_id) : outcomeDAO.getByMatchId(match.id))
                     .then(outcome => {
                         if (!outcome) {
+                            console.log('Not found outcome with match_id: ', i);
                             return resolve();
                         }
                         i.outcomes.forEach(o => {

@@ -35,11 +35,19 @@ router.post('/odds/init', (req, res, next) => {
     try {
         const start = parseInt(req.query.start);
         const end = parseInt(req.query.end);
-        if (start >= end || start == null || start == undefined || end == null || end == undefined) {
+        const outcome_data = req.body;
+
+        if (start >= end || start == null || start == undefined || end == null || end == undefined) {    
+            console.log(' start or end value is invalid');
             res.ok('Init odds data false.');
             return;
         }
-        scriptInitHandshake.initHandshake(start, end);
+        if (!Array.isArray(outcome_data)) {
+            console.log('Init odds false: body invalid.');
+            res.ok('Init odds false: body invalid.');
+            return;
+        }
+        scriptInitHandshake.initHandshake(start, end, outcome_data);
         res.ok('Init odds data.');
     } catch (err) {
         next(err);

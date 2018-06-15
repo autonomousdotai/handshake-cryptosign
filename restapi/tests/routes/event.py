@@ -20,6 +20,12 @@ class TestEventBluePrint(BaseTestCase):
 
     def test_reiceive_uninit_event(self):
         pass
+
+    def test_reiceive_create_maket_event(self):
+        pass
+
+    def test_reiceive_report_event(self):
+        pass
     
 if __name__ == '__main__':
     unittest.main()

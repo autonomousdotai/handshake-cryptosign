@@ -9,6 +9,8 @@ class MESSAGE(object):
 	MISSING_OFFCHAIN = 'Missing offchain data!'
 	INVALID_ODDS = 'Odds shoule be large than 1'
 	MAXIMUM_FREE_BET = 'The maximum free bet is 100!'
+	CANNOT_WITHDRAW = 'You cannot withdraw this handshake!'
+	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
 
 	# OUTCOME
 	INVALID_OUTCOME = 'Please check your outcome id'
@@ -47,6 +49,7 @@ class MESSAGE(object):
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
+
 
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'

@@ -35,8 +35,9 @@ def init_default_outcomes():
 
 		start = data['start']
 		end = data['end']
+		outcome_data = data['outcomes']
 
-		outcome_bl.init_default_outcomes(start, end)
+		outcome_bl.init_default_outcomes(start, end, outcome_data)
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)
@@ -61,6 +62,9 @@ def add(match_id):
 				name=item['name'],
 				match_id=match_id
 			)
+			db.session.add(outcome)
+			db.session.flush()
+			
 			outcomes.append(outcome)
 			response_json.append(outcome.to_json())
 

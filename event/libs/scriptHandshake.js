@@ -10,24 +10,32 @@ const oddsData = require('./handShakeData');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
 
-const genData = (start, end) => {
+const genData = (start, end, outcome_data) => {
     return new Promise((resolve, reject) => {
         const arr = [];
         const tasks = [];
         if (start >= end ) {
             return reject(`error: ${start} >= ${end}`);
         }
-        const oddsArr = oddsData.slice(start, end);
+        let oddsArr = oddsData.slice(start, end);
+        if (Array.isArray(outcome_data) && outcome_data.length > 0) {
+            console.log('Get outcome from request body!');
+            oddsArr = outcome_data;
+        }
+
         oddsArr.forEach( i => {
             tasks.push(new Promise((resolve, reject) => {
-                matchDAO.getMatchByName(i.name)
+                (i.match_id ? matchDAO.getMatchById(i.match_id) : matchDAO.getMatchByName(i.name))
                 .then(match => {
                     if (!match) {
+                        console.log('Not found match with outcome: ', i);
                         return resolve();
                     }
-                    outcomeDAO.getByMatchId(match.id)
+                    (i.outcome_id ? outcomeDAO.getById(i.outcome_id) : outcomeDAO.getByMatchId(match.id))
                     .then(outcome => {
                         if (!outcome) {
+                            console.log('Not found outcome with match_id: ', i);
+                            console.log('Not found outcome with match: ', match);
                             return resolve();
                         }
                         i.outcomes.forEach(o => {
@@ -50,7 +58,10 @@ const genData = (start, end) => {
         .then(result => {
             resolve(arr);
         })
-        .catch(reject);
+        .catch(err => {
+            console.error(start, end, outcome_data);
+            return reject(err);
+        });
     });
 }
 
@@ -111,9 +122,9 @@ const submitInitAPI = (arr) => {
     });
 };
 
-const initHandshake = async (start, end ) => {
+const initHandshake = async (start, end, outcome_data ) => {
     try {
-        const arr = await genData(start, end);
+        const arr = await genData(start, end, outcome_data);
         submitInitAPI(arr)
         .then(async tnxDataArr => {
             const nonce = await smartContract.getNonce(ownerAddress);

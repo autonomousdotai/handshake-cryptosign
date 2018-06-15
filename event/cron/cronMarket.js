@@ -30,9 +30,9 @@ function asyncScanOutcomeNull() {
                             const match = await matchDAO.getMatchById(outcome.match_id);
 
                             const fee = match.market_fee;
-                            const closingTime = match.date - Math.floor(+moment.utc()/1000);
-                            const reportTime = closingTime + (4 * 60 * 60);
-                            const dispute = reportTime + (4 * 60 * 60);
+                            const closingTime = match.date - Math.floor(+moment.utc()/1000) + 90 * 60;
+                            const reportTime = closingTime + (2 * 60 * 60);
+                            const dispute = reportTime + (2 * 60 * 60);
                             const offchain = `cryptosign_createMarket${outcome.id}`;
                             const source = match.source;
 
@@ -74,7 +74,7 @@ function asyncScanOutcomeNull() {
 
 
 function runCreateMarketCron() {
-    cron.schedule('*/5 * * * *', async function() {
+    cron.schedule('*/1 * * * *', async function() {
 		console.log('create market cron running a task every 5m at ' + new Date());
         try {
             const setting = await settingDAO.getByName('MarketCronJob');

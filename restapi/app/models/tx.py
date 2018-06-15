@@ -17,15 +17,13 @@ class Tx(BaseModel):
 	status = db.Column(db.Integer,
 	                   server_default=str(CONST.Tx['STATUS_PENDING']),
 	                   default=CONST.Tx['STATUS_PENDING'])
+	offchain = db.Column(db.String(255))
 	chain_id = db.Column(db.Integer, default=CONST.BLOCKCHAIN_NETWORK['RINKEBY'], server_default=str(CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 
 	@classmethod
 	def find_tx_with_id(cls, tx_id):
 		return Tx.query.filter_by(id=tx_id).first()
 
-	@classmethod
-	def find_tx_with_hand_shake_id(cls, handshake_id):
-		return Tx.query.filter_by(scope='handshake', scope_id=handshake_id).order_by(Tx.date_created.desc()).all()
 
 	def __repr__(self):
 		return '<Tx {}>'.format(self.hash)

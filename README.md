@@ -169,7 +169,7 @@ gcloud auth application-default print-access-token
 gcloud container clusters get-credentials server-cluster1 --zone us-west1-a --project handshake-205007
 kubectl proxy + http://localhost:8001/ui
 kubectl --namespace=staging get pods
-kubectl --namespace=staging exec -it cryptosign-service-b676bd676-cf6xp /bin/bash
+kubectl --namespace=staging exec -it cryptosign-service-5d6759b94c-hr78j /bin/bash
 ```
 
 #### Steps

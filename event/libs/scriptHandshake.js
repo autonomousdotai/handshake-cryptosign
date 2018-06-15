@@ -35,6 +35,7 @@ const genData = (start, end, outcome_data) => {
                     .then(outcome => {
                         if (!outcome) {
                             console.log('Not found outcome with match_id: ', i);
+                            console.log('Not found outcome with match: ', match);
                             return resolve();
                         }
                         i.outcomes.forEach(o => {

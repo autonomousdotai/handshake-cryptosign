@@ -74,7 +74,7 @@ function asyncScanOutcomeNull() {
 
 
 function runCreateMarketCron() {
-    cron.schedule('*/5 * * * *', async function() {
+    cron.schedule('*/1 * * * *', async function() {
 		console.log('create market cron running a task every 5m at ' + new Date());
         try {
             const setting = await settingDAO.getByName('MarketCronJob');

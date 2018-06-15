@@ -353,14 +353,12 @@ def collect():
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
-					print '[DEBUG] collect ---> {}'.format(handshakes)
 					for handshake in handshakes:
 						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
 						db.session.flush()
 
 						update_feed.delay(handshake.id)
 
-					print '[DEBUG] collect ---> {}'.format(shakers)
 					for shaker in shakers:
 						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
 						db.session.flush()

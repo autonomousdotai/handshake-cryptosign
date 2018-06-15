@@ -22,16 +22,20 @@ def find_best_odds_which_match_support_side(outcome_id):
 
 def is_exceed_report_time(match_id):
 	match = Match.find_match_by_id(match_id)
-	t = datetime.now().timetuple()
-	seconds = local_to_utc(t)
+	if match.date is not None:
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
 
-	if seconds > match.date + 4*60*60: #4hrs later
-		return True
+		if seconds > match.date + 4*60*60: #4hrs later
+			return True
+	return False
 
 def is_exceed_dispute_time(match_id):
 	match = Match.find_match_by_id(match_id)
-	t = datetime.now().timetuple()
-	seconds = local_to_utc(t)
+	if match.date is not None:
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
 
-	if seconds > match.date + (4*60*60) * 2: #8hrs later
-		return True
+		if seconds > match.date + (4*60*60) * 2: #8hrs later
+			return True
+	return False

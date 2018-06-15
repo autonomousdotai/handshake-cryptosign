@@ -18,7 +18,6 @@ const genData = (start, end) => {
             return reject(`error: ${start} >= ${end}`);
         }
         const oddsArr = oddsData.slice(start, end);
-        console.log(oddsArr);
         oddsArr.forEach( i => {
             tasks.push(new Promise((resolve, reject) => {
                 matchDAO.getMatchByName(i.name)

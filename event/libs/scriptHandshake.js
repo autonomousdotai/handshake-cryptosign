@@ -21,29 +21,28 @@ const genData = (start, end, outcome_data) => {
         if (Array.isArray(outcome_data) && outcome_data.length > 0) {
             console.log('Get outcome from request body!');
             oddsArr = outcome_data;
-        } else {
-            console.error('Outcome_data request is invalid', outcome_data);
-            return reject(outcome_data);
         }
 
         oddsArr.forEach( i => {
             tasks.push(new Promise((resolve, reject) => {
                 (i.match_id ? matchDAO.getMatchById(i.match_id) : matchDAO.getMatchByName(i.name))
                 .then(match => {
+                    console.log('=======');
                     if (!match) {
                         console.log('Not found match with outcome: ', i);
                         return resolve();
                     }
-                    outcomeDAO.getByMatchId(match.id)
-                    .then(outcome => {
-                        if (!outcome) {
+                    (i.outcome_id ? outcomeDAO.getById(i.outcome_id) : matchDAO.getMatchById(match.id))
+                    .then(_result => {
+                        if (!_result) {
+                            console.log('Not found outcome with match: ', match);
                             return resolve();
                         }
                         i.outcomes.forEach(o => {
                             arr.push({
-                                outcome_id: outcome.id,
+                                outcome_id: _result.id,
                                 name: i.name,
-                                extra_data: utils.gennerateExtraData(match, outcome),
+                                extra_data: utils.gennerateExtraData(match, _result),
                                 side: o.side,
                                 odds: o.odds
                             });

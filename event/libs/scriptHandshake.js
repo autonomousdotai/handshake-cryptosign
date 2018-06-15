@@ -21,9 +21,6 @@ const genData = (start, end, outcome_data) => {
         if (Array.isArray(outcome_data) && outcome_data.length > 0) {
             console.log('Get outcome from request body!');
             oddsArr = outcome_data;
-        } else {
-            console.error('Outcome_data request is invalid', outcome_data);
-            return reject(outcome_data);
         }
 
         oddsArr.forEach( i => {

@@ -35,8 +35,9 @@ def init_default_outcomes():
 
 		start = data['start']
 		end = data['end']
+		outcome_data = data['outcomes']
 
-		outcome_bl.init_default_outcomes(start, end)
+		outcome_bl.init_default_outcomes(start, end, outcome_data)
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

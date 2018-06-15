@@ -771,6 +771,73 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.commit()
 
 
+    def test_init_handshake_case_7(self):
+        # DEBUG
+        # Support
+        #   amount          odds
+        #   0.000003        2.4
+        # Shake with 0.01 ETH, odds: 1.71, side 2
+        # Expected:
+        #   Response:
+        #       Amount: 0.01
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=2.4,
+				amount=0.000003,
+				currency='ETH',
+				side=1,
+				remaining_amount=0.000003,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 66
+
+            params = {
+                "type": 3,
+                "extra_data": "", 
+                "description": "TESTING MODE",
+                "outcome_id": 88,
+                "odds": 1.71,
+                "amount": 0.01,
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            data_json = data['data']
+
+            handshake = data_json[0]
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(len(handshake['shakers']), 1)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
     def test_init_handshake_with_win_value_equal_amount(self):
         self.clear_data_before_test()
         

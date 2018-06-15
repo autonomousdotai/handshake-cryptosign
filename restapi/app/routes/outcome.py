@@ -61,6 +61,8 @@ def add(match_id):
 				name=item['name'],
 				match_id=match_id
 			)
+			outcome.flush()
+			
 			outcomes.append(outcome)
 			response_json.append(outcome.to_json())
 

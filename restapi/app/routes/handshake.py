@@ -345,7 +345,7 @@ def collect():
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
 					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)										
 					if outcome.result != shaker.side or \
 						match_bl.is_exceed_report_time(outcome.match_id):
 						raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)

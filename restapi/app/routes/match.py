@@ -26,7 +26,7 @@ def matches():
 
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.result == -1 or outcome.hid is not None:
+				if outcome.result == -1 or outcome.hid is None:
 					outcome_json = outcome.to_json()
 					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
 					outcome_json["market_odds"] = odds

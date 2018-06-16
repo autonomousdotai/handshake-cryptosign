@@ -22,6 +22,7 @@ from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
+from app.helpers.utils import is_equal
 from app import db, s3, ipfs
 from app.models import User, Handshake, Shaker, Outcome, Match
 from app.constants import Handshake as HandshakeStatus
@@ -193,7 +194,16 @@ def init():
 				subtracted_amount_for_shaker = 0
 				subtracted_amount_for_handshake = 0
 
-				if handshake_win_value >= shaker_win_value:
+
+				if is_equal(handshake_win_value, shaker_win_value):
+					print '--> use both amount'
+					subtracted_amount_for_shaker = shaker_amount
+					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
+
+					subtracted_amount_for_handshake = handshake.remaining_amount
+					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+				elif handshake_win_value >= shaker_win_value:
 					print '--> use shaker amount'
 					subtracted_amount_for_shaker = shaker_amount
 					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)

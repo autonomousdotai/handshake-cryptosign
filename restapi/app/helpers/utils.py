@@ -90,3 +90,14 @@ def local_to_utc(t):
 def utc_to_local(t):
     secs = calendar.timegm(t)
     return time.localtime(secs)
+
+def is_equal(a, b):
+	if a is None or b is None:
+		return False
+
+	delta = 0.00003 # 1 cent
+	if abs(a - b) <= delta:
+		return True
+
+	return False
+		

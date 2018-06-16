@@ -9,6 +9,7 @@ from app.helpers.utils import *
 from app import db, app
 from app.models import Shaker
 from datetime import datetime
+from decimal import *
 
 class TestUtils(BaseTestCase):
 
@@ -137,6 +138,55 @@ class TestUtils(BaseTestCase):
         expected = [1, 2]
         actual = parse_shakers_array(shakers)
         self.assertEqual(expected, actual)
+
+    def test_is_equal(self):
+        a = Decimal('2.40') * Decimal('0.000003')
+        b = Decimal('1.71') * Decimal('0.0000042')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
+
+        a = Decimal('2.40') * Decimal('0.000003')
+        b = Decimal('1.70') * Decimal('0.0000042')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
+
+        a = Decimal('3') * Decimal('1')
+        b = Decimal('2') * Decimal('1.5')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
+
+        a = Decimal('3') * Decimal('1')
+        b = Decimal('1.99') * Decimal('1.5')
+        actual = is_equal(a, b)
+        expected = False
+        self.assertEqual(actual, expected)
+
+        a = Decimal('2.5') * Decimal('0.001')
+        b = Decimal('1.67') * Decimal('0.0015')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
+
+        a = Decimal('2.5') * Decimal('0.001')
+        b = Decimal('1.66') * Decimal('0.0015')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
+
+        a = Decimal('4') * Decimal('0.001')
+        b = Decimal('1.33') * Decimal('0.003')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
+
+        a = Decimal('4') * Decimal('0.001')
+        b = Decimal('1.34') * Decimal('0.003')
+        actual = is_equal(a, b)
+        expected = True
+        self.assertEqual(actual, expected)
 
 
 if __name__ == '__main__':

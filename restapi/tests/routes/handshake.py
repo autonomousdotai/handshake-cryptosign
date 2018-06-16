@@ -599,7 +599,6 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         with self.client:
             Uid = 66
-
             params = {
                 "type": 3,
                 "extra_data": "",
@@ -641,7 +640,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.commit()
 
 
-    def test_init_handshake_case_6(self):
+    def test_init_handshake_case_8(self):
         # DEBUG
         # Against
         #   amount          odds
@@ -670,7 +669,6 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
-
         with self.client:
             Uid = 66
 
@@ -700,8 +698,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             data_json = data['data']
 
             handshake = data_json[0]
+            self.assertEqual(len(data_json), 1)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 0)
+            self.assertEqual(len(handshake['shakers']), 1)
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -776,7 +775,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         # Support
         #   amount          odds
         #   0.000003        2.4
-        # Shake with 0.01 ETH, odds: 1.71, side 2
+        # Shake with 0.0000042 ETH, odds: 1.71, side 2
         # Expected:
         #   Response:
         #       Amount: 0.01
@@ -810,7 +809,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                 "description": "TESTING MODE",
                 "outcome_id": 88,
                 "odds": 1.71,
-                "amount": 0.01,
+                "amount": 0.0000042,
                 "currency": "ETH",
                 "chain_id": 4,
                 "side": 2,
@@ -830,6 +829,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             data_json = data['data']
 
             handshake = data_json[0]
+            self.assertEqual(len(data_json), 1)
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(handshake['shakers']), 1)
 

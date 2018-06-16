@@ -143,7 +143,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei('0.01', 'ether')),
+          'value'   : web3.utils.toHex(web3.utils.toWei('0.001', 'ether')),
           'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);

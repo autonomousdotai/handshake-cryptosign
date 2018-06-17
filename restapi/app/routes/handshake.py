@@ -420,7 +420,7 @@ def collect():
 @login_required
 def rollback():
 	# rollback uninit: DONE
-	# rollback shake: NEED TO THINK MORE
+	# rollback shake: DONE
 	# rollback collect: DONE
 	try:
 		uid = int(request.headers['Uid'])
@@ -477,10 +477,12 @@ def rollback():
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
 
 			if shaker is not None:
-				if shaker.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']:
+				if shaker.status == HandshakeStatus['STATUS_PENDING']:
+					handshake_bl.rollback_shake_state(shaker)
 
+				elif shaker.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']:
 					shaker.status = shaker.bk_status
-					db.session.commit()
+					db.session.flush()
 
 					update_feed.delay(shaker.handshake_id, shaker.id)					
 					return response_ok(shaker.to_json())

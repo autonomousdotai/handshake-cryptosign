@@ -1,11 +1,9 @@
 import sys
 from flask import Flask
-from werkzeug.datastructures import FileStorage
 
 from app.factory import make_celery
-from app.core import db, s3, configure_app, wm, ipfs, firebase
-from app.extensions.file_crypto import FileCrypto
-from app.models import Handshake, Outcome, User, Shaker
+from app.core import db, configure_app, firebase
+from app.models import Handshake, Outcome, Shaker
 
 import time
 import app.constants as CONST
@@ -19,10 +17,7 @@ configure_app(app)
 
 # db
 db.init_app(app)
-# s3
-s3.init_app(app)
-# init ipfs
-ipfs.init_app(app)
+
 # init firebase database
 firebase.init_app(app)
 

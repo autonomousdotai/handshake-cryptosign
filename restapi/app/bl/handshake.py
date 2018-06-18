@@ -467,3 +467,5 @@ def rollback_shake_state(shaker):
 
 	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
 	db.session.flush()
+
+	update_feed.delay(handshake.id, shaker.id)

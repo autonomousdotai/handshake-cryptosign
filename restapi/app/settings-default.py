@@ -27,7 +27,7 @@ class BaseConfig(object):
 	AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME', '')
 
 	# Autonomous server: user sso
-	AUTONOMOUS_SERVICE_ENDPOINT = os.getenv('AUTONOMOUS_SERVICE_ENDPOINT', '')
+	DISPATCHER_SERVICE_ENDPOINT = os.getenv('DISPATCHER_SERVICE_ENDPOINT', '')
 	# Blockchain server: community blockchain eth
 	BLOCKCHAIN_SERVER_ENDPOINT = os.getenv('BLOCKCHAIN_SERVER_ENDPOINT', 'http://localhost:3000')
 	# IPFS

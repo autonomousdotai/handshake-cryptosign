@@ -16,7 +16,7 @@ from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREF
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed
+from app.tasks import update_feed, add_shuriken
 from datetime import datetime
 from app.helpers.message import MESSAGE
 from datetime import datetime
@@ -166,6 +166,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 				update_feed.delay(handshake.id, shaker.id)
+				add_shuriken(shaker.shaker_id)
 
 			elif '__collect' in event_name:
 				print '__collect'
@@ -186,6 +187,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				db.session.flush()
 
 				update_feed.delay(handshake.id)
+				add_shuriken(handshake.user_id)
 
 			elif '__uninit' in event_name:
 				print '__uninit'

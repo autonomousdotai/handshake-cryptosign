@@ -202,14 +202,6 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				# update all statuses (shaker and handshake) of them to done
 				save_collect_state_for_maker(handshake)
 
-
-def rollback_handshake_state(handshake_id):
-	handshake = Handshake.find_handshake_by_id(handshake_id)
-	if handshake is not None:
-		handshake.status = handshake.bk_status
-	return handshake
-
-
 def update_to_address_for_user(user):
 	# handshakes = Handshake.query.filter(Handshake.to_address==user.email).all()
 	handshakes = Handshake.query.filter(Handshake.to_address.contains(user.email)).all()
@@ -455,5 +447,18 @@ def add_free_bet(handshake):
 	if bc_json['status'] != 1:
 		raise BcException(bc_json['message'])
 
-def is_rollback_for_shake_state():
-	pass
+
+def rollback_shake_state(shaker):
+	if shaker is None:
+		raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+
+	if shaker.status == HandshakeStatus['STATUS_SHAKER_ROLLBACK']:
+		raise Exception(MESSAGE.SHAKER_ROLLBACK_ALREADY)
+
+	shaker.status = HandshakeStatus['STATUS_SHAKER_ROLLBACK']
+	handshake = db.session.query(Handshake).filter(and_(Handshake.id==shaker.handshake_id, Handshake.status==HandshakeStatus['STATUS_INITED'])).first()
+	if handshake is None:
+		raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+
+	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
+	db.session.flush()

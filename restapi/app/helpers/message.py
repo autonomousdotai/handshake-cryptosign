@@ -49,6 +49,7 @@ class MESSAGE(object):
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
+	SHAKER_ROLLBACK_ALREADY = 'You have rollbacked already!'
 
 
 	# WALLET

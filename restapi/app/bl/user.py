@@ -1,10 +1,11 @@
 from flask import g
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, Date, cast
 from datetime import datetime
 
 from app import db
 from app.models import User, Handshake
 from app.helpers.message import MESSAGE
+from datetime import date
 
 import app.constants as CONST
 import requests
@@ -116,7 +117,7 @@ def check_user_is_able_to_create_new_handshake(user):
 
 
 def check_user_is_able_to_create_new_free_bet():
-	users = db.session.query(User).filter(User.free_bet==1).all()
-	if len(users) > 100:
+	data = db.session.query(func.sum(User.free_bet).label('amount')).filter(cast(User.date_created,Date) == date.today()).first()
+	if int(data[0]) >= 100:
 		return False
 	return True

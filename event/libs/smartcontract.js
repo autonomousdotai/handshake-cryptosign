@@ -152,7 +152,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();
-      let tnxHash               = -1;
+      let tnxHash                 = -1;
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
@@ -162,11 +162,11 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
         });
       })
       .on('receipt', async (receipt) => {
-        await txDAO.create(tnxHash, bettingHandshakeAddress, 'SUBMIT_INIT', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
         console.log(receipt);
       })
       .on('error', async err => {
-        await txDAO.create(tnxHash, bettingHandshakeAddress, 'SUBMIT_INIT', -1, network_id, _offchain, JSON.stringify(rawTransaction));    
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction));    
         console.log(err);
         return reject(err);
       });
@@ -233,4 +233,58 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
   });
 };
 
-module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce };
+
+const reportOutcomeTransaction = (hid, outcome_result) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      const offchain = 'cryptosign_report' + outcome_result;
+      console.log('reportOutcomeTransaction');
+      console.log(hid, outcome_result, offchain);
+
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      let nonce             = await getNonce(ownerAddress);
+      nonce                 = nonce.toString(16)
+      const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+
+      const txParams = {
+        gasPrice: gasPriceWei,
+        gasLimit: 350000,
+        to: contractAddress,
+        from: ownerAddress,
+        nonce: '0x' + nonce,
+        chainId: network_id,
+        data: contract.methods.report(hid, outcome_result, web3.utils.fromUtf8(offchain)).encodeABI()
+      };
+
+      const tx = new ethTx(txParams);
+      let tnxHash = -1;
+      tx.sign(privKey);
+
+      const serializedTx = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        console.log('report tnxHash: ', hash);
+      })
+      .on('receipt', async (receipt) => {
+        console.log('report tnxHash: ', receipt);
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', 1, network_id, offchain, JSON.stringify(txParams));    
+        resolve(receipt);
+      })
+      .on('error', async  err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, offchain, JSON.stringify(txParams));    
+        console.log(err);
+        reject(err);
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce, reportOutcomeTransaction };

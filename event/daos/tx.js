@@ -12,23 +12,6 @@ module.exports = {
     });
   },
   create: function (hash, contract_address, contract_method, status, chain_id, offchain, payload) {
-    return models.Tx
-        .create(
-        {
-            hash: hash,
-            contract_address: contract_address,
-            contract_method: contract_method,
-            status: status,
-            chain_id: chain_id,
-            offchain: offchain,
-            payload: payload,
-            deleted: 0,
-            date_created: new Date(),
-            date_modified: new Date()
-        }, {
-          transaction: tx
-        })
-    /*
     return new Promise((resolve, reject ) => {
       models.sequelize.transaction({}, (tx) => {
         return models.Tx
@@ -51,6 +34,5 @@ module.exports = {
         .catch(reject)
       });
     });
-    */
   }
 };

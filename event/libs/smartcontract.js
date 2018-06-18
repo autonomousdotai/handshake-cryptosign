@@ -3,6 +3,9 @@ const configs = require('../configs');
 const httpRequest = require('../libs/http');
 const PredictionHandshake = require('../contracts/PredictionHandshake.json');
 const axios = require('axios');
+// models
+const models = require('../models');
+const txDAO = require('../daos/tx');
 
 const web3 = require('../configs/web3').getWeb3();
 
@@ -149,22 +152,26 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();
-
+      let tnxHash               = -1;
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
+        tnxHash = hash;
         return resolve({
           raw: rawTransaction,
           hash: hash,
         });
       })
-      .on('receipt', (receipt) => {
+      .on('receipt', async (receipt) => {
+        await txDAO.create(tnxHash, bettingHandshakeAddress, 'SUBMIT_INIT', 1, network_id, _offchain, JSON.stringify(rawTransaction))
         console.log(receipt);
       })
-      .on('error', err => {
+      .on('error', async err => {
+        await txDAO.create(tnxHash, bettingHandshakeAddress, 'SUBMIT_INIT', -1, network_id, _offchain, JSON.stringify(rawTransaction));    
         console.log(err);
         return reject(err);
       });
     } catch (e) {
+      console.error(e);
       reject(e);
     }
   });

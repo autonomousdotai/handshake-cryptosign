@@ -21,7 +21,11 @@ module.exports = (sequelize, DataTypes) => {
     user_id: DataTypes.INTEGER,
     status: DataTypes.INTEGER,
     transaction_status: DataTypes.STRING,
-    chain_id: DataTypes.INTEGER
+    chain_id: DataTypes.INTEGER,
+    offchain: DataTypes.STRING,
+    deleted: DataTypes.INTEGER,
+    date_created: DataTypes.DATE,
+    date_modified: DataTypes.DATE
   }, {
     tableName: 'tx',
     timestamps: false,

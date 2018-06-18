@@ -527,6 +527,18 @@ def create_bet():
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
+		hs_type = data.get('type', -1)
+		extra_data = data.get('extra_data', '')
+		description = data.get('description', '')
+		is_private = data.get('is_private', 1)
+		outcome_id = data.get('outcome_id')
+		odds = Decimal(data.get('odds'))
+		currency = data.get('currency', 'ETH')
+		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		from_address = data.get('from_address', '')
+		amount = 0.001
+
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
 
@@ -535,50 +547,159 @@ def create_bet():
 			raise Exception(MESSAGE.INVALID_DATA)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
-			hs_type = data.get('type', -1)
-			extra_data = data.get('extra_data', '')
-			description = data.get('description', '')
-			is_private = data.get('is_private', 1)
-			outcome_id = data.get('outcome_id')
-			odds = Decimal(data.get('odds'))
-			currency = data.get('currency', 'ETH')
-			side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-			chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-			from_address = data.get('from_address', '')
-			amount = 0.001
-
-			outcome = Outcome.find_outcome_by_id(outcome_id)
-			if outcome is None:
-				raise Exception(MESSAGE.INVALID_OUTCOME)
-			elif outcome.hid is None:
-				raise Exception(MESSAGE.INVALID_OUTCOME)
-				
-			handshake = Handshake(
-				hs_type=hs_type,
-				extra_data=extra_data,
-				description=description,
-				chain_id=chain_id,
-				is_private=is_private,
-				user_id=user.id,
-				outcome_id=outcome_id,
-				odds=odds,
-				amount=amount,
-				currency=currency,
-				side=side,
-				remaining_amount=amount,
-				from_address=from_address
-			)
-
-			db.session.add(handshake)
-			db.session.flush()
-
-			handshake_bl.add_free_bet(handshake)
-
+			# filter all handshakes which able be to match first
+			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
 			user.free_bet += 1
-			db.session.commit()
 
-			update_feed.delay(handshake.id)
-			return response_ok(handshake.to_json())
+			print 'DEBUG {}'.format(handshakes)
+			if len(handshakes) == 0:
+				handshake = Handshake(
+					hs_type=hs_type,
+					extra_data=extra_data,
+					description=description,
+					chain_id=chain_id,
+					is_private=is_private,
+					user_id=user.id,
+					outcome_id=outcome_id,
+					odds=odds,
+					amount=amount,
+					currency=currency,
+					side=side,
+					remaining_amount=amount,
+					from_address=from_address
+				)
+				db.session.add(handshake)
+				db.session.commit()
+
+				update_feed.delay(handshake.id)
+				handshake_bl.add_free_bet(handshake)
+
+				# response data
+				arr_hs = []
+				hs_json = handshake.to_json()
+				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+				arr_hs.append(hs_json)
+
+				return response_ok(arr_hs)
+			else:
+				arr_hs = []
+				shaker_amount = amount
+
+				for handshake in handshakes:
+					if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) <= 0:
+						break
+
+					handshake.shake_count += 1
+
+					print '---------------------------------------------------------------------'
+					print 'handshake_remaining_value --> {}'.format(handshake.remaining_amount)
+
+					handshake_win_value = handshake.remaining_amount*handshake.odds
+					print 'handshake_win_value --> {}'.format(handshake_win_value)
+
+					shaker_win_value = shaker_amount*odds
+					print 'shaker_win_value --> {}'.format(shaker_win_value)
+
+					subtracted_amount_for_shaker = 0
+					subtracted_amount_for_handshake = 0
+
+
+					if is_equal(handshake_win_value, shaker_win_value):
+						print '--> use both amount'
+						subtracted_amount_for_shaker = shaker_amount
+						print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
+
+						subtracted_amount_for_handshake = handshake.remaining_amount
+						print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+					elif handshake_win_value >= shaker_win_value:
+						print '--> use shaker amount'
+						subtracted_amount_for_shaker = shaker_amount
+						print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
+
+						subtracted_amount_for_handshake = shaker_win_value - subtracted_amount_for_shaker
+						print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+					else:
+						print '--> use maker amount'
+						subtracted_amount_for_handshake = handshake.remaining_amount
+						print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
+
+						subtracted_amount_for_shaker = handshake_win_value - subtracted_amount_for_handshake
+						print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
+
+					handshake.remaining_amount -= subtracted_amount_for_handshake
+					shaker_amount -= subtracted_amount_for_shaker
+
+					db.session.merge(handshake)
+					print 'shaker_amount = {}'.format(shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN))				
+					print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
+					print '---------------------------------------------------------------------'
+
+					# create shaker
+					shaker = Shaker(
+						shaker_id=user.id,
+						amount=subtracted_amount_for_shaker,
+						currency=currency,
+						odds=odds,
+						side=side,
+						handshake_id=handshake.id,
+						from_address=from_address,
+						chain_id=chain_id
+					)
+
+					db.session.add(shaker)
+					db.session.flush()
+
+					update_feed.delay(handshake.id, shaker.id)
+					
+					handshake_json = handshake.to_json()
+					shakers = handshake_json['shakers']
+					if shakers is None:
+						shakers = []
+
+					shakers.append(shaker.to_json())
+
+					handshake_json['shakers'] = shakers
+					handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+					arr_hs.append(handshake_json)
+					
+
+				if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
+					print 'still has money'
+					handshake = Handshake(
+						hs_type=hs_type,
+						extra_data=extra_data,
+						description=description,
+						chain_id=chain_id,
+						is_private=is_private,
+						user_id=user.id,
+						outcome_id=outcome_id,
+						odds=odds,
+						amount=shaker_amount,
+						currency=currency,
+						side=side,
+						remaining_amount=shaker_amount,
+						from_address=from_address
+					)
+					db.session.add(handshake)
+					db.session.flush()
+
+					update_feed.delay(handshake.id)
+					handshake_bl.add_free_bet(handshake)		
+
+					hs_json = handshake.to_json()
+					hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
+					arr_hs.append(hs_json)
+
+				print '----------------------'
+				print arr_hs
+				print '----------------------'
+				print 'commit database'
+				
+				
+				db.session.commit()
+				return response_ok(arr_hs)
 
 		else:
 			raise Exception(MESSAGE.MAXIMUM_FREE_BET)

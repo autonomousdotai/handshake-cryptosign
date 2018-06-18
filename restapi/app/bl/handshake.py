@@ -165,7 +165,9 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				print '__shake'
 				shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 				shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
-				db.session.flush()
+
+				# TOOD: recheck why flush not work here??
+				db.session.commit()
 
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 				update_feed.delay(handshake.id, shaker.id)
@@ -187,7 +189,9 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				print '__init'
 				handshake.status = HandshakeStatus['STATUS_INITED']
 				handshake.bk_status = HandshakeStatus['STATUS_INITED']
-				db.session.flush()
+
+				# TOOD: recheck why flush not work here??
+				db.session.commit()
 
 				update_feed.delay(handshake.id)
 				add_shuriken(handshake.user_id)
@@ -196,7 +200,9 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				print '__uninit'
 				handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
 				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
-				db.session.flush()
+
+				# TOOD: recheck why flush not work here??
+				db.session.commit()
 
 				update_feed.delay(handshake.id)
 

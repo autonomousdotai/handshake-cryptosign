@@ -14,10 +14,13 @@ class MESSAGE(object):
 
 	# OUTCOME
 	INVALID_OUTCOME = 'Please check your outcome id'
+	INVALID_OUTCOME_RESULT = 'Please check your outcome result'
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
 
 	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
+	INVALID_MATCH_RESULT = 'Match result invalid. Please try again.'
+	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'

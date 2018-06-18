@@ -16,7 +16,7 @@ from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREF
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed
+from app.tasks import update_feed, add_shuriken
 from datetime import datetime
 from app.helpers.message import MESSAGE
 from datetime import datetime
@@ -91,6 +91,7 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.flush()
 
+		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 		update_feed.delay(handshake.id, shaker.id)
 
 def save_collect_state_for_maker(handshake):
@@ -114,10 +115,9 @@ def save_collect_state_for_shaker(shaker):
 				shaker.status = HandshakeStatus['STATUS_DONE']
 				shaker.bk_status = HandshakeStatus['STATUS_DONE']
 
-				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
-
+				
 				save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
 
 def update_feed_result_for_outcome(outcome):
@@ -134,6 +134,8 @@ def update_feed_result_for_outcome(outcome):
 		print '--> {}'.format(shaker)
 		update_feed.delay(handshake.id, shaker.id)
 
+	return handshakes, shakers
+
 
 def save_handshake_for_event(event_name, offchain, outcome=None):
 	if 'report' in offchain:
@@ -149,8 +151,9 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 		if len(result) > -1:
 			result = int(result)
 			outcome.result = result
-			db.session.flush()
 
+			# TOOD: recheck why flush not work here??
+			db.session.commit()
 			update_feed_result_for_outcome(outcome)
 
 	elif 's' in offchain: # shaker
@@ -166,6 +169,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 				update_feed.delay(handshake.id, shaker.id)
+				add_shuriken(shaker.shaker_id)
 
 			elif '__collect' in event_name:
 				print '__collect'
@@ -186,6 +190,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				db.session.flush()
 
 				update_feed.delay(handshake.id)
+				add_shuriken(handshake.user_id)
 
 			elif '__uninit' in event_name:
 				print '__uninit'
@@ -201,14 +206,6 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
 				save_collect_state_for_maker(handshake)
-
-
-def rollback_handshake_state(handshake_id):
-	handshake = Handshake.find_handshake_by_id(handshake_id)
-	if handshake is not None:
-		handshake.status = handshake.bk_status
-	return handshake
-
 
 def update_to_address_for_user(user):
 	# handshakes = Handshake.query.filter(Handshake.to_address==user.email).all()
@@ -455,5 +452,18 @@ def add_free_bet(handshake):
 	if bc_json['status'] != 1:
 		raise BcException(bc_json['message'])
 
-def is_rollback_for_shake_state():
-	pass
+
+def rollback_shake_state(shaker):
+	if shaker is None:
+		raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+
+	if shaker.status == HandshakeStatus['STATUS_SHAKER_ROLLBACK']:
+		raise Exception(MESSAGE.SHAKER_ROLLBACK_ALREADY)
+
+	shaker.status = HandshakeStatus['STATUS_SHAKER_ROLLBACK']
+	handshake = db.session.query(Handshake).filter(and_(Handshake.id==shaker.handshake_id, Handshake.status==HandshakeStatus['STATUS_INITED'])).first()
+	if handshake is None:
+		raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+
+	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
+	db.session.flush()

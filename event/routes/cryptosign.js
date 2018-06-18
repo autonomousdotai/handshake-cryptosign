@@ -1,6 +1,5 @@
 const express = require('express');
 const router  = express.Router();
-const configs = require('../configs');
 const predictionContract = require('../libs/smartcontract');
 const scriptInitHandshake = require('../libs/scriptHandshake');
 
@@ -12,8 +11,6 @@ router.post('/init', async function(req, res, next) {
         const odds = parseInt(requestObject.odds);
         const address = requestObject.address;
         const offchain = requestObject.offchain;
-
-        console.log('[DEBUG] --> ', offchain)
 
         predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain)
                             .then((hash) => {
@@ -40,15 +37,29 @@ router.post('/odds/init', (req, res, next) => {
         if (start >= end || start == null || start == undefined || end == null || end == undefined) {    
             console.log(' start or end value is invalid');
             res.ok('Init odds data false.');
-            return;
+            return next();
         }
         if (!Array.isArray(outcome_data)) {
             console.log('Init odds false: body invalid.');
             res.ok('Init odds false: body invalid.');
-            return;
+            return next();
         }
         scriptInitHandshake.initHandshake(start, end, outcome_data);
         res.ok('Init odds data.');
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/report', (req, res, next) => {
+    try {
+        if (!req.body || req.body.hid == undefined || req.body.outcome_result == undefined) {
+            console.error(' Report outcome tnx invalid ');
+            return next();
+        }
+        predictionContract.reportOutcomeTransaction(req.body.hid, req.body.outcome_result)
+        .catch(console.error);
+        res.ok('Report outcome.');
     } catch (err) {
         next(err);
     }

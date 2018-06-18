@@ -51,8 +51,7 @@ def before_request():
 		return redirect(rp[:-1])
 
 	g.BLOCKCHAIN_SERVER_ENDPOINT = app.config.get('BLOCKCHAIN_SERVER_ENDPOINT')
-	g.AUTONOMOUS_SERVICE_ENDPOINT = app.config.get('AUTONOMOUS_SERVICE_ENDPOINT')
-	g.AUTONOMOUS_WEB_PASSPHASE = app.config.get('AUTONOMOUS_WEB_PASSPHASE')
+	g.DISPATCHER_SERVICE_ENDPOINT = app.config.get('DISPATCHER_SERVICE_ENDPOINT')
 	g.SOLR_SERVICE = app.config.get('SOLR_SERVICE')
 	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
 

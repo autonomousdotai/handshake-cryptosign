@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
@@ -10,6 +11,7 @@ from app.helpers.utils import parse_date_string_to_timestamp
 from app import db
 from app.models import User, Match, Outcome
 from app.helpers.message import MESSAGE
+from flask import g
 
 match_routes = Blueprint('match', __name__)
 
@@ -146,7 +148,66 @@ def remove(id):
 		db.session.rollback()
 		return response_error(ex.message)
 
+@match_routes.route('/report/<int:match_id>', methods=['POST'])
+@login_required
+# @admin_required
+def report(match_id):
+	try:
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
 
+		match = Match.find_match_by_id(match_id)
+		if match is not None:
+			homeScore = data['homeScore'] if 'homeScore' in data else ''
+			awayScore = data['awayScore'] if 'awayScore' in data else ''
+			result = data['result']
+
+			if homeScore is None:
+				return response_error(MESSAGE.INVALID_MATCH_RESULT)
+			
+			if awayScore is None:
+				return response_error(MESSAGE.INVALID_MATCH_RESULT)
+
+			match.homeScore = homeScore
+			match.awayScore = awayScore
+
+			if result is None:
+				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
+
+			if result['side'] is None:
+				return response_error(MESSAGE.INVALID_OUTCOME_RESULT)
+				
+			if result['outcome_id'] is None:
+				return response_error(MESSAGE.INVALID_OUTCOME_RESULT)
+
+			outcome = Outcome.find_outcome_by_id(result['outcome_id'])
+
+			if outcome is not None:
+				if outcome.result != -1:
+					return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+			else:
+				return response_error(MESSAGE.INVALID_OUTCOME)
+
+			dataReport = {}
+			dataReport['hid'] = outcome.hid
+			dataReport['outcome_result'] = result['side']
+			#json_data = json.dumps(data)
+
+			requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/report',
+							json=dataReport,
+							headers={"Content-Type": "application/json"})
+
+			return response_ok()
+		else:
+			return response_error(MESSAGE.MATCH_NOT_FOUND)
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+'''
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
 # @admin_required
@@ -170,7 +231,6 @@ def report(match_id):
 					outcome.result = o['side']
 				else:
 					return response_error(MESSAGE.INVALID_OUTCOME)
-
 			return response_ok()
 		else:
 			return response_error(MESSAGE.MATCH_NOT_FOUND)
@@ -178,4 +238,4 @@ def report(match_id):
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
-
+'''

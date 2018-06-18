@@ -38,10 +38,9 @@ def event():
 			outcome = Outcome.find_outcome_by_hid(hid)
 			if outcome is None:
 				return response_error(MESSAGE.INVALID_BET)
-	
 			handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
+			
 		db.session.commit()
-
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()

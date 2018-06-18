@@ -1,11 +1,9 @@
 import sys
 from flask import Flask
-from werkzeug.datastructures import FileStorage
 
 from app.factory import make_celery
-from app.core import db, s3, configure_app, wm, ipfs, firebase
-from app.extensions.file_crypto import FileCrypto
-from app.models import Handshake, Outcome, User, Shaker
+from app.core import db, configure_app, firebase
+from app.models import Handshake, Outcome, Shaker
 
 import time
 import app.constants as CONST
@@ -19,10 +17,7 @@ configure_app(app)
 
 # db
 db.init_app(app)
-# s3
-s3.init_app(app)
-# init ipfs
-ipfs.init_app(app)
+
 # init firebase database
 firebase.init_app(app)
 
@@ -120,3 +115,20 @@ def update_feed(handshake_id, shake_id=-1):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_feed=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def add_shuriken(user_id):
+	try:
+		if user_id is not None:
+				
+			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
+			res = requests.post(endpoint)
+			if res.status_code > 400:
+				print('Add shuriken is failed.')
+
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("add_shuriken=>",exc_type, fname, exc_tb.tb_lineno)

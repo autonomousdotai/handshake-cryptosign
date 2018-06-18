@@ -8,7 +8,7 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from datetime import datetime
 from app import db, app
-from app.models import Handshake, User, Outcome, Match
+from app.models import Handshake, User, Outcome, Match, Shaker
 
 import app.bl.handshake as handshake_bl
 import app.constants as CONST
@@ -548,16 +548,171 @@ class TestHandshakeBl(BaseTestCase):
         self.assertEqual(float(handshakes[0].amount), 0.3125)
         self.assertEqual(float(handshakes[1].amount), 0.21)
 
-
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
     def test_save_collect_state_for_shaker(self):
-        pass
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4
+				)
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+        db.session.flush()
+
+        handshake_bl.save_collect_state_for_shaker(shaker)
+
+        h = Handshake.find_handshake_by_id(handshake.id)
+        s = Shaker.find_shaker_by_id(shaker.id)
+
+        self.assertEqual(h.status, 6)
+        self.assertEqual(s.status, 6)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
 
     def test_save_collect_state_for_maker(self):
         pass
+
+    def test_rollback_shake_state(self):
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+					shaker_id=88,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4
+				)
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+        handshake_bl.rollback_shake_state(shaker)
+
+        h = Handshake.find_handshake_by_id(handshake.id)
+        s = Shaker.find_shaker_by_id(shaker.id)
+
+        self.assertEqual(h.remaining_amount, 1)
+        self.assertEqual(s.status, -9)
+
+        for item in arr_hs:
+            db.session.delete(item)
+            db.session.commit()
+
+    def test_update_feed_result_for_outcome(self):
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+					shaker_id=88,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4
+				)
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+        db.session.flush()
+
+        handshakes, shakers = handshake_bl.update_feed_result_for_outcome(outcome)
+        h = handshakes[0]
+        s = shakers[0]
+
+        self.assertEqual(h.id, handshake.id)
+        self.assertEqual(s.id, shaker.id)
+
+        for item in arr_hs:
+            db.session.delete(item)
+            db.session.commit()
+
 
 if __name__ == '__main__':
     unittest.main()

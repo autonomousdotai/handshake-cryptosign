@@ -161,12 +161,14 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
           hash: hash,
         });
       })
-      .on('receipt', async (receipt) => {
+      .on('receipt', (receipt) => {
         txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
         console.log(receipt);
       })
-      .on('error', async err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction));    
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
         console.log(err);
         return reject(err);
       });
@@ -271,13 +273,15 @@ const reportOutcomeTransaction = (hid, outcome_result) => {
         tnxHash = hash;
         console.log('report tnxHash: ', hash);
       })
-      .on('receipt', async (receipt) => {
+      .on('receipt', (receipt) => {
         console.log('report tnxHash: ', receipt);
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', 1, network_id, offchain, JSON.stringify(txParams));    
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', 1, network_id, offchain, JSON.stringify(txParams))
+        .catch(console.error);
         resolve(receipt);
       })
-      .on('error', async  err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, offchain, JSON.stringify(txParams));    
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, offchain, JSON.stringify(txParams))
+        .catch(console.error);
         console.log(err);
         reject(err);
       });

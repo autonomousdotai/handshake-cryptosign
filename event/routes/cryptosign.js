@@ -57,7 +57,8 @@ router.post('/report', (req, res, next) => {
             console.error(' Report outcome tnx invalid ');
             return next();
         }
-        predictionContract.reportOutcomeTransaction(req.body.hid, req.body.outcome_result);
+        predictionContract.reportOutcomeTransaction(req.body.hid, req.body.outcome_result)
+        .catch(console.error);
         res.ok('Report outcome.');
     } catch (err) {
         next(err);

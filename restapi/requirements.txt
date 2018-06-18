@@ -54,7 +54,6 @@ vine==1.1.4
 Werkzeug==0.14.1
 WTForms==2.1
 uuid
-hashlib
 Pyrebase==3.0.27
 simplejson==3.15.0
 flask-socketio==3.0.1

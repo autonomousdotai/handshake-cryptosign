@@ -29,6 +29,10 @@ celery = make_celery(app)
 def update_feed(handshake_id, shake_id=-1):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
+		if handshake is None:
+			print 'handshake is None'
+			return
+
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is None:
 			print 'outcome is None'

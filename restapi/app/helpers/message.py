@@ -21,6 +21,7 @@ class MESSAGE(object):
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
 	INVALID_MATCH_RESULT = 'Match result invalid. Please try again.'
 	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
+	MATCH_CANNOT_SET_RESULT = 'The report time is exceed!'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'

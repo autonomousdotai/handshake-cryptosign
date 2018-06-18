@@ -125,9 +125,10 @@ def update_feed(handshake_id, shake_id=-1):
 def add_shuriken(user_id):
 	try:
 		if user_id is not None:
-				
+			
 			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
 			res = requests.post(endpoint)
+			print 'add_shuriken {}'.format(res)
 			if res.status_code > 400:
 				print('Add shuriken is failed.')
 

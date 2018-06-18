@@ -608,5 +608,60 @@ class TestHandshakeBl(BaseTestCase):
             db.session.delete(item)
             db.session.commit()
 
+    def test_update_feed_result_for_outcome(self):
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+					shaker_id=88,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4
+				)
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+        db.session.flush()
+
+        handshakes, shakers = handshake_bl.update_feed_result_for_outcome(outcome)
+        h = handshakes[0]
+        s = shakers[0]
+
+        self.assertEqual(h.id, handshake.id)
+        self.assertEqual(s.id, shaker.id)
+
+        for item in arr_hs:
+            db.session.delete(item)
+            db.session.commit()
+
+
 if __name__ == '__main__':
     unittest.main()

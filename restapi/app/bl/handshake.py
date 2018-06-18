@@ -134,6 +134,8 @@ def update_feed_result_for_outcome(outcome):
 		print '--> {}'.format(shaker)
 		update_feed.delay(handshake.id, shaker.id)
 
+	return handshakes, shakers
+
 
 def save_handshake_for_event(event_name, offchain, outcome=None):
 	if 'report' in offchain:
@@ -149,8 +151,9 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 		if len(result) > -1:
 			result = int(result)
 			outcome.result = result
-			db.session.flush()
 
+			# TOOD: recheck why flush not work here??
+			db.session.commit()
 			update_feed_result_for_outcome(outcome)
 
 	elif 's' in offchain: # shaker

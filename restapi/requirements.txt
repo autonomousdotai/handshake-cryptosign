@@ -1,4 +1,4 @@
-alembic==0.9.8
+alembic==0.9.9
 amqp==2.2.2
 asn1crypto==0.24.0
 attrs==17.4.0

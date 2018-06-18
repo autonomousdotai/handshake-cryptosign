@@ -309,8 +309,8 @@ def uninit(handshake_id):
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
 			else:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-				if outcome.result != -1:
-					return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+				if outcome is None:
+					return response_error(MESSAGE.INVALID_OUTCOME)
 				else:
 					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
 					db.session.flush()
@@ -545,7 +545,7 @@ def create_bet():
 			side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 			chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 			from_address = data.get('from_address', '')
-			amount = 0.01
+			amount = 0.001
 
 			outcome = Outcome.find_outcome_by_id(outcome_id)
 			if outcome is None:

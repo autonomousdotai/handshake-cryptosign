@@ -91,6 +91,7 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.flush()
 
+		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 		update_feed.delay(handshake.id, shaker.id)
 
 def save_collect_state_for_maker(handshake):
@@ -114,10 +115,9 @@ def save_collect_state_for_shaker(shaker):
 				shaker.status = HandshakeStatus['STATUS_DONE']
 				shaker.bk_status = HandshakeStatus['STATUS_DONE']
 
-				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
-
+				
 				save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
 
 def update_feed_result_for_outcome(outcome):

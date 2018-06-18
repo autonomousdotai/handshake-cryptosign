@@ -553,7 +553,58 @@ class TestHandshakeBl(BaseTestCase):
             db.session.commit()
 
     def test_save_collect_state_for_shaker(self):
-        pass
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4
+				)
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+        db.session.flush()
+
+        handshake_bl.save_collect_state_for_shaker(shaker)
+
+        h = Handshake.find_handshake_by_id(handshake.id)
+        s = Shaker.find_shaker_by_id(shaker.id)
+
+        self.assertEqual(h.status, 6)
+        self.assertEqual(s.status, 6)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
 
     def test_save_collect_state_for_maker(self):
         pass

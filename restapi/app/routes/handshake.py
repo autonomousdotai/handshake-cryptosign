@@ -349,10 +349,8 @@ def collect():
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		handshakes = []
 		shakers = []
-
-		print 'collect --> 1'
+		
 		if 's' in offchain:
-			print 'collect --> 2'
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if shaker is not None:
@@ -360,7 +358,7 @@ def collect():
 					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)										
 					if outcome.result != shaker.side or \
-						match_bl.is_exceed_report_time(outcome.match_id):
+						match_bl.is_exceed_report_time(outcome.match_id) == False:
 						raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
 					
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
@@ -384,18 +382,13 @@ def collect():
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
 		else:
-			print 'collect --> 3'
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
-			print 'collect --> {}'.format(handshake)
 			if handshake is not None:
-				print 'collect --> 4'
-				print 'DEBUG --> {} -- {}'.format(handshake.status, HandshakeStatus['STATUS_INITED'])
 				if handshake.status == HandshakeStatus['STATUS_INITED']:
-					print 'collect --> 5'
 					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 					if outcome.result != handshake.side or \
-						match_bl.is_exceed_report_time(outcome.match_id):
+						match_bl.is_exceed_report_time(outcome.match_id) == False:
 						raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
 
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()

@@ -1,7 +1,7 @@
 
 const configs = require('./configs');
 const cron = require('./cron');
-console.log(configs);
+
 setTimeout( () => {
     cron.bettingCron.runBettingCron();
     cron.oddsCron.runOddsCron();

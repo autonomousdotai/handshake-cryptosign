@@ -130,12 +130,12 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) =>
 // /*
 //     submit init test drive transaction
 // */
-const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) => {
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, _nonce) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = await getNonce(ownerAddress);
+      const nonce           = _nonce || await getNonce(ownerAddress);
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -182,12 +182,12 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
 // /*
 //     submit shake test drive transaction
 // */
-const submitShakeTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) => {
+const submitShakeTestDriveTransaction = (_hid, _side, _odds, _taker, _offchain, _nonce) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = await getNonce(ownerAddress);
+      const nonce           = _nonce || await getNonce(ownerAddress);
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -199,7 +199,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) 
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
           'value'   : web3.utils.toHex(web3.utils.toWei('0.001', 'ether')),
-          'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
+          'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _odds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
@@ -343,4 +343,11 @@ const reportOutcomeTransaction = (hid, outcome_result) => {
   });
 };
 
-module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce, reportOutcomeTransaction, submitShakeTestDriveTransaction };
+module.exports = {
+  submitInitTransaction,
+  createMarketTransaction,
+  submitInitTestDriveTransaction,
+  getNonce,
+  reportOutcomeTransaction,
+  submitShakeTestDriveTransaction
+};

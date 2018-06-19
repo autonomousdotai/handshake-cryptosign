@@ -179,7 +179,7 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 		if win_value - amount > 0:
 			# calculate matched odds
 			v = odds/(odds-1)
-			v = float(Decimal(str(v)).quantize(Decimal('.01'), rounding=ROUND_HALF_UP))
+			v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))
 
 			print 'matched odds --> {}'.format(v)
 			query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
@@ -234,13 +234,6 @@ def find_available_against_handshakes(outcome_id):
 		return handshakes
 	return []
 
-
-def add_free_bet(arr_free_bet):
-	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', 
-							json=arr_free_bet,
-							headers={"Content-Type": "application/json"})
-	bc_json = bc_res.json()
-	print "bc_json=>", bc_json
 
 def rollback_shake_state(shaker):
 	if shaker is None:

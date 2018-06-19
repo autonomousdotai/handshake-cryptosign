@@ -12,7 +12,7 @@ class Shaker(BaseModel):
 	shaker_id = db.Column(db.Integer)
 	amount = db.Column(db.Numeric(20, 18))
 	currency = db.Column(db.String(10))
-	odds = db.Column(db.Numeric(20, 2))
+	odds = db.Column(db.Numeric(20, 1))
 	chain_id = db.Column(db.Integer,
 						server_default=str(CONST.BLOCKCHAIN_NETWORK['RINKEBY']),
 						default=CONST.BLOCKCHAIN_NETWORK['RINKEBY'])

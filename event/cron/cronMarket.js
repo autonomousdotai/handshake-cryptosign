@@ -32,7 +32,7 @@ function asyncScanOutcomeNull() {
                             const match = await matchDAO.getMatchById(outcome.match_id);
 
                             const fee = match.market_fee;
-                            const closingTime = match.date - Math.floor(+moment.utc()/1000) + 90 * 60;
+                            const closingTime = match.date - Math.floor(+moment.utc()/1000) + 90 * 60 + 15 * 60;
                             const reportTime = closingTime + (reportTimeConfig * 60 * 60);
                             const dispute = reportTime + (reportTimeConfig * 60 * 60);
                             const offchain = `cryptosign_createMarket${outcome.id}`;

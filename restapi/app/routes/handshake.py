@@ -558,8 +558,7 @@ def create_bet():
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			# filter all handshakes which able be to match first
 			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-			# TODO: open it
-			# user.free_bet += 1
+			user.free_bet += 1
 
 			arr_free_bet = []
 			print 'DEBUG {}'.format(handshakes)

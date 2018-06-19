@@ -153,3 +153,24 @@ def add_free_bet(arr_free_bet):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_free_bet=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def withdraw_free_bet(hid, winner, offchain):
+	try:
+		data = {
+			"hid": hid,
+			"winner": winner,
+			"offchain": offchain
+		}
+		res = requests.post(app.config['BLOCKCHAIN_SERVER_ENDPOINT'] + '/cryptosign/collect', 
+							json=data,
+							headers={"Content-Type": "application/json"})
+		print 'withdraw_free_bet {}'.format(res)
+		if res.status_code > 400:
+			print('withdraw_free_bet is failed.')
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("withdraw_free_bet=>",exc_type, fname, exc_tb.tb_lineno)

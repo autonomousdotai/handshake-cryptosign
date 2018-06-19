@@ -216,12 +216,65 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
         .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(err);
+        return reject(err);
+      });
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    }
+  });
+};
+
+// /*
+//     collect test drive transaction
+// */
+const submitCollectTestDriveTransaction = (_hid, _winner, _offchain) => {
+  console.log(_hid, _winner, _offchain);
+  return new Promise(async(resolve, reject) => {
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const nonce           = await getNonce(ownerAddress, 'pending');
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : '0x0',
+          'data'    : contract.methods.collectTestDrive(_hid, _winner, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let tnxHash                 = -1;
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+      .on('receipt', (receipt) => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(receipt);
+      })
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
         .catch(console.error);
         console.log(err);
         return reject(err);
@@ -351,5 +404,6 @@ module.exports = {
   submitInitTestDriveTransaction,
   getNonce,
   reportOutcomeTransaction,
-  submitShakeTestDriveTransaction
+  submitShakeTestDriveTransaction,
+  submitCollectTestDriveTransaction
 };

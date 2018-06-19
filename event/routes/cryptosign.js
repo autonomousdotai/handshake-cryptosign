@@ -6,6 +6,7 @@ const scriptInitHandshake = require('../libs/scriptHandshake');
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 
+// This api is used for free bet only
 router.post('/init', async function(req, res, next) {
     try {
         const arrObject = req.body || [];
@@ -61,6 +62,23 @@ router.post('/init', async function(req, res, next) {
         })
     } catch (err) {
         console.log('route init throw exception');
+        next(err);
+    }
+});
+
+// This api is used for free bet only
+router.post('/collect', async function(req, res, next) {
+    try {
+        const requestObject = req.body || {};
+        const hid = parseInt(requestObject.hid);
+        const winner = requestObject.winner;
+        const offchain = requestObject.offchain; 
+
+        predictionContract.submitCollectTestDriveTransaction(hid, winner, offchain)
+        res.ok('call collect method.')
+
+    } catch (err) {
+        console.log('route collect throw exception');
         next(err);
     }
 });

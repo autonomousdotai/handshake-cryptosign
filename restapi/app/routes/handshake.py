@@ -26,7 +26,7 @@ from app.helpers.utils import is_equal
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed, add_free_bet
+from app.tasks import update_feed, add_free_bet, withdraw_free_bet
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -524,7 +524,7 @@ def rollback():
 		return response_error(ex.message)
 
 
-@handshake_routes.route('/create_bet', methods=['POST'])
+@handshake_routes.route('/create_free_bet', methods=['POST'])
 @login_required
 def create_bet():
 	try:
@@ -734,6 +734,106 @@ def create_bet():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
+@handshake_routes.route('/collect_free_bet', methods=['POST'])
+@login_required
+def collect_free_bet():
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
+		offchain = data.get('offchain', '')
+		if len(offchain) == 0:
+			raise Exception(MESSAGE.MISSING_OFFCHAIN)
+
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		handshakes = []
+		shakers = []
+
+		hid = 0
+		winner = ''
+		original_offchain = data.get('offchain', '')
+
+		if 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			if shaker is not None:
+				if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
+					hid = outcome.hid
+					winner = shaker.from_address
+
+					if outcome.result != shaker.side:
+						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
+
+					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
+						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
+					
+					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+					for handshake in handshakes:
+						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+						db.session.flush()
+
+						update_feed.delay(handshake.id)
+
+					for shaker in shakers:
+						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+						db.session.flush()
+
+						update_feed.delay(handshake.id, shaker.id)
+				else:
+					raise Exception(MESSAGE.CANNOT_WITHDRAW)	
+
+			else:
+				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+
+		else:
+			offchain = int(offchain.replace('m', ''))
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			if handshake is not None:
+				if handshake.status == HandshakeStatus['STATUS_INITED']:
+					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+					hid = outcome.hid
+					winner = handshake.from_address
+
+					if outcome.result != handshake.side:
+						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
+
+					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
+						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
+
+					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+					for handshake in handshakes:
+						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+						db.session.flush()
+
+						update_feed.delay(handshake.id)
+
+					for shaker in shakers:
+						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+						db.session.flush()
+
+						update_feed.delay(handshake.id, shaker.id)
+				else:
+					raise Exception(MESSAGE.CANNOT_WITHDRAW)
+
+			else:
+				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+		withdraw_free_bet.delay(hid, winner, original_offchain)
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
 
 @handshake_routes.route('/check_free_bet', methods=['GET'])
 @login_required

@@ -44,7 +44,7 @@ class Handshake(BaseModel):
 							server_default=str(0),
 	                      	default=0)
 	from_address = db.Column(db.String(255))
-	odds = db.Column(db.Numeric(20, 2))
+	odds = db.Column(db.Numeric(20, 1))
 	amount = db.Column(db.Numeric(20, 18))
 	remaining_amount = db.Column(db.Numeric(20, 18))
 	currency = db.Column(db.String(10))

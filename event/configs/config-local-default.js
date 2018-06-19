@@ -28,6 +28,7 @@ module.exports = {
       gasLimit: 1000000,
       gasPrice: 4,
       amountValue: 0.001,
+      reportTimeConfig: 2,
       blockchainNetwork: 'https://mainnet.infura.io/',
     },
     '4': {
@@ -39,6 +40,7 @@ module.exports = {
       gasLimit: 3000000,
       gasPrice: 100,
       amountValue: 0.001,
+      reportTimeConfig: 2,
       blockchainNetwork: 'https://rinkeby.infura.io/',
     },
     '5': { 
@@ -50,6 +52,7 @@ module.exports = {
       gasLimit: 3000000,
       gasPrice: 2.1,
       amountValue: 0.001,
+      reportTimeConfig: 2,
       blockchainNetwork: 'http://localhost:8545',
     }
   }

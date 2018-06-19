@@ -50,6 +50,8 @@ class MESSAGE(object):
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
 	HANDSHAKE_CANNOT_UNINIT = 'There is shakers. Therefore you cannot refund!'
+	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
+	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'

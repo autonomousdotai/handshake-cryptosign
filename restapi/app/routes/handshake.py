@@ -357,9 +357,11 @@ def collect():
 				if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
 					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)										
-					if outcome.result != shaker.side or \
-						match_bl.is_exceed_report_time(outcome.match_id) == False:
-						raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
+					if outcome.result != shaker.side:
+						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
+
+					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
+						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
 					
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
@@ -387,9 +389,11 @@ def collect():
 			if handshake is not None:
 				if handshake.status == HandshakeStatus['STATUS_INITED']:
 					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-					if outcome.result != handshake.side or \
-						match_bl.is_exceed_report_time(outcome.match_id) == False:
-						raise Exception(MESSAGE.HANDSHAKE_NO_PERMISSION)
+					if outcome.result != handshake.side:
+						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
+
+					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
+						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
 
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()

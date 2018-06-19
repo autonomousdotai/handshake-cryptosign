@@ -21,6 +21,7 @@ class MESSAGE(object):
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
 	INVALID_MATCH_RESULT = 'Match result invalid. Please try again.'
 	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
+	MATCH_CANNOT_SET_RESULT = 'The report time is exceed!'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
@@ -49,6 +50,8 @@ class MESSAGE(object):
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
 	HANDSHAKE_CANNOT_UNINIT = 'There is shakers. Therefore you cannot refund!'
+	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
+	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'

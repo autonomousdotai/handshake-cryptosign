@@ -29,6 +29,10 @@ celery = make_celery(app)
 def update_feed(handshake_id, shake_id=-1):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
+		if handshake is None:
+			print 'handshake is None'
+			return
+
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is None:
 			print 'outcome is None'
@@ -92,7 +96,8 @@ def update_feed(handshake_id, shake_id=-1):
 			"currency_s": handshake.currency,
 			"side_i": handshake.side,
 			"from_address_s": handshake.from_address,
-			"result_i": outcome.result
+			"result_i": outcome.result,
+			"free_bet_i": handshake.free_bet
 		}
 		print 'create maker {}'.format(hs)
 
@@ -121,9 +126,9 @@ def update_feed(handshake_id, shake_id=-1):
 def add_shuriken(user_id):
 	try:
 		if user_id is not None:
-				
 			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
 			res = requests.post(endpoint)
+			print 'add_shuriken {}'.format(res)
 			if res.status_code > 400:
 				print('Add shuriken is failed.')
 
@@ -132,3 +137,40 @@ def add_shuriken(user_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_shuriken=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def add_free_bet(arr_free_bet):
+	try:
+		res = requests.post(app.config['BLOCKCHAIN_SERVER_ENDPOINT'] + '/cryptosign/init', 
+							json=arr_free_bet,
+							headers={"Content-Type": "application/json"})
+		print 'add_free_bet {}'.format(res)
+		if res.status_code > 400:
+			print('Add free bet is failed.')
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("add_free_bet=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def withdraw_free_bet(hid, winner, offchain):
+	try:
+		data = {
+			"hid": hid,
+			"winner": winner,
+			"offchain": offchain
+		}
+		res = requests.post(app.config['BLOCKCHAIN_SERVER_ENDPOINT'] + '/cryptosign/collect', 
+							json=data,
+							headers={"Content-Type": "application/json"})
+		print 'withdraw_free_bet {}'.format(res)
+		if res.status_code > 400:
+			print('withdraw_free_bet is failed.')
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("withdraw_free_bet=>",exc_type, fname, exc_tb.tb_lineno)

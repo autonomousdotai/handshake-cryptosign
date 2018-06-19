@@ -7,12 +7,12 @@ import app.constants as CONST
 
 class Shaker(BaseModel):
 	__tablename__ = 'shaker'
-	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'currency', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address']
+	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'currency', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address', 'free_bet']
 
 	shaker_id = db.Column(db.Integer)
 	amount = db.Column(db.Numeric(20, 18))
 	currency = db.Column(db.String(10))
-	odds = db.Column(db.Numeric(20, 2))
+	odds = db.Column(db.Numeric(20, 1))
 	chain_id = db.Column(db.Integer,
 						server_default=str(CONST.BLOCKCHAIN_NETWORK['RINKEBY']),
 						default=CONST.BLOCKCHAIN_NETWORK['RINKEBY'])
@@ -26,7 +26,9 @@ class Shaker(BaseModel):
 	bk_status = db.Column(db.Integer,
 	                      server_default=str(CONST.Handshake['STATUS_PENDING']),
 	                      default=CONST.Handshake['STATUS_PENDING'])
-
+	free_bet = db.Column(db.Integer,
+	                   server_default=str(0),
+	                   default=0)
 	handshake_id = db.Column('handshake_id', db.ForeignKey('handshake.id'))
 
 	@classmethod

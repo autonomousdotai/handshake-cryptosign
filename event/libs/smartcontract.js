@@ -130,12 +130,12 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) =>
 // /*
 //     submit init test drive transaction
 // */
-const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) => {
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = await getNonce(ownerAddress);
+      const nonce           = _nonce || await getNonce(ownerAddress);
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -146,7 +146,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei('0.001', 'ether')),
+          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
           'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
@@ -168,6 +168,113 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
       })
       .on('error', err => {
         txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(err);
+        return reject(err);
+      });
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    }
+  });
+};
+
+// /*
+//     submit shake test drive transaction
+// */
+
+const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdss, _offchain, amount, _nonce) => {
+  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdss, _offchain, amount, _nonce);
+  return new Promise(async(resolve, reject) => {
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const nonce           = _nonce || await getNonce(ownerAddress);
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdss, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let tnxHash                 = -1;
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+      .on('receipt', (receipt) => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(receipt);
+      })
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(err);
+        return reject(err);
+      });
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    }
+  });
+};
+
+// /*
+//     collect test drive transaction
+// */
+const submitCollectTestDriveTransaction = (_hid, _winner, _offchain) => {
+  console.log(_hid, _winner, _offchain);
+  return new Promise(async(resolve, reject) => {
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const nonce           = await getNonce(ownerAddress, 'pending');
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : '0x0',
+          'data'    : contract.methods.collectTestDrive(_hid, _winner, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let tnxHash                 = -1;
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+      .on('receipt', (receipt) => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(receipt);
+      })
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
         .catch(console.error);
         console.log(err);
         return reject(err);
@@ -291,4 +398,12 @@ const reportOutcomeTransaction = (hid, outcome_result) => {
   });
 };
 
-module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce, reportOutcomeTransaction };
+module.exports = {
+  submitInitTransaction,
+  createMarketTransaction,
+  submitInitTestDriveTransaction,
+  getNonce,
+  reportOutcomeTransaction,
+  submitShakeTestDriveTransaction,
+  submitCollectTestDriveTransaction
+};

@@ -12,6 +12,7 @@ const settingDAO = require('../daos/setting');
 
 const predictionContract = require('../libs/smartcontract');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
+const reportTimeConfig = configs.network[configs.network_id].reportTimeConfig || 2;
 
 // mark as running
 let isRunningCreateMarket = false;
@@ -27,12 +28,13 @@ function asyncScanOutcomeNull() {
                 outcomes.forEach((outcome, index) => {
                     const task = new Promise(async(resolve, reject) => {
                         try {
+                            console.log();
                             const match = await matchDAO.getMatchById(outcome.match_id);
 
                             const fee = match.market_fee;
                             const closingTime = match.date - Math.floor(+moment.utc()/1000) + 90 * 60;
-                            const reportTime = closingTime + (2 * 60 * 60);
-                            const dispute = reportTime + (2 * 60 * 60);
+                            const reportTime = closingTime + (reportTimeConfig * 60 * 60);
+                            const dispute = reportTime + (reportTimeConfig * 60 * 60);
                             const offchain = `cryptosign_createMarket${outcome.id}`;
                             const source = match.source;
 

@@ -92,6 +92,7 @@ const getNonceFromAPI = (address, length) => {
                 const tnxCount = await web3.eth.getTransactionCount(address, 'latest');
                 return resolve(tnxCount);
                 /*
+                
                 const path = `address=${address}&network_id=${configs.network_id}`;
                 const tnxCount = await web3.eth.getTransactionCount(address, 'latest');
 

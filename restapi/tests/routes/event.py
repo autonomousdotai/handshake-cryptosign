@@ -121,8 +121,9 @@ class TestEventBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
-            hs = Handshake.find_handshake_by_id(handshake.id)
-            self.assertEqual(hs.status, 0)
+
+        h = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(h.status, 0)
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -135,7 +136,58 @@ class TestEventBluePrint(BaseTestCase):
         pass
 
     def test_reiceive_report_event(self):
-        pass
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.25,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x123',
+                status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "events": {
+                    "contract": "predictionHandshake",
+                    "eventName": "__report",
+                    "offchain": "report1",
+                    "hid": 88
+                }
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+        hs = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(hs.status, 0)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
     
 if __name__ == '__main__':
     unittest.main()

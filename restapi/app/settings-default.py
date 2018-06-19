@@ -35,6 +35,7 @@ class BaseConfig(object):
 	IPFS_REST_PORT = os.environ.get('IPFS_REST_PORT', '5001')
 
 	PASSPHASE = ''
+	EMAIL = ''
 	AUTONOMOUS_WEB_PASSPHASE = ''
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'

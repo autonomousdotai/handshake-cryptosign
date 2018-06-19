@@ -31,6 +31,7 @@ const baseConfig = {
       ownerAddress: '',
       privateKey: '',
       gasLimit: 3000000,
+      reportTimeConfig: 2,
       blockchainNetwork: 'https://mainnet.infura.io/',
     },
     '4': {
@@ -40,6 +41,7 @@ const baseConfig = {
       ownerAddress: '',
       privateKey: '',
       gasLimit: 3000000,
+      reportTimeConfig: 0.2,
       blockchainNetwork: 'https://rinkeby.infura.io/',
     },
     '5': { 
@@ -49,6 +51,7 @@ const baseConfig = {
       ownerAddress: '',
       privateKey: '',
       gasLimit: 3000000,
+      reportTimeConfig: 2,
       blockchainNetwork: 'http://localhost:8545',
     }
   }

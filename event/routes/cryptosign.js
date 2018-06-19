@@ -22,17 +22,19 @@ router.post('/init', async function(req, res, next) {
             tasks.push(new Promise((resolve, reject) => {
                 const hid = parseInt(requestObject.hid);
                 const side = parseInt(requestObject.side);
-                const odds = parseInt(requestObject.odds); // TODO: check is float or * 100
-                const address = requestObject.address;
-                const offchain = requestObject.offchain;    
+                const odds = parseInt(requestObject.odds  * 100)
+                const address = requestObject.from_address;
+                const offchain = requestObject.offchain; 
+                const amount = requestObject.amount;
                 let fncSubmitTnx = null;
 
                 if (offchain) {
                     if (offchain.indexOf('_m') != -1) {
-                        fncSubmitTnx = predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain, nonce + index);
+                        fncSubmitTnx = predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain, parseFloat(amount), nonce + index);
                     } else if (offchain.indexOf('_s') != -1) {
-                        // TODO: check params
-                        fncSubmitTnx = predictionContract.submitShakeTestDriveTransaction(hid, side, odds, address, offchain, nonce + index);
+                        const maker = requestObject.maker_address;
+                        const makerOdds = parseInt(requestObject.maker_odds * 100)
+                        fncSubmitTnx = predictionContract.submitShakeTestDriveTransaction(hid, side, address, odds, maker, makerOdds, offchain, parseFloat(amount), nonce + index);
                     } else {
                         console.error('offchain invalid: ', offchain);
                         return resolve();
@@ -47,8 +49,6 @@ router.post('/init', async function(req, res, next) {
                         reject(err);
                     });
                 }
-                // cryptosign_m14 // initTestDrive
-                // cryptosign_s14 // shakeTestDrive
             }));
         });
 
@@ -59,31 +59,6 @@ router.post('/init', async function(req, res, next) {
         .catch(err => {
             return next (err);
         })
-    } catch (err) {
-        console.log('route init throw exception');
-        next(err);
-    }
-});
-
-router.post('/shake', async function(req, res, next) {
-    try {
-        const requestObject = req.body;
-        const hid = parseInt(requestObject.hid);
-        const side = parseInt(requestObject.side);
-        const odds = parseInt(requestObject.odds);
-        const address = requestObject.address;
-        const offchain = requestObject.offchain;
-
-        predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain)
-                            .then((hash) => {
-                                console.log(`Init test drive ${offchain} success, hash: ${hash}`);
-                                res.ok(hash);
-                            })
-                            .catch((e) => {
-                                console.log(`Init test drive ${offchain} fail, ${e.message}`);
-                                res.notok(e.message);
-                            });
-
     } catch (err) {
         console.log('route init throw exception');
         next(err);

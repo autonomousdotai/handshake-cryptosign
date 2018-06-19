@@ -684,10 +684,12 @@ def create_bet():
 					# add free bet
 					shaker_json['hid'] = outcome.hid
 					shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+					shaker_json['maker_address'] = handshake.from_address
+					shaker_json['maker_odds'] = handshake.odds
 					arr_free_bet.append(shaker_json)
 
 				if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
-					print 'still has money'
+					print 'still has money {}'.format(shaker_amount)
 					handshake = Handshake(
 						hs_type=hs_type,
 						extra_data=extra_data,
@@ -708,8 +710,6 @@ def create_bet():
 					db.session.flush()
 
 					update_feed.delay(handshake.id)
-					handshake_bl.add_free_bet(handshake)		
-
 					hs_json = handshake.to_json()
 					hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 					arr_hs.append(hs_json)

@@ -130,7 +130,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) =>
 // /*
 //     submit init test drive transaction
 // */
-const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, _nonce) => {
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
@@ -146,7 +146,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, _
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei('0.001', 'ether')),
+          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
           'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
@@ -182,7 +182,9 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, _
 // /*
 //     submit shake test drive transaction
 // */
-const submitShakeTestDriveTransaction = (_hid, _side, _odds, _taker, _offchain, _nonce) => {
+
+const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdss, _offchain, amount, _nonce) => {
+  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdss, _offchain, amount, _nonce);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
@@ -198,8 +200,8 @@ const submitShakeTestDriveTransaction = (_hid, _side, _odds, _taker, _offchain, 
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei('0.001', 'ether')),
-          'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _odds, web3.utils.fromUtf8(_offchain)).encodeABI()
+          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdss, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);

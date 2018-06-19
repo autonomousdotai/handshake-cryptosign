@@ -7,9 +7,8 @@ import app.bl.user as user_bl
 from flask import Blueprint, request, g
 from app import db, sg, s3
 from app.models import User
-from app.bl.handshake import update_to_address_for_user
 from datetime import datetime
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity)
+from flask_jwt_extended import (create_access_token)
 
 from app.helpers.message import MESSAGE
 from app.helpers.decorators import login_required
@@ -31,8 +30,6 @@ def auth():
 		password = data['password']
 
 		confirm = hashlib.md5('{}{}'.format(email.strip(), g.PASSPHASE)).hexdigest()
-		print g.PASSPHASE
-		print confirm
 		if email == g.EMAIL and password == confirm:
 			response = {
 			}

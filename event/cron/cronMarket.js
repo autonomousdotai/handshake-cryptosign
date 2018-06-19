@@ -12,7 +12,7 @@ const settingDAO = require('../daos/setting');
 
 const predictionContract = require('../libs/smartcontract');
 const ownerAddress = configs.network[configs.network_id].ownerAddress;
-const reportTimeConfig = configs.network[configs.network_id].reportTime || 2;
+const reportTimeConfig = configs.network[configs.network_id].reportTimeConfig || 2;
 
 // mark as running
 let isRunningCreateMarket = false;

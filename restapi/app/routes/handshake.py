@@ -532,6 +532,10 @@ def create_bet():
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
+		data = request.json
+		if data is None:
+			raise Exception(MESSAGE.INVALID_DATA)
+
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
@@ -547,15 +551,16 @@ def create_bet():
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
 
-		data = request.json
-		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome.result != -1:
+			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			# filter all handshakes which able be to match first
 			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
 			user.free_bet += 1
 
+			arr_free_bet = []
 			print 'DEBUG {}'.format(handshakes)
 			if len(handshakes) == 0:
 				handshake = Handshake(
@@ -571,7 +576,8 @@ def create_bet():
 					currency=currency,
 					side=side,
 					remaining_amount=amount,
-					from_address=from_address
+					from_address=from_address,
+					free_bet=1
 				)
 				db.session.add(handshake)
 				db.session.commit()
@@ -584,6 +590,11 @@ def create_bet():
 				hs_json = handshake.to_json()
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 				arr_hs.append(hs_json)
+
+				# add free bet
+				hs_json['hid'] = outcome.hid
+				arr_free_bet.append(hs_json)
+				handshake_bl.add_free_bet(arr_free_bet)
 
 				return response_ok(arr_hs)
 			else:
@@ -650,7 +661,8 @@ def create_bet():
 						side=side,
 						handshake_id=handshake.id,
 						from_address=from_address,
-						chain_id=chain_id
+						chain_id=chain_id,
+						free_bet=1
 					)
 
 					db.session.add(shaker)
@@ -662,13 +674,17 @@ def create_bet():
 					shakers = handshake_json['shakers']
 					if shakers is None:
 						shakers = []
-
-					shakers.append(shaker.to_json())
+					shaker_json = shaker.to_json()
+					shakers.append(shaker_json)
 
 					handshake_json['shakers'] = shakers
 					handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 					arr_hs.append(handshake_json)
-					
+
+					# add free bet
+					shaker_json['hid'] = outcome.hid
+					shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+					arr_free_bet.append(shaker_json)
 
 				if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
 					print 'still has money'
@@ -685,7 +701,8 @@ def create_bet():
 						currency=currency,
 						side=side,
 						remaining_amount=shaker_amount,
-						from_address=from_address
+						from_address=from_address,
+						free_bet=1
 					)
 					db.session.add(handshake)
 					db.session.flush()
@@ -697,12 +714,16 @@ def create_bet():
 					hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 					arr_hs.append(hs_json)
 
+					# add free bet
+					hs_json['hid'] = outcome.hid
+					arr_free_bet.append(hs_json)
+
 				print '----------------------'
 				print arr_hs
 				print '----------------------'
 				print 'commit database'
 				
-				
+				handshake_bl.add_free_bet(arr_free_bet)
 				db.session.commit()
 				return response_ok(arr_hs)
 

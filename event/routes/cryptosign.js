@@ -5,6 +5,31 @@ const scriptInitHandshake = require('../libs/scriptHandshake');
 
 router.post('/init', async function(req, res, next) {
     try {
+        // const requestObject = req.body;
+        // const hid = parseInt(requestObject.hid);
+        // const side = parseInt(requestObject.side);
+        // const odds = parseInt(requestObject.odds);
+        // const address = requestObject.address;
+        // const offchain = requestObject.offchain;
+
+        // predictionContract.submitInitTestDriveTransaction(hid, side, odds, address, offchain)
+        //                     .then((hash) => {
+        //                         console.log(`Init test drive ${offchain} success, hash: ${hash}`);
+        //                         res.ok(hash);
+        //                     })
+        //                     .catch((e) => {
+        //                         console.log(`Init test drive ${offchain} fail, ${e.message}`);
+        //                         res.notok(e.message);
+        //                     });
+
+    } catch (err) {
+        console.log('route init throw exception');
+        next(err);
+    }
+});
+
+router.post('/shake', async function(req, res, next) {
+    try {
         const requestObject = req.body;
         const hid = parseInt(requestObject.hid);
         const side = parseInt(requestObject.side);

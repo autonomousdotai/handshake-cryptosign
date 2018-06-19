@@ -179,6 +179,58 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) =
   });
 };
 
+// /*
+//     submit shake test drive transaction
+// */
+const submitShakeTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const nonce           = await getNonce(ownerAddress);
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : web3.utils.toHex(web3.utils.toWei('0.001', 'ether')),
+          'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let tnxHash                 = -1;
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+        });
+      })
+      .on('receipt', (receipt) => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(receipt);
+      })
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(err);
+        return reject(err);
+      });
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    }
+  });
+};
+
 /**
  * Create Market
  * 
@@ -291,4 +343,4 @@ const reportOutcomeTransaction = (hid, outcome_result) => {
   });
 };
 
-module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce, reportOutcomeTransaction };
+module.exports = { submitInitTransaction, createMarketTransaction, submitInitTestDriveTransaction, getNonce, reportOutcomeTransaction, submitShakeTestDriveTransaction };

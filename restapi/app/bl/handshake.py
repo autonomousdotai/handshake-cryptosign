@@ -235,22 +235,10 @@ def find_available_against_handshakes(outcome_id):
 	return []
 
 
-def add_free_bet(handshake):
-	outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-	bc_data = {
-		'hid': outcome.hid,
-		'side': handshake.side,
-		'odds': int(handshake.odds * 100),
-		'address': handshake.from_address,
-		'offchain': CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id)
-	}
-
-	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', data=bc_data, params={'chain_id': handshake.chain_id})
+def add_free_bet(arr_free_bet):
+	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', data=arr_free_bet, params={'chain_id': handshake.chain_id})
 	bc_json = bc_res.json()
 	print "bc_json=>", bc_json
-	if bc_json['status'] != 1:
-		raise BcException(bc_json['message'])
-
 
 def rollback_shake_state(shaker):
 	if shaker is None:

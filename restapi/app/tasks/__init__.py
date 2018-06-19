@@ -96,7 +96,8 @@ def update_feed(handshake_id, shake_id=-1):
 			"currency_s": handshake.currency,
 			"side_i": handshake.side,
 			"from_address_s": handshake.from_address,
-			"result_i": outcome.result
+			"result_i": outcome.result,
+			"free_bet_i": handshake.free_bet
 		}
 		print 'create maker {}'.format(hs)
 

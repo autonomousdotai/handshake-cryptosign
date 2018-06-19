@@ -126,7 +126,6 @@ def update_feed(handshake_id, shake_id=-1):
 def add_shuriken(user_id):
 	try:
 		if user_id is not None:
-			
 			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
 			res = requests.post(endpoint)
 			print 'add_shuriken {}'.format(res)
@@ -138,3 +137,12 @@ def add_shuriken(user_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_shuriken=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def add_free_bet(arr_free_bet):
+	bc_res = requests.post(app.config['BLOCKCHAIN_SERVER_ENDPOINT'] + '/cryptosign/init', 
+							json=arr_free_bet,
+							headers={"Content-Type": "application/json"})
+	bc_json = bc_res.json()
+	print "bc_json=>", bc_json

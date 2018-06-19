@@ -23,10 +23,10 @@ from app.helpers.message import MESSAGE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal
-from app import db, s3, ipfs
+from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed
+from app.tasks import update_feed, add_free_bet
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -546,7 +546,7 @@ def create_bet():
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		from_address = data.get('from_address', '')
-		amount = 0.001
+		amount = Decimal('0.001') 
 
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
@@ -558,7 +558,8 @@ def create_bet():
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			# filter all handshakes which able be to match first
 			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-			user.free_bet += 1
+			# TODO: open it
+			# user.free_bet += 1
 
 			arr_free_bet = []
 			print 'DEBUG {}'.format(handshakes)
@@ -583,7 +584,6 @@ def create_bet():
 				db.session.commit()
 
 				update_feed.delay(handshake.id)
-				handshake_bl.add_free_bet(handshake)
 
 				# response data
 				arr_hs = []
@@ -592,9 +592,9 @@ def create_bet():
 				arr_hs.append(hs_json)
 
 				# add free bet
-				hs_json['hid'] = outcome.hid
+				hs_json['hid'] = outcome.hid 
 				arr_free_bet.append(hs_json)
-				handshake_bl.add_free_bet(arr_free_bet)
+				add_free_bet.delay(arr_free_bet)
 
 				return response_ok(arr_hs)
 			else:
@@ -723,7 +723,7 @@ def create_bet():
 				print '----------------------'
 				print 'commit database'
 				
-				handshake_bl.add_free_bet(arr_free_bet)
+				add_free_bet.delay(arr_free_bet)
 				db.session.commit()
 				return response_ok(arr_hs)
 

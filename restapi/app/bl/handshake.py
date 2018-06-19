@@ -236,7 +236,9 @@ def find_available_against_handshakes(outcome_id):
 
 
 def add_free_bet(arr_free_bet):
-	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', data=arr_free_bet, params={'chain_id': handshake.chain_id})
+	bc_res = requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/init', 
+							json=arr_free_bet,
+							headers={"Content-Type": "application/json"})
 	bc_json = bc_res.json()
 	print "bc_json=>", bc_json
 

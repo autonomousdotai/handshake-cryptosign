@@ -838,13 +838,16 @@ def collect_free_bet():
 @login_required
 def has_received_free_bet():
 	try:
+		print 'DEBUG'
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
+		print '1'
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
 
+		print '2'
 		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
 			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
 

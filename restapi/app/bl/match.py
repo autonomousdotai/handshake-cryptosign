@@ -26,7 +26,7 @@ def is_exceed_report_time(match_id):
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 
-		if seconds > match.date + 2*60*60: #2hrs later
+		if seconds > match.date + 2*60*60 + 6000: #2hrs later
 			return True
 	return False
 
@@ -36,6 +36,6 @@ def is_exceed_dispute_time(match_id):
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 
-		if seconds > match.date + (2*60*60) * 2: #4hrs later
+		if seconds > match.date + (2*60*60) * 2 + 6000: #4hrs later
 			return True
 	return False

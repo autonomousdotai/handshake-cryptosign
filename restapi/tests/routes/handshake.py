@@ -1249,7 +1249,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_collect_handshake_fail_if_time_exceed_dispute_time(self):
+    def test_collect_handshake_if_time_exceed_dispute_time(self):
         pass
 
     def test_collect_handshake(self):
@@ -1324,7 +1324,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 18600
+        match.date = time.time() - 28600
 
         db.session.commit()
 
@@ -1371,7 +1371,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
@@ -1513,7 +1512,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 18600
+        match.date = time.time() - 28600
 
         db.session.commit()
 

@@ -30,7 +30,7 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 	shakers = []
 	if outcome.result == CONST.RESULT_TYPE['DRAW'] or outcome.result == CONST.RESULT_TYPE['PENDING']:
 		print 'outcome result is {}'.format(outcome.result)
-		return
+		return None, None
 
 	handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
 	print 'handshakes {}'.format(handshakes)
@@ -40,28 +40,31 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 	for handshake in handshakes:
 		handshake.status = HandshakeStatus['STATUS_DONE']
 		handshake.bk_status = HandshakeStatus['STATUS_DONE']
-		db.session.commit()
-
-		update_feed.delay(handshake.id)
+		db.session.flush()
 
 	for shaker in shakers:
 		shaker.status = HandshakeStatus['STATUS_DONE']
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
-		db.session.commit()
+		db.session.flush()
 
-		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-		update_feed.delay(handshake.id, shaker.id)
+	return handshakes, shakers
 
 def save_collect_state_for_maker(handshake):
 	if handshake is not None:
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is not None:
 			if handshake.side == outcome.result:
-				handshake.status = HandshakeStatus['STATUS_DONE']
-				handshake.bk_status = HandshakeStatus['STATUS_DONE']
-				db.session.commit()
+				shaker = Shaker.find_shaker_by_handshake_id(handshake.id)
+				shaker.status = HandshakeStatus['STATUS_DONE']
+				shaker.bk_status = HandshakeStatus['STATUS_DONE']
 
-				save_status_all_bet_which_user_win(handshake.user_id, outcome)
+				db.session.flush()
+				handshakes, shakers = save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
+				
+				if shakers is None:
+					shakers = []	
+				shakers.append(shaker)
+				return handshakes, shakers
 
 def save_collect_state_for_shaker(shaker):
 	if shaker is not None:
@@ -70,38 +73,29 @@ def save_collect_state_for_shaker(shaker):
 
 		if outcome is not None:
 			if shaker.side == outcome.result:
-				shaker.status = HandshakeStatus['STATUS_DONE']
-				shaker.bk_status = HandshakeStatus['STATUS_DONE']
-
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 
-				db.session.commit()
-				save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
+				db.session.flush()
+				handshakes, shakers = save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
+				
+				if handshakes is None:
+					handshakes = []
+				handshakes.append(handshake)
+				return handshakes, shakers
 
-def update_feed_result_for_outcome(outcome):
-	print 'update_feed_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
+	return None, None
+
+def data_need_set_result_for_outcome(outcome):
+	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
 
 	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
 	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
-
-	for handshake in handshakes:
-		print '--> {}'.format(handshake)
-		update_feed.delay(handshake.id)
-
-	for shaker in shakers:
-		print '--> {}'.format(shaker)
-		update_feed.delay(handshake.id, shaker.id)
-
 	return handshakes, shakers
 
 
 def save_handshake_for_event(event_name, offchain, outcome=None):
 	if 'report' in offchain:
-		if outcome is None:
-			print 'outcome is None'
-			return
-
 		# report1: mean that support win
 		# report2: mean that against win
 		# report0: mean that no one win
@@ -111,9 +105,8 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 			result = int(result)
 			outcome.result = result
 
-			# TOOD: recheck why flush not work here??
-			db.session.commit()
-			update_feed_result_for_outcome(outcome)
+			db.session.flush()
+			return data_need_set_result_for_outcome(outcome)
 
 	elif 's' in offchain: # shaker
 		offchain = offchain.replace('s', '')
@@ -125,19 +118,18 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 				shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
-				# TOOD: recheck why flush not work here??
-				db.session.commit()
+				db.session.flush()
 
-				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-				update_feed.delay(handshake.id, shaker.id)
-				add_shuriken(shaker.shaker_id)
+				arr = []
+				arr.append(shaker)
+				return None, arr
 
 			elif '__collect' in event_name:
 				print '__collect'
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
-				save_collect_state_for_shaker(shaker)
+				return save_collect_state_for_shaker(shaker)
 
 	else: # maker
 		offchain = offchain.replace('m', '')
@@ -149,28 +141,29 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				handshake.status = HandshakeStatus['STATUS_INITED']
 				handshake.bk_status = HandshakeStatus['STATUS_INITED']
 
-				# TOOD: recheck why flush not work here??
-				db.session.commit()
+				db.session.flush()
 
-				update_feed.delay(handshake.id)
-				add_shuriken(handshake.user_id)
+				arr = []
+				arr.append(handshake)
+				return arr, None
 
 			elif '__uninit' in event_name:
 				print '__uninit'
 				handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
 				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
 
-				# TOOD: recheck why flush not work here??
-				db.session.commit()
+				db.session.flush()
 
-				update_feed.delay(handshake.id)
+				arr = []
+				arr.append(handshake)
+				return arr, None
 
 			elif '__collect' in event_name:
 				print '__collect'
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
-				save_collect_state_for_maker(handshake)
+				return save_collect_state_for_maker(handshake)
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()

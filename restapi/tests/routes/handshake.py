@@ -1324,7 +1324,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 18600
+        match.date = time.time() - 28600
 
         db.session.commit()
 
@@ -1512,7 +1512,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 18600
+        match.date = time.time() - 28600
 
         db.session.commit()
 

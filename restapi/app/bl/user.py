@@ -28,6 +28,6 @@ def check_user_is_able_to_create_new_handshake(user):
 
 def check_user_is_able_to_create_new_free_bet():
 	data = db.session.query(func.sum(User.free_bet).label('amount')).filter(cast(User.date_created,Date) == date.today()).first()
-	if int(data[0]) >= 100:
+	if data is not None and int(data[0]) >= 100:
 		return False
 	return True

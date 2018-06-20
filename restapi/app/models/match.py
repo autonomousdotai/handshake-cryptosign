@@ -6,7 +6,7 @@ from app.models.base import BaseModel
 
 class Match(BaseModel):
 	__tablename__ = 'match'
-	__json_public__ = ['id', 'homeTeamName', 'homeTeamCode', 'homeTeamFlag', 'awayTeamName', 'awayTeamCode', 'awayTeamFlag', 'date', 'outcomes', 'homeScore', 'awayScore', 'name', 'market_fee', 'source']	
+	__json_public__ = ['id', 'homeTeamName', 'homeTeamCode', 'homeTeamFlag', 'awayTeamName', 'awayTeamCode', 'awayTeamFlag', 'date', 'reportTime', 'disputeTime', 'outcomes', 'homeScore', 'awayScore', 'name', 'market_fee', 'source']	
 	__json_modifiers__ = {
         'outcomes': lambda outcomes, _: [outcome.to_json() for outcome in outcomes]
     }
@@ -23,7 +23,12 @@ class Match(BaseModel):
 	market_fee = db.Column(db.Integer,
 							server_default=str(1),
 	                      	default=1)
-	date = db.Column(db.BigInteger)
+
+	date = db.Column(db.BigInteger) #closingTime
+
+	reportTime = db.Column(db.BigInteger)
+	disputeTime = db.Column(db.BigInteger)
+
 	outcomes = db.relationship('Outcome', backref='match', primaryjoin="Match.id == Outcome.match_id", lazy='dynamic')
 
 	@classmethod

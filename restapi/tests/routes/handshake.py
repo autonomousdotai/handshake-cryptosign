@@ -1601,9 +1601,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_rollback_handshake_with_refund_state(self):
-        pass
-
     
 if __name__ == '__main__':
     unittest.main()

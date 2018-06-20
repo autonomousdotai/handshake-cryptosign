@@ -35,5 +35,9 @@ class Shaker(BaseModel):
 	def find_shaker_by_id(cls, _id):
 		return Shaker.query.filter_by(id=_id).first()
 
+	@classmethod
+	def find_shaker_by_handshake_id(cls, _id):
+		return Shaker.query.filter_by(handshake_id=_id).first()
+
 	def __repr__(self):
 		return '<shaker {}>'.format(self.id)

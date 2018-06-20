@@ -30,20 +30,19 @@ def update_feed(handshake_id, shake_id=-1):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		if handshake is None:
-			print 'handshake is None'
+			print 'handshake {} is None'.format(handshake_id)
 			return
 
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is None:
-			print 'outcome is None'
+			print 'outcome for handshake {} is None'.format(handshake_id)
 			return
 		
-		print '------------------------------------------------'
-		print 'update feed for user id: {}'.format(handshake.user_id)
-		print '------------------------------------------------'
+		print '-----------------------------------------------------------'
+		print 'begin: update feed for user id: {}'.format(handshake.user_id)
+		print '-----------------------------------------------------------'
 		shaker = None
 
-		# create maker id
 		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 		amount = handshake.amount
 		status = handshake.status

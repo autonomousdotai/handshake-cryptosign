@@ -1,6 +1,5 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
-from app.models import Device, Wallet
 from app import db
 from app.helpers.message import MESSAGE
 

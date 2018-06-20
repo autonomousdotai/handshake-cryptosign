@@ -1196,7 +1196,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 
-    def test_collect_handshake_fail_if_time_less_than_report_time(self):
+    def test_collect_handshake_fail_if_time_less_dispute_time(self):
         self.clear_data_before_test()
         arr_hs = []
         # -----
@@ -1221,7 +1221,8 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time()
+        match.disputeTime = time.time() + 1000
+        match.reportTime = time.time() + 1000
 
         db.session.add(handshake)
         db.session.commit()
@@ -1242,15 +1243,13 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
-
-    def test_collect_handshake_if_time_exceed_dispute_time(self):
-        pass
 
     def test_collect_handshake(self):
         self.clear_data_before_test()
@@ -1324,7 +1323,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 28600
+        match.disputeTime = time.time() - 28600
 
         db.session.commit()
 
@@ -1512,7 +1511,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 28600
+        match.disputeTime = time.time() - 28600
 
         db.session.commit()
 

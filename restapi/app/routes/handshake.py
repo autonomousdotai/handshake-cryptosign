@@ -847,7 +847,6 @@ def has_received_free_bet():
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
 
-		print '2'
 		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
 			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
 

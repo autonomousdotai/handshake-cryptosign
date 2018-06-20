@@ -20,6 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     homeScore: DataTypes.INTEGER,
     awayScore: DataTypes.INTEGER,
     date: DataTypes.BIGINT,
+    reportTime: DataTypes.BIGINT,
+    disputeTime: DataTypes.BIGINT,
     modified_user_id: DataTypes.INTEGER,
     created_user_id: DataTypes.INTEGER,
     name: DataTypes.STRING,

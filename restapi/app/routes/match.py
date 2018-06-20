@@ -67,7 +67,10 @@ def add():
 				name=item['name'],
 				source=item['source'],
 				market_fee=int(item['market_fee']),
-				date=parse_date_string_to_timestamp(item['date'])
+				date=item['date'],
+				reportTime=item['reportTime'],
+				disputeTime=item['disputeTime']
+				#date=parse_date_string_to_timestamp(item['date'])
 			)
 			matches.append(match)
 			db.session.add(match)
@@ -112,7 +115,10 @@ def create_market():
 								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
 								source='football-data.org',
 								market_fee=0,
-								date=parse_date_string_to_timestamp(item['date'])
+								date=item['date'],
+								reportTime=item['reportTime'],
+								disputeTime=item['disputeTime']
+								#date=parse_date_string_to_timestamp(item['date'])
 							)
 					matches.append(match)
 					db.session.add(match)

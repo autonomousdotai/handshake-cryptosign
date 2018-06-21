@@ -60,10 +60,8 @@ def save_collect_state_for_maker(handshake):
 				shaker.status = HandshakeStatus['STATUS_DONE']
 				shaker.bk_status = HandshakeStatus['STATUS_DONE']
 
-				print 'save_collect_state_for_maker --> BEFORE'
 				db.session.merge(shaker)
 				db.session.flush()
-				print 'save_collect_state_for_maker --> AFTER'
 				handshakes, shakers = save_status_all_bet_which_user_win(handshake.user_id, outcome)
 				
 				if shakers is None:

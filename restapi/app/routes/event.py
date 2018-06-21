@@ -49,9 +49,7 @@ def event():
 			
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
 
-		print 'EVENT --> BEGIN COMMIT'
 		db.session.commit()
-		print 'EVENT --> BEGIN COMMIT'
 
 		# update feed
 		if handshakes is not None:

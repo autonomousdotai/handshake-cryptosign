@@ -49,7 +49,9 @@ def event():
 			
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
 
+		print 'EVENT --> BEGIN COMMIT'
 		db.session.commit()
+		print 'EVENT --> BEGIN COMMIT'
 
 		# update feed
 		if handshakes is not None:
@@ -66,6 +68,7 @@ def event():
 				if '__shake' in event_name:
 					add_shuriken(shaker.shaker_id)
 
+		print 'FINISH'
 		return response_ok(response_json)
 	except Exception, ex:
 		db.session.rollback()

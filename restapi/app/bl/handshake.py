@@ -40,13 +40,15 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 	for handshake in handshakes:
 		handshake.status = HandshakeStatus['STATUS_DONE']
 		handshake.bk_status = HandshakeStatus['STATUS_DONE']
-		db.session.flush()
+		db.session.merge(handshake)
 
 	for shaker in shakers:
 		shaker.status = HandshakeStatus['STATUS_DONE']
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
-		db.session.flush()
+		db.session.merge(shaker)
+		
 
+	db.session.flush()
 	return handshakes, shakers
 
 def save_collect_state_for_maker(handshake):
@@ -58,8 +60,9 @@ def save_collect_state_for_maker(handshake):
 				shaker.status = HandshakeStatus['STATUS_DONE']
 				shaker.bk_status = HandshakeStatus['STATUS_DONE']
 
+				db.session.merge(shaker)
 				db.session.flush()
-				handshakes, shakers = save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
+				handshakes, shakers = save_status_all_bet_which_user_win(handshake.user_id, outcome)
 				
 				if shakers is None:
 					shakers = []	
@@ -76,6 +79,7 @@ def save_collect_state_for_shaker(shaker):
 				handshake.status = HandshakeStatus['STATUS_DONE']
 				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 
+				db.session.merge(handshake)
 				db.session.flush()
 				handshakes, shakers = save_status_all_bet_which_user_win(shaker.shaker_id, outcome)
 				

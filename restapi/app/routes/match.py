@@ -8,6 +8,7 @@ from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import parse_date_string_to_timestamp
+from app.bl.match import is_validate_match_time
 from app import db
 from app.models import User, Match, Outcome
 from app.helpers.message import MESSAGE
@@ -57,6 +58,10 @@ def add():
 		outcomes = []
 		response_json = []
 		for item in data:
+
+			if match_bl.is_validate_match_time(item) == False:
+				raise Exception(MESSAGE.INVALID_DATA)
+
 			match = Match(
 				homeTeamName=item['homeTeamName'],
 				homeTeamCode=item['homeTeamCode'],
@@ -70,7 +75,6 @@ def add():
 				date=item['date'],
 				reportTime=item['reportTime'],
 				disputeTime=item['disputeTime']
-				#date=parse_date_string_to_timestamp(item['date'])
 			)
 			matches.append(match)
 			db.session.add(match)
@@ -166,9 +170,10 @@ def report(match_id):
 
 		match = Match.find_match_by_id(match_id)
 		if match is not None:
+			result = data['result']
+			'''
 			homeScore = data['homeScore'] if 'homeScore' in data else ''
 			awayScore = data['awayScore'] if 'awayScore' in data else ''
-			result = data['result']
 
 			if homeScore is None:
 				return response_error(MESSAGE.INVALID_MATCH_RESULT)
@@ -178,7 +183,7 @@ def report(match_id):
 
 			match.homeScore = homeScore
 			match.awayScore = awayScore
-
+			'''
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			

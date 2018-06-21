@@ -75,7 +75,6 @@ def add():
 				date=item['date'],
 				reportTime=item['reportTime'],
 				disputeTime=item['disputeTime']
-				#date=parse_date_string_to_timestamp(item['date'])
 			)
 			matches.append(match)
 			db.session.add(match)

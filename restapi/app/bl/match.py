@@ -39,3 +39,10 @@ def is_exceed_dispute_time(match_id):
 		if seconds > match.disputeTime:
 			return True
 	return False
+
+def is_validate_match_time(data):
+	if 'date' not in data or 'reportTime' not in data or 'disputeTime' not in data:
+		return False
+	if data['date'] < data['reportTime'] and data['reportTime'] < data['disputeTime']:
+		return True
+	return False

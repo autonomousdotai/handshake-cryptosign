@@ -106,18 +106,24 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value) =>
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();
+      let tnxHash                 = -1;
 
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
+        tnxHash = hash;
         return resolve({
           raw: rawTransaction,
           hash: hash,
         });
       })
       .on('receipt', (receipt) => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
         console.log(err);
         return reject(err);
       });

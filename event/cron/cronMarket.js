@@ -33,19 +33,24 @@ function asyncScanOutcomeNull() {
 
                             const fee = match.market_fee;
                             const closingTime = match.date - Math.floor(+moment.utc()/1000) + 90 * 60 + 15 * 60;
-                            //TODO: check closingTime
+
                             let reportTime = closingTime + (reportTimeConfig * 60 * 60);
                             if (match.reportTime) {
-                                reportTime = match.reportTime;
+                                reportTime = match.reportTime - Math.floor(+moment.utc()/1000);
                             }
 
                             let dispute = reportTime + (reportTimeConfig * 60 * 60);
                             if (match.disputeTime) {
-                                dispute = match.disputeTime;
+                                dispute = match.disputeTime - Math.floor(+moment.utc()/1000);
                             }
 
                             const offchain = `cryptosign_createMarket${outcome.id}`;
                             const source = match.source;
+
+                            if (closingTime < 0 || reportTime < 0 || dispute < 0) {
+                                console.error('Time invalid.');
+                                return resolve(null);
+                            }
 
                             predictionContract
                                 .createMarketTransaction(nonce + index, fee, source, closingTime, reportTime, dispute, offchain)

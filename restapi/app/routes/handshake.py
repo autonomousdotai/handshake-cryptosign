@@ -478,6 +478,7 @@ def rollback():
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
 		else:
+			print '1'
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
 
@@ -494,19 +495,22 @@ def rollback():
 
 				elif shaker.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
 					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
+					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
+					print 'handshakes = {}'.format(handshakes)
+					print 'shakers = {}'.format(shakers)
 					for handshake in handshakes:
 						handshake.status = handshake.bk_status
+						db.session.merge(handshake)
 						db.session.flush()
 
 						update_feed.delay(handshake.id)
 
 					for shaker in shakers:
 						shaker.status = shaker.bk_status
+						db.session.merge(shaker)
 						db.session.flush()
 
 						update_feed.delay(handshake.id, shaker.id)
@@ -828,6 +832,10 @@ def collect_free_bet():
 
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+
+		db.session.commit()
+
+		print 'hid = {}, winner = {}, original_offchain = {}'.format(hid, winner, original_offchain)
 		withdraw_free_bet.delay(hid, winner, original_offchain)
 		return response_ok()
 	except Exception, ex:

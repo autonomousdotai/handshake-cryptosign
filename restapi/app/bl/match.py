@@ -43,6 +43,14 @@ def is_exceed_dispute_time(match_id):
 def is_validate_match_time(data):
 	if 'date' not in data or 'reportTime' not in data or 'disputeTime' not in data:
 		return False
+	
+	t = datetime.now().timetuple()
+	seconds = local_to_utc(t)
+
+	#TODO: check this, add more time for cron outcome
+	if seconds <= data['date'] or seconds <= data['reportTime'] or seconds <= data['disputeTime']:
+		return False
+
 	if data['date'] < data['reportTime'] and data['reportTime'] < data['disputeTime']:
 		return True
 	return False

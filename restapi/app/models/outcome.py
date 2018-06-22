@@ -9,10 +9,7 @@ from app.models.base import BaseModel
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
 	__json_public__ = ['id', 'name', 'hid', 'result']
-	# __json_modifiers__ = {
-    #     'handshakes': lambda handshakes, _: [handshake.to_json() for handshake in handshakes]
-    # }
-
+	
 	name = db.Column(db.String(255))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
 	hid = db.Column(db.BigInteger)
@@ -20,6 +17,9 @@ class Outcome(BaseModel):
 						server_default=str(CONST.RESULT_TYPE['PENDING']),
 	                   	default=CONST.RESULT_TYPE['PENDING'])
 	tx = db.Column(db.String(255))
+	public = db.Column(db.Integer,
+						server_default=str(1),
+	                   	default=0)
 	handshakes = db.relationship('Handshake', backref='outcome', primaryjoin="Outcome.id == Handshake.outcome_id",
 	                             lazy='dynamic')
 

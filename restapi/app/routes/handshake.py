@@ -424,6 +424,7 @@ def collect():
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
+	# rollback init
 	# rollback uninit: DONE
 	# rollback shake: DONE
 	# rollback collect: DONE
@@ -478,7 +479,6 @@ def rollback():
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
 		else:
-			print '1'
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
 
@@ -499,8 +499,6 @@ def rollback():
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
 					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
-					print 'handshakes = {}'.format(handshakes)
-					print 'shakers = {}'.format(shakers)
 					for handshake in handshakes:
 						handshake.status = handshake.bk_status
 						db.session.merge(handshake)

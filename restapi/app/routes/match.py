@@ -70,6 +70,7 @@ def add():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
+				public=item['public'],
 				source=item['source'],
 				market_fee=int(item['market_fee']),
 				date=item['date'],

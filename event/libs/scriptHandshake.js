@@ -84,6 +84,8 @@ const submitInitAPI = (arr) => {
                     from_address: ownerAddress
                 };
 
+                console.log('CALL HANDSHAKE INIT API: ', dataRequest);
+
                 axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -96,6 +98,13 @@ const submitInitAPI = (arr) => {
                     if (response.data.status == 1 && response.data.data.length != 0) {
                         const _outcome = await outcomeDAO.getById(item.outcome_id);
                         arrTnxSubmit.push({
+                            hid: _outcome.hid,
+                            odds: parseInt(item.odds * 100),
+                            value: web3.utils.toWei(dataRequest.amount),
+                            offchain: response.data.data[0].offchain,
+                            side: item.side
+                        });
+                        console.log('RESPONSE CALL HANDSHAKE INIT API: ', {
                             hid: _outcome.hid,
                             odds: parseInt(item.odds * 100),
                             value: web3.utils.toWei(dataRequest.amount),

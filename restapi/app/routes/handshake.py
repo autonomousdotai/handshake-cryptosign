@@ -828,6 +828,10 @@ def collect_free_bet():
 
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+
+		db.session.commit()
+
+		print 'hid = {}, winner = {}, original_offchain = {}'.format(hid, winner, original_offchain)
 		withdraw_free_bet.delay(hid, winner, original_offchain)
 		return response_ok()
 	except Exception, ex:

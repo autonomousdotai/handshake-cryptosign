@@ -47,10 +47,10 @@ function asyncScanOutcomeNull() {
                             const offchain = `cryptosign_createMarket${outcome.id}`;
                             const source = match.source;
 
-                            if (closingTime < 0 || reportTime < 0 || dispute < 0) {
-                                console.error('Time invalid.');
-                                return resolve(null);
-                            }
+                            // if (closingTime < 0 || reportTime < 0 || dispute < 0) {
+                            //     console.error('Time invalid.');
+                            //     return resolve(null);
+                            // }
 
                             predictionContract
                                 .createMarketTransaction(nonce + index, fee, source, closingTime, reportTime, dispute, offchain)

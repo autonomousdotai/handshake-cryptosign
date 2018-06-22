@@ -495,10 +495,9 @@ def rollback():
 
 				elif shaker.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
 					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
+					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
 					print 'handshakes = {}'.format(handshakes)
 					print 'shakers = {}'.format(shakers)

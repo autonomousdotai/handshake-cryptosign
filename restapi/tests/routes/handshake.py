@@ -1592,10 +1592,12 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             shaker = Shaker.find_shaker_by_id(shaker.id)
             self.assertEqual(shaker.status, shaker.bk_status) 
+            self.assertNotEqual(shaker.status, -7)
             self.assertEqual(shaker.amount, 3.5)
 
             hs = Handshake.find_handshake_by_id(handshake1['id'])
             self.assertEqual(hs.status, hs.bk_status)
+            self.assertNotEqual(hs.status, -7)
 
         for handshake in arr_hs:
             db.session.delete(handshake)

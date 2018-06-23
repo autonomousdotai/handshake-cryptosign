@@ -1387,6 +1387,59 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_rollback_handshake_with_shake_state(self):
         pass
 
+
+    def test_rollback_handshake_with_init_state(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=-1,
+                bk_status=-1,
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": 'cryptosign_m{}'.format(handshake.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/rollback',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            handshake = data['data']
+            self.assertNotEqual(handshake['status'], handshake['bk_status'])
+            self.assertEqual(handshake['status'], -2)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
     def test_rollback_handshake_with_uninit_state(self):
         self.clear_data_before_test()
         arr_hs = []

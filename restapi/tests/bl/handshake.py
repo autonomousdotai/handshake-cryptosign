@@ -395,6 +395,7 @@ class TestHandshakeBl(BaseTestCase):
         self.assertEqual(float(handshakes[0].amount), 0.3125)
         self.assertEqual(float(handshakes[1].amount), 0.21)
 
+
     def test_find_available_against_handshakes(self):
         self.clear_data_before_test()
         # -----
@@ -539,9 +540,66 @@ class TestHandshakeBl(BaseTestCase):
 
         self.assertEqual(h.status, 6)
         self.assertEqual(s.status, 6)
+    
 
-    def test_save_collect_state_for_maker(self):
-        pass
+    def test_is_init_pending_status(self):
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=99,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0,
+		)
+		actual = handshake_bl.is_init_pending_status(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=99,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=-1
+		)
+
+		actual = handshake_bl.is_init_pending_status(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=99,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=-1,
+			bk_status=-1
+		)
+
+		actual = handshake_bl.is_init_pending_status(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
 
     def test_rollback_shake_state(self):
         self.clear_data_before_test()
@@ -585,7 +643,6 @@ class TestHandshakeBl(BaseTestCase):
 
         self.assertEqual(h.remaining_amount, 1)
         self.assertEqual(s.status, -9)
-
 
     def test_data_need_set_result_for_outcome(self):
         self.clear_data_before_test()

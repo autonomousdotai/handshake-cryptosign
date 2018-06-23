@@ -424,7 +424,7 @@ def collect():
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
-	# rollback init
+	# rollback init: DONE
 	# rollback uninit: DONE
 	# rollback shake: DONE
 	# rollback collect: DONE
@@ -443,38 +443,46 @@ def rollback():
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		
+		handshakes = []
+		shakers = []
+		response = None
+
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
 			
-			if handshake is not None:
-				if handshake.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING'] or \
+			if handshake is not None:				
+				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
+					
+					handshake.status = HandshakeStatus['STATUS_MAKER_FAILED_INIT']
+					db.session.flush()
+					handshakes.append(handshake)
+
+				elif handshake.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING'] or \
 					handshake.status == HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']:
 
 					handshake.status = handshake.bk_status
-					db.session.commit()
-
-					update_feed.delay(handshake.id)
-					return response_ok(handshake.to_json())
+					db.session.flush()
+					handshakes.append(handshake)
 
 				elif handshake.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
+					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
-					for handshake in handshakes:
-						handshake.status = handshake.bk_status
+					for hs in h:
+						hs.status = hs.bk_status
 						db.session.flush()
+						handshakes.append(hs)
 
-						update_feed.delay(handshake.id)
-
-					for shaker in shakers:
-						shaker.status = shaker.bk_status
+					for sk in s:
+						sk.status = sk.bk_status
 						db.session.flush()
-
-						update_feed.delay(handshake.id, shaker.id)
+						shakers.append(sk)
 
 				else:
 					raise Exception(MESSAGE.CANNOT_ROLLBACK)
+
+				response = handshake.to_json()
 
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
@@ -484,43 +492,52 @@ def rollback():
 
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
-					handshake_bl.rollback_shake_state(shaker)
+					shaker = handshake_bl.rollback_shake_state(shaker)
+					shakers.append(shaker)
 
 				elif shaker.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']:
 					shaker.status = shaker.bk_status
 					db.session.flush()
 
 					update_feed.delay(shaker.handshake_id, shaker.id)					
-					return response_ok(shaker.to_json())
 
 				elif shaker.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
 					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
+					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
-					for handshake in handshakes:
-						handshake.status = handshake.bk_status
-						db.session.merge(handshake)
+					for hs in h:
+						hs.status = hs.bk_status
 						db.session.flush()
+						handshakes.append(hs)
+						
 
-						update_feed.delay(handshake.id)
-
-					for shaker in shakers:
-						shaker.status = shaker.bk_status
-						db.session.merge(shaker)
+					for sk in s:
+						sk.status = sk.bk_status
 						db.session.flush()
-
-						update_feed.delay(handshake.id, shaker.id)
+						shakers.append(sk)
 
 				else:
 					raise Exception(MESSAGE.CANNOT_ROLLBACK)
+
+				response = shaker.to_json()
 
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
 		db.session.commit()
-		return response_ok()
+
+		# update feed
+		if handshakes is not None:
+			for handshake in handshakes:
+				update_feed.delay(handshake.id)
+
+		if shakers is not None:
+			for shaker in shakers:
+				update_feed.delay(shaker.handshake_id, shaker.id)
+
+		return response_ok(response)
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

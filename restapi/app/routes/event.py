@@ -66,7 +66,6 @@ def event():
 				if '__shake' in event_name:
 					add_shuriken(shaker.shaker_id)
 
-		print 'FINISH'
 		return response_ok(response_json)
 	except Exception, ex:
 		db.session.rollback()

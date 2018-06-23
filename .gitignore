@@ -25,6 +25,8 @@ event-new/node_modules
 event-new/.sonarlint
 event-new/dist
 
+# log
+debug.log
 
 # virtualenv
 .Python

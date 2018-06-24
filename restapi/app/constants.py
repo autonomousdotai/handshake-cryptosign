@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 from decimal import *
 
-# subscription type
-Subscription = {
-	'TRIAL': 5,
-	'TIER_5': 5,
-	'TIER_15': 20,
-	'TIER_30': 50,
-}
 
 Tx = {
 	'STATUS_PENDING': -1,
@@ -86,4 +79,14 @@ SIDE_TYPE = {
 	'DRAW': 0,
 	'SUPPORT': 1,
 	'AGAINST': 2
+}
+
+TASK_TYPE = {
+	'FREE_BET': 0,
+	'REAL_BET': 1
+}
+
+TASK_ACTION = {
+	'INIT': 0,
+	'COLLECT': 1
 }

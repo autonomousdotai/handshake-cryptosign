@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker
+from app.models import Handshake, User, Outcome, Match, Shaker, Task
 from app.helpers.message import MESSAGE
 from io import BytesIO
 
@@ -77,9 +77,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             outcome.result = -1
             db.session.commit()
 
-    def mock_add_free_bet(handshake):
-        print 'DEBUG {}'.format(handshake)
-
     def clear_data_before_test(self):
         # delete master user
         user = User.find_user_with_id(1)
@@ -91,6 +88,9 @@ class TestHandshakeBluePrint(BaseTestCase):
         for handshake in handshakes:
             db.session.delete(handshake)
             db.session.commit()
+
+        Task.query.delete()
+        db.session.commit()
 
     def test_list_of_handshakes(self):
         self.clear_data_before_test()
@@ -1387,7 +1387,6 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_rollback_handshake_with_shake_state(self):
         pass
 
-
     def test_rollback_handshake_with_init_state(self):
         self.clear_data_before_test()
         arr_hs = []
@@ -1656,6 +1655,37 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
+    def test_create_free_bet(self):
+        with self.client:
+            Uid = 88
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "DTHTRONG",
+                "outcome_id": 88,
+                "odds": "1.7",
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+            }
+
+            response = self.client.post(
+                                    '/handshake/create_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            task = data['data']
+            self.assertEqual(task['task_type'], '0')
     
 if __name__ == '__main__':
     unittest.main()

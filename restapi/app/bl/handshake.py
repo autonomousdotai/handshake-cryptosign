@@ -7,6 +7,7 @@ import time
 import requests
 import app.constants as CONST
 import math
+import app.bl.match as match_bl
 
 from decimal import *
 from flask import g
@@ -14,13 +15,11 @@ from app import db, fcm, sg, firebase
 from sqlalchemy import and_, or_, func, text
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
-from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken
+from app.tasks import update_feed
 from datetime import datetime
 from app.helpers.message import MESSAGE
 from datetime import datetime
-from sqlalchemy import literal
 
 getcontext().prec = 18
 
@@ -169,6 +168,7 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 				# update all statuses (shaker and handshake) of them to done
 				return save_collect_state_for_maker(handshake)
 
+
 def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
@@ -208,12 +208,14 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 			return handshakes
 	return []
 
+
 def find_all_joined_handshakes(side, outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake).filter(and_(Handshake.side!=side, Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
+
 
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -223,6 +225,7 @@ def find_available_support_handshakes(outcome_id):
 			print "{} - {}".format(handshake[0], handshake[1])
 		return handshakes
 	return []
+
 
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -254,3 +257,41 @@ def is_init_pending_status(handshake):
 	if handshake.status == HandshakeStatus['STATUS_PENDING'] and handshake.bk_status == HandshakeStatus['STATUS_PENDING']:
 		return True
 	return False
+
+
+def update_handshakes_feed(handshakes, shakers):
+	# update feed
+	if handshakes is not None:
+		for handshake in handshakes:
+			update_feed.delay(handshake.id)
+
+	if shakers is not None:
+		for shaker in shakers:
+			update_feed.delay(shaker.handshake_id, shaker.id)
+
+
+def can_withdraw(handshake, shaker=None):
+	outcome = None
+	if shaker is None:
+		if handshake is not None:
+			if handshake.status == HandshakeStatus['STATUS_INITED']:
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+			else:
+				return MESSAGE.CANNOT_WITHDRAW
+		else:
+			return MESSAGE.CANNOT_WITHDRAW
+	else:
+		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
+		else:
+			return MESSAGE.CANNOT_WITHDRAW
+
+	if outcome is not None:
+		if outcome.result != handshake.side:
+			return MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT
+
+		if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
+			return MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE
+
+	return ''

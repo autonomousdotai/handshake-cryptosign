@@ -3,8 +3,6 @@ from __future__ import division
 import base64
 import time
 import os
-import requests
-import hashlib
 import sys
 import json
 
@@ -16,7 +14,6 @@ import app.bl.user as user_bl
 from decimal import *
 from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text, func
-from datetime import datetime
 
 from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE
@@ -24,7 +21,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match
+from app.models import User, Handshake, Shaker, Outcome, Match, Task
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, add_free_bet, withdraw_free_bet
 
@@ -131,9 +128,8 @@ def init():
 			raise Exception(MESSAGE.INVALID_ADDRESS)
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-		print outcome_id
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_BET)
+			raise Exception(MESSAGE.INVALID_OUTCOME)
 
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
@@ -354,15 +350,8 @@ def collect():
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if shaker is not None:
-				if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)										
-					if outcome.result != shaker.side:
-						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
-
-					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
-						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
-					
+				msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
+				if len(msg) == 0:
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
@@ -378,7 +367,7 @@ def collect():
 
 						update_feed.delay(handshake.id, shaker.id)
 				else:
-					raise Exception(MESSAGE.CANNOT_WITHDRAW)	
+					raise Exception(msg)	
 
 			else:
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
@@ -387,14 +376,8 @@ def collect():
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake is not None:
-				if handshake.status == HandshakeStatus['STATUS_INITED']:
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-					if outcome.result != handshake.side:
-						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
-
-					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
-						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
-
+				msg = handshake_bl.can_withdraw(handshake)
+				if len(msg) == 0:
 					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
@@ -410,7 +393,7 @@ def collect():
 
 						update_feed.delay(handshake.id, shaker.id)
 				else:
-					raise Exception(MESSAGE.CANNOT_WITHDRAW)
+					raise Exception(msg)
 
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
@@ -512,7 +495,6 @@ def rollback():
 						db.session.flush()
 						handshakes.append(hs)
 						
-
 					for sk in s:
 						sk.status = sk.bk_status
 						db.session.flush()
@@ -527,15 +509,7 @@ def rollback():
 				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
 		db.session.commit()
-
-		# update feed
-		if handshakes is not None:
-			for handshake in handshakes:
-				update_feed.delay(handshake.id)
-
-		if shakers is not None:
-			for shaker in shakers:
-				update_feed.delay(shaker.handshake_id, shaker.id)
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -555,195 +529,28 @@ def create_bet():
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		hs_type = data.get('type', -1)
-		extra_data = data.get('extra_data', '')
-		description = data.get('description', '')
-		is_private = data.get('is_private', 1)
-		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
-		currency = data.get('currency', 'ETH')
-		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		from_address = data.get('from_address', '')
-		amount = Decimal('0.001') 
-
 		if user.free_bet > 0:
 			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
 
+		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome.result != -1:
+		if outcome is None:
+			raise Exception(MESSAGE.INVALID_OUTCOME)
+
+		elif outcome.result != -1:
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
-			# filter all handshakes which able be to match first
-			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-			user.free_bet += 1
+			task = Task(
+				task_type=CONST.TASK_TYPE['FREE_BET'],
+				data=json.dumps(data),
+				action=CONST.TASK_ACTION['INIT'],
+				status=-1
+			)
+			db.session.add(task)
+			db.session.commit()
 
-			arr_free_bet = []
-			print 'DEBUG {}'.format(handshakes)
-			if len(handshakes) == 0:
-				handshake = Handshake(
-					hs_type=hs_type,
-					extra_data=extra_data,
-					description=description,
-					chain_id=chain_id,
-					is_private=is_private,
-					user_id=user.id,
-					outcome_id=outcome_id,
-					odds=odds,
-					amount=amount,
-					currency=currency,
-					side=side,
-					remaining_amount=amount,
-					from_address=from_address,
-					free_bet=1
-				)
-				db.session.add(handshake)
-				db.session.commit()
-
-				update_feed.delay(handshake.id)
-
-				# response data
-				arr_hs = []
-				hs_json = handshake.to_json()
-				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
-				arr_hs.append(hs_json)
-
-				# add free bet
-				hs_json['hid'] = outcome.hid 
-				arr_free_bet.append(hs_json)
-				add_free_bet.delay(arr_free_bet)
-
-				return response_ok(arr_hs)
-			else:
-				arr_hs = []
-				shaker_amount = amount
-
-				for handshake in handshakes:
-					if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) <= 0:
-						break
-
-					handshake.shake_count += 1
-
-					print '---------------------------------------------------------------------'
-					print 'handshake_remaining_value --> {}'.format(handshake.remaining_amount)
-
-					handshake_win_value = handshake.remaining_amount*handshake.odds
-					print 'handshake_win_value --> {}'.format(handshake_win_value)
-
-					shaker_win_value = shaker_amount*odds
-					print 'shaker_win_value --> {}'.format(shaker_win_value)
-
-					subtracted_amount_for_shaker = 0
-					subtracted_amount_for_handshake = 0
-
-
-					if is_equal(handshake_win_value, shaker_win_value):
-						print '--> use both amount'
-						subtracted_amount_for_shaker = shaker_amount
-						print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
-						subtracted_amount_for_handshake = handshake.remaining_amount
-						print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
-
-					elif handshake_win_value >= shaker_win_value:
-						print '--> use shaker amount'
-						subtracted_amount_for_shaker = shaker_amount
-						print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
-						subtracted_amount_for_handshake = shaker_win_value - subtracted_amount_for_shaker
-						print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
-
-					else:
-						print '--> use maker amount'
-						subtracted_amount_for_handshake = handshake.remaining_amount
-						print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
-
-						subtracted_amount_for_shaker = handshake_win_value - subtracted_amount_for_handshake
-						print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
-					handshake.remaining_amount -= subtracted_amount_for_handshake
-					shaker_amount -= subtracted_amount_for_shaker
-
-					db.session.merge(handshake)
-					print 'shaker_amount = {}'.format(shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN))				
-					print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
-					print '---------------------------------------------------------------------'
-
-					# create shaker
-					shaker = Shaker(
-						shaker_id=user.id,
-						amount=subtracted_amount_for_shaker,
-						currency=currency,
-						odds=odds,
-						side=side,
-						handshake_id=handshake.id,
-						from_address=from_address,
-						chain_id=chain_id,
-						free_bet=1
-					)
-
-					db.session.add(shaker)
-					db.session.flush()
-
-					update_feed.delay(handshake.id, shaker.id)
-					
-					handshake_json = handshake.to_json()
-					shakers = handshake_json['shakers']
-					if shakers is None:
-						shakers = []
-					shaker_json = shaker.to_json()
-					shakers.append(shaker_json)
-
-					handshake_json['shakers'] = shakers
-					handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-					arr_hs.append(handshake_json)
-
-					# add free bet
-					shaker_json['hid'] = outcome.hid
-					shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-					shaker_json['maker_address'] = handshake.from_address
-					shaker_json['maker_odds'] = handshake.odds
-					arr_free_bet.append(shaker_json)
-
-				if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
-					print 'still has money {}'.format(shaker_amount)
-					handshake = Handshake(
-						hs_type=hs_type,
-						extra_data=extra_data,
-						description=description,
-						chain_id=chain_id,
-						is_private=is_private,
-						user_id=user.id,
-						outcome_id=outcome_id,
-						odds=odds,
-						amount=shaker_amount,
-						currency=currency,
-						side=side,
-						remaining_amount=shaker_amount,
-						from_address=from_address,
-						free_bet=1
-					)
-					db.session.add(handshake)
-					db.session.flush()
-
-					update_feed.delay(handshake.id)
-					hs_json = handshake.to_json()
-					hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
-					arr_hs.append(hs_json)
-
-					# add free bet
-					hs_json['hid'] = outcome.hid
-					arr_free_bet.append(hs_json)
-
-				print '----------------------'
-				print arr_hs
-				print '----------------------'
-				print 'commit database'
-				
-				add_free_bet.delay(arr_free_bet)
-				db.session.commit()
-				return response_ok(arr_hs)
+			return response_ok(task.to_json())
 
 		else:
 			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
@@ -770,89 +577,31 @@ def collect_free_bet():
 			raise Exception(MESSAGE.MISSING_OFFCHAIN)
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
-		handshakes = []
-		shakers = []
-
-		hid = 0
-		winner = ''
-		original_offchain = data.get('offchain', '')
-
 		if 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
-			if shaker is not None:
-				if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
-					hid = outcome.hid
-					winner = shaker.from_address
-
-					if outcome.result != shaker.side:
-						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
-
-					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
-						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
-					
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
-
-					for handshake in handshakes:
-						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id)
-
-					for shaker in shakers:
-						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id, shaker.id)
-				else:
-					raise Exception(MESSAGE.CANNOT_WITHDRAW)	
-
-			else:
-				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+			msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
+			if len(msg) != 0:
+				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
 		else:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
-			if handshake is not None:
-				if handshake.status == HandshakeStatus['STATUS_INITED']:
-					outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-					hid = outcome.hid
-					winner = handshake.from_address
-
-					if outcome.result != handshake.side:
-						raise Exception(MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
-
-					if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
-						raise Exception(MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
-
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
-
-					for handshake in handshakes:
-						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id)
-
-					for shaker in shakers:
-						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id, shaker.id)
-				else:
-					raise Exception(MESSAGE.CANNOT_WITHDRAW)
-
-			else:
+			msg = handshake_bl.can_withdraw(handshake)
+			if len(msg) != 0:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
+		task = Task(
+			task_type=CONST.TASK_TYPE['FREE_BET'],
+			data=json.dumps(data),
+			action=CONST.TASK_ACTION['COLLECT'],
+			status=-1
+		)
+		db.session.add(task)
 		db.session.commit()
 
-		print 'hid = {}, winner = {}, original_offchain = {}'.format(hid, winner, original_offchain)
-		withdraw_free_bet.delay(hid, winner, original_offchain)
-		return response_ok()
+		return response_ok(task.to_json())
+
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

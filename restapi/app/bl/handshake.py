@@ -221,8 +221,6 @@ def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
-		for handshake in handshakes:
-			print "{} - {}".format(handshake[0], handshake[1])
 		return handshakes
 	return []
 
@@ -247,6 +245,7 @@ def rollback_shake_state(shaker):
 	if handshake is None:
 		raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
+	print '{}, {}, {}, {}'.format(handshake.remaining_amount, shaker.odds, shaker.amount, shaker.amount)
 	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
 	db.session.flush()
 
@@ -272,10 +271,13 @@ def update_handshakes_feed(handshakes, shakers):
 
 def can_withdraw(handshake, shaker=None):
 	outcome = None
+	result = None
+
 	if shaker is None:
 		if handshake is not None:
 			if handshake.status == HandshakeStatus['STATUS_INITED']:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				result = handshake.side
 			else:
 				return MESSAGE.CANNOT_WITHDRAW
 		else:
@@ -284,14 +286,17 @@ def can_withdraw(handshake, shaker=None):
 		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
+			result = shaker.side
 		else:
 			return MESSAGE.CANNOT_WITHDRAW
 
 	if outcome is not None:
-		if outcome.result != handshake.side:
+		if outcome.result != result:
 			return MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT
 
 		if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
 			return MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE
+	else:
+		return MESSAGE.INVALID_OUTCOME
 
 	return ''

@@ -346,26 +346,19 @@ def collect():
 		handshakes = []
 		shakers = []
 		
+		h = []
+		s = []
 		if 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if shaker is not None:
 				msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
 				if len(msg) == 0:
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+					hs = Handshake.find_handshake_by_id(shaker.handshake_id)
+					# find all handshakes and shakers which shaker won
+					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
 
-					for handshake in handshakes:
-						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id)
-
-					for shaker in shakers:
-						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id, shaker.id)
 				else:
 					raise Exception(msg)	
 
@@ -378,27 +371,30 @@ def collect():
 			if handshake is not None:
 				msg = handshake_bl.can_withdraw(handshake)
 				if len(msg) == 0:
-					handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+					# find all handshakes and shakers which maker won
+					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
-					for handshake in handshakes:
-						handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id)
-
-					for shaker in shakers:
-						shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-						db.session.flush()
-
-						update_feed.delay(handshake.id, shaker.id)
 				else:
 					raise Exception(msg)
 
 			else:
 				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
+		# update status
+		for hs in h:
+			hs.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.flush()
+			handshakes.append(hs)
+			
+		for sk in s:
+			sk.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.flush()
+			shakers.append(sk)
+
 		db.session.commit()
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()

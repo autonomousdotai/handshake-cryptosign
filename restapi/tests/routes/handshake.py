@@ -1385,7 +1385,87 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.commit()
 
     def test_rollback_handshake_with_shake_state(self):
-        pass
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=0,
+                bk_status=-1,
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 66
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "TESTING MODE",
+                "outcome_id": 88,
+                "odds": "1.2",
+                "amount": "0.5",
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 1,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            data_json = data['data']
+            hs = data_json[0]
+            self.assertEqual(hs['remaining_amount'], 0.6)
+
+            sk = hs['shakers'][0]
+            self.assertEqual(sk['amount'], 0.5)
+            shaker_id = sk['id']
+            handshake_id = handshake.id
+
+            # rollback here
+            params = {
+                "offchain": 'cryptosign_s{}'.format(shaker_id)
+            }
+            response = self.client.post(
+                                    '/handshake/rollback',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+            h = Handshake.find_handshake_by_id(handshake_id)
+            self.assertEqual(float(h.amount), 0.7)
+            self.assertEqual(float(h.remaining_amount), 0.7)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
 
     def test_rollback_handshake_with_init_state(self):
         self.clear_data_before_test()

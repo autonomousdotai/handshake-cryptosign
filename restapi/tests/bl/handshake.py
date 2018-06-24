@@ -9,11 +9,13 @@ from mock import patch
 from datetime import datetime
 from app import db, app
 from app.models import Handshake, User, Outcome, Match, Shaker
+from app.helpers.message import MESSAGE
 
 import app.bl.handshake as handshake_bl
 import app.constants as CONST
 import mock
 import json
+import time
 
 
 class TestHandshakeBl(BaseTestCase):
@@ -644,79 +646,100 @@ class TestHandshakeBl(BaseTestCase):
         self.assertEqual(h.remaining_amount, 1)
         self.assertEqual(s.status, -9)
 
-    def test_data_need_set_result_for_outcome(self):
-        self.clear_data_before_test()
+    def test_can_withdraw(self):
+		self.clear_data_before_test()
+
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() + 1000
+		match.reportTime = time.time() + 1000
+		db.session.commit()
+
+		actual = handshake_bl.can_withdraw(None, shaker=None)
+		self.assertNotEqual(len(actual), 0)
 
         # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=2,
-				remaining_amount=0,
-				from_address='0x123',
-                status=0
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=1000,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
         )
-        db.session.add(handshake)
-        db.session.commit()
 
-        hs1 = handshake.id
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, MESSAGE.INVALID_OUTCOME)
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=2,
-				remaining_amount=0,
-				from_address='0x123',
-                status=0
+		# -----
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
         )
-        db.session.add(handshake)
-        db.session.commit()
 
-        hs2 = handshake.id
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
 
-        # -----
-        shaker = Shaker(
-					shaker_id=88,
-					amount=0.2,
-					currency='ETH',
-					odds=6,
-					side=1,
-					handshake_id=handshake.id,
-					from_address='0x123',
-					chain_id=4
-				)
-        db.session.add(shaker)
-        db.session.commit()
+		# -----
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=1,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
+        )
 
-        outcome = Outcome.find_outcome_by_id(88)
-        outcome.result = 1
-        db.session.flush()
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
 
-        handshakes, shakers = handshake_bl.data_need_set_result_for_outcome(outcome)
-        self.assertEqual(len(handshakes), 2)
-        self.assertEqual(len(shakers), 1)
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() - 1000
+		match.reportTime = time.time() - 1000
+		db.session.commit()
 
-        h1 = handshakes[0]
-        h2 = handshakes[1]
-        s = shakers[0]
+		# -----
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=1,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
+        )
 
-        self.assertEqual(h1.id, hs1)
-        self.assertEqual(h2.id, hs2)
-        self.assertEqual(s.id, shaker.id)
-
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, '')
 
 if __name__ == '__main__':
     unittest.main()

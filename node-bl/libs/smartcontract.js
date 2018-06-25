@@ -1,8 +1,6 @@
 
 const configs = require('../configs');
-const httpRequest = require('../libs/http');
-const PredictionHandshake = require('../contracts/PredictionHandshake.json');
-const axios = require('axios');
+
 // models
 const models = require('../models');
 const txDAO = require('../daos/tx');

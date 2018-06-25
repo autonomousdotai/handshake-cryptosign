@@ -61,46 +61,56 @@ const collect = (params) => {
 };
 
 const asyncScanTask = () => {
-	const tasks = [];
-	taskDAO.getTasksByStatus()
-	.then(_tasks => {
-		_tasks.forEach(task => {
-			tasks.push(
-				new Promise((resolve, reject) => {
-					
-					if (!task || !task.task_type) {
-						return reject('Task is empty');
-					}
-
-					if (task.data) {
-						return reject('Task params is empty');
-					}
-
-					const params = JSON.parse(task.data)
-					let processTaskFunc = undefined;
-
-					switch(task.task_type){
-						case 'INIT':
-							processTaskFunc = init(params);
-						break;
-						case 'UNINIT':
-							processTaskFunc = unInit(params);
-						break;
-						case 'COLLECT':
-							processTaskFunc = collect(params);
-						break;
-					}
-
-					processTaskFunc
-					.then(result => {
+	return new Promise((resolve, reject) => {
+		const tasks = [];
+		taskDAO.getTasksByStatus()
+		.then(_tasks => {
+			_tasks.forEach(task => {
+				tasks.push(
+					new Promise((resolve, reject) => {
 						
+						if (!task || !task.task_type) {
+							return reject('Task is empty');
+						}
+	
+						if (task.data) {
+							return reject('Task params is empty');
+						}
+	
+						const params = JSON.parse(task.data)
+						let processTaskFunc = undefined;
+	
+						switch(task.task_type){
+							case 'INIT':
+								processTaskFunc = init(params);
+							break;
+							case 'UNINIT':
+								processTaskFunc = unInit(params);
+							break;
+							case 'COLLECT':
+								processTaskFunc = collect(params);
+							break;
+						}
+	
+						processTaskFunc
+						.then(result => {
+							console.log('======');
+						})
+						.catch(err => {
+							return reject(err);
+						})
 					})
-					.catch(err => {
-						return reject(err);
-					})
-				})
-			)
-		})
+				)
+			});
+
+			Promise.all(tasks)
+			.then(result => {
+				console.log('Done');
+			})
+			.catch(err => {
+				console.error('Error', err);
+			})
+		});
 	})
 };
 
@@ -109,22 +119,23 @@ const runTaskCron = () => {
 		console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');
-            if (!setting) {
-                console.log('TaskCronJob is null. Exit!');
-                return;
-            }
-            if(!setting.status) {
-                console.log('Exit TaskCronJob with status: ' + setting.status);
-                return;
-            }
-            console.log('Begin run TaskCronJob!');
+				if (!setting) {
+						console.log('TaskCronJob setting is null. Exit!');
+						return;
+				}
+				if(!setting.status) {
+						console.log('Exit TaskCronJob setting with status: ' + setting.status);
+						return;
+				}
+				console.log('Begin run TaskCronJob!');
 
 			if (isRunningTask === false) {
-					isRunningTask = true;
-					
-					asyncScanTask().then(result => {
-							console.log('EXIT SCAN TASK: ', result);
-							isRunningTask = false;
+				isRunningTask = true;
+				
+				asyncScanTask()
+				.then(result => {
+						console.log('EXIT SCAN TASK: ', result);
+						isRunningTask = false;
 				})
 				.catch(e => {
 					throw e;

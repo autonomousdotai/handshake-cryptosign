@@ -153,7 +153,9 @@ const initHandshake = async (start, end, outcome_data ) => {
                 }));
             });
             Promise.all(tasks)
-            .then()
+            .then(re => {
+                
+            })
             .catch(console.error)
         })
         .catch(console.error);

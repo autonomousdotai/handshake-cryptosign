@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
     },
     task_type: DataTypes.STRING,
-    data: DataTypes.Text,
+    data: DataTypes.TEXT,
     status: DataTypes.INTEGER
   }, {
     tableName: 'task',

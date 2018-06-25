@@ -2,29 +2,62 @@
 const cron = require('node-cron');
 const configs = require('../configs');
 
-// models
-const models = require('../models');
-
 // daos
 const taskDAO = require('../daos/task');
 const settingDAO = require('../daos/setting');
 
+const utils = require('../libs/utils');
+const predictionContract = require('../libs/smartcontract');
+
 const web3 = require('../configs/web3').getWeb3();
-
-const bettingHandshakeAddress = configs.network[configs.network_id].bettingHandshakeAddress;
-
 let isRunningTask = false;
 
-const init = () => {
 
+/**
+ * 
+ * @param {number} params.type
+ * @param {JSON string} params.extra_data
+ * @param {number} params.outcome_id
+ * @param {number} params.odds
+ * @param {number} params.amount
+ * @param {string} params.currency
+ * @param {number} params.side
+ * @param {string} params.from_address
+ */
+const init = (params) => {
+	return new Promise((resolve, reject) => {
+		utils.submitInitAPI(params)
+		.then(result => {
+			return resolve(Object.assign(result, {
+				contract_method: 'init'
+			}))
+		})
+		.catch(err => {
+			//TODO: handle error
+			return reject(err);
+		})
+	});
 };
 
-const unInit = () => {
-
+const unInit = (params) => {
+	return new Promise((resolve, reject) => {
+	});
 };
 
-const collect = () => {
-
+/**
+ * @param {number} params.hid
+ * @param {string} params.winner
+ * @param {string} params.offchain
+ */
+const collect = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve({
+			contract_method: 'collectTestDrive',
+			hid: params.hid,
+			winner: params.winner,
+			offchain: params.offchain
+		})
+	});
 };
 
 const asyncScanTask = () => {
@@ -38,18 +71,23 @@ const asyncScanTask = () => {
 					if (!task || !task.task_type) {
 						return reject('Task is empty');
 					}
-					
+
+					if (task.data) {
+						return reject('Task params is empty');
+					}
+
+					const params = JSON.parse(task.data)
 					let processTaskFunc = undefined;
 
 					switch(task.task_type){
 						case 'INIT':
-							processTaskFunc = init();
+							processTaskFunc = init(params);
 						break;
 						case 'UNINIT':
-							processTaskFunc = unInit();
+							processTaskFunc = unInit(params);
 						break;
 						case 'COLLECT':
-							processTaskFunc = collect();
+							processTaskFunc = collect(params);
 						break;
 					}
 
@@ -67,8 +105,8 @@ const asyncScanTask = () => {
 };
 
 const runTaskCron = () => {
-    cron.schedule('*/3 * * * * *', async () => {
-		console.log('task cron running a task every 3s at ' + new Date());
+    cron.schedule('*/5 * * * * *', async () => {
+		console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');
             if (!setting) {

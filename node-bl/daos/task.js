@@ -2,7 +2,7 @@
 const models = require('../models');
 const constants = require('../constants');
 
-const op = models.Sequelize.Op;
+const Op = models.Sequelize.Op;
 
 module.exports = {
     getTasksByStatus: () => {

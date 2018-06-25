@@ -89,7 +89,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = _nonce || await getNonce(ownerAddress);
+      const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -144,7 +144,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = _nonce || await getNonce(ownerAddress);
+      const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -188,17 +188,19 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
   });
 };
 
-// /*
-//     collect test drive transaction
-// */
-const submitCollectTestDriveTransaction = (_hid, _winner, _offchain) => {
+/**
+ * @param {number} params.hid
+ * @param {string} params.winner
+ * @param {string} params.offchain
+ */
+const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce) => {
   console.log('submitCollectTestDriveTransaction');
   console.log(_hid, _winner, _offchain);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      const nonce           = await getNonce(ownerAddress, 'pending');
+      const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -287,10 +289,12 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
           return resolve(hash);
         })
         .on('receipt', (receipt) => {
+          txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', 1, network_id, _offchain, JSON.stringify(rawTransaction))
           console.log('createMarketTransactionReceipt');
           console.log(receipt);
         })
         .on('error', err => {
+          txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, _offchain, JSON.stringify(rawTransaction))
           console.log(err);
           return reject(err);
         });
@@ -301,7 +305,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 };
 
 
-const reportOutcomeTransaction = (hid, outcome_result) => {
+const reportOutcomeTransaction = (hid, outcome_result, nonce) => {
   return new Promise(async(resolve, reject) => {
     try {
       const offchain = 'cryptosign_report' + outcome_result;
@@ -310,8 +314,6 @@ const reportOutcomeTransaction = (hid, outcome_result) => {
 
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
-      let nonce             = await getNonce(ownerAddress);
-      nonce                 = nonce.toString(16)
       const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
@@ -322,7 +324,7 @@ const reportOutcomeTransaction = (hid, outcome_result) => {
         gasLimit: 350000,
         to: contractAddress,
         from: ownerAddress,
-        nonce: '0x' + nonce,
+        nonce: '0x' + nonce.toString(16),
         chainId: network_id,
         data: contract.methods.report(hid, outcome_result, web3.utils.fromUtf8(offchain)).encodeABI()
       };

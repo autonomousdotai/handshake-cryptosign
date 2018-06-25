@@ -88,6 +88,10 @@ def update(id):
 		if setting is not None:
 			status = int(data['status'])
 			setting.status = status
+
+			if 'value' in data:
+				setting.value = data['value']
+
 			db.session.commit()
 
 			return response_ok(message='{} has been updated'.format(setting.id))

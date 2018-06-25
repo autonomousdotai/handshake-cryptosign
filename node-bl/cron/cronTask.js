@@ -8,10 +8,52 @@ const settingDAO = require('../daos/setting');
 
 const utils = require('../libs/utils');
 const predictionContract = require('../libs/smartcontract');
+const network_id = configs.network_id;
+const ownerAddress = configs.network[network_id].ownerAddress;
 
 const web3 = require('../configs/web3').getWeb3();
 let isRunningTask = false;
 
+
+const submitMultiTnx = (arr) => {
+	return new Promise((resolve, reject) => {
+		predictionContract.getNonce(ownerAddress)
+		.then(nonce => {
+			let tasks = [];
+			let index = 0;
+			arr.forEach((item) => {
+				let smartContractFunc = null;
+				switch (item.contract_method) {
+					case 'init':
+						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, item.hid, item.side, item.odds, item.offchain, item.value);
+						index += 1;
+					break;
+					case 'collectTestDrive':
+						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(item.hid, item.winner, item.offchain, nonce + index);
+						index += 1;
+					break;
+					case 'reportOutcomeTransaction':
+						smartContractFunc = predictionContract.reportOutcomeTransaction(item.hid, item.outcome_result, nonce + index);
+						index += 1;
+					break;
+				}
+				tasks.push(smartContractFunc);
+			});
+			Promise.all(tasks)
+			.then(result => {
+				// TODO
+				return resolve();
+			})
+			.catch(err => {
+				// TODO
+				return reject(err);
+			})
+		})
+		.catch(err => {
+			return reject(err);
+		})
+	});
+}
 
 /**
  * 
@@ -41,6 +83,20 @@ const init = (params) => {
 
 const unInit = (params) => {
 	return new Promise((resolve, reject) => {
+	});
+};
+
+/**
+ * @param {number} params.hid
+ * @param {number} outcome_result
+ */
+const report = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve({
+			contract_method: 'reportOutcomeTransaction',
+			hid: params.hid,
+			outcome_result: params.outcome_result
+		})
 	});
 };
 
@@ -90,10 +146,14 @@ const asyncScanTask = () => {
 							case 'COLLECT':
 								processTaskFunc = collect(params);
 							break;
+							case 'REPORT':
+								processTaskFunc = report(params);
+							break;
 						}
 	
 						processTaskFunc
 						.then(result => {
+							return resolve(result);
 							console.log('======');
 						})
 						.catch(err => {
@@ -104,8 +164,15 @@ const asyncScanTask = () => {
 			});
 
 			Promise.all(tasks)
-			.then(result => {
+			.then(results => {
 				console.log('Done');
+				submitMultiTnx(results)
+				.then(tnxResults => {
+					console.log(tnxResults);
+				})
+				.catch(err => {
+					console.error('Error', err);
+				})	
 			})
 			.catch(err => {
 				console.error('Error', err);
@@ -120,12 +187,12 @@ const runTaskCron = () => {
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');
 				if (!setting) {
-						console.log('TaskCronJob setting is null. Exit!');
-						return;
+					console.log('TaskCronJob setting is null. Exit!');
+					return;
 				}
 				if(!setting.status) {
-						console.log('Exit TaskCronJob setting with status: ' + setting.status);
-						return;
+					console.log('Exit TaskCronJob setting with status: ' + setting.status);
+					return;
 				}
 				console.log('Begin run TaskCronJob!');
 
@@ -133,9 +200,9 @@ const runTaskCron = () => {
 				isRunningTask = true;
 				
 				asyncScanTask()
-				.then(result => {
-						console.log('EXIT SCAN TASK: ', result);
-						isRunningTask = false;
+				.then(results => {
+					console.log('EXIT SCAN TASK: ', result);
+					isRunningTask = false;
 				})
 				.catch(e => {
 					throw e;

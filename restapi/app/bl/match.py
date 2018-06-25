@@ -6,9 +6,7 @@ from app.models import User, Handshake, Match
 from app.helpers.utils import local_to_utc
 
 import app.constants as CONST
-import logging
 
-logfile    = logging.getLogger('file')
 
 def find_all_markets():
 	return db.session.query(Match).order_by(Match.date.asc()).all()
@@ -49,7 +47,6 @@ def is_validate_match_time(data):
 	t = datetime.now().timetuple()
 	seconds = local_to_utc(t)
 
-	logfile.debug("seconds -> {}, data -> {}".format(seconds, data))
 	if seconds >= data['date'] or seconds >= data['reportTime'] or seconds >= data['disputeTime']:
 		return False
 

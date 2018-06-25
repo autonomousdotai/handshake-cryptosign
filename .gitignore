@@ -22,12 +22,12 @@ event/vendor
 event/logs
 
 #event-new ignore
-event-old-25-June/node_modules
-event-old-25-June/.sonarlint
-event-old-25-June/dist
-event-old-25-June/configs/config-local.js
-event-old-25-June/configs/config-staging.js
-event-old-25-June/configs/config-production.js
+node_modules
+.sonarlint
+dist
+config-local.js
+config-staging.js
+config-production.js
 
 # log
 debug.log

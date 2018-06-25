@@ -88,5 +88,6 @@ TASK_TYPE = {
 
 TASK_ACTION = {
 	'INIT': 0,
-	'COLLECT': 1
+	'UNINIT': 1,
+	'COLLECT': 2
 }

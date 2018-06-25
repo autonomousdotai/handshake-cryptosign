@@ -9,6 +9,7 @@ from mock import patch
 from datetime import datetime
 from app import db, app
 from app.models import Handshake, User, Outcome, Match
+from app.helpers.utils import local_to_utc
 
 import app.bl.match as match_bl
 import app.constants as CONST
@@ -126,6 +127,43 @@ class TestMatchBl(BaseTestCase):
         actual_odds, actual_amount = match_bl.find_best_odds_which_match_support_side(88)
         self.assertEqual(expected_odds, actual_odds)
         
+    def test_is_validate_match_time(self):
+
+        t = datetime.now().timetuple()
+    	seconds = local_to_utc(t)
+
+        data = {
+            "date": seconds,
+            "reportTime": seconds + 1000,
+            "disputeTime": seconds + 2000 
+        }
+
+        expected = False
+        actual = match_bl.is_validate_match_time(data)
+        self.assertEqual(actual, expected)
+
+        # -------
+        data = {
+            "date": seconds + 1000,
+            "reportTime": seconds + 1000,
+            "disputeTime": seconds + 2000 
+        }
+
+        expected = False
+        actual = match_bl.is_validate_match_time(data)
+        self.assertEqual(actual, expected)
+
+        # -------
+        data = {
+            "date": seconds + 1000,
+            "reportTime": seconds + 2000,
+            "disputeTime": seconds + 3000 
+        }
+
+        expected = True
+        actual = match_bl.is_validate_match_time(data)
+        self.assertEqual(actual, expected)
+
 
 if __name__ == '__main__':
     unittest.main()

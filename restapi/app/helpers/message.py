@@ -3,17 +3,17 @@
 
 class MESSAGE(object):
 	# ERROR
-	INVALID_DATA = 'Please double check your input data.'
-	INVALID_BET = 'No equivalent bets found. Please create a new bet.'
-	INVALID_ADDRESS = 'Please provide valid wallet address!'
-	MISSING_OFFCHAIN = 'Missing offchain data!'
-	INVALID_ODDS = 'Odds shoule be large than 1'
-	MAXIMUM_FREE_BET = 'The maximum free bet is 100!'
-	CANNOT_WITHDRAW = 'You cannot withdraw this handshake!'
-	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
+	INVALID_DATA = '1000' 													#'Please double check your input data.'
+	INVALID_BET = '1001' 													#'No equivalent bets found. Please create a new bet.'
+	INVALID_ADDRESS = '1002' 												#'Please provide valid wallet address!'
+	MISSING_OFFCHAIN = '1003' 												#'Missing offchain data!'
+	INVALID_ODDS = '1004' 													#'Odds shoule be large than 1'
+	MAXIMUM_FREE_BET = '1005' 												#'The maximum free bet is 100!'
+	CANNOT_WITHDRAW = '1006' 												#'You cannot withdraw this handshake!'
+	CANNOT_ROLLBACK = '1007' 												#'Cannot rollback this handshake!'
 
 	# OUTCOME
-	INVALID_OUTCOME = 'Please check your outcome id'
+	INVALID_OUTCOME = '1008'												#'Please check your outcome id'
 	INVALID_OUTCOME_RESULT = 'Please check your outcome result'
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
 

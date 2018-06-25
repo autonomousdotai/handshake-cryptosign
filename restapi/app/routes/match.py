@@ -123,7 +123,6 @@ def create_market():
 								date=item['date'],
 								reportTime=item['reportTime'],
 								disputeTime=item['disputeTime']
-								#date=parse_date_string_to_timestamp(item['date'])
 							)
 					matches.append(match)
 					db.session.add(match)
@@ -172,19 +171,6 @@ def report(match_id):
 		match = Match.find_match_by_id(match_id)
 		if match is not None:
 			result = data['result']
-			'''
-			homeScore = data['homeScore'] if 'homeScore' in data else ''
-			awayScore = data['awayScore'] if 'awayScore' in data else ''
-
-			if homeScore is None:
-				return response_error(MESSAGE.INVALID_MATCH_RESULT)
-			
-			if awayScore is None:
-				return response_error(MESSAGE.INVALID_MATCH_RESULT)
-
-			match.homeScore = homeScore
-			match.awayScore = awayScore
-			'''
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			

@@ -47,10 +47,10 @@ def is_validate_match_time(data):
 	t = datetime.now().timetuple()
 	seconds = local_to_utc(t)
 
-	#TODO: check this, add more time for cron outcome
-	if seconds <= data['date'] or seconds <= data['reportTime'] or seconds <= data['disputeTime']:
+	if seconds >= data['date'] or seconds >= data['reportTime'] or seconds >= data['disputeTime']:
 		return False
 
 	if data['date'] < data['reportTime'] and data['reportTime'] < data['disputeTime']:
 		return True
+	
 	return False

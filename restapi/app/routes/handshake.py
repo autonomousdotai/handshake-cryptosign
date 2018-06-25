@@ -555,6 +555,46 @@ def create_bet():
 		db.session.rollback()
 		return response_error(ex.message)
 
+@handshake_routes.route('/uninit_free_bet/<int:handshake_id>', methods=['POST'])
+@login_required
+def uninit_free_bet(handshake_id):
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.free_bet==1)).first()
+		if handshake is not None:
+			if len(handshake.shakers.all()) > 0:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
+			else:
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				if outcome is None:
+					return response_error(MESSAGE.INVALID_OUTCOME)
+				else:
+					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
+					db.session.flush()
+					update_feed.delay(handshake.id)
+					
+					task = Task(
+						task_type=CONST.TASK_TYPE['FREE_BET'],
+						data=json.dumps({"handshake_id": handshake_id}),
+						action=CONST.TASK_ACTION['UNINIT'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.commit()
+
+					return response_ok(task.to_json())
+					
+		else:
+			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND)	
+
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
 
 @handshake_routes.route('/collect_free_bet', methods=['POST'])
 @login_required

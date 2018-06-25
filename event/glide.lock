@@ -1,0 +1,12 @@
+hash: f0fa19a35664f181100ee6e8d2608bdbccf9a01daa1fbcbf0b0a572461e311e1
+updated: 2018-06-25T14:46:36.279791441+07:00
+imports:
+- name: github.com/gin-gonic/gin
+  version: d459835d2b077e44f7c9b453505ee29881d5d12d
+- name: github.com/go-sql-driver/mysql
+  version: d523deb1b23d913de5bdada721a6071e71283618
+- name: github.com/jinzhu/gorm
+  version: 6ed508ec6a4ecb3531899a69cbc746ccf65a4166
+- name: github.com/robfig/cron
+  version: b41be1df696709bb6395fe435af20370037c0b4c
+testImports: []

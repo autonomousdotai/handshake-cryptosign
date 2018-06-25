@@ -7,6 +7,7 @@ class Setting(BaseModel):
 	__json_public__ = ['id', 'name', 'status']
 
 	name = db.Column(db.String(255))
+	value = db.Column(db.Text)
 	status = db.Column(db.Integer,
 	                   server_default=str(0),
 	                   default=0)

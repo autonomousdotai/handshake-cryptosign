@@ -21,9 +21,12 @@ event/configs/config-staging.js
 event/configs/config-production.js
 
 #event-new ignore
-event-new/node_modules
-event-new/.sonarlint
-event-new/dist
+event-old-25-June/node_modules
+event-old-25-June/.sonarlint
+event-old-25-June/dist
+event-old-25-June/configs/config-local.js
+event-old-25-June/configs/config-staging.js
+event-old-25-June/configs/config-production.js
 
 # log
 debug.log

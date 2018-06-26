@@ -6,11 +6,11 @@ module.exports = {
     'STATUS_FAILED': 0,
     'STATUS_SUCCESS': 1,
   },
-  TASK_TYPE = {
+  TASK_TYPE: {
     'FREE_BET': 'FREE_BET',
     'REAL_BET': 'REAL_BET'
   },
-  TASK_ACTION = {
+  TASK_ACTION: {
     'INIT': 'INIT',
     'UNINIT': 'UNINIT',
     'COLLECT': 'COLLECT',

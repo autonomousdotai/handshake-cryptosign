@@ -28,28 +28,26 @@ def outcomes():
 
 @outcome_routes.route('/init_default_outcomes', methods=['POST'])
 @login_required
-# @admin_required
+@admin_required
 def init_default_outcomes():
 	try:
 		data = request.json
 		if data is None:
 			raise Exception(MESSAGE.INVALID_DATA)
 
-		start = data['start']
-		end = data['end']
-		outcome_data = data['outcomes']
-
-		outcome_bl.init_default_outcomes(start, end, outcome_data)
-		# TODO:
-		# add Task
-		# task = Task(
-		# 	task_type=CONST.TASK_TYPE['REAL_BET'],
-		# 	data=json.dumps(outcome.to_json()),
-		# 	action=CONST.TASK_ACTION['CREATE_MARKET'],
-		# 	status=-1
-		# )
-		# db.session.add(task)
-		# db.session.flush()
+		for item in data:
+			outcome_id = item['outcome_id']
+			outcome_data = item['outcomes']
+			for o in outcome_data:
+				o['id'] = outcome_id
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(o),
+					action=CONST.TASK_ACTION['INIT'],
+					status=-1
+				)
+				db.session.add(task)
+				db.session.flush()
 		
 		return response_ok()
 	except Exception, ex:
@@ -101,7 +99,7 @@ def remove(outcome_id):
 			db.session.commit()
 			return response_ok("{} has been deleted!".format(outcome.id))
 		else:
-			return response_error(MESSAGE.INVALID_OUTCOME)
+			return response_error(MESSAGE.OUTCOME_INVALID)
 
 	except Exception, ex:
 		db.session.rollback()

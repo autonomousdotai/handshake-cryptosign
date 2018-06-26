@@ -28,7 +28,7 @@ def matches():
 
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.result == -1 or outcome.hid is None:
+				if outcome.result == -1 and outcome.hid is not None:
 					outcome_json = outcome.to_json()
 					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
 					outcome_json["market_odds"] = odds
@@ -107,7 +107,6 @@ def create_market():
 			data = json.load(f)
 
 		matches = []
-		outcomes = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
@@ -132,7 +131,6 @@ def create_market():
 					)
 					db.session.add(outcome)
 					db.session.flush()
-					outcomes.append(outcome)
 
 					# add Task
 					task = Task(
@@ -153,7 +151,7 @@ def create_market():
 
 @match_routes.route('/remove/<int:id>', methods=['POST'])
 @login_required
-# @admin_required
+@admin_required
 def remove(id):
 	try:
 		match = Match.find_match_by_id(id)
@@ -184,10 +182,10 @@ def report(match_id):
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			
 			if result['side'] is None:
-				return response_error(MESSAGE.INVALID_OUTCOME_RESULT)
+				return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
 				
 			if result['outcome_id'] is None:
-				return response_error(MESSAGE.INVALID_OUTCOME_RESULT)
+				return response_error(MESSAGE.OUTCOME_INVALID)
 
 			outcome = Outcome.find_outcome_by_id(result['outcome_id'])
 			if outcome is not None:
@@ -198,7 +196,7 @@ def report(match_id):
 					return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
 
 			else:
-				return response_error(MESSAGE.INVALID_OUTCOME)
+				return response_error(MESSAGE.OUTCOME_INVALID)
 
 			dataReport = {}
 			dataReport['hid'] = outcome.hid

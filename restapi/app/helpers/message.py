@@ -13,13 +13,13 @@ class MESSAGE(object):
 	CANNOT_ROLLBACK = '1007' 												#'Cannot rollback this handshake!'
 
 	# OUTCOME
-	INVALID_OUTCOME = '1008'												#'Please check your outcome id'
-	INVALID_OUTCOME_RESULT = '1009'											#'Please check your outcome result'
+	OUTCOME_INVALID = '1008'												#'Please check your outcome id'
+	OUTCOME_INVALID_RESULT = '1009'											#'Please check your outcome result'
 	OUTCOME_HAS_RESULT = '1010' 											#'This outcome has had result already!'
 
 	# MATCH
 	MATCH_NOT_FOUND = '1011'												#'Match not found. Please try again.'
-	INVALID_MATCH_RESULT = '1011' 											#'Match result invalid. Please try again.'
+	MATCH_INVALID_RESULT = '1011' 											#'Match result invalid. Please try again.'
 	MATCH_RESULT_EMPTY = '1012'												#'Match result is empty. Please try again.'
 	MATCH_CANNOT_SET_RESULT = '1013'										#'The report time is exceed!'
 

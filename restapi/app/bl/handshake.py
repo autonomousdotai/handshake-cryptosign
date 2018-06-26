@@ -296,6 +296,6 @@ def can_withdraw(handshake, shaker=None):
 		if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
 			return MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE
 	else:
-		return MESSAGE.INVALID_OUTCOME
+		return MESSAGE.OUTCOME_INVALID
 
 	return ''

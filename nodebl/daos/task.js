@@ -9,9 +9,9 @@ module.exports = {
         return models.Task.findAll({
             where: {
                 [Op.or]: [{
-                    status: constants.TASK.STATUS_PENDING
+                    status: constants.TASK_STATUS.STATUS_PENDING
                 }, {
-                    status: constants.TASK.STATUS_RETRY
+                    status: constants.TASK_STATUS.STATUS_RETRY
                 }]
             },
             limit: 10

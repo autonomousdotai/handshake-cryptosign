@@ -124,7 +124,7 @@ def init():
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_OUTCOME)
+			raise Exception(MESSAGE.OUTCOME_INVALID)
 
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
@@ -269,7 +269,7 @@ def uninit(handshake_id):
 			else:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				if outcome is None:
-					return response_error(MESSAGE.INVALID_OUTCOME)
+					return response_error(MESSAGE.OUTCOME_INVALID)
 				else:
 					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
 					db.session.flush()
@@ -494,7 +494,7 @@ def create_bet():
 		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_OUTCOME)
+			raise Exception(MESSAGE.OUTCOME_INVALID)
 
 		elif outcome.result != -1:
 			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
@@ -533,7 +533,7 @@ def uninit_free_bet(handshake_id):
 			else:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				if outcome is None:
-					return response_error(MESSAGE.INVALID_OUTCOME)
+					return response_error(MESSAGE.OUTCOME_INVALID)
 				else:
 					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
 					db.session.flush()

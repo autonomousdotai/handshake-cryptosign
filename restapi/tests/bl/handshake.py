@@ -677,7 +677,7 @@ class TestHandshakeBl(BaseTestCase):
         )
 
 		actual = handshake_bl.can_withdraw(handshake, shaker=None)
-		self.assertEqual(actual, MESSAGE.INVALID_OUTCOME)
+		self.assertEqual(actual, MESSAGE.OUTCOME_INVALID)
 
 		# -----
 		handshake = Handshake(

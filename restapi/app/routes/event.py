@@ -38,7 +38,7 @@ def event():
 			offchain = int(offchain.replace('createMarket', ''))
 			outcome = Outcome.find_outcome_by_id(offchain)
 			if outcome is None:
-				return response_error(MESSAGE.INVALID_OUTCOME)
+				return response_error(MESSAGE.OUTCOME_INVALID)
 			else:
 				outcome.hid = hid
 				db.session.flush()
@@ -48,7 +48,7 @@ def event():
 		else:
 			outcome = Outcome.find_outcome_by_hid(hid)
 			if outcome is None:
-				return response_error(MESSAGE.INVALID_OUTCOME)
+				return response_error(MESSAGE.OUTCOME_INVALID)
 			
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
 

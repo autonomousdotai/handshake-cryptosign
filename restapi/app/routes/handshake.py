@@ -46,7 +46,7 @@ def handshakes():
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
 		against = handshake_bl.find_available_against_handshakes(outcome_id)
 
-		total = Decimal(0, 2)
+		total = Decimal('0', 2)
 
 		traded_volumns = db.session.query(func.sum(Handshake.amount*Handshake.odds).label('traded_volumn')).filter(and_(Handshake.outcome_id==outcome_id, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).all()
 		for traded in traded_volumns:
@@ -109,13 +109,8 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		print '-------------------'
-		print 'input {}, {}'.format(data.get('odds'), data.get('amount'))
 		odds = Decimal(data.get('odds'))
 		amount = Decimal(data.get('amount'))
-		print '-------------------'
-		print 'output {}, {}'.format(data.get('odds'), data.get('amount'))
-
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -139,7 +134,6 @@ def init():
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-		print 'DEBUG {}'.format(handshakes)
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -177,51 +171,27 @@ def init():
 					break
 
 				handshake.shake_count += 1
-
-				print '---------------------------------------------------------------------'
-				print 'handshake_remaining_value --> {}'.format(handshake.remaining_amount)
-
 				handshake_win_value = handshake.remaining_amount*handshake.odds
-				print 'handshake_win_value --> {}'.format(handshake_win_value)
-
 				shaker_win_value = shaker_amount*odds
-				print 'shaker_win_value --> {}'.format(shaker_win_value)
-
 				subtracted_amount_for_shaker = 0
 				subtracted_amount_for_handshake = 0
 
 
 				if is_equal(handshake_win_value, shaker_win_value):
-					print '--> use both amount'
 					subtracted_amount_for_shaker = shaker_amount
-					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
 					subtracted_amount_for_handshake = handshake.remaining_amount
-					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 
 				elif handshake_win_value >= shaker_win_value:
-					print '--> use shaker amount'
 					subtracted_amount_for_shaker = shaker_amount
-					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
 					subtracted_amount_for_handshake = shaker_win_value - subtracted_amount_for_shaker
-					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 
 				else:
-					print '--> use maker amount'
 					subtracted_amount_for_handshake = handshake.remaining_amount
-					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
-
 					subtracted_amount_for_shaker = handshake_win_value - subtracted_amount_for_handshake
-					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
-
 				db.session.merge(handshake)
-				print 'shaker_amount = {}'.format(shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN))				
-				print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
-				print '---------------------------------------------------------------------'
 
 				# create shaker
 				shaker = Shaker(
@@ -250,10 +220,8 @@ def init():
 				handshake_json['shakers'] = shakers
 				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(handshake_json)
-				
 
 			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
-				print 'still has money'
 				handshake = Handshake(
 					hs_type=hs_type,
 					extra_data=extra_data,
@@ -277,11 +245,6 @@ def init():
 				hs_json = handshake.to_json()
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 				arr_hs.append(hs_json)
-
-			print '----------------------'
-			print arr_hs
-			print '----------------------'
-			print 'commit database'
 			
 			db.session.commit()
 			return response_ok(arr_hs)

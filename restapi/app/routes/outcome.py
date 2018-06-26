@@ -2,9 +2,11 @@ from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app import db
-from app.models import User, Outcome, Match
+from app.models import User, Outcome, Match, Task
 from app.helpers.message import MESSAGE
 
+import json
+import app.constants as CONST
 import app.bl.outcome as outcome_bl
 
 outcome_routes = Blueprint('outcome', __name__)
@@ -38,6 +40,17 @@ def init_default_outcomes():
 		outcome_data = data['outcomes']
 
 		outcome_bl.init_default_outcomes(start, end, outcome_data)
+		# TODO:
+		# add Task
+		# task = Task(
+		# 	task_type=CONST.TASK_TYPE['REAL_BET'],
+		# 	data=json.dumps(outcome.to_json()),
+		# 	action=CONST.TASK_ACTION['CREATE_MARKET'],
+		# 	status=-1
+		# )
+		# db.session.add(task)
+		# db.session.flush()
+		
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

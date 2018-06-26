@@ -4,15 +4,13 @@ import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
-from flask import Blueprint, request, current_app as app
+from flask import g, Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
-from app.helpers.utils import parse_date_string_to_timestamp
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome
+from app.models import User, Match, Outcome, Task
 from app.helpers.message import MESSAGE
-from flask import g
 from flask_jwt_extended import jwt_required
 
 match_routes = Blueprint('match', __name__)
@@ -55,11 +53,10 @@ def add():
 			raise Exception(MESSAGE.INVALID_DATA)
 
 		matches = []
-		outcomes = []
 		response_json = []
 		for item in data:
 
-			if match_bl.is_validate_match_time(item) == False:
+			if match_bl.is_validate_match_time(item) == False:				
 				raise Exception(MESSAGE.INVALID_DATA)
 
 			match = Match(
@@ -70,7 +67,7 @@ def add():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
-				public=item['public'],
+				public=item.get('public', 0),
 				source=item['source'],
 				market_fee=int(item['market_fee']),
 				date=item['date'],
@@ -87,10 +84,11 @@ def add():
 						name=outcome_data['name'],
 						match_id=match.id
 					)
-					outcomes.append(outcome)
+					db.session.add(outcome)
+					db.session.flush()
+
 			response_json.append(match.to_json())
 
-		db.session.add_all(outcomes)
 		db.session.commit()
 
 		return response_ok(response_json)
@@ -132,9 +130,20 @@ def create_market():
 						name='{} wins'.format(item['homeTeamName']),
 						match_id=match.id
 					)
+					db.session.add(outcome)
+					db.session.flush()
 					outcomes.append(outcome)
 
-		db.session.add_all(outcomes)
+					# add Task
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(outcome.to_json()),
+						action=CONST.TASK_ACTION['CREATE_MARKET'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.flush()
+
 		db.session.commit()
 		return response_ok()
 	except Exception, ex:

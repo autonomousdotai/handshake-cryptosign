@@ -89,5 +89,6 @@ TASK_TYPE = {
 TASK_ACTION = {
 	'INIT': 0,
 	'UNINIT': 1,
-	'COLLECT': 2
+	'COLLECT': 2,
+	'CREATE_MARKET': 3
 }

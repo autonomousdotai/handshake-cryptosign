@@ -14,6 +14,9 @@ event_routes = Blueprint('event', __name__)
 @event_routes.route('/', methods=['POST'])
 def event():
 	
+	# MISSING:
+	# Uninit free bet: state failed
+	
 	data = request.json
 	print 'event = {}'.format(data)
 

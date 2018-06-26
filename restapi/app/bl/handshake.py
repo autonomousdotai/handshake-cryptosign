@@ -245,7 +245,6 @@ def rollback_shake_state(shaker):
 	if handshake is None:
 		raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
-	print '{}, {}, {}, {}'.format(handshake.remaining_amount, shaker.odds, shaker.amount, shaker.amount)
 	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
 	db.session.flush()
 

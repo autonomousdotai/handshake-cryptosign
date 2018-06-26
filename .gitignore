@@ -21,6 +21,14 @@ event/config/*.json
 event/vendor
 event/logs
 
+# node-bl ignore
+nodebl/vendor
+nodebl/config/*.yaml
+nodebl/config/*.json
+nodebl/vendor
+nodebl/logs
+nodebl/config-local.js
+
 #event-new ignore
 node_modules
 .sonarlint

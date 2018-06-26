@@ -26,17 +26,18 @@ const submitMultiTnx = (arr) => {
 				switch (item.contract_method) {
 					case 'init':
 						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, item.hid, item.side, item.odds, item.offchain, item.value);
-						index += 1;
 					break;
 					case 'collectTestDrive':
 						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(item.hid, item.winner, item.offchain, nonce + index);
-						index += 1;
 					break;
 					case 'reportOutcomeTransaction':
 						smartContractFunc = predictionContract.reportOutcomeTransaction(item.hid, item.outcome_result, nonce + index);
-						index += 1;
+					break;
+					case 'reportOutcomeTransaction':
+						smartContractFunc = predictionContract.reportOutcomeTransaction(item.hid, item.outcome_result, nonce + index);
 					break;
 				}
+				index += 1;
 				tasks.push(smartContractFunc);
 			});
 			Promise.all(tasks)
@@ -55,6 +56,20 @@ const submitMultiTnx = (arr) => {
 	});
 }
 
+
+const init = (params) => {
+	return new Promise((resolve, reject) => {
+
+	});
+};
+
+
+const unInit = (params) => {
+	return new Promise((resolve, reject) => {
+
+	});
+};
+
 /**
  * 
  * @param {number} params.type
@@ -66,7 +81,7 @@ const submitMultiTnx = (arr) => {
  * @param {number} params.side
  * @param {string} params.from_address
  */
-const init = (params) => {
+const initDefault = (params) => {
 	return new Promise((resolve, reject) => {
 		utils.submitInitAPI(params)
 		.then(result => {
@@ -78,11 +93,6 @@ const init = (params) => {
 			//TODO: handle error
 			return reject(err);
 		})
-	});
-};
-
-const unInit = (params) => {
-	return new Promise((resolve, reject) => {
 	});
 };
 
@@ -122,45 +132,45 @@ const asyncScanTask = () => {
 		taskDAO.getTasksByStatus()
 		.then(_tasks => {
 			_tasks.forEach(task => {
-				tasks.push(
-					new Promise((resolve, reject) => {
-						
-						if (!task || !task.task_type) {
-							return reject('Task is empty');
-						}
-	
-						if (task.data) {
-							return reject('Task params is empty');
-						}
-	
-						const params = JSON.parse(task.data)
-						let processTaskFunc = undefined;
-	
-						switch(task.task_type){
-							case 'INIT':
-								processTaskFunc = init(params);
-							break;
-							case 'UNINIT':
-								processTaskFunc = unInit(params);
-							break;
-							case 'COLLECT':
-								processTaskFunc = collect(params);
-							break;
-							case 'REPORT':
-								processTaskFunc = report(params);
-							break;
-						}
-	
-						processTaskFunc
-						.then(result => {
-							return resolve(result);
-							console.log('======');
-						})
-						.catch(err => {
-							return reject(err);
-						})
-					})
-				)
+
+				if (task && task.task_type && task.data) {
+					const params = JSON.parse(task.data)
+					let processTaskFunc = undefined;
+
+					switch (task.task_type) {
+						case 'INIT':
+							processTaskFunc = init(params);
+						break;
+						case 'UNINIT':
+							processTaskFunc = unInit(params);
+						break;
+						case 'INIT_DEFAULT':
+							processTaskFunc = initDefault(params);
+						break;
+						case 'COLLECT':
+							processTaskFunc = collect(params);
+						break;
+						case 'REPORT':
+							processTaskFunc = report(params);
+						break;
+					}
+
+					if (processTaskFunc) {
+						tasks.push(
+							new Promise((resolve, reject) => {
+								processTaskFunc
+								.then(result => {
+									return resolve(result);
+								})
+								.catch(err => {
+									return reject(err);
+								})
+							})
+						)
+					}
+				} else {
+					console.error('Task is empty ', task);
+				}
 			});
 
 			Promise.all(tasks)

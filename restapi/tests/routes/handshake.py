@@ -1767,6 +1767,72 @@ class TestHandshakeBluePrint(BaseTestCase):
             task = data['data']
             self.assertEqual(task['task_type'], 'FREE_BET')
 
+
+    def test_uninit_free_bet(self):
+        with self.client:
+            Uid = 88
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "DTHTRONG",
+                "outcome_id": 88,
+                "odds": "1.7",
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+            }
+
+            response = self.client.post(
+                                    '/handshake/create_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            task = data['data']
+            self.assertEqual(task['task_type'], 'FREE_BET')
+
+
+    def test_collect_free_bet(self):
+        with self.client:
+            Uid = 88
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "DTHTRONG",
+                "outcome_id": 88,
+                "odds": "1.7",
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+            }
+
+            response = self.client.post(
+                                    '/handshake/create_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            task = data['data']
+            self.assertEqual(task['task_type'], 'FREE_BET')
+
     def test_uninit_free_bet(self):
         self.clear_data_before_test()
         arr_hs = []

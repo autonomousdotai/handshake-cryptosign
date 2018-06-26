@@ -17,7 +17,6 @@ from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREF
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
 from app.tasks import update_feed
-from datetime import datetime
 from app.helpers.message import MESSAGE
 from datetime import datetime
 
@@ -299,3 +298,26 @@ def can_withdraw(handshake, shaker=None):
 		return MESSAGE.OUTCOME_INVALID
 
 	return ''
+
+def can_uninit(handshake):
+	if handshake is None:
+		return False
+	
+	n = time.mktime(datetime.now().timetuple())
+	if len(handshake.shakers.all()) == 0:
+		ds = time.mktime(handshake.date_created.timetuple()) 
+		if n - ds > 300: #5 minutes
+			return True
+
+	else:
+		for sk in handshake.shakers.all():
+			if sk.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+				return False
+			else:
+				ds = time.mktime(sk.date_created.timetuple()) 
+				if n - ds < 300:
+					return False
+
+		return True
+
+	return False

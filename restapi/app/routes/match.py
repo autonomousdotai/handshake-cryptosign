@@ -181,30 +181,39 @@ def report(match_id):
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			
-			if result['side'] is None:
-				return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
-				
-			if result['outcome_id'] is None:
-				return response_error(MESSAGE.OUTCOME_INVALID)
+			for item in result:
+				if 'side' not in item:
+					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
+					
+				if 'outcome_id' not in item:
+					return response_error(MESSAGE.OUTCOME_INVALID)
 
-			outcome = Outcome.find_outcome_by_id(result['outcome_id'])
-			if outcome is not None:
-				if outcome.result != -1:
-					return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
+				if outcome is not None:
+					if outcome.result != -1:
+						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
-				elif match_bl.is_exceed_report_time(outcome.match_id):
-					return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
+					elif match_bl.is_exceed_report_time(outcome.match_id):
+						return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
 
-			else:
-				return response_error(MESSAGE.OUTCOME_INVALID)
+				else:
+					return response_error(MESSAGE.OUTCOME_INVALID)
 
-			dataReport = {}
-			dataReport['hid'] = outcome.hid
-			dataReport['outcome_result'] = result['side']
-			requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/report',
-							json=dataReport,
-							headers={"Content-Type": "application/json"})
+				report = {}
+				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + item['side']
+				report['hid'] = outcome.hid
+				report['outcome_result'] = item['side']
 
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(report),
+					action=CONST.TASK_ACTION['REPORT'],
+					status=-1
+				)
+				db.session.add(task)
+				db.session.flush()
+
+			db.session.commit()
 			return response_ok()
 		else:
 			return response_error(MESSAGE.MATCH_NOT_FOUND)

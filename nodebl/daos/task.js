@@ -17,4 +17,9 @@ module.exports = {
             limit: 10
         });
     },
+    updateStatusById: (task, status) => {
+        return task.update({
+            status: status
+        });
+    }    
 };

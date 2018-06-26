@@ -47,11 +47,10 @@ const submitMultiTnx = (arr) => {
 			});
 			Promise.all(tasks)
 			.then(result => {
-				// TODO
+				// TODO UPDATTE STATUS TASK
 				return resolve();
 			})
 			.catch(err => {
-				// TODO
 				return reject(err);
 			})
 		})

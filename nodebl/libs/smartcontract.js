@@ -192,6 +192,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         return resolve({
           raw: rawTransaction,
           hash: hash,
+          task: _options.task
         });
       })
       .on('receipt', (receipt) => {
@@ -261,6 +262,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
         return resolve({
           raw: rawTransaction,
           hash: hash,
+          task: _options.task
         });
       })
       .on('receipt', (receipt) => {
@@ -331,12 +333,16 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();
+      let tnxHash = -1;
 
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
-        console.log('nonce: ', _nonce);
-        console.log(rawTransaction);
-        return resolve(hash);
+        tnxHash = hash;
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+          task: _options.task
+        });
       })
       .on('receipt', (receipt) => {
         txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', 1, network_id, _offchain, JSON.stringify(rawTransaction))
@@ -401,7 +407,11 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _options) => {
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
-        console.log('report tnxHash: ', hash);
+        return resolve({
+          raw: txParams,
+          hash: hash,
+          task: _options.task
+        });
       })
       .on('receipt', (receipt) => {
         console.log('report tnxHash: ', receipt);

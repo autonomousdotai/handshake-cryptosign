@@ -67,7 +67,6 @@ def add():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
-				public=item['public'],
 				source=item['source'],
 				market_fee=int(item['market_fee']),
 				date=item['date'],
@@ -82,7 +81,8 @@ def add():
 				for outcome_data in item['outcomes']:
 					outcome = Outcome(
 						name=outcome_data['name'],
-						match_id=match.id
+						match_id=match.id,
+						public=item.get('public', 0)
 					)
 					db.session.add(outcome)
 					db.session.flush()

@@ -67,7 +67,7 @@ def add():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
-				public=item.get('public', 0),
+				public=item['public'],
 				source=item['source'],
 				market_fee=int(item['market_fee']),
 				date=item['date'],
@@ -135,7 +135,7 @@ def create_market():
 					# add Task
 					task = Task(
 						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(outcome.to_json()),
+						data=json.dumps(match.to_json()),
 						action=CONST.TASK_ACTION['CREATE_MARKET'],
 						status=-1
 					)

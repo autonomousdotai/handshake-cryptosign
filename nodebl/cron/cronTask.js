@@ -148,7 +148,23 @@ const collect = (params) => {
 
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
-		console.log(params);
+		console.log('DTHTRONG ->', params);
+		const ntasks = [];
+		
+		Promise.all(tasks)
+		.then(results => {
+			console.log('Done');
+			submitMultiTnx(results)
+			.then(tnxResults => {
+				console.log(tnxResults);
+			})
+			.catch(err => {
+				console.error('Error', err);
+			})
+		})
+		.catch(err => {
+			console.error('Error', err);
+		})
 	});
 }
 
@@ -161,6 +177,7 @@ const asyncScanTask = () => {
 				if (task && task.task_type && task.data) {
 					tasks.push(
 						new Promise((resolve, reject) => {
+							// outcopme
 							console.log(`1 task_id: ${task.id}, status: ${task.status}`);
 							taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PROGRESSING)
 							.then( resultUpdate => {
@@ -168,24 +185,33 @@ const asyncScanTask = () => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
 			
-								switch (task.action) {
-									case 'INIT':
-										processTaskFunc = init(params);
+								switch (task.task_type) {
+									case 'REAL_BET':
+										switch (task.action) {
+											case 'INIT_DEFAULT':
+												processTaskFunc = initDefault(params);
+											break;
+											case 'REPORT':
+												processTaskFunc = report(params);
+											break;
+											case 'CREATE_MARKET':
+												processTaskFunc = createMarket(params);
+											break;
+										}
 									break;
-									case 'UNINIT':
-										processTaskFunc = unInit(params);
-									break;
-									case 'INIT_DEFAULT':
-										processTaskFunc = initDefault(params);
-									break;
-									case 'COLLECT':
-										processTaskFunc = collect(params);
-									break;
-									case 'REPORT':
-										processTaskFunc = report(params);
-									break;
-									case 'CREATE_MARKET':
-										processTaskFunc = createMarket(params);
+
+									case 'FREE_BET':
+										switch (task.action) {
+											case 'INIT':
+												processTaskFunc = init(params);
+											break;
+											case 'UNINIT':
+												processTaskFunc = unInit(params);
+											break;
+											case 'COLLECT':
+												processTaskFunc = collect(params);
+											break;
+										}
 									break;
 								}
 

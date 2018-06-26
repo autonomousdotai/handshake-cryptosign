@@ -15,13 +15,13 @@
           "href": "http://api.football-data.org/v1/teams/801"
         }
       },
-      "date": 1529413526,
-      "reportTime": 1529433526,
-      "disputeTime": 1529813526,
+      "date": 1530018326,
+      "reportTime": 1530021926,
+      "disputeTime": 1530025526,
       "status": "TIMED",
       "matchday": 1,
-      "homeTeamName": "Russia",
-      "awayTeamName": "Saudi Arabia",
+      "homeTeamName": "Google",
+      "awayTeamName": "Apple",
       "result": {
         "goalsHomeTeam": null,
         "goalsAwayTeam": null

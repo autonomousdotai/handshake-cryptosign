@@ -4,6 +4,8 @@ const configs = require('../configs');
 
 // daos
 const taskDAO = require('../daos/task');
+const matchDAO = require('../daos/match');
+const outcomeDAO = require('../daos/outcome');
 const settingDAO = require('../daos/setting');
 
 const constants = require('../constants');
@@ -20,12 +22,16 @@ const submitMultiTnx = (arr) => {
 	return new Promise((resolve, reject) => {
 		predictionContract.getNonce(ownerAddress, 'pending')
 		.then(nonce => {
+			console.log('Current nonce pending: ', nonce);
 			let tasks = [];
 			let index = 0;
 			arr.forEach((item) => {
 				let smartContractFunc = null;
 				const onchainData = item.onchainData;
 				switch (onchainData.contract_method) {
+					case 'createMarket':
+						smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, item);
+					break;
 					case 'init':
 						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.value, item);
 					break;
@@ -47,8 +53,7 @@ const submitMultiTnx = (arr) => {
 			});
 			Promise.all(tasks)
 			.then(result => {
-				// TODO UPDATTE STATUS TASK
-				return resolve();
+				return resolve(result);
 			})
 			.catch(err => {
 				return reject(err);
@@ -86,29 +91,48 @@ const unInit = (params) => {
 
 /**
  * 
- * @param {number} params.type
- * @param {JSON string} params.extra_data
- * @param {number} params.outcome_id
  * @param {number} params.odds
- * @param {number} params.amount
- * @param {string} params.currency
+ * @param {number} params.id // outcome_id
  * @param {number} params.side
- * @param {string} params.from_address
  */
-const initDefault = (params) => {
-	return new Promise((resolve, reject) => {
-		utils.submitInitAPI(params)
-		.then(result => {
-			return resolve(Object.assign(result, {
-				contract_method: 'init'
-			}))
-		})
-		.catch(err => {
-			//TODO: handle error
-			return reject(err);
-		})
+const initRealBet = (params) => {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const outcome = await outcomeDAO.getById(params.id);
+			const match = await matchDAO.getMatchById(outcome.match_id);
+			if (!outcome || !match ) {
+				return reject({
+					err_type: 'INIT_REAL_BET_DATABSE_EXCEPTION',
+					options_data: { params }
+				});
+			}
+			utils.submitInitAPI(params)
+			.then(result => {
+				return resolve(Object.assign(result, {
+					contract_method: 'init'
+				}))
+			})
+			.catch(err => {
+				return reject(err);
+			});
+		} catch (e) {
+			console.log('initRealBet error: ', e);
+			reject(e);
+		}
 	});
 };
+
+/**
+ * 
+ * @param {number} options.type
+ * @param {JSON string} options.extra_data
+ * @param {number} options.outcome_id
+ * @param {number} options.odds
+ * @param {number} options.amount
+ * @param {string} options.currency
+ * @param {number} options.side
+ * @param {string} options.from_address
+ */
 
 /**
  * @param {number} params.hid
@@ -116,11 +140,11 @@ const initDefault = (params) => {
  */
 const report = (params) => {
 	return new Promise((resolve, reject) => {
-		return resolve({
+		return resolve([{
 			contract_method: 'reportOutcomeTransaction',
 			hid: params.hid,
 			outcome_result: params.outcome_result
-		})
+		}])
 	});
 };
 
@@ -131,25 +155,32 @@ const report = (params) => {
  */
 const collect = (params) => {
 	return new Promise((resolve, reject) => {
-		return resolve({
+		return resolve([{
 			contract_method: 'collectTestDrive',
 			hid: params.hid,
 			winner: params.winner,
 			offchain: params.offchain
-		})
+		}])
 	});
 };
 
 /**
- * @param {number} params.market_fee
+ * @param {number} params.disputeTime
+ * @param {number} params.reportTime
+ * @param {number} params.date
  * @param {string} params.source
- * @param {string} params.offchain
+ * @param {number} params.market_fee
+ * @param {number} params.id
+ * @param {array} params.outcomes
+ * * @param {number} outcomes.result
+ * * @param {number} outcomes.public
+ * * @param {number} outcomes.hid
+ * * @param {string} outcomes.name
+ * 
  */
-
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
-		console.log('DTHTRONG ->', params);
-
+		return resolve(utils.generateMarkets(params.outcomes, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
 	});
 }
 
@@ -170,8 +201,8 @@ const asyncScanTask = () => {
 								switch (task.task_type) {
 									case 'REAL_BET':
 										switch (task.action) {
-											case 'INIT_DEFAULT':
-												processTaskFunc = initDefault(params);
+											case 'INIT':
+												processTaskFunc = initRealBet(params);
 											break;
 											case 'REPORT':
 												processTaskFunc = report(params);
@@ -184,7 +215,7 @@ const asyncScanTask = () => {
 
 									case 'FREE_BET':
 										switch (task.action) {
-											case 'INIT':
+											case 'INIT': // Same real_bet, call smartcontract name
 												processTaskFunc = init(params);
 											break;
 											case 'UNINIT':
@@ -236,17 +267,49 @@ const asyncScanTask = () => {
 			Promise.all(tasks)
 			.then(results => {
 				console.log('START SUBMIT MULTI TRANSACTION!');
-				submitMultiTnx(results)
+
+				let tnxs = [];
+				results.forEach(i => {
+					if (Array.isArray(i.onchainData)) {
+						i.onchainData.forEach(tnxData => {
+							tnxs.push({
+								onchainData: tnxData,
+								task: i.task
+							});
+						});
+					}
+				});
+
+				submitMultiTnx(tnxs)
 				.then(tnxResults => {
 					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
 					console.log(tnxResults);
+
+					
+					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
+						const taskIds = tnxResults.map(i => { return i.task.id; })
+
+						console.log('UPDATE TASK STATUS ', taskIds);
+						taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
+						.then(updateResults => {
+							return resolve(tnxResults);
+						})
+						.catch(err => {
+							console.error('Error update task status: ', err);
+							return reject(err);
+						})
+					} else {
+						resolve([]);
+					}
 				})
 				.catch(err => {
 					console.error('Error', err);
+					return reject(err);
 				})
 			})
 			.catch(err => {
 				console.error('Error', err);
+				return reject(err);
 			})
 		});
 	})
@@ -272,15 +335,17 @@ const runTaskCron = () => {
 				
 				asyncScanTask()
 				.then(results => {
-					console.log('EXIT SCAN TASK: ', result);
+					console.log('task cron done at ' + new Date());
+					console.log('EXIT SCAN TASK');
 					isRunningTask = false;
 				})
 				.catch(e => {
+					isRunningTask = false;
 					throw e;
 				})
 
 			} else {
-        console.log('CRON JOB SCAN TASK IS RUNNING!');
+        		console.log('CRON JOB SCAN TASK IS RUNNING!');
 			}
 		} catch (e) {
 			isRunningTask = false;

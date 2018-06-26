@@ -146,6 +146,18 @@ const collect = (params) => {
 	});
 };
 
+/**
+ * @param {number} params.market_fee
+ * @param {string} params.source
+ * @param {string} params.offchain
+ */
+
+const createMarket = (params) => {
+	return new Promise((resolve, reject) => {
+		console.log(params);
+	});
+}
+
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
@@ -162,7 +174,7 @@ const asyncScanTask = () => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
 			
-								switch (task.task_type) {
+								switch (task.action) {
 									case 'INIT':
 										processTaskFunc = init(params);
 									break;
@@ -177,6 +189,9 @@ const asyncScanTask = () => {
 									break;
 									case 'REPORT':
 										processTaskFunc = report(params);
+									break;
+									case 'CREATE_MARKET':
+										processTaskFunc = createMarket(params);
 									break;
 								}
 

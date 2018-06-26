@@ -1,10 +1,11 @@
 module.exports = {
   TASK_STATUS: {
-    'STATUS_PROGRESSING': -3,
-    'STATUS_RETRY': -2,
-    'STATUS_PENDING': -1,
     'STATUS_FAILED': 0,
     'STATUS_SUCCESS': 1,
+    'STATUS_PENDING': -1,
+    'STATUS_RETRY': -2,
+    'STATUS_PROGRESSING': -3,
+    'STATUS_CALL_SMARTCONTRACT_FAIL': -4
   },
   TASK_TYPE: {
     'FREE_BET': 'FREE_BET',

@@ -18,27 +18,28 @@ let isRunningTask = false;
 
 const submitMultiTnx = (arr) => {
 	return new Promise((resolve, reject) => {
-		predictionContract.getNonce(ownerAddress)
+		predictionContract.getNonce(ownerAddress, 'pending')
 		.then(nonce => {
 			let tasks = [];
 			let index = 0;
 			arr.forEach((item) => {
 				let smartContractFunc = null;
-				switch (item.contract_method) {
+				const onchainData = item.onchainData;
+				switch (onchainData.contract_method) {
 					case 'init':
-						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, item.hid, item.side, item.odds, item.offchain, item.value);
+						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.value, item);
 					break;
 					case 'collectTestDrive':
-						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(item.hid, item.winner, item.offchain, nonce + index);
+						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, item);
 					break;
 					case 'reportOutcomeTransaction':
-						smartContractFunc = predictionContract.reportOutcomeTransaction(item.hid, item.outcome_result, nonce + index);
+						smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, item);
 					break;
 					case 'initTestDriveTransaction':
-						smartContractFunc = predictionContract.submitInitTestDriveTransaction(item.hid, item.side, item.odds, item.maker, item.offchain, parseFloat(item.amount), nonce + index);
+						smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
 					break;
 					case 'shakeTestDriveTransaction':
-						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(item.hid, item.side, item.taker, item.takerOdds, item.maker, item.makerOdds, item.offchain, parseFloat(item.amount), nonce + index);
+						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
 					break;
 				}
 				index += 1;
@@ -46,11 +47,10 @@ const submitMultiTnx = (arr) => {
 			});
 			Promise.all(tasks)
 			.then(result => {
-				// TODO
+				// TODO UPDATTE STATUS TASK
 				return resolve();
 			})
 			.catch(err => {
-				// TODO
 				return reject(err);
 			})
 		})
@@ -149,22 +149,7 @@ const collect = (params) => {
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
 		console.log('DTHTRONG ->', params);
-		const ntasks = [];
-		
-		Promise.all(tasks)
-		.then(results => {
-			console.log('Done');
-			submitMultiTnx(results)
-			.then(tnxResults => {
-				console.log(tnxResults);
-			})
-			.catch(err => {
-				console.error('Error', err);
-			})
-		})
-		.catch(err => {
-			console.error('Error', err);
-		})
+
 	});
 }
 
@@ -223,7 +208,10 @@ const asyncScanTask = () => {
 			
 								processTaskFunc
 								.then(result => {
-									return resolve(result);
+									return resolve({
+										onchainData: result,
+										task: task.toJSON()
+									});
 								})
 								.catch(err => {
 									return reject(err);
@@ -232,6 +220,7 @@ const asyncScanTask = () => {
 							.catch(err => {
 								return reject({
 									err_type: `UPDATE_TASK_STATUS_FAIL`,
+									error: err,
 									options_data: {
 										task: task.toJSON()
 									}
@@ -246,9 +235,10 @@ const asyncScanTask = () => {
 
 			Promise.all(tasks)
 			.then(results => {
-				console.log('Done');
+				console.log('START SUBMIT MULTI TRANSACTION!');
 				submitMultiTnx(results)
 				.then(tnxResults => {
+					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
 					console.log(tnxResults);
 				})
 				.catch(err => {

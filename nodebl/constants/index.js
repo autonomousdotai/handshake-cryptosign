@@ -1,5 +1,5 @@
 module.exports = {
-  TASK: {
+  TASK_STATUS: {
     'STATUS_PROGRESSING': -3,
     'STATUS_RETRY': -2,
     'STATUS_PENDING': -1,
@@ -7,12 +7,13 @@ module.exports = {
     'STATUS_SUCCESS': 1,
   },
   TASK_TYPE: {
-	  'FREE_BET': 0,
-	  'REAL_BET': 1
+    'FREE_BET': 'FREE_BET',
+    'REAL_BET': 'REAL_BET'
   },
   TASK_ACTION: {
-    'INIT': 0,
-    'UNINIT': 1,
-    'COLLECT': 2
+    'INIT': 'INIT',
+    'UNINIT': 'UNINIT',
+    'COLLECT': 'COLLECT',
+    'CREATE_MARKET': 'CREATE_MARKET'
   }
 }

@@ -67,18 +67,12 @@ const init = (params) => {
 			return resolve(Object.assign({
 				contract_method: 'initTestDriveTransaction'
 			}, params));
-		} else if (offchain.indexOf('_s') != -1) {
+		} else {
 			return resolve(Object.assign({
 				contract_method: 'shakeTestDriveTransaction',
-				maker: requestObject.maker_address
+				maker: params.maker_address,
+				makerOdds: parseInt(params.maker_odds * 100)
 			}, params));
-
-			// const maker = requestObject.maker_address;
-			// const makerOdds = parseInt(requestObject.maker_odds * 100)
-			// fncSubmitTnx = predictionContract.submitShakeTestDriveTransaction(hid, side, address, odds, maker, makerOdds, offchain, parseFloat(amount), nonce + index);
-		} else {
-			console.error('offchain invalid: ', offchain);
-			return resolve();
 		}
 	});
 };
@@ -168,7 +162,7 @@ const asyncScanTask = () => {
 					tasks.push(
 						new Promise((resolve, reject) => {
 							console.log(`1 task_id: ${task.id}, status: ${task.status}`);
-							taskDAO.updateStatusById(task, constants.TASK.STATUS_PROGRESSING)
+							taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PROGRESSING)
 							.then( resultUpdate => {
 								console.log(`2 task_id: ${task.id}, status: ${task.status}`);
 								const params = JSON.parse(task.data)

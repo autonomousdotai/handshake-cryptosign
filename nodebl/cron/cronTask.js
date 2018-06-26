@@ -149,10 +149,8 @@ const asyncScanTask = () => {
 				if (task && task.task_type && task.data) {
 					tasks.push(
 						new Promise((resolve, reject) => {
-							console.log(`1 task_id: ${task.id}, status: ${task.status}`);
 							taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PROGRESSING)
 							.then( resultUpdate => {
-								console.log(`2 task_id: ${task.id}, status: ${task.status}`);
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
 			

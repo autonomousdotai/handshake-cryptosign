@@ -21,5 +21,14 @@ module.exports = {
         return task.update({
             status: status
         });
+    },
+    multiUpdateStatusById: (ids, status) => {
+        return models.Task.update({
+            status: status
+        }, {
+            where: {
+                id: ids
+            }
+        });
     }
 };

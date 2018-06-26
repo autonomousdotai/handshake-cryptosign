@@ -135,9 +135,9 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
 //     submit shake test drive transaction
 // */
 
-const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdss, _offchain, amount, _nonce) => {
+const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce) => {
   console.log('submitShakeTestDriveTransaction');
-  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdss, _offchain, amount, _nonce);
+  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = bettingHandshakeAddress;
@@ -154,7 +154,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
           'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
-          'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdss, web3.utils.fromUtf8(_offchain)).encodeABI()
+          'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);

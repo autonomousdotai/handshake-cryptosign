@@ -6,6 +6,7 @@ const configs = require('../configs');
 const taskDAO = require('../daos/task');
 const settingDAO = require('../daos/setting');
 
+const constants = require('../constants');
 const utils = require('../libs/utils');
 const predictionContract = require('../libs/smartcontract');
 const network_id = configs.network_id;
@@ -33,8 +34,11 @@ const submitMultiTnx = (arr) => {
 					case 'reportOutcomeTransaction':
 						smartContractFunc = predictionContract.reportOutcomeTransaction(item.hid, item.outcome_result, nonce + index);
 					break;
-					case 'reportOutcomeTransaction':
-						smartContractFunc = predictionContract.reportOutcomeTransaction(item.hid, item.outcome_result, nonce + index);
+					case 'initTestDriveTransaction':
+						smartContractFunc = predictionContract.submitInitTestDriveTransaction(item.hid, item.side, item.odds, item.maker, item.offchain, parseFloat(item.amount), nonce + index);
+					break;
+					case 'shakeTestDriveTransaction':
+						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(item.hid, item.side, item.taker, item.takerOdds, item.maker, item.makerOdds, item.offchain, parseFloat(item.amount), nonce + index);
 					break;
 				}
 				index += 1;
@@ -59,7 +63,23 @@ const submitMultiTnx = (arr) => {
 
 const init = (params) => {
 	return new Promise((resolve, reject) => {
+		if (offchain.indexOf('_m') != -1) {
+			return resolve(Object.assign({
+				contract_method: 'initTestDriveTransaction'
+			}, params));
+		} else if (offchain.indexOf('_s') != -1) {
+			return resolve(Object.assign({
+				contract_method: 'shakeTestDriveTransaction',
+				maker: requestObject.maker_address
+			}, params));
 
+			// const maker = requestObject.maker_address;
+			// const makerOdds = parseInt(requestObject.maker_odds * 100)
+			// fncSubmitTnx = predictionContract.submitShakeTestDriveTransaction(hid, side, address, odds, maker, makerOdds, offchain, parseFloat(amount), nonce + index);
+		} else {
+			console.error('offchain invalid: ', offchain);
+			return resolve();
+		}
 	});
 };
 
@@ -132,42 +152,55 @@ const asyncScanTask = () => {
 		taskDAO.getTasksByStatus()
 		.then(_tasks => {
 			_tasks.forEach(task => {
-
 				if (task && task.task_type && task.data) {
-					const params = JSON.parse(task.data)
-					let processTaskFunc = undefined;
+					tasks.push(
+						new Promise((resolve, reject) => {
+							console.log(`1 task_id: ${task.id}, status: ${task.status}`);
+							taskDAO.updateStatusById(task, constants.TASK.STATUS_PROGRESSING)
+							.then( resultUpdate => {
+								console.log(`2 task_id: ${task.id}, status: ${task.status}`);
+								const params = JSON.parse(task.data)
+								let processTaskFunc = undefined;
+			
+								switch (task.task_type) {
+									case 'INIT':
+										processTaskFunc = init(params);
+									break;
+									case 'UNINIT':
+										processTaskFunc = unInit(params);
+									break;
+									case 'INIT_DEFAULT':
+										processTaskFunc = initDefault(params);
+									break;
+									case 'COLLECT':
+										processTaskFunc = collect(params);
+									break;
+									case 'REPORT':
+										processTaskFunc = report(params);
+									break;
+								}
 
-					switch (task.task_type) {
-						case 'INIT':
-							processTaskFunc = init(params);
-						break;
-						case 'UNINIT':
-							processTaskFunc = unInit(params);
-						break;
-						case 'INIT_DEFAULT':
-							processTaskFunc = initDefault(params);
-						break;
-						case 'COLLECT':
-							processTaskFunc = collect(params);
-						break;
-						case 'REPORT':
-							processTaskFunc = report(params);
-						break;
-					}
-
-					if (processTaskFunc) {
-						tasks.push(
-							new Promise((resolve, reject) => {
+								if (!processTaskFunc) {
+									//TODO handle error
+									return reject();
+								}
+			
 								processTaskFunc
 								.then(result => {
 									return resolve(result);
 								})
 								.catch(err => {
+									//TODO handle error
 									return reject(err);
-								})
+								});
 							})
-						)
-					}
+							.catch(err => {
+								//TODO handle error
+								console.error('Error update status', err);
+								return reject(err);
+							})
+						})
+					);
 				} else {
 					console.error('Task is empty ', task);
 				}
@@ -182,7 +215,7 @@ const asyncScanTask = () => {
 				})
 				.catch(err => {
 					console.error('Error', err);
-				})	
+				})
 			})
 			.catch(err => {
 				console.error('Error', err);

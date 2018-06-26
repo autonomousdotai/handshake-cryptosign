@@ -1,5 +1,6 @@
 module.exports = {
   TASK: {
+    'STATUS_PROGRESSING': -3,
     'STATUS_RETRY': -2,
     'STATUS_PENDING': -1,
     'STATUS_FAILED': 0,

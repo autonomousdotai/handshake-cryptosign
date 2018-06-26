@@ -5,7 +5,7 @@ from app.helpers.response import response_ok, response_error
 from app import db
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, Outcome, Shaker, Match
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 from app.tasks import update_feed, add_shuriken
 
 event_routes = Blueprint('event', __name__)
@@ -21,7 +21,7 @@ def event():
 	print 'event = {}'.format(data)
 
 	if data is None:
-		return response_error(MESSAGE.INVALID_DATA)
+		return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 	try:
 		data = data['events']
@@ -38,7 +38,7 @@ def event():
 			offchain = int(offchain.replace('createMarket', ''))
 			outcome = Outcome.find_outcome_by_id(offchain)
 			if outcome is None:
-				return response_error(MESSAGE.OUTCOME_INVALID)
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 			else:
 				outcome.hid = hid
 				db.session.flush()
@@ -48,7 +48,7 @@ def event():
 		else:
 			outcome = Outcome.find_outcome_by_hid(hid)
 			if outcome is None:
-				return response_error(MESSAGE.OUTCOME_INVALID)
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 			
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
 

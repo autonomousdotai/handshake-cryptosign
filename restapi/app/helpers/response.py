@@ -19,7 +19,7 @@ def response_ok(value=None, message='', code=-1):
 	return jsonify(result)
 
 
-def response_error(message='', status=0, code=-1):
+def response_error(message='', code=-1, status=0):
 	result = {
 		'status': status,
 		'code': code

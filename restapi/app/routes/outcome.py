@@ -3,7 +3,7 @@ from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app import db
 from app.models import User, Outcome, Match, Task
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 
 import json
 import app.constants as CONST
@@ -33,7 +33,7 @@ def init_default_outcomes():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		for item in data:
 			outcome_id = item['outcome_id']
@@ -60,11 +60,11 @@ def add(match_id):
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		match = Match.find_match_by_id(match_id)
 		if match is None:
-			return response_error(MESSAGE.MATCH_NOT_FOUND)
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 		outcomes = []
 		response_json = []
@@ -99,7 +99,7 @@ def remove(outcome_id):
 			db.session.commit()
 			return response_ok("{} has been deleted!".format(outcome.id))
 		else:
-			return response_error(MESSAGE.OUTCOME_INVALID)
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 	except Exception, ex:
 		db.session.rollback()

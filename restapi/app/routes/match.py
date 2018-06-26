@@ -10,7 +10,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.bl.match import is_validate_match_time
 from app import db
 from app.models import User, Match, Outcome, Task
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 from flask_jwt_extended import jwt_required
 
 match_routes = Blueprint('match', __name__)
@@ -50,14 +50,14 @@ def add():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		matches = []
 		response_json = []
 		for item in data:
 
 			if match_bl.is_validate_match_time(item) == False:				
-				raise Exception(MESSAGE.INVALID_DATA)
+				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -173,7 +173,7 @@ def report(match_id):
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		match = Match.find_match_by_id(match_id)
 		if match is not None:

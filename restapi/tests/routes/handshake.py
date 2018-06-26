@@ -1765,7 +1765,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
             task = data['data']
-            self.assertEqual(task['task_type'], '0')
+            self.assertEqual(task['task_type'], 'FREE_BET')
 
     def test_uninit_free_bet(self):
         self.clear_data_before_test()

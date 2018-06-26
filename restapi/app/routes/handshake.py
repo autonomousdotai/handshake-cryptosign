@@ -16,7 +16,7 @@ from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text, func
 
 from app.helpers.response import response_ok, response_error
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal
@@ -35,12 +35,12 @@ def handshakes():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		outcome_id = data.get('outcome_id', -1)
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_BET)
+			return response_error(MESSAGE.INVALID_BET, CODE.INVALID_BET)
 		
 		match = Match.find_match_by_id(outcome.match_id)
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
@@ -102,7 +102,7 @@ def init():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
@@ -117,20 +117,20 @@ def init():
 		from_address = data.get('from_address', '')
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
-			raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
+			return response_error(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE, CODE.HANDSHAKE_INVALID_BETTING_TYPE)
 
 		if len(from_address) == 0:
-			raise Exception(MESSAGE.INVALID_ADDRESS)
+			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.OUTCOME_INVALID)
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
-			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
+			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
 		if odds <= 1:
-			raise Exception(MESSAGE.INVALID_ODDS)
+			return response_error(MESSAGE.INVALID_ODDS, CODE.INVALID_ODDS)
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
@@ -265,11 +265,11 @@ def uninit(handshake_id):
 		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
 		if handshake is not None:
 			if len(handshake.shakers.all()) > 0:
-				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)
 			else:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				if outcome is None:
-					return response_error(MESSAGE.OUTCOME_INVALID)
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 				else:
 					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
 					db.session.flush()
@@ -284,7 +284,7 @@ def uninit(handshake_id):
 					return response_ok(handshake_json)
 					
 		else:
-			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND)		
+			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)		
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
@@ -299,11 +299,11 @@ def collect():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		offchain = data.get('offchain', '')
 		if len(offchain) == 0:
-			raise Exception(MESSAGE.MISSING_OFFCHAIN)
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		handshakes = []
@@ -323,10 +323,10 @@ def collect():
 					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
 
 				else:
-					raise Exception(msg)	
+					return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 			else:
-				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+				return response_error(MESSAGE.SHAKER_NOT_FOUND)
 
 		else:
 			offchain = int(offchain.replace('m', ''))
@@ -339,10 +339,10 @@ def collect():
 					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
 				else:
-					raise Exception(msg)
+					return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 			else:
-				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+				return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
 
 		# update status
 		for hs in h:
@@ -377,11 +377,11 @@ def rollback():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		offchain = data.get('offchain')
 		if offchain is None or len(offchain) == 0:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		
@@ -422,12 +422,13 @@ def rollback():
 						shakers.append(sk)
 
 				else:
-					raise Exception(MESSAGE.CANNOT_ROLLBACK)
+					return response_error(MESSAGE.CANNOT_ROLLBACK, CODE.CANNOT_ROLLBACK)
 
 				response = handshake.to_json()
 
 			else:
-				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
+				return response_error(MESSAGE.HANDSHAKE_EMPTY, CODE.HANDSHAKE_EMPTY)
+
 		else:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
@@ -460,12 +461,12 @@ def rollback():
 						shakers.append(sk)
 
 				else:
-					raise Exception(MESSAGE.CANNOT_ROLLBACK)
+					return response_error(MESSAGE.CANNOT_ROLLBACK, CODE.CANNOT_ROLLBACK)
 
 				response = shaker.to_json()
 
 			else:
-				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+				return response_error(MESSAGE.SHAKER_NOT_FOUND, CODE.SHAKER_NOT_FOUND)
 
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
@@ -486,18 +487,18 @@ def create_bet():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		if user.free_bet > 0:
-			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.OUTCOME_INVALID)
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		elif outcome.result != -1:
-			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
+			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			task = Task(
@@ -512,7 +513,7 @@ def create_bet():
 			return response_ok(task.to_json())
 
 		else:
-			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
+			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -529,11 +530,11 @@ def uninit_free_bet(handshake_id):
 		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.free_bet==1)).first()
 		if handshake is not None:
 			if len(handshake.shakers.all()) > 0:
-				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)
 			else:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				if outcome is None:
-					return response_error(MESSAGE.OUTCOME_INVALID)
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 				else:
 					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
 					db.session.flush()
@@ -551,7 +552,7 @@ def uninit_free_bet(handshake_id):
 					return response_ok(task.to_json())
 					
 		else:
-			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND)	
+			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
 
 
 	except Exception, ex:
@@ -569,11 +570,11 @@ def collect_free_bet():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		offchain = data.get('offchain', '')
 		if len(offchain) == 0:
-			raise Exception(MESSAGE.MISSING_OFFCHAIN)
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		if 's' in offchain:
@@ -581,14 +582,14 @@ def collect_free_bet():
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
 			if len(msg) != 0:
-				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 		else:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			msg = handshake_bl.can_withdraw(handshake)
 			if len(msg) != 0:
-				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 		task = Task(
 			task_type=CONST.TASK_TYPE['FREE_BET'],
@@ -614,10 +615,10 @@ def has_received_free_bet():
 		user = User.find_user_with_id(uid)
 
 		if user.free_bet > 0:
-			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
-			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
+			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 		return response_ok()
 	except Exception, ex:

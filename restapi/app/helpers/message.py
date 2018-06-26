@@ -22,6 +22,7 @@ class MESSAGE(object):
 	MATCH_INVALID_RESULT = 'Match result invalid. Please try again.'
 	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
 	MATCH_CANNOT_SET_RESULT = 'The report time is exceed!'
+	MATCH_INVALID_TIME = 'Please double check your closing time, report time and dispute time'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
@@ -63,7 +64,7 @@ class MESSAGE(object):
 	WALLET_REJECT_FREE_ETH = 'Your account can\'t get free ETH.'
 
 
-class Code(object):
+class CODE(object):
 	# ERROR
 	INVALID_DATA = '1000' 													
 	INVALID_BET = '1001' 													
@@ -83,7 +84,8 @@ class Code(object):
 	MATCH_NOT_FOUND = '1011'												
 	MATCH_INVALID_RESULT = '1011' 											
 	MATCH_RESULT_EMPTY = '1012'												
-	MATCH_CANNOT_SET_RESULT = '1013'										
+	MATCH_CANNOT_SET_RESULT = '1013'	
+	MATCH_INVALID_TIME = '1043'									
 
 	# USER
 	USER_INVALID_EMAIL = '1014'												

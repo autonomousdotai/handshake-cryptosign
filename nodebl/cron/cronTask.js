@@ -175,8 +175,12 @@ const asyncScanTask = () => {
 								}
 
 								if (!processTaskFunc) {
-									//TODO handle error
-									return reject();
+									return reject({
+										err_type: `TASK_TYPE_NOT_FOUND`,
+										options_data: {
+											task: task.toJSON()
+										}
+									});
 								}
 			
 								processTaskFunc
@@ -184,19 +188,21 @@ const asyncScanTask = () => {
 									return resolve(result);
 								})
 								.catch(err => {
-									//TODO handle error
 									return reject(err);
 								});
 							})
 							.catch(err => {
-								//TODO handle error
-								console.error('Error update status', err);
-								return reject(err);
+								return reject({
+									err_type: `UPDATE_TASK_STATUS_FAIL`,
+									options_data: {
+										task: task.toJSON()
+									}
+								});
 							})
 						})
 					);
 				} else {
-					console.error('Task is empty ', task);
+					console.error('Task is empty with id: ', task.id);
 				}
 			});
 

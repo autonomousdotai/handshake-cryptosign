@@ -18,6 +18,7 @@ module.exports = {
         });
     },
     updateStatusById: (task, status) => {
+        console.log('>>>> ', status);
         return task.update({
             status: status
         });

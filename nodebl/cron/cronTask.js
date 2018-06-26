@@ -13,6 +13,7 @@ const utils = require('../libs/utils');
 const predictionContract = require('../libs/smartcontract');
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
+const amountDefaultValue = configs.network[network_id].amountValue;
 
 const web3 = require('../configs/web3').getWeb3();
 let isRunningTask = false;
@@ -69,15 +70,15 @@ const submitMultiTnx = (arr) => {
 const init = (params) => {
 	return new Promise((resolve, reject) => {
 		if (offchain.indexOf('_m') != -1) {
-			return resolve(Object.assign({
+			return resolve([Object.assign({
 				contract_method: 'initTestDriveTransaction'
-			}, params));
+			}, params)]);
 		} else {
-			return resolve(Object.assign({
+			return resolve([Object.assign({
 				contract_method: 'shakeTestDriveTransaction',
 				maker: params.maker_address,
 				makerOdds: parseInt(params.maker_odds * 100)
-			}, params));
+			}, params)]);
 		}
 	});
 };
@@ -94,45 +95,65 @@ const unInit = (params) => {
  * @param {number} params.odds
  * @param {number} params.id // outcome_id
  * @param {number} params.side
+ * @param {Object} task
  */
-const initRealBet = (params) => {
+const initRealBet = (params, task) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const outcome = await outcomeDAO.getById(params.id);
-			const match = await matchDAO.getMatchById(outcome.match_id);
-			if (!outcome || !match ) {
+			if (!outcome) {
+				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_NOT_FOUND_IN_DATABASE);
 				return reject({
-					err_type: 'INIT_REAL_BET_DATABSE_EXCEPTION',
+					err_type: 'INIT_REAL_BET_OUTCOME_NOT_FOUND',
 					options_data: { params }
 				});
 			}
-			utils.submitInitAPI(params)
+
+			const match = await matchDAO.getMatchById(outcome.match_id);
+			if (!match ) {
+				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_NOT_FOUND_IN_DATABASE);
+				return reject({
+					err_type: 'INIT_REAL_BET_MATCH_NOT_FOUND',
+					options_data: { params }
+				});
+			}
+
+			if (outcome.hid == null || outcome.hid == undefined || outcome.hid < 0) {
+				console.log(`NOT FOUND HID, UPDATE TASK'S STATUS TO: WAITING`);
+				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_WAITING_ONCHAIN_HID)
+				return resolve(undefined);
+			}
+
+			const dataRequest = {
+				type: 3,
+				extra_data: utils.gennerateExtraData(match, outcome),
+				outcome_id: outcome.id,
+				odds: params.odds, // TODO: check value 
+				amount: amountDefaultValue + '',
+				currency: 'ETH',
+				side: params.side,
+				from_address: ownerAddress, //TODO: check this address
+				hid: outcome.hid
+			};
+								
+			utils.submitInitAPI(dataRequest)
 			.then(result => {
-				return resolve(Object.assign(result, {
+				return resolve([Object.assign(result, {
 					contract_method: 'init'
-				}))
+				})])
 			})
 			.catch(err => {
 				return reject(err);
 			});
 		} catch (e) {
 			console.log('initRealBet error: ', e);
-			reject(e);
+			reject({
+				err_type: 'INIT_REAL_BET_EXCEPTION',
+				options_data: { params }
+			});
 		}
 	});
 };
-
-/**
- * 
- * @param {number} options.type
- * @param {JSON string} options.extra_data
- * @param {number} options.outcome_id
- * @param {number} options.odds
- * @param {number} options.amount
- * @param {string} options.currency
- * @param {number} options.side
- * @param {string} options.from_address
- */
 
 /**
  * @param {number} params.hid
@@ -202,7 +223,7 @@ const asyncScanTask = () => {
 									case 'REAL_BET':
 										switch (task.action) {
 											case 'INIT':
-												processTaskFunc = initRealBet(params);
+												processTaskFunc = initRealBet(params, task);
 											break;
 											case 'REPORT':
 												processTaskFunc = report(params);
@@ -341,7 +362,7 @@ const runTaskCron = () => {
 				})
 				.catch(e => {
 					isRunningTask = false;
-					throw e;
+					console.error(e);
 				})
 
 			} else {

@@ -1,7 +1,5 @@
 
 const axios = require('axios');
-
-const outcomeDAO = require('../daos/outcome');
 const moment = require('moment');
 
 const configs = require('../configs');
@@ -9,6 +7,15 @@ const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
 const reportTimeConfig = configs.network[configs.network_id].reportTimeConfig || 2;
+
+const gennerateExtraData = (match, outcome) => {
+    return JSON.stringify({
+        event_name: match.name,
+        event_predict: outcome.name,
+        date: moment((match.date || 0) * 1000).format("MMM DD")
+    });
+};
+
 /**
  * 
  * @param {number} options.type
@@ -47,9 +54,8 @@ const submitInitAPI = (options) => {
         })
         .then(async response => {
             if (response.data.status == 1 && response.data.data.length != 0) {
-                const _outcome = await outcomeDAO.getById(options.outcome_id);
                 const result = {
-                    hid: _outcome.hid,
+                    hid: options.hid,
                     odds: parseInt(options.odds * 100),
                     value: web3.utils.toWei(dataRequest.amount),
                     offchain: response.data.data[0].offchain,
@@ -62,9 +68,6 @@ const submitInitAPI = (options) => {
                 console.log('RESPONSE CALL HANDSHAKE INIT API: ', result);
                 return resolve(result);
             } else {
-                console.log('===== ERROR =====');
-                console.log(response.data);
-                console.log(dataRequest);
                 return reject({
                     err_type: 'INIT_CALL_API_FAIL',
                     options_data: {
@@ -122,5 +125,6 @@ const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _s
 
 module.exports = {
     submitInitAPI,
-    generateMarkets
+    generateMarkets,
+    gennerateExtraData
 };

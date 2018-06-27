@@ -47,7 +47,7 @@ def init_default_outcomes():
 			
 			match = Match.find_match_by_id(outcome.match_id)
 			for o in outcome_data:
-				o['id'] = outcome_id
+				o['outcome_id'] = outcome_id
 				o['hid'] = outcome.hid
 				o['match_date'] = match.date
 				o['match_name'] = match.name

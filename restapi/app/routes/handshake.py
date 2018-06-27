@@ -367,6 +367,12 @@ def create_bet():
 		elif outcome.result != -1:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
+		match = Match.find_match_by_id(outcome.match_id)
+		data['hid'] = outcome.hid
+		data['outcome_name'] = outcome.name
+		data['match_date'] = match.date
+		data['match_name'] = match.name
+
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			user.free_bet = 1
 			task = Task(

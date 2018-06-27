@@ -84,6 +84,7 @@ def add(match_id):
 		for item in data:
 			outcome = Outcome(
 				name=item['name'],
+				public=item['public'],
 				match_id=match_id
 			)
 			db.session.add(outcome)

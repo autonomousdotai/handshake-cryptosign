@@ -222,6 +222,7 @@ def init():
 				sk_feed.append(shaker)
 				
 				shaker_json = shaker.to_json()
+				shaker_json['maker_address'] = handshake.from_address
 				shaker_json['type'] = 'shake'
 				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(shaker_json)

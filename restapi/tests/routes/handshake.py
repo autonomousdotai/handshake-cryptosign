@@ -1115,54 +1115,39 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue('match' in data)
 
 
-    def test_uninit_free_bet(self):
-        with self.client:
-            Uid = 88
-
-            params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "DTHTRONG",
-                "outcome_id": 88,
-                "odds": "1.7",
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 2,
-                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
-            }
-
-            response = self.client.post(
-                                    '/handshake/create_free_bet',
-                                    content_type='application/json',
-                                    data=json.dumps(params),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            print data
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-            task = data['data']
-            self.assertEqual(task['task_type'], 'FREE_BET')
-
-
     def test_collect_free_bet(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 2
+        db.session.commit()
+
         with self.client:
             Uid = 88
 
             params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "DTHTRONG",
-                "outcome_id": 88,
-                "odds": "1.7",
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 2,
-                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+                "offchain": "cryptosign_m{}".format(handshake.id)
             }
 
             response = self.client.post(
@@ -1176,9 +1161,15 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
+            hs = data['data']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
+            self.assertEqual(hs['status'], HandshakeStatus['STATUS_COLLECT_PENDING'])
+
+        
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
  
 
     def test_uninit_free_bet(self):
@@ -1237,8 +1228,49 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
+        
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
     def test_check_free_bet(self):
-        pass
+        user = User.find_user_with_id(88)
+        user.free_bet = 0
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            response = self.client.get(
+                                    '/handshake/check_free_bet',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+
+            # update free_bet
+            user = User.find_user_with_id(88)
+            user.free_bet = 1
+            db.session.commit()
+
+            # call check free bet again
+            response = self.client.get(
+                                    '/handshake/check_free_bet',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
     
 if __name__ == '__main__':
     unittest.main()

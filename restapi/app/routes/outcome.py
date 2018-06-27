@@ -38,8 +38,16 @@ def init_default_outcomes():
 		for item in data:
 			outcome_id = item['outcome_id']
 			outcome_data = item['outcomes']
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+			if outcome is None:
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+			if outcome.result != CONST.RESULT_TYPE['PENDING']:
+				return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
+
 			for o in outcome_data:
 				o['id'] = outcome_id
+				o['hid'] = outcome.hid
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(o),

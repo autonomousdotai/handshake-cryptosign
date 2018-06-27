@@ -25,35 +25,45 @@ def event():
 		return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 	try:
-		data = data['events']
-		contract = data['contract']
-		event_name = data['eventName']
-		offchain = data['offchain']
-		hid = int(data['hid'])
-
+		status = data.get('status', 1)
+		
 		handshakes = []
 		shakers = []
 
-		response_json = []
-		if '__createMarket' in event_name:
-			offchain = int(offchain.replace('createMarket', ''))
-			outcome = Outcome.find_outcome_by_id(offchain)
-			if outcome is None:
-				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-			else:
-				outcome.hid = hid
-				db.session.flush()
+		if status == 1:
+			event_name = data['eventName']
+			inputs = data['inputs']
 
-				response_json.append(outcome.to_json())
+			# parse inputs
+			offchain = inputs['offchain']
+			hid = int(inputs['hid'])
+
+			response_json = []
+			if '__createMarket' in event_name:
+				offchain = int(offchain.replace('createMarket', ''))
+				outcome = Outcome.find_outcome_by_id(offchain)
+				if outcome is None:
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+				else:
+					outcome.hid = hid
+					db.session.flush()
+
+					response_json.append(outcome.to_json())
+
+			else:
+				outcome = Outcome.find_outcome_by_hid(hid)
+				if outcome is None:
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+				
+				handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
+
+			db.session.commit()
 
 		else:
-			outcome = Outcome.find_outcome_by_hid(hid)
-			if outcome is None:
-				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-			
-			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, offchain, outcome)
+			# TODO:
+			method = data.get('methodName', '')
+			inputs = data['inputs']
 
-		db.session.commit()
 
 		# update feed
 		if handshakes is not None:

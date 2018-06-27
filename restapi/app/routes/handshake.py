@@ -4,7 +4,7 @@ import base64
 import time
 import os
 import sys
-import json
+import simplejson as json
 import logging
 
 import app.constants as CONST
@@ -425,7 +425,7 @@ def uninit_free_bet(handshake_id):
 					}
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
-						data=json.dumps(data),
+						data=json.dumps(data, use_decimal=True),
 						action=CONST.TASK_ACTION['UNINIT'],
 						status=-1
 					)

@@ -163,7 +163,7 @@ const initRealBet = (params, task) => {
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
-			contract_method: 'reportOutcomeTransaction', // method?
+			contract_method: 'reportOutcomeTransaction',
 			hid: params.hid,
 			outcome_result: params.outcome_result
 		}])

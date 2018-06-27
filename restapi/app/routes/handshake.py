@@ -449,8 +449,12 @@ def collect_free_bet():
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
 			
 			hs = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(hs.outcome_id)
 			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
+
+			data['hid'] = outcome.hid
+			data['winner'] = shaker.from_address
 
 		else:
 			offchain = int(offchain.replace('m', ''))
@@ -459,8 +463,12 @@ def collect_free_bet():
 			if len(msg) != 0:
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+
+			data['hid'] = outcome.hid
+			data['winner'] = handshake.from_address
 
 
 		handshakes = []

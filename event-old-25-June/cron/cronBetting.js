@@ -64,12 +64,13 @@ function callEvent(eventName, eventObj) {
             const offchainId = offchains[1];
             const events = {};
             const body = {};
-            events['hid'] = hid;
-            events['offchain'] = offchainId;
+            events['inputs'] = {
+                'hid': hid,
+                'offchain': offchainId
+            }
             events['eventName'] = eventName;
             events['contract'] = BettingHandshake.contractName;
-            body['events'] = events;
-            axios.post(configs.restApiEndpoint + '/event', body)
+            axios.post(configs.restApiEndpoint + '/event', events)
             .then(function (response) {
                 console.log('hook success');
             })

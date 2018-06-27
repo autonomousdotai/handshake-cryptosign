@@ -138,7 +138,8 @@ const initRealBet = (params, task) => {
 				from_address: ownerAddress, // TODO: check this address
 				hid: outcome.hid
 			};
-								
+			
+			// TODO: recheck -- may be multi init and shake
 			utils.submitInitAPI(dataRequest)
 			.then(results => {
 				return resolve(results);

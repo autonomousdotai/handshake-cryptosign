@@ -157,6 +157,76 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
   });
 };
 
+
+// /*
+//     submit shake transaction
+// */
+const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, _options) => {
+  console.log('submitShakeTransaction');
+  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
+  return new Promise(async(resolve, reject) => {
+    try {
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const nonce           = _nonce;
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'data'    : contract.methods.shake(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let tnxHash                 = -1;
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+          task: _options.task
+        });
+      })
+      .on('receipt', (receipt) => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', 1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+        console.log(receipt);
+      })
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        .catch(console.error);
+
+        console.log(err);
+        return reject({
+          err_type: `SHAKE_TNX_FAIL`,
+          error: err,
+          options_data: {
+            task: _options.task
+          }
+        });
+      });
+    } catch (e) {
+      console.error(e);
+      reject({
+        err_type: `SHAKE_TNX_EXCEPTION`,
+        error: e,
+        options_data: {
+          task: _options.task
+        }
+      });
+    }
+  });
+};
+
+
 // /*
 //     submit shake test drive transaction
 // */
@@ -374,10 +444,10 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 };
 
 
-const reportOutcomeTransaction = (hid, outcome_result, nonce, _options) => {
+const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _options) => {
   return new Promise(async(resolve, reject) => {
     try {
-      const offchain = 'cryptosign_report' + outcome_result;
+      const offchain = _offchain || ('cryptosign_report' + outcome_result);
       console.log('reportOutcomeTransaction');
       console.log(hid, outcome_result, offchain);
 
@@ -450,6 +520,7 @@ module.exports = {
   submitInitTestDriveTransaction,
   getNonce,
   reportOutcomeTransaction,
+  submitShakeTransaction,
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction
 };

@@ -32,7 +32,7 @@ const submitInitAPI = (options) => {
         const dataRequest = {
             type: options.type,
             extra_data: options.extra_data,
-            description: 'int from task cron',
+            description: 'init from task cron',
             outcome_id: options.outcome_id,
             odds: options.odds,
             amount: (options.amount || amountDefaultValue) + '',
@@ -54,19 +54,42 @@ const submitInitAPI = (options) => {
         })
         .then(async response => {
             if (response.data.status == 1 && response.data.data.length != 0) {
-                const result = {
-                    hid: options.hid,
-                    odds: parseInt(options.odds * 100),
-                    value: web3.utils.toWei(dataRequest.amount),
-                    offchain: response.data.data[0].offchain,
-                    side: options.side,
-                    options_data: {
-                        response: response.data,
-                        dataRequest: dataRequest
+                const results = [];
+
+                response.data.data.forEach(item => {
+                    if (item && Array.isArray(item.shakers)) {
+                        item.shakers.forEach(shaker => {
+
+                            results.push(Object.assign({
+                                contract_method: shaker.shaker_id == item.user_id ? 'shake' : 'init',
+                                hid: options.hid,
+                                odds: parseInt(options.odds * 100),
+                                value: web3.utils.toWei(dataRequest.amount),
+                                offchain: response.data.data[0].offchain,
+                                side: options.side,
+                                options_data: {
+                                    response: response.data,
+                                    dataRequest: dataRequest
+                                }
+                            }));
+
+/*
+case 'init':
+						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.value, item);
+					break;
+					case 'shake':
+						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+					break;
+*/
+
+
+
+
+                        });
                     }
-                };
-                console.log('RESPONSE CALL HANDSHAKE INIT API: ', result);
-                return resolve(result);
+                });
+                console.log('RESPONSE CALL HANDSHAKE INIT API: ', results);
+                return resolve(results);
             } else {
                 return reject({
                     err_type: 'INIT_CALL_API_FAIL',

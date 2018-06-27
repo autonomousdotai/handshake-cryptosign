@@ -36,11 +36,14 @@ const submitMultiTnx = (arr) => {
 					case 'init':
 						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.value, item);
 					break;
+					case 'shake':
+						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+					break;
 					case 'collectTestDrive':
 						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, item);
 					break;
 					case 'reportOutcomeTransaction':
-						smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, item);
+						smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, offchain, item);
 					break;
 					case 'initTestDriveTransaction':
 						smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
@@ -132,15 +135,13 @@ const initRealBet = (params, task) => {
 				amount: amountDefaultValue + '',
 				currency: 'ETH',
 				side: params.side,
-				from_address: ownerAddress, //TODO: check this address
+				from_address: ownerAddress, // TODO: check this address
 				hid: outcome.hid
 			};
 								
 			utils.submitInitAPI(dataRequest)
-			.then(result => {
-				return resolve([Object.assign(result, {
-					contract_method: 'init'
-				})])
+			.then(results => {
+				return resolve(results);
 			})
 			.catch(err => {
 				return reject(err);
@@ -156,15 +157,19 @@ const initRealBet = (params, task) => {
 };
 
 /**
+ * @param {string} params.offchain
  * @param {number} params.hid
- * @param {number} outcome_result
+ * @param {number} params.outcome_result
+ * @param {string} params.offchain
  */
+
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
 			contract_method: 'reportOutcomeTransaction',
 			hid: params.hid,
-			outcome_result: params.outcome_result
+			outcome_result: params.outcome_result,
+			offchain: params.offchain
 		}])
 	});
 };

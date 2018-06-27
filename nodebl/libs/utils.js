@@ -3,6 +3,9 @@ const axios = require('axios');
 const moment = require('moment');
 const web3 = require('../configs/web3').getWeb3();
 const configs = require('../configs');
+const taskDAO = require('../daos/task');
+const constants = require('../constants');
+
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
@@ -144,8 +147,31 @@ const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _s
     return markets;
 };
 
+const handleErrorTask = (task, err) => {
+    let status = constants.TASK_STATUS.STATUS_UNKNOW;
+    switch(err.err_type) {
+        case '':
+        break;
+        case '':
+        break;
+        case '':
+        break;
+        case '':
+        break;
+        case '':
+        break;
+        case '':
+        break;
+        case '':
+        break;
+    }
+    taskDAO.updateStatusById(task, status)
+    .catch(console.error);
+}
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
-    gennerateExtraData
+    gennerateExtraData,
+    handleErrorTask
 };

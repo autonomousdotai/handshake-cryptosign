@@ -26,7 +26,7 @@ celery = make_celery(app)
 
 
 @celery.task()
-def update_feed(handshake_id, shake_id=-1):
+def update_feed(handshake_id):
 	try:
 		handshake = Handshake.find_handshake_by_id(handshake_id)
 		if handshake is None:
@@ -56,20 +56,6 @@ def update_feed(handshake_id, shake_id=-1):
 				shake_user_ids.append(s.shaker_id)	
 				shake_user_infos.append(s.to_json())
 
-		if shake_id != -1:
-			shaker = Shaker.find_shaker_by_id(shake_id)
-			if shaker is not None:
-				if shaker.shaker_id not in shake_user_ids:
-					shake_user_ids.append(shaker.shaker_id)
-					shake_user_infos.append(shaker.to_json())
-
-		extra_data = {}
-		try:
-			extra_data = json.loads(handshake.extra_data)
-		except Exception as ex:
-			print 'Handshake has no extra data'
-		extra_data['shakers'] = shake_user_infos
-
 		hs = {
 			"id": _id,
 			"hid_s": outcome.hid,
@@ -87,7 +73,7 @@ def update_feed(handshake_id, shake_id=-1):
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
-			"extra_data_s": json.dumps(extra_data, use_decimal=True),
+			"extra_data_s": handshake.extra_data,
 			"remaining_amount_f": float(handshake.remaining_amount),
 			"amount_f": float(amount),
 			"outcome_id_i": handshake.outcome_id,
@@ -96,7 +82,8 @@ def update_feed(handshake_id, shake_id=-1):
 			"side_i": handshake.side,
 			"from_address_s": handshake.from_address,
 			"result_i": outcome.result,
-			"free_bet_i": handshake.free_bet
+			"free_bet_i": handshake.free_bet,
+			"shakers_s": json.dumps(shake_user_infos, use_decimal=True),
 		}
 		print 'create maker {}'.format(hs)
 
@@ -136,40 +123,3 @@ def add_shuriken(user_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_shuriken=>",exc_type, fname, exc_tb.tb_lineno)
-
-
-@celery.task()
-def add_free_bet(arr_free_bet):
-	try:
-		res = requests.post(app.config['BLOCKCHAIN_SERVER_ENDPOINT'] + '/cryptosign/init', 
-							json=arr_free_bet,
-							headers={"Content-Type": "application/json"})
-		print 'add_free_bet {}'.format(res)
-		if res.status_code > 400:
-			print('Add free bet is failed.')
-
-	except Exception as e:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("add_free_bet=>",exc_type, fname, exc_tb.tb_lineno)
-
-
-@celery.task()
-def withdraw_free_bet(hid, winner, offchain):
-	try:
-		data = {
-			"hid": hid,
-			"winner": winner,
-			"offchain": offchain
-		}
-		res = requests.post(app.config['BLOCKCHAIN_SERVER_ENDPOINT'] + '/cryptosign/collect', 
-							json=data,
-							headers={"Content-Type": "application/json"})
-		print 'withdraw_free_bet {}'.format(res)
-		if res.status_code > 400:
-			print('withdraw_free_bet is failed.')
-
-	except Exception as e:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("withdraw_free_bet=>",exc_type, fname, exc_tb.tb_lineno)

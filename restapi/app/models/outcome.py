@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
-	__json_public__ = ['id', 'name', 'hid', 'result']
+	__json_public__ = ['id', 'name', 'hid', 'result', 'public']
 	
 	name = db.Column(db.String(255))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))

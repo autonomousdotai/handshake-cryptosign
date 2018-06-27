@@ -5,6 +5,7 @@ import time
 import os
 import sys
 import json
+import logging
 
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
@@ -16,17 +17,18 @@ from flask import Blueprint, request, g
 from sqlalchemy import or_, and_, text, func
 
 from app.helpers.response import response_ok, response_error
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed, add_free_bet, withdraw_free_bet
+from app.tasks import update_feed
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
+logfile = logging.getLogger('file')
 
 @handshake_routes.route('/', methods=['POST'])
 @login_required
@@ -35,18 +37,18 @@ def handshakes():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		outcome_id = data.get('outcome_id', -1)
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_BET)
+			return response_error(MESSAGE.INVALID_BET, CODE.INVALID_BET)
 		
 		match = Match.find_match_by_id(outcome.match_id)
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
 		against = handshake_bl.find_available_against_handshakes(outcome_id)
 
-		total = Decimal(0, 2)
+		total = Decimal('0', 2)
 
 		traded_volumns = db.session.query(func.sum(Handshake.amount*Handshake.odds).label('traded_volumn')).filter(and_(Handshake.outcome_id==outcome_id, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).all()
 		for traded in traded_volumns:
@@ -83,10 +85,16 @@ def handshakes():
 @handshake_routes.route('/<int:id>')
 @login_required
 def detail(id):
+	uid = int(request.headers['Uid'])
 	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+	user = User.find_user_with_id(uid)		
 
 	try:
-		return response_ok()
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==id, Handshake.user_id==uid)).first()
+		if handshake is not None:
+			return response_ok(handshake.to_json())
+
+		return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
 
 	except Exception, ex:
 		return response_error(ex.message)
@@ -102,44 +110,38 @@ def init():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		print '-------------------'
-		print 'input {}, {}'.format(data.get('odds'), data.get('amount'))
 		odds = Decimal(data.get('odds'))
 		amount = Decimal(data.get('amount'))
-		print '-------------------'
-		print 'output {}, {}'.format(data.get('odds'), data.get('amount'))
-
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		from_address = data.get('from_address', '')
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
-			raise Exception(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE)
+			return response_error(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE, CODE.HANDSHAKE_INVALID_BETTING_TYPE)
 
 		if len(from_address) == 0:
-			raise Exception(MESSAGE.INVALID_ADDRESS)
+			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_OUTCOME)
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
-			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
+			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
 		if odds <= 1:
-			raise Exception(MESSAGE.INVALID_ODDS)
+			return response_error(MESSAGE.INVALID_ODDS, CODE.INVALID_ODDS)
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-		print 'DEBUG {}'.format(handshakes)
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -164,64 +166,44 @@ def init():
 			# response data
 			arr_hs = []
 			hs_json = handshake.to_json()
+			hs_json['type'] = 'init'
 			hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 			arr_hs.append(hs_json)
 
+			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 			return response_ok(arr_hs)
 		else:
 			arr_hs = []
 			shaker_amount = amount
 
+			hs_feed = []
+			sk_feed = []
 			for handshake in handshakes:
 				if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) <= 0:
 					break
 
 				handshake.shake_count += 1
-
-				print '---------------------------------------------------------------------'
-				print 'handshake_remaining_value --> {}'.format(handshake.remaining_amount)
-
 				handshake_win_value = handshake.remaining_amount*handshake.odds
-				print 'handshake_win_value --> {}'.format(handshake_win_value)
-
 				shaker_win_value = shaker_amount*odds
-				print 'shaker_win_value --> {}'.format(shaker_win_value)
-
 				subtracted_amount_for_shaker = 0
 				subtracted_amount_for_handshake = 0
 
 
 				if is_equal(handshake_win_value, shaker_win_value):
-					print '--> use both amount'
 					subtracted_amount_for_shaker = shaker_amount
-					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
 					subtracted_amount_for_handshake = handshake.remaining_amount
-					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 
 				elif handshake_win_value >= shaker_win_value:
-					print '--> use shaker amount'
 					subtracted_amount_for_shaker = shaker_amount
-					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
-
 					subtracted_amount_for_handshake = shaker_win_value - subtracted_amount_for_shaker
-					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
 
 				else:
-					print '--> use maker amount'
 					subtracted_amount_for_handshake = handshake.remaining_amount
-					print 'subtracted_amount_for_handshake --> {}'.format(subtracted_amount_for_handshake)
-
 					subtracted_amount_for_shaker = handshake_win_value - subtracted_amount_for_handshake
-					print 'subtracted_amount_for_shaker --> {}'.format(subtracted_amount_for_shaker)
 
 				handshake.remaining_amount -= subtracted_amount_for_handshake
 				shaker_amount -= subtracted_amount_for_shaker
-
 				db.session.merge(handshake)
-				print 'shaker_amount = {}'.format(shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN))				
-				print 'handshake.remaining_amount = {}'.format(handshake.remaining_amount)
-				print '---------------------------------------------------------------------'
 
 				# create shaker
 				shaker = Shaker(
@@ -237,23 +219,14 @@ def init():
 
 				db.session.add(shaker)
 				db.session.flush()
-
-				update_feed.delay(handshake.id, shaker.id)
+				sk_feed.append(shaker)
 				
-				handshake_json = handshake.to_json()
-				shakers = handshake_json['shakers']
-				if shakers is None:
-					shakers = []
-
-				shakers.append(shaker.to_json())
-
-				handshake_json['shakers'] = shakers
-				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(handshake_json)
-				
+				shaker_json = shaker.to_json()
+				shaker_json['type'] = 'shake'
+				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(shaker_json)
 
 			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
-				print 'still has money'
 				handshake = Handshake(
 					hs_type=hs_type,
 					extra_data=extra_data,
@@ -271,19 +244,17 @@ def init():
 				)
 				db.session.add(handshake)
 				db.session.flush()
-
-				update_feed.delay(handshake.id)				
+				hs_feed.append(handshake)			
 
 				hs_json = handshake.to_json()
+				hs_json['type'] = 'init'
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 				arr_hs.append(hs_json)
-
-			print '----------------------'
-			print arr_hs
-			print '----------------------'
-			print 'commit database'
 			
 			db.session.commit()
+			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
+
+			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
 			return response_ok(arr_hs)
 
 	except Exception, ex:
@@ -291,122 +262,11 @@ def init():
 		return response_error(ex.message)
 
 
-@handshake_routes.route('/uninit/<int:handshake_id>', methods=['POST'])
-@login_required
-def uninit(handshake_id):
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
-		
-		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
-		if handshake is not None:
-			if len(handshake.shakers.all()) > 0:
-				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT)
-			else:
-				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-				if outcome is None:
-					return response_error(MESSAGE.INVALID_OUTCOME)
-				else:
-					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
-					db.session.flush()
-
-					update_feed.delay(handshake.id)
-					
-					handshake_json = handshake.to_json()
-					handshake_json['hid'] = outcome.hid
-					handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
-
-					db.session.commit()
-					return response_ok(handshake_json)
-					
-		else:
-			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND)		
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-@handshake_routes.route('/collect', methods=['POST'])
-@login_required
-def collect():
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
-
-		data = request.json
-		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
-
-		offchain = data.get('offchain', '')
-		if len(offchain) == 0:
-			raise Exception(MESSAGE.MISSING_OFFCHAIN)
-
-		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
-		handshakes = []
-		shakers = []
-		
-		h = []
-		s = []
-		if 's' in offchain:
-			offchain = int(offchain.replace('s', ''))
-			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
-			if shaker is not None:
-				msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
-				if len(msg) == 0:
-					hs = Handshake.find_handshake_by_id(shaker.handshake_id)
-					# find all handshakes and shakers which shaker won
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
-
-				else:
-					raise Exception(msg)	
-
-			else:
-				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
-
-		else:
-			offchain = int(offchain.replace('m', ''))
-			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
-			if handshake is not None:
-				msg = handshake_bl.can_withdraw(handshake)
-				if len(msg) == 0:
-					# find all handshakes and shakers which maker won
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-				else:
-					raise Exception(msg)
-
-			else:
-				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
-
-		# update status
-		for hs in h:
-			hs.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-			db.session.flush()
-			handshakes.append(hs)
-			
-		for sk in s:
-			sk.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-			db.session.flush()
-			shakers.append(sk)
-
-		db.session.commit()
-		handshake_bl.update_handshakes_feed(handshakes, shakers)
-
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
-	# rollback init: DONE
-	# rollback uninit: DONE
-	# rollback shake: DONE
-	# rollback collect: DONE
+	# rollback init (real, free): DONE
+	# rollback shake (real, free): DONE
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -414,11 +274,11 @@ def rollback():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		offchain = data.get('offchain')
 		if offchain is None or len(offchain) == 0:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		
@@ -429,42 +289,23 @@ def rollback():
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
-			
-			if handshake is not None:				
+			if handshake is not None:	
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
+					handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
+					if handshake.free_bet == 1:
+						user.free_bet = 0
 					
-					handshake.status = HandshakeStatus['STATUS_MAKER_FAILED_INIT']
 					db.session.flush()
 					handshakes.append(handshake)
-
-				elif handshake.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING'] or \
-					handshake.status == HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']:
-
-					handshake.status = handshake.bk_status
-					db.session.flush()
-					handshakes.append(handshake)
-
-				elif handshake.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-					for hs in h:
-						hs.status = hs.bk_status
-						db.session.flush()
-						handshakes.append(hs)
-
-					for sk in s:
-						sk.status = sk.bk_status
-						db.session.flush()
-						shakers.append(sk)
 
 				else:
-					raise Exception(MESSAGE.CANNOT_ROLLBACK)
+					return response_error(MESSAGE.CANNOT_ROLLBACK, CODE.CANNOT_ROLLBACK)
 
 				response = handshake.to_json()
 
 			else:
-				raise Exception(MESSAGE.HANDSHAKE_EMPTY)
+				return response_error(MESSAGE.HANDSHAKE_EMPTY, CODE.HANDSHAKE_EMPTY)
+
 		else:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==uid)).first()
@@ -472,37 +313,18 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
+					if shaker.free_bet == 1:
+						user.free_bet = 0
+
 					shakers.append(shaker)
 
-				elif shaker.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']:
-					shaker.status = shaker.bk_status
-					db.session.flush()
-
-					update_feed.delay(shaker.handshake_id, shaker.id)					
-
-				elif shaker.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
-					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-					for hs in h:
-						hs.status = hs.bk_status
-						db.session.flush()
-						handshakes.append(hs)
-						
-					for sk in s:
-						sk.status = sk.bk_status
-						db.session.flush()
-						shakers.append(sk)
-
 				else:
-					raise Exception(MESSAGE.CANNOT_ROLLBACK)
+					return response_error(MESSAGE.CANNOT_ROLLBACK, CODE.CANNOT_ROLLBACK)
 
 				response = shaker.to_json()
 
 			else:
-				raise Exception(MESSAGE.SHAKER_NOT_FOUND)
+				return response_error(MESSAGE.SHAKER_NOT_FOUND, CODE.SHAKER_NOT_FOUND)
 
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
@@ -523,18 +345,22 @@ def create_bet():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		odds = Decimal(data.get('odds'))
+		amount = Decimal(data.get('amount'))
+		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
 		if user.free_bet > 0:
-			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None:
-			raise Exception(MESSAGE.INVALID_OUTCOME)
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		elif outcome.result != -1:
-			raise Exception(MESSAGE.OUTCOME_HAS_RESULT)
+			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			task = Task(
@@ -546,10 +372,57 @@ def create_bet():
 			db.session.add(task)
 			db.session.commit()
 
-			return response_ok(task.to_json())
+			# this is for frontend
+			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+			response = {}
+			if len(handshakes) == 0:
+				response['match'] = 0
+			else:
+				response['match'] = 1
+			return response_ok(response)
 
 		else:
-			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
+			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+@handshake_routes.route('/uninit_free_bet/<int:handshake_id>', methods=['POST'])
+@login_required
+def uninit_free_bet(handshake_id):
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.free_bet==1)).first()
+		if handshake is not None:
+			if handshake_bl.can_uninit(handshake) == False:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)
+			else:
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				if outcome is None:
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+				else:
+					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
+					db.session.flush()
+					update_feed.delay(handshake.id)
+					
+					task = Task(
+						task_type=CONST.TASK_TYPE['FREE_BET'],
+						data=json.dumps({"handshake_id": handshake_id}),
+						action=CONST.TASK_ACTION['UNINIT'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.commit()
+
+					return response_ok(handshake.to_json())
+					
+		else:
+			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
+
 
 	except Exception, ex:
 		db.session.rollback()
@@ -566,27 +439,66 @@ def collect_free_bet():
 
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		offchain = data.get('offchain', '')
 		if len(offchain) == 0:
-			raise Exception(MESSAGE.MISSING_OFFCHAIN)
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
+		h = []
+		s = []
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		if 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
 			if len(msg) != 0:
-				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+				return response_error(msg, CODE.CANNOT_WITHDRAW)
+			
+			hs = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(hs.outcome_id)
+			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
+
+			data['hid'] = outcome.hid
+			data['winner'] = shaker.from_address
 
 		else:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			msg = handshake_bl.can_withdraw(handshake)
 			if len(msg) != 0:
-				raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
+				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+
+			data['hid'] = outcome.hid
+			data['winner'] = handshake.from_address
+
+
+		handshakes = []
+		shakers = []
+		response = {}
+		# update status
+		for hs in h:
+			hs.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.flush()
+			handshakes.append(hs)
+
+			if hs.id == offchain:
+				response = hs.to_json()
+			
+		for sk in s:
+			sk.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.flush()
+			shakers.append(sk)
+
+			if sk.id == offchain:
+				response = sk.to_json()
+
+		# add task
 		task = Task(
 			task_type=CONST.TASK_TYPE['FREE_BET'],
 			data=json.dumps(data),
@@ -596,7 +508,8 @@ def collect_free_bet():
 		db.session.add(task)
 		db.session.commit()
 
-		return response_ok(task.to_json())
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -611,10 +524,10 @@ def has_received_free_bet():
 		user = User.find_user_with_id(uid)
 
 		if user.free_bet > 0:
-			raise Exception(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY)
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
-			raise Exception(MESSAGE.MAXIMUM_FREE_BET)
+			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 		return response_ok()
 	except Exception, ex:

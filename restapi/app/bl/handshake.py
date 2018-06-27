@@ -17,7 +17,6 @@ from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREF
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
 from app.tasks import update_feed
-from datetime import datetime
 from app.helpers.message import MESSAGE
 from datetime import datetime
 
@@ -31,9 +30,9 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		print 'outcome result is {}'.format(outcome.result)
 		return None, None
 
-	handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+	handshakes = db.session.query(Handshake).filter(or_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
 	print 'handshakes {}'.format(handshakes)
-	shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+	shakers = db.session.query(Shaker).filter(or_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
@@ -237,15 +236,11 @@ def rollback_shake_state(shaker):
 	if shaker is None:
 		raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
-	if shaker.status == HandshakeStatus['STATUS_SHAKER_ROLLBACK']:
-		raise Exception(MESSAGE.SHAKER_ROLLBACK_ALREADY)
-
 	shaker.status = HandshakeStatus['STATUS_SHAKER_ROLLBACK']
 	handshake = db.session.query(Handshake).filter(and_(Handshake.id==shaker.handshake_id, Handshake.status==HandshakeStatus['STATUS_INITED'])).first()
 	if handshake is None:
 		raise Exception(MESSAGE.HANDSHAKE_NOT_FOUND)
 
-	print '{}, {}, {}, {}'.format(handshake.remaining_amount, shaker.odds, shaker.amount, shaker.amount)
 	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
 	db.session.flush()
 
@@ -254,7 +249,7 @@ def rollback_shake_state(shaker):
 
 def is_init_pending_status(handshake):
 	if handshake.status == HandshakeStatus['STATUS_PENDING'] and handshake.bk_status == HandshakeStatus['STATUS_PENDING']:
-		return True
+		return True	
 	return False
 
 
@@ -266,7 +261,7 @@ def update_handshakes_feed(handshakes, shakers):
 
 	if shakers is not None:
 		for shaker in shakers:
-			update_feed.delay(shaker.handshake_id, shaker.id)
+			update_feed.delay(shaker.handshake_id)
 
 
 def can_withdraw(handshake, shaker=None):
@@ -297,6 +292,29 @@ def can_withdraw(handshake, shaker=None):
 		if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
 			return MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE
 	else:
-		return MESSAGE.INVALID_OUTCOME
+		return MESSAGE.OUTCOME_INVALID
 
 	return ''
+
+def can_uninit(handshake):
+	if handshake is None:
+		return False
+	
+	n = time.mktime(datetime.now().timetuple())
+	if len(handshake.shakers.all()) == 0:
+		ds = time.mktime(handshake.date_created.timetuple()) 
+		if n - ds > 300: #5 minutes
+			return True
+
+	else:
+		for sk in handshake.shakers.all():
+			if sk.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+				return False
+			else:
+				ds = time.mktime(sk.date_created.timetuple()) 
+				if n - ds < 300:
+					return False
+
+		return True
+
+	return False

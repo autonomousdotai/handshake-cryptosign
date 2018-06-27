@@ -4,15 +4,13 @@ import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
-from flask import Blueprint, request, current_app as app
+from flask import g, Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
-from app.helpers.utils import parse_date_string_to_timestamp
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome
-from app.helpers.message import MESSAGE
-from flask import g
+from app.models import User, Match, Outcome, Task
+from app.helpers.message import MESSAGE, CODE
 from flask_jwt_extended import jwt_required
 
 match_routes = Blueprint('match', __name__)
@@ -30,7 +28,7 @@ def matches():
 
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.result == -1 or outcome.hid is None:
+				if outcome.result == -1 and outcome.hid is not None:
 					outcome_json = outcome.to_json()
 					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
 					outcome_json["market_odds"] = odds
@@ -52,15 +50,14 @@ def add():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		matches = []
-		outcomes = []
 		response_json = []
 		for item in data:
 
-			if match_bl.is_validate_match_time(item) == False:
-				raise Exception(MESSAGE.INVALID_DATA)
+			if match_bl.is_validate_match_time(item) == False:				
+				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -70,7 +67,6 @@ def add():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
-				public=item['public'],
 				source=item['source'],
 				market_fee=int(item['market_fee']),
 				date=item['date'],
@@ -85,12 +81,14 @@ def add():
 				for outcome_data in item['outcomes']:
 					outcome = Outcome(
 						name=outcome_data['name'],
-						match_id=match.id
+						match_id=match.id,
+						public=item.get('public', 0)
 					)
-					outcomes.append(outcome)
+					db.session.add(outcome)
+					db.session.flush()
+
 			response_json.append(match.to_json())
 
-		db.session.add_all(outcomes)
 		db.session.commit()
 
 		return response_ok(response_json)
@@ -109,7 +107,6 @@ def create_market():
 			data = json.load(f)
 
 		matches = []
-		outcomes = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
@@ -123,7 +120,6 @@ def create_market():
 								date=item['date'],
 								reportTime=item['reportTime'],
 								disputeTime=item['disputeTime']
-								#date=parse_date_string_to_timestamp(item['date'])
 							)
 					matches.append(match)
 					db.session.add(match)
@@ -133,9 +129,19 @@ def create_market():
 						name='{} wins'.format(item['homeTeamName']),
 						match_id=match.id
 					)
-					outcomes.append(outcome)
+					db.session.add(outcome)
+					db.session.flush()
 
-		db.session.add_all(outcomes)
+					# add Task
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(match.to_json()),
+						action=CONST.TASK_ACTION['CREATE_MARKET'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.flush()
+
 		db.session.commit()
 		return response_ok()
 	except Exception, ex:
@@ -145,7 +151,7 @@ def create_market():
 
 @match_routes.route('/remove/<int:id>', methods=['POST'])
 @login_required
-# @admin_required
+@admin_required
 def remove(id):
 	try:
 		match = Match.find_match_by_id(id)
@@ -167,51 +173,47 @@ def report(match_id):
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		match = Match.find_match_by_id(match_id)
 		if match is not None:
 			result = data['result']
-			'''
-			homeScore = data['homeScore'] if 'homeScore' in data else ''
-			awayScore = data['awayScore'] if 'awayScore' in data else ''
-
-			if homeScore is None:
-				return response_error(MESSAGE.INVALID_MATCH_RESULT)
-			
-			if awayScore is None:
-				return response_error(MESSAGE.INVALID_MATCH_RESULT)
-
-			match.homeScore = homeScore
-			match.awayScore = awayScore
-			'''
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			
-			if result['side'] is None:
-				return response_error(MESSAGE.INVALID_OUTCOME_RESULT)
-				
-			if result['outcome_id'] is None:
-				return response_error(MESSAGE.INVALID_OUTCOME_RESULT)
+			for item in result:
+				if 'side' not in item:
+					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
+					
+				if 'outcome_id' not in item:
+					return response_error(MESSAGE.OUTCOME_INVALID)
 
-			outcome = Outcome.find_outcome_by_id(result['outcome_id'])
-			if outcome is not None:
-				if outcome.result != -1:
-					return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
+				if outcome is not None:
+					if outcome.result != -1:
+						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
-				elif match_bl.is_exceed_report_time(outcome.match_id):
-					return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
+					elif match_bl.is_exceed_report_time(outcome.match_id):
+						return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
 
-			else:
-				return response_error(MESSAGE.INVALID_OUTCOME)
+				else:
+					return response_error(MESSAGE.OUTCOME_INVALID)
 
-			dataReport = {}
-			dataReport['hid'] = outcome.hid
-			dataReport['outcome_result'] = result['side']
-			requests.post(g.BLOCKCHAIN_SERVER_ENDPOINT + '/cryptosign/report',
-							json=dataReport,
-							headers={"Content-Type": "application/json"})
+				report = {}
+				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + item['side']
+				report['hid'] = outcome.hid
+				report['outcome_result'] = item['side']
 
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(report),
+					action=CONST.TASK_ACTION['REPORT'],
+					status=-1
+				)
+				db.session.add(task)
+				db.session.flush()
+
+			db.session.commit()
 			return response_ok()
 		else:
 			return response_error(MESSAGE.MATCH_NOT_FOUND)

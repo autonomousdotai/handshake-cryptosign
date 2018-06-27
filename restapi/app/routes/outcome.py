@@ -2,9 +2,11 @@ from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app import db
-from app.models import User, Outcome, Match
-from app.helpers.message import MESSAGE
+from app.models import User, Outcome, Match, Task
+from app.helpers.message import MESSAGE, CODE
 
+import json
+import app.constants as CONST
 import app.bl.outcome as outcome_bl
 
 outcome_routes = Blueprint('outcome', __name__)
@@ -26,18 +28,27 @@ def outcomes():
 
 @outcome_routes.route('/init_default_outcomes', methods=['POST'])
 @login_required
-# @admin_required
+@admin_required
 def init_default_outcomes():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		start = data['start']
-		end = data['end']
-		outcome_data = data['outcomes']
-
-		outcome_bl.init_default_outcomes(start, end, outcome_data)
+		for item in data:
+			outcome_id = item['outcome_id']
+			outcome_data = item['outcomes']
+			for o in outcome_data:
+				o['id'] = outcome_id
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(o),
+					action=CONST.TASK_ACTION['INIT'],
+					status=-1
+				)
+				db.session.add(task)
+				db.session.flush()
+		
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)
@@ -49,11 +60,11 @@ def add(match_id):
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		match = Match.find_match_by_id(match_id)
 		if match is None:
-			return response_error(MESSAGE.MATCH_NOT_FOUND)
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 		outcomes = []
 		response_json = []
@@ -88,7 +99,7 @@ def remove(outcome_id):
 			db.session.commit()
 			return response_ok("{} has been deleted!".format(outcome.id))
 		else:
-			return response_error(MESSAGE.INVALID_OUTCOME)
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 	except Exception, ex:
 		db.session.rollback()

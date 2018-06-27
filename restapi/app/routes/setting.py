@@ -7,7 +7,7 @@ from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app import db
 from app.models import Setting
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 
 setting_routes = Blueprint('setting', __name__)
 
@@ -33,7 +33,7 @@ def add():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		settings = []
 		response_json = []
@@ -82,7 +82,7 @@ def update(id):
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		setting = Setting.find_setting_by_id(id)
 		if setting is not None:
@@ -96,7 +96,7 @@ def update(id):
 
 			return response_ok(message='{} has been updated'.format(setting.id))
 		else:
-			return response_error(message=MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 	except Exception, ex:
 		db.session.rollback()

@@ -13,19 +13,19 @@ class MESSAGE(object):
 	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
 
 	# OUTCOME
-	INVALID_OUTCOME = 'Please check your outcome id'
-	INVALID_OUTCOME_RESULT = 'Please check your outcome result'
+	OUTCOME_INVALID = 'Please check your outcome id'
+	OUTCOME_INVALID_RESULT = 'Please check your outcome result'
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
 
 	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
-	INVALID_MATCH_RESULT = 'Match result invalid. Please try again.'
+	MATCH_INVALID_RESULT = 'Match result invalid. Please try again.'
 	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
 	MATCH_CANNOT_SET_RESULT = 'The report time is exceed!'
+	MATCH_INVALID_TIME = 'Please double check your closing time, report time and dispute time'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
-	USER_INVALID_INPUT = 'Please make sure your email and password are correct.'
 	USER_CANNOT_REGISTRY = 'Sorry, we were unable to register you. Please contact human@autonomous.ai for support.'
 	USER_INVALID = 'Invalid user'
 	USER_NEED_PURCHASE_PRODUCT = 'Please purchase to sign more.'
@@ -49,7 +49,7 @@ class MESSAGE(object):
 	HANDSHAKE_DESC_TOO_LONG = 'Your note is too long. It should be less than 1000 characters.'
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
-	HANDSHAKE_CANNOT_UNINIT = 'There is shakers. Therefore you cannot refund!'
+	HANDSHAKE_CANNOT_UNINIT = 'There is an error happens or you are calling cancel too fast. Need wait for 5 minutes!'
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 
@@ -62,3 +62,66 @@ class MESSAGE(object):
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'
 	WALLET_RECEIVE_ETH_ALREADY = 'You can only request free Handshakes once.'
 	WALLET_REJECT_FREE_ETH = 'Your account can\'t get free ETH.'
+
+
+class CODE(object):
+	# ERROR
+	INVALID_DATA = '1000' 													
+	INVALID_BET = '1001' 													
+	INVALID_ADDRESS = '1002' 												
+	MISSING_OFFCHAIN = '1003' 												
+	INVALID_ODDS = '1004' 													
+	MAXIMUM_FREE_BET = '1005' 												
+	CANNOT_WITHDRAW = '1006' 												
+	CANNOT_ROLLBACK = '1007' 												
+
+	# OUTCOME
+	OUTCOME_INVALID = '1008'												
+	OUTCOME_INVALID_RESULT = '1009'											
+	OUTCOME_HAS_RESULT = '1010' 											
+
+	# MATCH
+	MATCH_NOT_FOUND = '1011'												
+	MATCH_INVALID_RESULT = '1011' 											
+	MATCH_RESULT_EMPTY = '1012'												
+	MATCH_CANNOT_SET_RESULT = '1013'	
+	MATCH_INVALID_TIME = '1043'									
+
+	# USER
+	USER_INVALID_EMAIL = '1014'												
+	USER_CANNOT_REGISTRY = '1015' 											
+	USER_INVALID = '1016'													
+	USER_NEED_PURCHASE_PRODUCT = '1017'										
+	USER_INVALID_ACCESS_TOKEN = '1018' 										
+	USER_INVALID_SOURCE = '1019' 											
+	USER_RECEIVED_FREE_BET_ALREADY = '1020' 								
+
+	# HANSHAKE
+	HANDSHAKE_NOT_ENOUGH_GAS = '1021' 										
+	HANDSHAKE_CANNOT_SEND_TO_MYSELF = '1021' 								
+	HANDSHAKE_EMPTY = '1022' 												
+	HANDSHAKE_NO_PERMISSION = '1023' 										
+	HANDSHAKE_NO_CONTRACT_FILE = '1024' 									
+	HANDSHAKE_NOT_FOUND = '1025' 											
+	HANDSHAKE_TERM_AND_VALUE_NOT_MATCH = '1026' 							
+	HANDSHAKE_VALUE_GREATER_THAN_0 = '1027' 								
+	HANDSHAKE_AMOUNT_INVALID = '1028' 										
+	HANDSHAKE_PUBLIC_INVALID = '1029' 										
+	HANDSHAKE_INVALID_WALLET_ADDRESS = '1030' 								
+	HANDSHAKE_ERROR_ANYTHING = '1031' 										
+	HANDSHAKE_DESC_TOO_LONG = '1032' 										
+	HANDSHAKE_NO_TYPE = '1033' 												
+	HANDSHAKE_INVALID_BETTING_TYPE = '1034' 								
+	HANDSHAKE_CANNOT_UNINIT = '1035' 										
+	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
+	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 								
+
+	# SHAKER
+	SHAKER_NOT_FOUND = '1038' 												
+	SHAKER_ROLLBACK_ALREADY = '1039' 										
+
+
+	# WALLET
+	WALLET_EXCEED_FREE_ETH = '1040' 										
+	WALLET_RECEIVE_ETH_ALREADY = '1041' 									
+	WALLET_REJECT_FREE_ETH = '1042' 										

@@ -602,6 +602,68 @@ class TestHandshakeBl(BaseTestCase):
 		expected = True
 		self.assertEqual(actual, expected)
 
+    def test_can_uninit(self):
+        self.clear_data_before_test()
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        db.session.add(handshake)
+        db.session.commit()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = False
+        self.assertEqual(actual, expected)
+
+        # -----
+        shaker = Shaker(
+					shaker_id=88,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+                    status=-1
+				)
+        db.session.add(shaker)
+        db.session.commit()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = False
+        self.assertEqual(actual, expected)
+
+        # decrease date create of shaker
+        shaker.date_created = datetime(2018, 6, 12)
+        db.session.merge(shaker)
+        db.session.flush()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = True
+        self.assertEqual(actual, expected)
+
+
+        # set shaker status = 2
+        shaker.status = 2
+        db.session.merge(shaker)
+        db.session.flush()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = False
+        self.assertEqual(actual, expected)
+
 
     def test_rollback_shake_state(self):
         self.clear_data_before_test()
@@ -677,7 +739,7 @@ class TestHandshakeBl(BaseTestCase):
         )
 
 		actual = handshake_bl.can_withdraw(handshake, shaker=None)
-		self.assertEqual(actual, MESSAGE.INVALID_OUTCOME)
+		self.assertEqual(actual, MESSAGE.OUTCOME_INVALID)
 
 		# -----
 		handshake = Handshake(

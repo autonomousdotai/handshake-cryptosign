@@ -347,6 +347,10 @@ def create_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
+		odds = Decimal(data.get('odds'))
+		amount = Decimal(data.get('amount'))
+		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+
 		if user.free_bet > 0:
 			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
@@ -369,9 +373,13 @@ def create_bet():
 			db.session.commit()
 
 			# this is for frontend
-
-
-			return response_ok(task.to_json())
+			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+			response = {}
+			if len(handshakes) == 0:
+				response['match'] = 0
+			else:
+				response['match'] = 1
+			return response_ok(response)
 
 		else:
 			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)

@@ -1,0 +1,6 @@
+db: root:123456@tcp(localhost:3306)/handshake-cryptosign?charset=utf8&parseTime=True&loc=Local
+blockchainNetwork: https://rinkeby.infura.io/
+predictionHandshakeAddress: 0xaddress
+etherScanEndpoint: https://api.etherscan.io/api
+etherScanKey: ETHERSCAN_KEY 
+hookEndpoint: http://localhost:5000

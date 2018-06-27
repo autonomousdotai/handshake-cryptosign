@@ -1,3 +1,6 @@
+# vim
+*~
+*.swp
 # mac fucking
 .DS_Store
 # vscode editor
@@ -19,7 +22,7 @@ event/vendor
 event/config/*.yaml
 event/config/*.json
 event/vendor
-event/logs
+event/logs/*
 
 # node-bl ignore
 nodebl/vendor

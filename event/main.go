@@ -25,12 +25,12 @@ func main() {
     fmt.Println("Start cron")
     appCron := cron.New()
     // 
-    appCron.AddFunc("@every 20s", func() {
-        fmt.Println("scan tx every 20s")
+    appCron.AddFunc("@every 30s", func() {
+        fmt.Println("scan tx every 30s")
         go cp.ScanTx()
     })
-    appCron.AddFunc("@every 1m", func() {
-        fmt.Println("sync tx every 1m")
+    appCron.AddFunc("@every 5m", func() {
+        fmt.Println("sync tx every 5m")
         go cp.SyncTx()
     })
     appCron.Start()

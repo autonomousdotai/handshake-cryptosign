@@ -24,7 +24,7 @@ def matches():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		public = data.get('public', 1)
+		public = int(data.get('public', 1))
 		response = []
 
 		if public == 0:

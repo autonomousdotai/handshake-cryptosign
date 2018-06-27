@@ -8,11 +8,11 @@ const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
 const reportTimeConfig = configs.network[configs.network_id].reportTimeConfig || 2;
 
-const gennerateExtraData = (match, outcome) => {
+const gennerateExtraData = (match_date, match_name, outcome_name) => {
     return JSON.stringify({
-        event_name: match.name,
-        event_predict: outcome.name,
-        date: moment((match.date || 0) * 1000).format("MMM DD")
+        event_name: match_name,
+        event_predict: outcome_name,
+        date: moment((match_date || 0) * 1000).format("MMM DD")
     });
 };
 
@@ -26,6 +26,7 @@ const gennerateExtraData = (match, outcome) => {
  * @param {string} options.currency
  * @param {number} options.side
  * @param {string} options.from_address
+ * @param {boolean} options.isFreeBet
  */
 const submitInitAPI = (options) => {
     return new Promise((resolve, reject) => {
@@ -52,16 +53,16 @@ const submitInitAPI = (options) => {
                 'Fcm-Token': configs.fcm_token
             }
         })
-        .then(async response => {
+        .then(response => {
             if (response.data.status == 1 && response.data.data.length != 0) {
                 const results = [];
                 response.data.data.forEach(item => {
                     if (item.type == 'init') {
                         results.push(Object.assign({
-                            contract_method: 'init',
+                            contract_method: options.isFreeBet ? 'initTestDriveTransaction' : 'init',
                             hid: options.hid,
                             odds: parseInt(item.odds * 100),
-                            value: web3.utils.toWei(`${item.amount}`),
+                            value: web3.utils.toWei(`${item.amount}`), //TODO: check
                             offchain: item.offchain,
                             side: item.side,
                             options_data: {
@@ -71,11 +72,11 @@ const submitInitAPI = (options) => {
                         }));
                     } else if (item.type == 'shake') {
                         results.push(Object.assign({
-                            contract_method: 'shake',
+                            contract_method: options.isFreeBet ? 'shakeTestDriveTransaction' : 'shake',
                             hid: options.hid,
                             odds: parseInt(item.odds * 100),
-                            amount: web3.utils.toWei(`${item.amount}`),
-                            maker: item.from_address,
+                            amount: web3.utils.toWei(`${item.amount}`), //TODO: check
+                            maker: item.maker_address,
                             offchain: item.offchain,
                             side: item.side,
                             options_data: {

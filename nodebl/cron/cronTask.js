@@ -53,7 +53,7 @@ const submitMultiTnx = (arr) => {
 						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
 					break;
 					case 'uninitForTrial':
-						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, parseFloat(onchainData.value), onchainData.offchain, nonce + index, item);
 					break;
 				}
 				index += 1;
@@ -73,39 +73,25 @@ const submitMultiTnx = (arr) => {
 	});
 }
 
-
-const init = (params) => {
-	return new Promise((resolve, reject) => {
-		if (offchain.indexOf('_m') != -1) {
-			return resolve([Object.assign({
-				contract_method: 'initTestDriveTransaction'
-			}, params)]);
-		} else {
-			return resolve([Object.assign({
-				contract_method: 'shakeTestDriveTransaction',
-				maker: params.maker_address,
-				makerOdds: parseInt(params.maker_odds * 100)
-			}, params)]);
-		}
-	});
-};
-
 /**
  * 
- * @param {number} params.handshake_id
+ * @param {number} params.hid
+ * @param {number} params.side
+ * @param {string} params.maker
+ * @param {number} params.outcome_result
+ * @param {string} params.offchain
  */
-const unInitFreeBet = (params, task) => {
-	return new Promise( async (resolve, reject) => {
-		try {
-			const handshake = await handshakeDAO.getById(params.handshake_id);
-		} catch (e) {
-			await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_DATABASE_EXCEPTION);
-			return reject({
-				err_type: 'UNINIT_FREE_BET_EXCEPTION',
-				error: e,
-				options_data: { params }
-			});
-		}
+const unInitFreeBet = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'uninitForTrial',
+			hid: params.hid,
+			side: params.side,
+			odds: params.odds,
+			maker: params.maker,
+			value: params.value,
+			offchain: params.offchain
+		}])
 	});
 };
 
@@ -114,30 +100,18 @@ const unInitFreeBet = (params, task) => {
  * @param {number} params.odds
  * @param {number} params.id // outcome_id
  * @param {number} params.side
+ * @param {number} params.hid
+ * @param {number} params.match_date
+ * @param {string} params.match_name
+ * @param {string} params.outcome_name
  * @param {Object} task
+ * @param {boolean} isFreeBet
  */
-const initRealBet = (params, task) => {
-	return new Promise(async (resolve, reject) => {
+const initBet = (params, task, isFreeBet) => {
+	return new Promise((resolve, reject) => {
 		try {
-			const outcome = await outcomeDAO.getById(params.id);
-			if (!outcome) {
-				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_NOT_FOUND_IN_DATABASE);
-				return reject({
-					err_type: 'INIT_REAL_BET_OUTCOME_NOT_FOUND',
-					options_data: { params }
-				});
-			}
 
-			const match = await matchDAO.getMatchById(outcome.match_id);
-			if (!match ) {
-				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_NOT_FOUND_IN_DATABASE);
-				return reject({
-					err_type: 'INIT_REAL_BET_MATCH_NOT_FOUND',
-					options_data: { params }
-				});
-			}
-
-			if (outcome.hid == null || outcome.hid == undefined || outcome.hid < 0) {
+			if (params.hid == null || params.hid == 'null' || params.hid == undefined) {
 				console.log(`NOT FOUND HID, UPDATE TASK'S STATUS TO: WAITING`);
 				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_WAITING_ONCHAIN_HID)
 				return resolve(undefined);
@@ -145,14 +119,15 @@ const initRealBet = (params, task) => {
 
 			const dataRequest = {
 				type: 3,
-				extra_data: utils.gennerateExtraData(match, outcome),
-				outcome_id: outcome.id,
+				extra_data: utils.gennerateExtraData(params.match_date, params.match_name, params.outcome_name),
+				outcome_id: params.id,
 				odds: params.odds, // TODO: check value 
 				amount: amountDefaultValue + '',
 				currency: 'ETH',
 				side: params.side,
 				from_address: ownerAddress, // TODO: check this address
-				hid: outcome.hid
+				hid: params.hid,
+				isFreeBet: isFreeBet
 			};
 
 			utils.submitInitAPI(dataRequest)
@@ -239,12 +214,11 @@ const asyncScanTask = () => {
 							.then( resultUpdate => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
-			
 								switch (task.task_type) {
 									case 'REAL_BET':
 										switch (task.action) {
 											case 'INIT':
-												processTaskFunc = initRealBet(params, task);
+												processTaskFunc = initBet(params, task, false);
 											break;
 											case 'REPORT':
 												processTaskFunc = report(params);
@@ -258,10 +232,10 @@ const asyncScanTask = () => {
 									case 'FREE_BET':
 										switch (task.action) {
 											case 'INIT':
-												processTaskFunc = init(params, task);
+												processTaskFunc = initBet(params, task, true);
 											break;
 											case 'UNINIT':
-												processTaskFunc = unInitFreeBet(params, task);
+												processTaskFunc = unInitFreeBet(params);
 											break;
 											case 'COLLECT':
 												processTaskFunc = collect(params);
@@ -281,6 +255,7 @@ const asyncScanTask = () => {
 			
 								processTaskFunc
 								.then(result => {
+									console.log('===========');
 									return resolve({
 										onchainData: result,
 										task: task.toJSON()

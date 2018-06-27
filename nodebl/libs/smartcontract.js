@@ -58,6 +58,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
         return resolve({
           raw: rawTransaction,
           hash: hash,
+          task: _options.task
         });
       })
       .on('receipt', (receipt) => {
@@ -66,7 +67,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
         .catch(console.error);
 
         console.log(err);
@@ -124,6 +125,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         return resolve({
           raw: rawTransaction,
           hash: hash,
+          task: _options.task
         });
       })
       .on('receipt', (receipt) => {
@@ -132,7 +134,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
         .catch(console.error);
 
         console.log(err);
@@ -201,7 +203,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
         .catch(console.error);
 
         console.log(err);
@@ -271,7 +273,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
         .catch(console.error);
 
         console.log(err);
@@ -341,7 +343,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
         .catch(console.error);
 
         console.log(err);
@@ -420,7 +422,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, _offchain, JSON.stringify(rawTransaction))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
 
         console.log(err);
         return reject({
@@ -490,7 +492,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
         resolve(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, offchain, JSON.stringify(txParams))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, offchain, JSON.stringify(Object.assign(txParams, { err: err })))
         .catch(console.error);
 
         console.log(err);
@@ -514,6 +516,77 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
   });
 };
 
+
+const uninitForTrial = (_hid, _side, _odds, _maker, _value, _nonce, _offchain, _options) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      console.log('uninitForTrial');
+      console.log(_hid, _side, _odds, _maker, _value, _nonce, _offchain, _options);
+
+      const contractAddress = bettingHandshakeAddress;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
+      const value           = web3.utils.toHex(web3.utils.toWei(_value));
+      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+          from: ownerAddress
+      });
+
+      const txParams = {
+        gasPrice: gasPriceWei,
+        gasLimit: 350000,
+        to: contractAddress,
+        from: ownerAddress,
+        nonce: '0x' + _nonce.toString(16),
+        chainId: network_id,
+        data: contract.methods.uninitForTrial(_hid, _side, _odds, _maker, value, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+
+      const tx = new ethTx(txParams);
+      let tnxHash = -1;
+      tx.sign(privKey);
+
+      const serializedTx = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+        return resolve({
+          raw: txParams,
+          hash: hash,
+          task: _options.task
+        });
+      })
+      .on('receipt', (receipt) => {
+        console.log('uninitForTrial tnxHash: ', receipt);
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', 1, network_id, offchain, JSON.stringify(txParams))
+        .catch(console.error);
+        resolve(receipt);
+      })
+      .on('error', err => {
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, offchain, JSON.stringify(Object.assign(txParams, { err: err })))
+        .catch(console.error);
+
+        console.log(err);
+        return reject({
+          err_type: `UNINIT_FOR_TRIAL_TNX_FAIL`,
+          error: err,
+          options_data: {
+            task: _options.task
+          }
+        });
+      });
+    } catch (e) {
+      reject({
+        err_type: `UNINIT_FOR_TRIAL_TNX_EXCEPTION`,
+        error: e,
+        options_data: {
+          task: _options.task
+        }
+      });
+    }
+  });
+};
+
 module.exports = {
   submitInitTransaction,
   createMarketTransaction,
@@ -522,5 +595,6 @@ module.exports = {
   reportOutcomeTransaction,
   submitShakeTransaction,
   submitShakeTestDriveTransaction,
-  submitCollectTestDriveTransaction
+  submitCollectTestDriveTransaction,
+  uninitForTrial
 };

@@ -166,6 +166,7 @@ def init():
 			# response data
 			arr_hs = []
 			hs_json = handshake.to_json()
+			hs_json['hid'] = outcome.hid
 			hs_json['type'] = 'init'
 			hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 			arr_hs.append(hs_json)
@@ -224,6 +225,7 @@ def init():
 				shaker_json = shaker.to_json()
 				shaker_json['maker_address'] = handshake.from_address
 				shaker_json['maker_odds'] = handshake.odds
+				hs_json['hid'] = outcome.hid
 				shaker_json['type'] = 'shake'
 				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(shaker_json)
@@ -249,6 +251,7 @@ def init():
 				hs_feed.append(handshake)			
 
 				hs_json = handshake.to_json()
+				hs_json['hid'] = outcome.hid
 				hs_json['type'] = 'init'
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 				arr_hs.append(hs_json)
@@ -365,6 +368,7 @@ def create_bet():
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
+			user.free_bet = 1
 			task = Task(
 				task_type=CONST.TASK_TYPE['FREE_BET'],
 				data=json.dumps(data),
@@ -411,9 +415,17 @@ def uninit_free_bet(handshake_id):
 					db.session.flush()
 					update_feed.delay(handshake.id)
 					
+					data = {
+						'hid': outcome.hid,
+						'side': handshake.side,
+						'odds': handshake.odds,
+						'maker': handshake.from_address,
+						'value': handshake.amount,
+						'offchain': CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id)
+					}
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
-						data=json.dumps({"handshake_id": handshake_id}),
+						data=json.dumps(data),
 						action=CONST.TASK_ACTION['UNINIT'],
 						status=-1
 					)

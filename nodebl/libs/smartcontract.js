@@ -55,6 +55,10 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', 1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: rawTransaction,
           hash: hash,
@@ -62,12 +66,10 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', 1, network_id, _offchain, JSON.stringify(rawTransaction))
-        .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);
@@ -122,6 +124,10 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', 1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: rawTransaction,
           hash: hash,
@@ -129,12 +135,10 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
-        .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);
@@ -191,6 +195,10 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', 1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: rawTransaction,
           hash: hash,
@@ -198,12 +206,10 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', 1, network_id, _offchain, JSON.stringify(rawTransaction))
-        .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);
@@ -261,6 +267,10 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', 1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: rawTransaction,
           hash: hash,
@@ -268,12 +278,10 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
-        .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);
@@ -331,6 +339,10 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', 1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: rawTransaction,
           hash: hash,
@@ -338,12 +350,10 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', 1, network_id, _offchain, JSON.stringify(rawTransaction))
-        .catch(console.error);
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);
@@ -410,6 +420,10 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', 1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: rawTransaction,
           hash: hash,
@@ -417,12 +431,12 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         });
       })
       .on('receipt', (receipt) => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', 1, network_id, _offchain, JSON.stringify(rawTransaction))
         console.log('createMarketTransactionReceipt');
         console.log(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
@@ -479,6 +493,10 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', 1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        .catch(console.error);
+
         return resolve({
           raw: txParams,
           hash: hash,
@@ -487,12 +505,9 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
       })
       .on('receipt', (receipt) => {
         console.log('report tnxHash: ', receipt);
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', 1, network_id, offchain, JSON.stringify(txParams))
-        .catch(console.error);
-        resolve(receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, offchain, JSON.stringify(Object.assign(txParams, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);
@@ -550,7 +565,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, offchain, JSON.stringify(txParams))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -563,7 +578,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
         console.log('uninitForTrial tnxHash: ', receipt);
       })
       .on('error', err => {
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, offchain, JSON.stringify(Object.assign(txParams, { err: err })))
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options })))
         .catch(console.error);
 
         console.log(err);

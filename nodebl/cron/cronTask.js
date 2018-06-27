@@ -4,10 +4,7 @@ const configs = require('../configs');
 
 // daos
 const taskDAO = require('../daos/task');
-const matchDAO = require('../daos/match');
-const outcomeDAO = require('../daos/outcome');
 const settingDAO = require('../daos/setting');
-const handshakeDAO = require('../daos/handshake');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
@@ -110,7 +107,7 @@ const unInitFreeBet = (params) => {
  * @param {boolean} isFreeBet
  */
 const initBet = (params, task, isFreeBet) => {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		try {
 
 			if (params.hid == null || params.hid == 'null' || params.hid == undefined) {
@@ -257,13 +254,13 @@ const asyncScanTask = () => {
 			
 								processTaskFunc
 								.then(result => {
-									console.log('===========');
 									return resolve({
 										onchainData: result,
 										task: task.toJSON()
 									});
 								})
 								.catch(err => {
+
 									return reject(err);
 								});
 							})

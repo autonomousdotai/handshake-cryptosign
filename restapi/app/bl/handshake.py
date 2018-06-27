@@ -249,7 +249,7 @@ def rollback_shake_state(shaker):
 
 def is_init_pending_status(handshake):
 	if handshake.status == HandshakeStatus['STATUS_PENDING'] and handshake.bk_status == HandshakeStatus['STATUS_PENDING']:
-		return True
+		return True	
 	return False
 
 
@@ -261,7 +261,7 @@ def update_handshakes_feed(handshakes, shakers):
 
 	if shakers is not None:
 		for shaker in shakers:
-			update_feed.delay(shaker.handshake_id, shaker.id)
+			update_feed.delay(shaker.handshake_id)
 
 
 def can_withdraw(handshake, shaker=None):

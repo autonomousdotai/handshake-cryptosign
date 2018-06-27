@@ -66,7 +66,7 @@ def event():
 		if shakers is not None:
 			for shaker in shakers:
 				response_json.append(shaker.to_json())
-				update_feed.delay(shaker.handshake_id, shaker.id)
+				update_feed.delay(shaker.handshake_id)
 				if '__shake' in event_name:
 					add_shuriken(shaker.shaker_id)
 

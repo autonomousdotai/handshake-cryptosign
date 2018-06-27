@@ -24,7 +24,7 @@ from app.helpers.utils import is_equal
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed, add_free_bet, withdraw_free_bet
+from app.tasks import update_feed
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -217,7 +217,7 @@ def init():
 				db.session.add(shaker)
 				db.session.flush()
 
-				update_feed.delay(handshake.id, shaker.id)
+				update_feed.delay(shaker.handshake_id)
 				
 				handshake_json = handshake.to_json()
 				shakers = handshake_json['shakers']
@@ -292,13 +292,12 @@ def rollback():
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
-			
-			if handshake is not None:				
+			if handshake is not None:	
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
-					handshake.status = HandshakeStatus['STATUS_MAKER_FAILED_INIT']
+					handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
 					if handshake.free_bet == 1:
 						user.free_bet = 0
-
+					
 					db.session.flush()
 					handshakes.append(handshake)
 

@@ -49,7 +49,7 @@ class MESSAGE(object):
 	HANDSHAKE_DESC_TOO_LONG = 'Your note is too long. It should be less than 1000 characters.'
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
-	HANDSHAKE_CANNOT_UNINIT = 'There is shakers. Therefore you cannot refund!'
+	HANDSHAKE_CANNOT_UNINIT = 'There is an error happens or you are calling cancel too fast. Need wait for 5 minutes!'
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 

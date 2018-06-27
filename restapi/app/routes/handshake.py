@@ -4,7 +4,7 @@ import base64
 import time
 import os
 import sys
-import json
+import simplejson as json
 import logging
 
 import app.constants as CONST
@@ -225,7 +225,7 @@ def init():
 				shaker_json = shaker.to_json()
 				shaker_json['maker_address'] = handshake.from_address
 				shaker_json['maker_odds'] = handshake.odds
-				hs_json['hid'] = outcome.hid
+				shaker_json['hid'] = outcome.hid
 				shaker_json['type'] = 'shake'
 				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(shaker_json)
@@ -367,6 +367,12 @@ def create_bet():
 		elif outcome.result != -1:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
+		match = Match.find_match_by_id(outcome.match_id)
+		data['hid'] = outcome.hid
+		data['outcome_name'] = outcome.name
+		data['match_date'] = match.date
+		data['match_name'] = match.name
+
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			user.free_bet = 1
 			task = Task(
@@ -425,7 +431,7 @@ def uninit_free_bet(handshake_id):
 					}
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
-						data=json.dumps(data),
+						data=json.dumps(data, use_decimal=True),
 						action=CONST.TASK_ACTION['UNINIT'],
 						status=-1
 					)

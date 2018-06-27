@@ -516,8 +516,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
   });
 };
 
-
-const uninitForTrial = (_hid, _side, _odds, _maker, _value, _nonce, _offchain, _options) => {
+const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , _options) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('uninitForTrial');
@@ -550,6 +549,10 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _nonce, _offchain, _
       web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
       .on('transactionHash', (hash) => {
         tnxHash = hash;
+
+        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, offchain, JSON.stringify(txParams))
+        .catch(console.error);
+
         return resolve({
           raw: txParams,
           hash: hash,
@@ -558,9 +561,6 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _nonce, _offchain, _
       })
       .on('receipt', (receipt) => {
         console.log('uninitForTrial tnxHash: ', receipt);
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', 1, network_id, offchain, JSON.stringify(txParams))
-        .catch(console.error);
-        resolve(receipt);
       })
       .on('error', err => {
         txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, offchain, JSON.stringify(Object.assign(txParams, { err: err })))

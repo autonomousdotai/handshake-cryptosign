@@ -1155,7 +1155,7 @@ class TestHandshakeBluePrint(BaseTestCase):
 				amount=0.7,
 				currency='ETH',
 				side=2,
-				remaining_amount=0.7,
+				remaining_amount=0,
 				from_address='0x123',
                 status=0,
                 bk_status=-1,
@@ -1166,9 +1166,9 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         shaker = Shaker(
             shaker_id=66,
-            amount=0.2,
+            amount=3.5,
             currency='ETH',
-            odds=6,
+            odds=1.2,
             side=1,
             handshake_id=handshake.id,
             from_address='0x123',
@@ -1204,7 +1204,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
-            h = Handshake.find_handshake_by_id(handshake_id)
+            h = Handshake.find_handshake_by_id(handshake.id)
             self.assertEqual(float(h.amount), 0.7)
             self.assertEqual(float(h.remaining_amount), 0.7)
 
@@ -1244,6 +1244,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             data = data['data']
             self.assertTrue('match' in data)
+
+            user = User.find_user_with_id(88)
+            self.assertEqual(user.free_bet, 1)
 
 
     def test_collect_free_bet(self):

@@ -207,13 +207,13 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(len(data_json), 1)
             self.assertEqual(response.status_code, 200)
 
-            handshake = data_json[0]
-            self.assertEqual(len(handshake['shakers']), 1)
-            self.assertEqual(handshake['amount'], 1)
-            self.assertEqual(handshake['remaining_amount'], 0.375)
-
-            shaker = handshake['shakers'][0]
-            self.assertEqual(shaker['amount'], 1.25)
+            hs = data_json[0]
+            handshake = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(hs['type'], 'shake')
+            self.assertEqual(float(handshake.amount), 1)
+            self.assertEqual(float(handshake.remaining_amount), 0.375)
+            
+            self.assertEqual(hs['amount'], 1.25)
 
 
         handshakes = handshake_bl.find_available_support_handshakes(88)
@@ -559,10 +559,14 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 1)
 
-            handshake = data_json[0]
-            self.assertEqual(len(handshake['shakers']), 1)
-            self.assertEqual(handshake['amount'], 0.003)
-            self.assertEqual(handshake['remaining_amount'], 0.0028)
+            hs = data_json[0]
+
+            handshake = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(float(handshake.amount), 0.003)
+            self.assertEqual(float(handshake.remaining_amount), 0.0028)
+
+            self.assertEqual(hs['type'], 'shake')
+            self.assertEqual(hs['amount'], 0.001)
 
 
         for handshake in arr_hs:
@@ -629,13 +633,13 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(len(data_json), 1)
 
 
-            handshake = data_json[0]
-            self.assertEqual(handshake['remaining_amount'], 0)
-            self.assertEqual(handshake['amount'], 0.005)
-            self.assertEqual(len(handshake['shakers']), 1)
+            hs = data_json[0]
+            handshake = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(handshake.remaining_amount, 0)
+            self.assertEqual(float(handshake.amount), 0.005)
 
-            shaker = handshake['shakers'][0]
-            self.assertEqual(shaker['amount'], 0.01)
+            self.assertEqual(hs['type'], 'shake')
+            self.assertEqual(hs['amount'], 0.01)
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -702,7 +706,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             handshake = data_json[0]
             self.assertEqual(len(data_json), 1)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -765,7 +769,7 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             handshake = data_json[0]
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -833,7 +837,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             handshake = data_json[0]
             self.assertEqual(len(data_json), 1)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -898,7 +902,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             handshake = data_json[0]
             self.assertEqual(len(data_json), 2)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -987,10 +991,11 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             data_json = data['data']
-            hs = data_json[0]
-            self.assertEqual(hs['remaining_amount'], 0.6)
 
-            sk = hs['shakers'][0]
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(float(hs.remaining_amount), 0.6)
+
+            sk = data_json[0]
             self.assertEqual(sk['amount'], 0.5)
             shaker_id = sk['id']
             handshake_id = handshake.id
@@ -1106,8 +1111,8 @@ class TestHandshakeBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
-            task = data['data']
-            self.assertEqual(task['task_type'], 'FREE_BET')
+            data = data['data']
+            self.assertTrue('match' in data)
 
 
     def test_uninit_free_bet(self):
@@ -1137,6 +1142,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
             task = data['data']
@@ -1160,7 +1166,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             }
 
             response = self.client.post(
-                                    '/handshake/create_free_bet',
+                                    '/handshake/collect_free_bet',
                                     content_type='application/json',
                                     data=json.dumps(params),
                                     headers={
@@ -1170,10 +1176,10 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
-            task = data['data']
-            self.assertEqual(task['task_type'], 'FREE_BET')
+ 
 
     def test_uninit_free_bet(self):
         self.clear_data_before_test()

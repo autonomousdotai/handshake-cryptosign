@@ -1,7 +1,7 @@
 package models
 
 type Tx struct {
-	Hash            string `gorm:"column:address;" json:"hash"`
+	Hash            string `gorm:"column:hash;" json:"hash"`
 	ContractAddress string `gorm:"column:contract_address;" json:"contract_address"`
 	ContractMethod  string `gorm:"column:contract_method;" json:"contract_method"`
 	Payload         string `gorm:"column:payload;" json:"payload"`

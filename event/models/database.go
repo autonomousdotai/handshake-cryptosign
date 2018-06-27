@@ -5,6 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
+    _ "github.com/go-sql-driver/mysql"
 )
 
 var dbInst *gorm.DB

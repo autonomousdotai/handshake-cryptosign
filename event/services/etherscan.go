@@ -16,7 +16,7 @@ func (s EtherscanService) ListTransactions(address string, page int, offset int)
     endpoint := conf.GetString("etherScanEndpoint")
     apiKey := conf.GetString("etherScanKey")
 
-    endpoint = fmt.Sprintf("%s?module=account&action=txlist&address=%s&sort=asc&apikey=%s", endpoint, address, apiKey)
+    endpoint = fmt.Sprintf("%s?module=account&action=txlist&startblock=0&endblock=99999999&address=%s&page=%d&offset=%d&sort=asc&apikey=%s", endpoint, address, page, offset, apiKey)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 
@@ -36,7 +36,7 @@ func (s EtherscanService) ListTransactions(address string, page int, offset int)
     message, _ := data["message"]
     result, _ := data["result"] 
 
-    if ok && status.(float64) > 0 {
+    if ok && status.(string) == "1" {
         return true, result.([]interface{})
     } else {
         log.Println(message)

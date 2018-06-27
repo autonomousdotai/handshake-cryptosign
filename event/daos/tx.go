@@ -7,8 +7,8 @@ import (
 type TxDAO struct {}
 
 func (t TxDAO) GetAllPending() ([]models.Tx, error) {
-    var txs []models.Tx
-    err := models.Database().Where("status = ?", "-1").Find(&txs).Error
+    txs := []models.Tx{}
+    err := models.Database().Find(&txs).Error
     if err != nil {
         return nil, err
     }
@@ -16,7 +16,7 @@ func (t TxDAO) GetAllPending() ([]models.Tx, error) {
 }
 
 func (t TxDAO) GetByHash(hash string) (models.Tx, error) {
-    var tx models.Tx
+    tx := models.Tx{}
     err := models.Database().Where("hash = ?", hash).First(&tx).Error
     return tx, err
 }

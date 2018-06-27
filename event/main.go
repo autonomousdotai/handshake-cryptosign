@@ -1,33 +1,43 @@
 package main
 
 import (
+    "os"
+    "fmt"
     "log"
     "github.com/robfig/cron"
     cp "github.com/ninjadotorg/handshake-cryptosign/event/cron"
+    "github.com/ninjadotorg/handshake-cryptosign/event/config"
 )
 
 func main() {
-    // config Logger
-    logFile, err := os.OpenFile("logs/log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+    // config Logger 
+    logFile, err := os.OpenFile("logs/log.txt", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
     if err != nil {
         panic(err)
     }
-    gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
-    log.SetOutput(gin.DefaultWriter) // You may need this
+    defer logFile.Close()
+    log.SetOutput(logFile) // You may need this
     log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-    log.Println("Start cron")
+    // config
+    config.Init()
+ 
+    fmt.Println("Start cron")
     appCron := cron.New()
     // 
     appCron.AddFunc("@every 20s", func() {
-        log.Println("scan tx every 20s")
-        cp.ScanTx()
+        fmt.Println("scan tx every 20s")
+        go cp.ScanTx()
     })
     appCron.AddFunc("@every 1m", func() {
-        log.Println("sync tx every 1m")
-        cp.SyncTx()
+        fmt.Println("sync tx every 1m")
+        go cp.SyncTx()
     })
     appCron.Start()
     // loop forever
     select {}
+
+    // for debug alone
+    //cp.ScanTx()
+    //cp.SyncTx()
 }

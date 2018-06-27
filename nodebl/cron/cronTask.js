@@ -7,6 +7,7 @@ const taskDAO = require('../daos/task');
 const matchDAO = require('../daos/match');
 const outcomeDAO = require('../daos/outcome');
 const settingDAO = require('../daos/setting');
+const handshakeDAO = require('../daos/handshake');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
@@ -51,6 +52,9 @@ const submitMultiTnx = (arr) => {
 					case 'shakeTestDriveTransaction':
 						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
 					break;
+					case 'uninitForTrial':
+						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+					break;
 				}
 				index += 1;
 				tasks.push(smartContractFunc);
@@ -86,10 +90,22 @@ const init = (params) => {
 	});
 };
 
-
-const unInit = (params) => {
-	return new Promise((resolve, reject) => {
-
+/**
+ * 
+ * @param {number} params.handshake_id
+ */
+const unInitFreeBet = (params, task) => {
+	return new Promise( async (resolve, reject) => {
+		try {
+			const handshake = await handshakeDAO.getById(params.handshake_id);
+		} catch (e) {
+			await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_DATABASE_EXCEPTION);
+			return reject({
+				err_type: 'UNINIT_FREE_BET_EXCEPTION',
+				error: e,
+				options_data: { params }
+			});
+		}
 	});
 };
 
@@ -138,8 +154,7 @@ const initRealBet = (params, task) => {
 				from_address: ownerAddress, // TODO: check this address
 				hid: outcome.hid
 			};
-			
-			// TODO: recheck -- may be multi init and shake
+
 			utils.submitInitAPI(dataRequest)
 			.then(results => {
 				return resolve(results);
@@ -242,11 +257,11 @@ const asyncScanTask = () => {
 
 									case 'FREE_BET':
 										switch (task.action) {
-											case 'INIT': // Same real_bet, call smartcontract name
-												processTaskFunc = init(params);
+											case 'INIT':
+												processTaskFunc = init(params, task);
 											break;
 											case 'UNINIT':
-												processTaskFunc = unInit(params);
+												processTaskFunc = unInitFreeBet(params, task);
 											break;
 											case 'COLLECT':
 												processTaskFunc = collect(params);

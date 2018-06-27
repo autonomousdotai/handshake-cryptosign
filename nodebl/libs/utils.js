@@ -1,7 +1,7 @@
 
 const axios = require('axios');
 const moment = require('moment');
-
+const web3 = require('../configs/web3').getWeb3();
 const configs = require('../configs');
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
@@ -55,37 +55,34 @@ const submitInitAPI = (options) => {
         .then(async response => {
             if (response.data.status == 1 && response.data.data.length != 0) {
                 const results = [];
-
                 response.data.data.forEach(item => {
-                    if (item && Array.isArray(item.shakers)) {
-                        item.shakers.forEach(shaker => {
-
-                            results.push(Object.assign({
-                                contract_method: shaker.shaker_id == item.user_id ? 'shake' : 'init',
-                                hid: options.hid,
-                                odds: parseInt(options.odds * 100),
-                                value: web3.utils.toWei(dataRequest.amount),
-                                offchain: response.data.data[0].offchain,
-                                side: options.side,
-                                options_data: {
-                                    response: response.data,
-                                    dataRequest: dataRequest
-                                }
-                            }));
-
-/*
-case 'init':
-						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.value, item);
-					break;
-					case 'shake':
-						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
-					break;
-*/
-
-
-
-
-                        });
+                    if (item.type == 'init') {
+                        results.push(Object.assign({
+                            contract_method: 'init',
+                            hid: options.hid,
+                            odds: parseInt(item.odds * 100),
+                            value: web3.utils.toWei(`${item.amount}`),
+                            offchain: item.offchain,
+                            side: item.side,
+                            options_data: {
+                                response: item,
+                                dataRequest: dataRequest
+                            }
+                        }));
+                    } else if (item.type == 'shake') {
+                        results.push(Object.assign({
+                            contract_method: 'shake',
+                            hid: options.hid,
+                            odds: parseInt(item.odds * 100),
+                            amount: web3.utils.toWei(`${item.amount}`),
+                            maker: item.from_address,
+                            offchain: item.offchain,
+                            side: item.side,
+                            options_data: {
+                                response: item,
+                                dataRequest: dataRequest
+                            }
+                        }));
                     }
                 });
                 console.log('RESPONSE CALL HANDSHAKE INIT API: ', results);

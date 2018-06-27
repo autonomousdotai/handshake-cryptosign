@@ -166,6 +166,7 @@ def init():
 			# response data
 			arr_hs = []
 			hs_json = handshake.to_json()
+			hs_json['type'] = 'init'
 			hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 			arr_hs.append(hs_json)
 
@@ -175,6 +176,8 @@ def init():
 			arr_hs = []
 			shaker_amount = amount
 
+			hs_feed = []
+			sk_feed = []
 			for handshake in handshakes:
 				if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) <= 0:
 					break
@@ -216,19 +219,12 @@ def init():
 
 				db.session.add(shaker)
 				db.session.flush()
-
-				update_feed.delay(shaker.handshake_id)
+				sk_feed.append(shaker)
 				
-				handshake_json = handshake.to_json()
-				shakers = handshake_json['shakers']
-				if shakers is None:
-					shakers = []
-
-				shakers.append(shaker.to_json())
-
-				handshake_json['shakers'] = shakers
-				handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
-				arr_hs.append(handshake_json)
+				shaker_json = shaker.to_json()
+				shaker_json['type'] = 'shake'
+				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
+				arr_hs.append(shaker_json)
 
 			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
 				handshake = Handshake(
@@ -248,16 +244,17 @@ def init():
 				)
 				db.session.add(handshake)
 				db.session.flush()
-
-				update_feed.delay(handshake.id)				
+				hs_feed.append(handshake)			
 
 				hs_json = handshake.to_json()
+				hs_json['type'] = 'init'
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 				arr_hs.append(hs_json)
 			
 			db.session.commit()
-
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
+
+			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
 			return response_ok(arr_hs)
 
 	except Exception, ex:
@@ -370,6 +367,9 @@ def create_bet():
 			)
 			db.session.add(task)
 			db.session.commit()
+
+			# this is for frontend
+
 
 			return response_ok(task.to_json())
 

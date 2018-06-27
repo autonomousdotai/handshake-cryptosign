@@ -1,10 +1,8 @@
 
 const configs = require('../configs');
-
+const constants = require('../constants');
 // models
-const models = require('../models');
 const txDAO = require('../daos/tx');
-
 const web3 = require('../configs/web3').getWeb3();
 
 const network_id = configs.network_id;
@@ -74,7 +72,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
 
         console.log(err);
         return reject({
-          err_type: `INIT_TNX_FAIL`,
+          err_type: constants.TASK_STATUSINIT_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -83,7 +81,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
       });
     } catch (e) {
       reject({
-        err_type: `INIT_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSINIT_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -143,7 +141,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
 
         console.log(err);
         return reject({
-          err_type: `INIT_TEST_DRIVE_TNX_FAIL`,
+          err_type: constants.TASK_STATUSINIT_TEST_DRIVE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -153,7 +151,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
     } catch (e) {
       console.error(e);
       reject({
-        err_type: `INIT_TEST_DRIVE_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSINIT_TEST_DRIVE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -214,7 +212,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 
         console.log(err);
         return reject({
-          err_type: `SHAKE_TNX_FAIL`,
+          err_type: constants.TASK_STATUSSHAKE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -224,7 +222,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
     } catch (e) {
       console.error(e);
       reject({
-        err_type: `SHAKE_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSSHAKE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -286,7 +284,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
 
         console.log(err);
         return reject({
-          err_type: `SHAKE_TEST_DRIVE_TNX_FAIL`,
+          err_type: constants.TASK_STATUSSHAKE_TEST_DRIVE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -296,7 +294,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
     } catch (e) {
       console.error(e);
       reject({
-        err_type: `SHAKE_TEST_DRIVE_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSSHAKE_TEST_DRIVE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -358,7 +356,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
 
         console.log(err);
         return reject({
-          err_type: `COLLECT_TEST_DRIVE_TNX_FAIL`,
+          err_type: constants.TASK_STATUSCOLLECT_TEST_DRIVE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -368,7 +366,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
     } catch (e) {
       console.error(e);
       reject({
-        err_type: `COLLECT_TEST_DRIVE_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSCOLLECT_TEST_DRIVE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -440,7 +438,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 
         console.log(err);
         return reject({
-          err_type: `CREATE_MARKET_TNX_FAIL`,
+          err_type: constants.TASK_STATUSCREATE_MARKET_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -449,7 +447,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
       });
     } catch (e) {
       reject({
-        err_type: `CREATE_MARKET_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSCREATE_MARKET_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -512,7 +510,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
 
         console.log(err);
         return reject({
-          err_type: `REPORT_TNX_FAIL`,
+          err_type: constants.TASK_STATUSREPORT_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -521,7 +519,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
       });
     } catch (e) {
       reject({
-        err_type: `REPORT_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSREPORT_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -583,7 +581,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
 
         console.log(err);
         return reject({
-          err_type: `UNINIT_FOR_TRIAL_TNX_FAIL`,
+          err_type: constants.TASK_STATUSUNINIT_FOR_TRIAL_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -592,7 +590,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
       });
     } catch (e) {
       reject({
-        err_type: `UNINIT_FOR_TRIAL_TNX_EXCEPTION`,
+        err_type: constants.TASK_STATUSUNINIT_FOR_TRIAL_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task

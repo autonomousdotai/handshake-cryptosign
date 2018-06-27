@@ -139,7 +139,7 @@ const initBet = (params, task, isFreeBet) => {
 		} catch (e) {
 			console.log('initRealBet error: ', e);
 			reject({
-				err_type: 'INIT_REAL_BET_EXCEPTION',
+				err_type: constants.TASK_STATUS.INIT_REAL_BET_EXCEPTION,
 				options_data: { params }
 			});
 		}
@@ -245,7 +245,7 @@ const asyncScanTask = () => {
 
 								if (!processTaskFunc) {
 									return reject({
-										err_type: `TASK_TYPE_NOT_FOUND`,
+										err_type: constants.TASK_STATUSTASK_TYPE_NOT_FOUND,
 										options_data: {
 											task: task.toJSON()
 										}
@@ -260,13 +260,13 @@ const asyncScanTask = () => {
 									});
 								})
 								.catch(err => {
-
+									utils.handleErrorTask(task, err.err_type);
 									return reject(err);
 								});
 							})
 							.catch(err => {
 								return reject({
-									err_type: `UPDATE_TASK_STATUS_FAIL`,
+									err_type: constants.TASK_STATUSUPDATE_TASK_STATUS_FAIL,
 									error: err,
 									options_data: {
 										task: task.toJSON()

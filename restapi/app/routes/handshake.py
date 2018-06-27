@@ -5,6 +5,7 @@ import time
 import os
 import sys
 import json
+import logging
 
 import app.constants as CONST
 import app.bl.handshake as handshake_bl
@@ -27,6 +28,7 @@ from app.tasks import update_feed, add_free_bet, withdraw_free_bet
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
+logfile = logging.getLogger('file')
 
 @handshake_routes.route('/', methods=['POST'])
 @login_required
@@ -83,10 +85,16 @@ def handshakes():
 @handshake_routes.route('/<int:id>')
 @login_required
 def detail(id):
+	uid = int(request.headers['Uid'])
 	chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+	user = User.find_user_with_id(uid)		
 
 	try:
-		return response_ok()
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==id, Handshake.user_id==uid)).first()
+		if handshake is not None:
+			return response_ok(handshake.to_json())
+
+		return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
 
 	except Exception, ex:
 		return response_error(ex.message)
@@ -161,6 +169,7 @@ def init():
 			hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 			arr_hs.append(hs_json)
 
+			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 			return response_ok(arr_hs)
 		else:
 			arr_hs = []
@@ -247,6 +256,8 @@ def init():
 				arr_hs.append(hs_json)
 			
 			db.session.commit()
+
+			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 			return response_ok(arr_hs)
 
 	except Exception, ex:
@@ -254,122 +265,11 @@ def init():
 		return response_error(ex.message)
 
 
-@handshake_routes.route('/uninit/<int:handshake_id>', methods=['POST'])
-@login_required
-def uninit(handshake_id):
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
-		
-		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'])).first()
-		if handshake is not None:
-			if len(handshake.shakers.all()) > 0:
-				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)
-			else:
-				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-				if outcome is None:
-					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-				else:
-					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
-					db.session.flush()
-
-					update_feed.delay(handshake.id)
-					
-					handshake_json = handshake.to_json()
-					handshake_json['hid'] = outcome.hid
-					handshake_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
-
-					db.session.commit()
-					return response_ok(handshake_json)
-					
-		else:
-			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)		
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-@handshake_routes.route('/collect', methods=['POST'])
-@login_required
-def collect():
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
-
-		data = request.json
-		if data is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		offchain = data.get('offchain', '')
-		if len(offchain) == 0:
-			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
-
-		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
-		handshakes = []
-		shakers = []
-		
-		h = []
-		s = []
-		if 's' in offchain:
-			offchain = int(offchain.replace('s', ''))
-			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
-			if shaker is not None:
-				msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
-				if len(msg) == 0:
-					hs = Handshake.find_handshake_by_id(shaker.handshake_id)
-					# find all handshakes and shakers which shaker won
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
-
-				else:
-					return response_error(msg, CODE.CANNOT_WITHDRAW)
-
-			else:
-				return response_error(MESSAGE.SHAKER_NOT_FOUND)
-
-		else:
-			offchain = int(offchain.replace('m', ''))
-			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
-			if handshake is not None:
-				msg = handshake_bl.can_withdraw(handshake)
-				if len(msg) == 0:
-					# find all handshakes and shakers which maker won
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-				else:
-					return response_error(msg, CODE.CANNOT_WITHDRAW)
-
-			else:
-				return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
-
-		# update status
-		for hs in h:
-			hs.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-			db.session.flush()
-			handshakes.append(hs)
-			
-		for sk in s:
-			sk.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-			db.session.flush()
-			shakers.append(sk)
-
-		db.session.commit()
-		handshake_bl.update_handshakes_feed(handshakes, shakers)
-
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
 @handshake_routes.route('/rollback', methods=['POST'])
 @login_required
 def rollback():
-	# rollback init: DONE
-	# rollback uninit: DONE
-	# rollback shake: DONE
-	# rollback collect: DONE
+	# rollback init (real, free): DONE
+	# rollback shake (real, free): DONE
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -395,31 +295,12 @@ def rollback():
 			
 			if handshake is not None:				
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
-					
 					handshake.status = HandshakeStatus['STATUS_MAKER_FAILED_INIT']
+					if handshake.free_bet == 1:
+						user.free_bet = 0
+
 					db.session.flush()
 					handshakes.append(handshake)
-
-				elif handshake.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING'] or \
-					handshake.status == HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']:
-
-					handshake.status = handshake.bk_status
-					db.session.flush()
-					handshakes.append(handshake)
-
-				elif handshake.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-					for hs in h:
-						hs.status = hs.bk_status
-						db.session.flush()
-						handshakes.append(hs)
-
-					for sk in s:
-						sk.status = sk.bk_status
-						db.session.flush()
-						shakers.append(sk)
 
 				else:
 					return response_error(MESSAGE.CANNOT_ROLLBACK, CODE.CANNOT_ROLLBACK)
@@ -436,29 +317,10 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
+					if shaker.free_bet == 1:
+						user.free_bet = 0
+
 					shakers.append(shaker)
-
-				elif shaker.status == HandshakeStatus['STATUS_BLOCKCHAIN_PENDING']:
-					shaker.status = shaker.bk_status
-					db.session.flush()
-
-					update_feed.delay(shaker.handshake_id, shaker.id)					
-
-				elif shaker.status == HandshakeStatus['STATUS_COLLECT_PENDING']:
-					handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-
-					h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'])).all()
-					s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-					for hs in h:
-						hs.status = hs.bk_status
-						db.session.flush()
-						handshakes.append(hs)
-						
-					for sk in s:
-						sk.status = sk.bk_status
-						db.session.flush()
-						shakers.append(sk)
 
 				else:
 					return response_error(MESSAGE.CANNOT_ROLLBACK, CODE.CANNOT_ROLLBACK)
@@ -549,7 +411,7 @@ def uninit_free_bet(handshake_id):
 					db.session.add(task)
 					db.session.commit()
 
-					return response_ok(task.to_json())
+					return response_ok(handshake.to_json())
 					
 		else:
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
@@ -576,6 +438,8 @@ def collect_free_bet():
 		if len(offchain) == 0:
 			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
+		h = []
+		s = []
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		if 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
@@ -583,6 +447,10 @@ def collect_free_bet():
 			msg = handshake_bl.can_withdraw(handshake=None, shaker=shaker)
 			if len(msg) != 0:
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
+			
+			hs = Handshake.find_handshake_by_id(shaker.handshake_id)
+			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
 
 		else:
 			offchain = int(offchain.replace('m', ''))
@@ -591,6 +459,31 @@ def collect_free_bet():
 			if len(msg) != 0:
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
+			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
+			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+
+
+		handshakes = []
+		shakers = []
+		response = {}
+		# update status
+		for hs in h:
+			hs.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.flush()
+			handshakes.append(hs)
+
+			if hs.id == offchain:
+				response = hs.to_json()
+			
+		for sk in s:
+			sk.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.flush()
+			shakers.append(sk)
+
+			if sk.id == offchain:
+				response = sk.to_json()
+
+		# add task
 		task = Task(
 			task_type=CONST.TASK_TYPE['FREE_BET'],
 			data=json.dumps(data),
@@ -600,7 +493,8 @@ def collect_free_bet():
 		db.session.add(task)
 		db.session.commit()
 
-		return response_ok(task.to_json())
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()

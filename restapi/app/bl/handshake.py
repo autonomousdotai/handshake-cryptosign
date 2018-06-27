@@ -30,9 +30,9 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		print 'outcome result is {}'.format(outcome.result)
 		return None, None
 
-	handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+	handshakes = db.session.query(Handshake).filter(or_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
 	print 'handshakes {}'.format(handshakes)
-	shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+	shakers = db.session.query(Shaker).filter(or_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
@@ -235,9 +235,6 @@ def find_available_against_handshakes(outcome_id):
 def rollback_shake_state(shaker):
 	if shaker is None:
 		raise Exception(MESSAGE.SHAKER_NOT_FOUND)
-
-	if shaker.status == HandshakeStatus['STATUS_SHAKER_ROLLBACK']:
-		raise Exception(MESSAGE.SHAKER_ROLLBACK_ALREADY)
 
 	shaker.status = HandshakeStatus['STATUS_SHAKER_ROLLBACK']
 	handshake = db.session.query(Handshake).filter(and_(Handshake.id==shaker.handshake_id, Handshake.status==HandshakeStatus['STATUS_INITED'])).first()

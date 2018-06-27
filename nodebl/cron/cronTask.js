@@ -135,7 +135,8 @@ const initRealBet = (params, task) => {
 				from_address: ownerAddress, //TODO: check this address
 				hid: outcome.hid
 			};
-								
+			
+			// TODO: recheck -- may be multi init and shake
 			utils.submitInitAPI(dataRequest)
 			.then(result => {
 				return resolve([Object.assign(result, {
@@ -162,7 +163,7 @@ const initRealBet = (params, task) => {
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
-			contract_method: 'reportOutcomeTransaction',
+			contract_method: 'reportOutcomeTransaction', // method?
 			hid: params.hid,
 			outcome_result: params.outcome_result
 		}])

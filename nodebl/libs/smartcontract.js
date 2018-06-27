@@ -516,8 +516,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
   });
 };
 
-
-const uninitForTrial = (_hid, _side, _odds, _maker, _value, _nonce, _offchain, _options) => {
+const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , _options) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('uninitForTrial');

@@ -44,10 +44,15 @@ def init_default_outcomes():
 
 			if outcome.result != CONST.RESULT_TYPE['PENDING']:
 				return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
-
+			
+			match = Match.find_match_by_id(outcome.match_id)
 			for o in outcome_data:
 				o['id'] = outcome_id
 				o['hid'] = outcome.hid
+				o['match_date'] = match.date
+				o['match_name'] = match.name
+				o['outcome_name'] = outcome.name
+
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(o),

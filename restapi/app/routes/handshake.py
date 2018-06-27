@@ -225,7 +225,7 @@ def init():
 				shaker_json = shaker.to_json()
 				shaker_json['maker_address'] = handshake.from_address
 				shaker_json['maker_odds'] = handshake.odds
-				hs_json['hid'] = outcome.hid
+				shaker_json['hid'] = outcome.hid
 				shaker_json['type'] = 'shake'
 				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(shaker_json)

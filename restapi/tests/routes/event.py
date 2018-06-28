@@ -111,14 +111,17 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
+        handshake_id = handshake.id
+
         with self.client:
             Uid = 1
             
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__init",
-                    "offchain": "m{}".format(handshake.id),
+                "contract": "predictionHandshake",
+                "eventName": "__init",
+                "status": 1,
+                "inputs": {
+                    "offchain": "cryptosign_m{}".format(handshake_id),
                     "hid": 88
                 }
             }
@@ -135,9 +138,9 @@ class TestEventBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
+            db.session.close()
 
-            hs_json = data['data'][0]
-            h = Handshake.find_handshake_by_id(hs_json['id'])
+            h = Handshake.find_handshake_by_id(handshake_id)
             self.assertEqual(h.status, 0)
 
     def test_reiceive_uninit_event(self):
@@ -165,12 +168,13 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__uninit",
-                    "offchain": "m{}".format(handshake.id),
+                "contract": "predictionHandshake",
+                "eventName": "__uninit",
+                "inputs": {
+                    "offchain": "cryptosign_m{}".format(handshake.id),
                     "hid": 88
                 }
+                
             }
 
             response = self.client.post(
@@ -186,8 +190,7 @@ class TestEventBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
 
-            hs_json = data['data'][0]
-            h = Handshake.find_handshake_by_id(hs_json['id'])
+            h = Handshake.find_handshake_by_id(handshake.id)
             self.assertEqual(h.status, 1)
 
 
@@ -210,10 +213,10 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__createMarket",
-                    "offchain": "createMarket{}".format(22),
+                "contract": "predictionHandshake",
+                "eventName": "__createMarket",
+                "inputs": {
+                    "offchain": "cryptosign_createMarket{}".format(22),
                     "hid": 88
                 }
             }
@@ -229,11 +232,9 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            
             self.assertTrue(data['status'] == 1)
 
-            o = data['data'][0]
-            outcome = Outcome.find_outcome_by_id(o['id'])
+            outcome = Outcome.find_outcome_by_id(22)
             self.assertEqual(outcome.hid, 88)
 
 
@@ -267,7 +268,7 @@ class TestEventBluePrint(BaseTestCase):
 					handshake_id=handshake.id,
 					from_address='0x123',
 					chain_id=4,
-                    status=-1
+                    status=2
 				)
         db.session.add(shaker)
         db.session.commit()
@@ -283,10 +284,11 @@ class TestEventBluePrint(BaseTestCase):
         with self.client:
             Uid = 66
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__collect",
-                    "offchain": "s{}".format(shaker.id),
+                "contract": "predictionHandshake",
+                "eventName": "__collect",
+                "status": 1,
+                "inputs": {
+                    "offchain": "cryptosign_s{}".format(shaker.id),
                     "hid": 88
                 }
             }
@@ -302,11 +304,12 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            handshake = data['data'][0]
-            shaker = data['data'][1]
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(handshake['status'], 6)
-            self.assertEqual(shaker['status'], 6)
+
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            s = Shaker.find_shaker_by_id(shaker.id)
+            self.assertEqual(hs.status, 6)
+            self.assertEqual(s.status, 6)
 
 
     def test_reiceive_collect_event_for_maker(self):
@@ -339,7 +342,7 @@ class TestEventBluePrint(BaseTestCase):
 					handshake_id=handshake.id,
 					from_address='0x123',
 					chain_id=4,
-                    status=-1
+                    status=2
 				)
         db.session.add(shaker)
         db.session.commit()
@@ -355,10 +358,11 @@ class TestEventBluePrint(BaseTestCase):
         with self.client:
             Uid = 22
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__collect",
-                    "offchain": "m{}".format(handshake.id),
+                "contract": "predictionHandshake",
+                "eventName": "__collect",
+                "status": 1,
+                "inputs": {
+                    "offchain": "cryptosign_m{}".format(handshake.id),
                     "hid": 88
                 }
             }
@@ -374,11 +378,13 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            handshake = data['data'][0]
-            shaker = data['data'][1]
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(handshake['status'], 6)
-            self.assertEqual(shaker['status'], 6)
+
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            s = Shaker.find_shaker_by_id(shaker.id)
+
+            self.assertEqual(hs.status, 6)
+            self.assertEqual(s.status, 6)
 
     def test_reiceive_shake_event(self):
         self.clear_data_before_test()
@@ -415,16 +421,19 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(shaker)
         db.session.commit()
 
+        shaker_id = shaker.id
+
         with self.client:
             Uid = 1
             
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__shake",
-                    "offchain": "s{}".format(shaker.id),
+                "contract": "predictionHandshake",
+                "eventName": "__shake",
+                "status": 1,
+                "inputs": {
+                    "offchain": "cryptosign_s{}".format(shaker_id),
                     "hid": 88
-                }
+                }   
             }
 
             response = self.client.post(
@@ -438,11 +447,11 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            handshake = data['data'][0]
             self.assertTrue(data['status'] == 1)
+            db.session.close()
 
-            hs = Shaker.find_shaker_by_id(handshake['id'])
-            self.assertEqual(hs.status, 2)
+            s = Shaker.find_shaker_by_id(shaker_id)
+            self.assertEqual(s.status, 2)
 
     def test_reiceive_report_event(self):
         self.clear_data_before_test()
@@ -468,12 +477,13 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "events": {
-                    "contract": "predictionHandshake",
-                    "eventName": "__report",
-                    "offchain": "report1",
-                    "hid": 88
-                }
+                "contract": "predictionHandshake",
+                "eventName": "__report",
+                "status": 1,
+                "inputs": {
+                    "offchain": "cryptosign_report1",
+                    "hid": 88    
+                }   
             }
 
             response = self.client.post(

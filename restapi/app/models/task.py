@@ -17,5 +17,9 @@ class Task(BaseModel):
 						server_default=str(-1),
 	                   	default=-1)
 
+	@classmethod
+	def find_task_by_id(cls, _id):
+		return Task.query.filter_by(id=_id).first()
+
 	def __repr__(self):
 		return '<task {}, {}>'.format(self.id, self.task_type)

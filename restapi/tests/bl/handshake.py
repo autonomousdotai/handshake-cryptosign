@@ -10,6 +10,7 @@ from datetime import datetime
 from app import db, app
 from app.models import Handshake, User, Outcome, Match, Shaker
 from app.helpers.message import MESSAGE
+from app.constants import Handshake as HandshakeStatus
 
 import app.bl.handshake as handshake_bl
 import app.constants as CONST
@@ -526,7 +527,8 @@ class TestHandshakeBl(BaseTestCase):
 					side=1,
 					handshake_id=handshake.id,
 					from_address='0x123',
-					chain_id=4
+					chain_id=4,
+                    status=2
 				)
         db.session.add(shaker)
         db.session.commit()
@@ -536,6 +538,7 @@ class TestHandshakeBl(BaseTestCase):
         db.session.flush()
 
         handshake_bl.save_collect_state_for_shaker(shaker)
+        db.session.commit()
 
         h = Handshake.find_handshake_by_id(handshake.id)
         s = Shaker.find_shaker_by_id(shaker.id)
@@ -706,7 +709,7 @@ class TestHandshakeBl(BaseTestCase):
         s = Shaker.find_shaker_by_id(shaker.id)
 
         self.assertEqual(h.remaining_amount, 1)
-        self.assertEqual(s.status, -9)
+        self.assertEqual(s.status, HandshakeStatus['STATUS_SHAKER_ROLLBACK'])
 
     def test_can_withdraw(self):
 		self.clear_data_before_test()

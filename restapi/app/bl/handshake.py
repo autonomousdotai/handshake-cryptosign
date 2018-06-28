@@ -96,13 +96,39 @@ def data_need_set_result_for_outcome(outcome):
 	return handshakes, shakers
 
 
-def save_handshake_for_event(event_name, offchain, outcome=None):
-	if 'report' in offchain:
+def parse_inputs(inputs):
+	offchain = ''
+	hid = ''
+
+	if 'offchain' in inputs:
+		offchain = inputs['offchain']
+
+	if 'hid' in inputs:
+		hid = inputs['hid']
+
+	return offchain, hid
+
+def save_handshake_for_event(event_name, inputs):
+	offchain, hid = parse_inputs(inputs)
+	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+
+	if '__createMarket' in event_name:
+		offchain = int(offchain.replace('createMarket', ''))
+		outcome = Outcome.find_outcome_by_id(offchain)
+		if outcome is not None:
+			outcome.hid = hid
+			db.session.flush()
+
+		return None, None
+
+	elif '__report' in event_name:
+		print '__report'
 		# report1: mean that support win
 		# report2: mean that against win
 		# report0: mean that no one win
 		result = offchain.replace('report', '')
 		print 'result {}'.format(result)
+		outcome = Outcome.find_outcome_by_hid(hid)
 		if len(result) > -1:
 			result = int(result)
 			outcome.result = result
@@ -110,62 +136,80 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 			db.session.flush()
 			return data_need_set_result_for_outcome(outcome)
 
-	elif 's' in offchain: # shaker
+		return None, None
+
+	elif '__shake' in event_name:
+		print '__shake'
 		offchain = offchain.replace('s', '')
 		shaker = Shaker.find_shaker_by_id(int(offchain))
-		print 'shaker = {}'.format(shaker)
 		if shaker is not None:
-			if '__shake' in event_name:
-				print '__shake'
-				shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
-				shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
+			print 'shaker = {}'.format(shaker)
+			shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
+			shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
-				db.session.flush()
+			db.session.flush()
 
-				arr = []
-				arr.append(shaker)
-				return None, arr
+			arr = []
+			arr.append(shaker)
+			return None, arr
 
-			elif '__collect' in event_name:
-				print '__collect'
+		return None, None
+
+	elif '__collect' in event_name:
+		print '__collect'
+
+		if 's' in offchain:
+			offchain = offchain.replace('s', '')
+			shaker = Shaker.find_shaker_by_id(int(offchain))
+			if shaker is not None:
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
 				return save_collect_state_for_shaker(shaker)
 
-	else: # maker
-		offchain = offchain.replace('m', '')
-		handshake = Handshake.find_handshake_by_id(int(offchain))
-		print 'handshake = {}, offchain = {}'.format(handshake, offchain)
-		if handshake is not None:
-			if '__init' in event_name:
-				print '__init'
-				handshake.status = HandshakeStatus['STATUS_INITED']
-				handshake.bk_status = HandshakeStatus['STATUS_INITED']
-
-				db.session.flush()
-
-				arr = []
-				arr.append(handshake)
-				return arr, None
-
-			elif '__uninit' in event_name:
-				print '__uninit'
-				handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
-				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
-
-				db.session.flush()
-
-				arr = []
-				arr.append(handshake)
-				return arr, None
-
-			elif '__collect' in event_name:
-				print '__collect'
+		elif 'm' in offchain:
+			offchain = offchain.replace('m', '')
+			handshake = Handshake.find_handshake_by_id(int(offchain))
+			if handshake is not None:
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
 				return save_collect_state_for_maker(handshake)
+
+		return None, None
+
+	elif '__init' in event_name:
+		print '__init'
+
+		offchain = offchain.replace('m', '')
+		handshake = Handshake.find_handshake_by_id(int(offchain))
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_INITED']
+			handshake.bk_status = HandshakeStatus['STATUS_INITED']
+
+			db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+		return None, None
+
+	elif '__uninit' in event_name:
+		print '__uninit'
+		offchain = offchain.replace('m', '')
+		handshake = Handshake.find_handshake_by_id(int(offchain))
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
+			handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
+
+			db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+		return None, None
 
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):

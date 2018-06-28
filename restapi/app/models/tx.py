@@ -21,9 +21,8 @@ class Tx(BaseModel):
 	chain_id = db.Column(db.Integer, default=CONST.BLOCKCHAIN_NETWORK['RINKEBY'], server_default=str(CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 
 	@classmethod
-	def find_tx_with_id(cls, tx_id):
+	def find_tx_by_id(cls, tx_id):
 		return Tx.query.filter_by(id=tx_id).first()
-
 
 	def __repr__(self):
 		return '<Tx {}>'.format(self.hash)

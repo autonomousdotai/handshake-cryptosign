@@ -76,6 +76,8 @@ def matches():
 @login_required
 def add():
 	try:
+		uid = int(request.headers['Uid'])
+
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -110,7 +112,9 @@ def add():
 					outcome = Outcome(
 						name=outcome_data['name'],
 						match_id=match.id,
-						public=item.get('public', 0)
+						public=item.get('public', 0),
+						modified_user_id=uid,
+						created_user_id=uid
 					)
 					db.session.add(outcome)
 					db.session.flush()

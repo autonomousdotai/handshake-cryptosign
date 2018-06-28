@@ -4,7 +4,7 @@ from flask import Blueprint, request
 from app.helpers.response import response_ok, response_error
 from app import db
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
-from app.models import Handshake, Outcome, Shaker, Match
+from app.models import Handshake, Outcome, Shaker, Match, Tx
 from app.helpers.message import MESSAGE, CODE
 from app.tasks import update_feed, add_shuriken
 
@@ -25,17 +25,29 @@ def event():
 		return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 	try:
 		status = data.get('status', 1)
-		
+		tx_id = int(data['id'])
+
 		handshakes = []
 		shakers = []
 		if status == 1:
 			event_name = data['eventName']
 			inputs = data['inputs']
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, inputs)
+
+			tx = Tx.find_tx_by_id(tx_id)
+			if tx is not None:
+				tx.status = 1
+				db.session.flush()
+
 		else:
 			# TODO:
 			method = data.get('methodName', '')
 			inputs = data['inputs']
+
+			tx = Tx.find_tx_by_id(tx_id)
+			if tx is not None:
+				tx.status = 0
+				db.session.flush()
 
 		db.session.commit()
 		# update feed

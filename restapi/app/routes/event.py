@@ -40,10 +40,10 @@ def event():
 				db.session.flush()
 
 		else:
-			# TODO:
 			method = data.get('methodName', '')
 			inputs = data['inputs']
 
+			handshakes, shakers = handshake_bl.save_handshake_method_for_event(method, inputs)
 			if tx is not None:
 				tx.status = 0
 				db.session.flush()

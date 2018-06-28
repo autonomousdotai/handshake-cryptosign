@@ -93,7 +93,7 @@ const submitInitAPI = (options) => {
                 return resolve(results);
             } else {
                 return reject({
-                    err_type: 'INIT_CALL_API_FAIL',
+                    err_type: constants.TASK_STATUSINIT_CALL_API_FAIL,
                     options_data: {
                         response: response.data,
                         dataRequest: dataRequest
@@ -103,7 +103,7 @@ const submitInitAPI = (options) => {
         })
         .catch((error) => {
             return reject({
-                err_type: 'INIT_CALL_API_EXCEPTION',
+                err_type: constants.TASK_STATUSINIT_CALL_API_EXCEPTION,
                 error: error,
                 options_data: {
                     dataRequest: dataRequest
@@ -147,25 +147,8 @@ const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _s
     return markets;
 };
 
-const handleErrorTask = (task, err) => {
-    let status = constants.TASK_STATUS.STATUS_UNKNOW;
-    switch(err.err_type) {
-        case '':
-        break;
-        case '':
-        break;
-        case '':
-        break;
-        case '':
-        break;
-        case '':
-        break;
-        case '':
-        break;
-        case '':
-        break;
-    }
-    taskDAO.updateStatusById(task, status)
+const handleErrorTask = (task, err_type) => {
+    taskDAO.updateStatusById(task, err_type || constants.TASK_STATUS.STATUS_UNKNOW)
     .catch(console.error);
 }
 

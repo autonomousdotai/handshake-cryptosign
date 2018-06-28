@@ -33,6 +33,7 @@ func worker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, result
 				// call REST fail
 				var jsonData map[string]interface{}
 				json.Unmarshal([]byte(methodJson), &jsonData)
+				jsonData["id"] = transaction.TxID
 				jsonData["status"] = 0
 				//log.Println("hook fail", jsonData)
 				err := hookService.Event(jsonData)
@@ -48,6 +49,7 @@ func worker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, result
 						_, eventJson := utils.DecodeTransactionLog("PredictionHandshake", l)
 						var jsonData map[string]interface{}
 						json.Unmarshal([]byte(eventJson), &jsonData)
+						jsonData["id"] = transaction.TxID
 						jsonData["status"] = 1
 						// call REST API SUCCESS with event
 						//log.Println("hook success", jsonData)

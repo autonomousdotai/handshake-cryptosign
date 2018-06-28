@@ -153,6 +153,16 @@ def add():
 					db.session.add(outcome)
 					db.session.flush()
 
+					# add Task
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(match.to_json()),
+						action=CONST.TASK_ACTION['CREATE_MARKET'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.flush()
+
 			response_json.append(match.to_json())
 
 		db.session.commit()

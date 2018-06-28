@@ -108,6 +108,60 @@ def parse_inputs(inputs):
 
 	return offchain, hid
 
+
+def save_handshake_method_for_event(method, inputs):
+	offchain = inputs['offchain']
+	if method == 'init' or method == 'initTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('m', ''))
+		handshake = Handshake.find_handshake_by_id(offchain)
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
+			db.session.flush()
+
+			if 'maker' in inputs: # free-bet
+				user = User.find_user_with_id(handshake.user_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+					db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+	elif method == 'shake' or method == 'shakeTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('s', ''))
+		shaker = Shaker.find_shaker_by_id(offchain)
+		if shaker is not None:
+			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
+			db.session.flush()
+
+			if 'taker' in inputs: # free-bet
+				user = User.find_user_with_id(shaker.shaker_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+					db.session.flush()
+
+			arr = []
+			arr.append(shaker)
+			return None, arr
+
+	elif method == 'uninit' or method == 'uninitTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('m', ''))
+		handshake = Handshake.find_handshake_by_id(offchain)
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
+			db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+	return None, None
+
+
 def save_handshake_for_event(event_name, inputs):
 	offchain, hid = parse_inputs(inputs)
 	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')

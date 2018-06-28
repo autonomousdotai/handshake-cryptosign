@@ -72,6 +72,40 @@ def matches():
 		return response_error(ex.message)
 
 
+@match_routes.route('/user/<int:user_id>', methods=['POST'])
+@login_required
+def matches_for_user(user_id):
+	try:
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		public = int(data.get('public', 1))
+		response = []
+
+		matches = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id==user_id, Outcome.public==public)))).all()
+		for match in matches:
+			#  find best odds which match against
+			match_json = match.to_json()
+
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				if outcome.result == -1 and outcome.hid is not None:
+					outcome_json = outcome.to_json()
+					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
+					outcome_json["market_odds"] = odds
+					outcome_json["market_amount"] = amount
+					arr_outcomes.append(outcome_json)
+			
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes
+				response.append(match_json)
+
+		return response_ok(response)
+	except Exception, ex:
+		return response_error(ex.message)
+
+
 @match_routes.route('/add', methods=['POST'])
 @login_required
 def add():
@@ -117,6 +151,16 @@ def add():
 						created_user_id=uid
 					)
 					db.session.add(outcome)
+					db.session.flush()
+
+					# add Task
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(match.to_json()),
+						action=CONST.TASK_ACTION['CREATE_MARKET'],
+						status=-1
+					)
+					db.session.add(task)
 					db.session.flush()
 
 			response_json.append(match.to_json())

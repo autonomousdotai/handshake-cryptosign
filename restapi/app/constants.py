@@ -9,7 +9,9 @@ Tx = {
 
 # handshake
 Handshake = {
-	
+	'STATUS_SHAKE_FAILED': -11,
+	'STATUS_INIT_FAILED': -10,
+
 	'STATUS_COLLECT_FAILED': -9,
 	'STATUS_COLLECT_PENDING': -8,
 

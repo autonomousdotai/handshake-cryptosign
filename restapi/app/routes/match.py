@@ -53,7 +53,6 @@ def matches():
 			for match in matches:
 				#  find best odds which match against
 				match_json = match.to_json()
-
 				arr_outcomes = []
 				for outcome in match.outcomes:
 					if outcome.result == -1 and outcome.hid is not None and outcome.public == 1:
@@ -65,7 +64,7 @@ def matches():
 				
 				if len(arr_outcomes) > 0:
 					match_json["outcomes"] = arr_outcomes
-					response.append(match_json)
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -151,16 +150,6 @@ def add():
 						created_user_id=uid
 					)
 					db.session.add(outcome)
-					db.session.flush()
-
-					# add Task
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(match.to_json()),
-						action=CONST.TASK_ACTION['CREATE_MARKET'],
-						status=-1
-					)
-					db.session.add(task)
 					db.session.flush()
 
 			response_json.append(match.to_json())

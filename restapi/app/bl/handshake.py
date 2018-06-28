@@ -166,7 +166,7 @@ def save_handshake_for_event(event_name, inputs):
 	offchain, hid = parse_inputs(inputs)
 	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 
-	if '__createMarket' in event_name:
+	if event_name == '__createMarket':
 		offchain = int(offchain.replace('createMarket', ''))
 		outcome = Outcome.find_outcome_by_id(offchain)
 		if outcome is not None:
@@ -175,7 +175,7 @@ def save_handshake_for_event(event_name, inputs):
 
 		return None, None
 
-	elif '__report' in event_name:
+	elif event_name == '__report':
 		print '__report'
 		# report1: mean that support win
 		# report2: mean that against win
@@ -192,7 +192,7 @@ def save_handshake_for_event(event_name, inputs):
 
 		return None, None
 
-	elif '__shake' in event_name:
+	elif event_name == '__shake':
 		print '__shake'
 		offchain = offchain.replace('s', '')
 		shaker = Shaker.find_shaker_by_id(int(offchain))
@@ -209,7 +209,7 @@ def save_handshake_for_event(event_name, inputs):
 
 		return None, None
 
-	elif '__collect' in event_name:
+	elif event_name == '__collect':
 		print '__collect'
 
 		if 's' in offchain:
@@ -232,7 +232,7 @@ def save_handshake_for_event(event_name, inputs):
 
 		return None, None
 
-	elif '__init' in event_name:
+	elif event_name == '__init':
 		print '__init'
 
 		offchain = offchain.replace('m', '')
@@ -249,7 +249,7 @@ def save_handshake_for_event(event_name, inputs):
 
 		return None, None
 
-	elif '__uninit' in event_name:
+	elif event_name == '__uninit':
 		print '__uninit'
 		offchain = offchain.replace('m', '')
 		handshake = Handshake.find_handshake_by_id(int(offchain))

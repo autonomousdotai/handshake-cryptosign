@@ -4,7 +4,9 @@ from app.helpers.decorators import login_required, admin_required
 from app import db
 from app.models import User, Outcome, Match, Task
 from app.helpers.message import MESSAGE, CODE
+from sqlalchemy import or_, and_, text, func
 
+import re
 import json
 import app.constants as CONST
 import app.bl.outcome as outcome_bl
@@ -126,13 +128,23 @@ def remove(outcome_id):
 
 @outcome_routes.route('/generate_link', methods=['POST'])
 @login_required
-def generate_link(outcome_id):
+def generate_link():
 	try:
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		uid = int(request.headers['Uid'])
+		print uid
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		outcome_id = data['outcome_id']
+		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.public==0, Outcome.created_user_id==uid)).first()
 		if outcome is not None:
-			db.session.delete(outcome)
-			db.session.commit()
-			return response_ok("{} has been deleted!".format(outcome.id))
+			slug = re.sub('[^\w]+', '-', outcome.name.lower())
+			response = {
+				'slug': '{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid)
+			}
+			return response_ok(response)
+			
 		else:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 

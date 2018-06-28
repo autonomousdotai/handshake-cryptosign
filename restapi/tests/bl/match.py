@@ -75,10 +75,6 @@ class TestMatchBl(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_all_matches(self):
-        matches = match_bl.find_all_markets()
-
-
     def test_find_best_odds_which_match_support_side(self):
         self.clear_data_before_test()
 

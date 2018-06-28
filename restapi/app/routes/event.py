@@ -23,7 +23,6 @@ def event():
 
 	if data is None:
 		return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
 	try:
 		status = data.get('status', 1)
 		

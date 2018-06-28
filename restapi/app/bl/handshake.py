@@ -110,6 +110,7 @@ def parse_inputs(inputs):
 
 def save_handshake_for_event(event_name, inputs):
 	offchain, hid = parse_inputs(inputs)
+	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 
 	if '__createMarket' in event_name:
 		offchain = int(offchain.replace('createMarket', ''))
@@ -127,6 +128,7 @@ def save_handshake_for_event(event_name, inputs):
 		# report0: mean that no one win
 		result = offchain.replace('report', '')
 		print 'result {}'.format(result)
+		outcome = Outcome.find_outcome_by_hid(hid)
 		if len(result) > -1:
 			result = int(result)
 			outcome.result = result

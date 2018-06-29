@@ -13,7 +13,6 @@ const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[network_id].amountValue;
 
-const web3 = require('../configs/web3').getWeb3();
 let isRunningTask = false;
 
 
@@ -50,7 +49,7 @@ const submitMultiTnx = (arr) => {
 						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
 					break;
 					case 'uninitForTrial':
-						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, parseFloat(onchainData.value), onchainData.offchain, nonce + index, item);
+						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, item);
 					break;
 				}
 				index += 1;
@@ -86,7 +85,7 @@ const unInitFreeBet = (params) => {
 			side: params.side,
 			odds: parseInt(params.odds * 100),
 			maker: params.maker,
-			value: `${params.value}`,
+			value: params.value,
 			offchain: params.offchain
 		}])
 	});

@@ -52,7 +52,7 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
 						//log.Println("hook success", jsonData)
 						err := hookService.Event(jsonData)
 						if err != nil {
-							log.Println("Hook event failed: ", err.Error())
+							log.Println("Hook event success error: ", err.Error())
 							log.Println(eventJson)
 						}
 					}

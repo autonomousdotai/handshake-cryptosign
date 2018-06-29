@@ -184,8 +184,8 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
-          'value'   : web3.utils.toHex(amount),
+          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          // 'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shake(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
@@ -541,7 +541,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
-      const value           = web3.utils.toHex(web3.utils.toWei(_value));
+      const value           = web3.utils.toHex(web3.utils.toWei(_value, 'ether'));
       const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
           from: ownerAddress
       });

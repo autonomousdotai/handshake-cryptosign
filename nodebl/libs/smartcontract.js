@@ -67,12 +67,12 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
         console.log(receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSINIT_TNX_FAIL,
+          err_type: constants.TASK_STATUS.INIT_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -81,7 +81,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
       });
     } catch (e) {
       reject({
-        err_type: constants.TASK_STATUSINIT_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.INIT_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -112,7 +112,8 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
@@ -136,12 +137,12 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         console.log(receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSINIT_TEST_DRIVE_TNX_FAIL,
+          err_type: constants.TASK_STATUS.INIT_TEST_DRIVE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -151,7 +152,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
     } catch (e) {
       console.error(e);
       reject({
-        err_type: constants.TASK_STATUSINIT_TEST_DRIVE_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.INIT_TEST_DRIVE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -183,7 +184,8 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shake(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
@@ -207,12 +209,12 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
         console.log(receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSSHAKE_TNX_FAIL,
+          err_type: constants.TASK_STATUS.SHAKE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -222,7 +224,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
     } catch (e) {
       console.error(e);
       reject({
-        err_type: constants.TASK_STATUSSHAKE_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.SHAKE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -255,7 +257,8 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
@@ -279,12 +282,12 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         console.log(receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSSHAKE_TEST_DRIVE_TNX_FAIL,
+          err_type: constants.TASK_STATUS.SHAKE_TEST_DRIVE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -294,7 +297,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
     } catch (e) {
       console.error(e);
       reject({
-        err_type: constants.TASK_STATUSSHAKE_TEST_DRIVE_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.SHAKE_TEST_DRIVE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -351,12 +354,12 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
         console.log(receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSCOLLECT_TEST_DRIVE_TNX_FAIL,
+          err_type: constants.TASK_STATUS.COLLECT_TEST_DRIVE_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -366,7 +369,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
     } catch (e) {
       console.error(e);
       reject({
-        err_type: constants.TASK_STATUSCOLLECT_TEST_DRIVE_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.COLLECT_TEST_DRIVE_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -433,12 +436,12 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         console.log(receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSCREATE_MARKET_TNX_FAIL,
+          err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -447,7 +450,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
       });
     } catch (e) {
       reject({
-        err_type: constants.TASK_STATUSCREATE_MARKET_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -505,12 +508,12 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
         console.log('report tnxHash: ', receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSREPORT_TNX_FAIL,
+          err_type: constants.TASK_STATUS.REPORT_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -519,7 +522,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
       });
     } catch (e) {
       reject({
-        err_type: constants.TASK_STATUSREPORT_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.REPORT_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task
@@ -576,12 +579,12 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
         console.log('uninitForTrial tnxHash: ', receipt);
       })
       .on('error', err => {
-        // txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options })))
-        // .catch(console.error);
+        txDAO.create(-1, bettingHandshakeAddress, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+        .catch(console.error);
 
         console.log(err);
         return reject({
-          err_type: constants.TASK_STATUSUNINIT_FOR_TRIAL_TNX_FAIL,
+          err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_FAIL,
           error: err,
           options_data: {
             task: _options.task
@@ -590,7 +593,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
       });
     } catch (e) {
       reject({
-        err_type: constants.TASK_STATUSUNINIT_FOR_TRIAL_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task

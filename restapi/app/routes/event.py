@@ -53,13 +53,13 @@ def event():
 		if handshakes is not None:
 			for handshake in handshakes:
 				update_feed.delay(handshake.id)
-				if '__init' in event_name:
+				if event_name == '__init':
 					add_shuriken(handshake.user_id)
 
 		if shakers is not None:
 			for shaker in shakers:
 				update_feed.delay(shaker.handshake_id)
-				if '__shake' in event_name:
+				if event_name == '__shake':
 					add_shuriken(shaker.shaker_id)
 
 		return response_ok()

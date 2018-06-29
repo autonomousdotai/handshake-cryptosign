@@ -300,6 +300,23 @@ const asyncScanTask = () => {
 				.then(tnxResults => {
 					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
 					console.log(tnxResults);
+					/*					
+					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
+						const taskIds = tnxResults.map(i => { return i.task.id; })
+
+						console.log('UPDATE TASK STATUS ', taskIds);
+						taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
+						.then(updateResults => {
+							return resolve(tnxResults);
+						})
+						.catch(err => {
+							console.error('Error update task status: ', err);
+							return reject(err);
+						})
+					} else {
+						resolve([]);
+					}
+					*/
 					return resolve(tnxResults);
 				})
 				.catch(err => {

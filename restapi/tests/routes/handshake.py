@@ -1304,6 +1304,160 @@ class TestHandshakeBluePrint(BaseTestCase):
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
+
+
+    def test_collect_free_bet_1(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=0,
+                bk_status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        handshake_id = handshake.id
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=66,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=1,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=0,
+                bk_status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        handshake_id_1 = handshake.id
+        
+        shaker = Shaker(
+            shaker_id=66,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake_id,
+            from_address='0x123',
+            chain_id=4,
+            status=-1,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+        shaker_id = shaker.id
+
+        with self.client:
+            Uid = 66
+
+            params = {
+                "offchain": "cryptosign_s{}".format(shaker_id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/collect_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            # cannot withdraw because status = -1
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+        
+        shaker = Shaker.find_shaker_by_id(shaker_id)
+        shaker.status = 2
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 1
+
+        match = Match.find_match_by_id(outcome.match_id)
+        match.disputeTime = time.time() - 28600
+        db.session.commit()
+
+
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": "cryptosign_m{}".format(handshake_id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/collect_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            # cannot withdraw because handshake now win
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+            Uid = 66
+            params = {
+                "offchain": 'cryptosign_s{}'.format(shaker_id)
+            }
+            response = self.client.post(
+                                    '/handshake/collect_free_bet',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+            shaker = Shaker.find_shaker_by_id(shaker_id)
+            self.assertEqual(shaker.status, HandshakeStatus['STATUS_COLLECT_PENDING']) # pending collect method
+            self.assertEqual(shaker.amount, 3.5)
+
+            hs = Handshake.find_handshake_by_id(handshake_id)
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_INITED'])
+
+            hs1 = Handshake.find_handshake_by_id(handshake_id_1)
+            self.assertEqual(hs1.status, HandshakeStatus['STATUS_COLLECT_PENDING'])
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
  
 
     def test_uninit_free_bet(self):

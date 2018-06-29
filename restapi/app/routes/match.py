@@ -31,7 +31,7 @@ def matches():
 			outcome_id = data.get('outcome_id', -1)
 			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.public==public)).first()
 
-			if outcome is None:
+			if outcome is None or outcome.hid is None:
 				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 			match = db.session.query(Match).filter(Match.id==outcome.match_id).first()
@@ -53,7 +53,6 @@ def matches():
 			for match in matches:
 				#  find best odds which match against
 				match_json = match.to_json()
-
 				arr_outcomes = []
 				for outcome in match.outcomes:
 					if outcome.result == -1 and outcome.hid is not None and outcome.public == 1:
@@ -65,7 +64,43 @@ def matches():
 				
 				if len(arr_outcomes) > 0:
 					match_json["outcomes"] = arr_outcomes
-					response.append(match_json)
+				else:
+					match_json["outcomes"] = []
+				response.append(match_json)
+
+		return response_ok(response)
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@match_routes.route('/user/<int:user_id>', methods=['POST'])
+@login_required
+def matches_for_user(user_id):
+	try:
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		public = int(data.get('public', 1))
+		response = []
+
+		matches = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id==user_id, Outcome.public==public)))).all()
+		for match in matches:
+			#  find best odds which match against
+			match_json = match.to_json()
+
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				if outcome.result == -1 and outcome.hid is not None:
+					outcome_json = outcome.to_json()
+					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
+					outcome_json["market_odds"] = odds
+					outcome_json["market_amount"] = amount
+					arr_outcomes.append(outcome_json)
+			
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -76,6 +111,8 @@ def matches():
 @login_required
 def add():
 	try:
+		uid = int(request.headers['Uid'])
+
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -110,7 +147,9 @@ def add():
 					outcome = Outcome(
 						name=outcome_data['name'],
 						match_id=match.id,
-						public=item.get('public', 0)
+						public=item.get('public', 0),
+						modified_user_id=uid,
+						created_user_id=uid
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -155,7 +194,8 @@ def create_market():
 					
 					outcome = Outcome(
 						name='{} wins'.format(item['homeTeamName']),
-						match_id=match.id
+						match_id=match.id,
+						public=1
 					)
 					db.session.add(outcome)
 					db.session.flush()

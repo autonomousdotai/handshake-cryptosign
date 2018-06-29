@@ -31,7 +31,7 @@ def matches():
 			outcome_id = data.get('outcome_id', -1)
 			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.public==public)).first()
 
-			if outcome is None:
+			if outcome is None or outcome.hid is None:
 				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 			match = db.session.query(Match).filter(Match.id==outcome.match_id).first()
@@ -64,6 +64,8 @@ def matches():
 				
 				if len(arr_outcomes) > 0:
 					match_json["outcomes"] = arr_outcomes
+				else:
+					match_json["outcomes"] = []
 				response.append(match_json)
 
 		return response_ok(response)

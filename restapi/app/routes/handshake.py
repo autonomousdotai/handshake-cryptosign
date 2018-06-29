@@ -378,6 +378,7 @@ def create_bet():
 		data['match_name'] = match.name
 		data['uid'] = uid
 		data['payload'] = user.payload
+		data['free_bet'] = 1
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			user.free_bet = 1
@@ -435,7 +436,8 @@ def uninit_free_bet(handshake_id):
 						'value': handshake.amount,
 						'offchain': CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id),
 						'uid': uid,
-						'payload': user.payload
+						'payload': user.payload,
+						'free_bet': 1
 					}
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
@@ -528,6 +530,7 @@ def collect_free_bet():
 
 		data['uid'] = uid
 		data['payload'] = user.payload
+		data['free_bet'] = 1
 		# add task
 		task = Task(
 			task_type=CONST.TASK_TYPE['FREE_BET'],

@@ -43,7 +43,7 @@ const submitInitAPI = (options) => {
             currency: options.currency,
             chain_id: network_id,
             side: options.side,
-            from_address: ownerAddress,
+            from_address: options.from_address,
             free_bet: options.is_free_bet
         };
 

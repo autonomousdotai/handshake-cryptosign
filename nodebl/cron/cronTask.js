@@ -300,7 +300,7 @@ const asyncScanTask = () => {
 				.then(tnxResults => {
 					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
 					console.log(tnxResults);
-					/*					
+
 					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
 						const taskIds = tnxResults.map(i => { return i.task.id; })
 
@@ -316,8 +316,6 @@ const asyncScanTask = () => {
 					} else {
 						resolve([]);
 					}
-					*/
-					return resolve(tnxResults);
 				})
 				.catch(err => {
 					console.error('Error', err);

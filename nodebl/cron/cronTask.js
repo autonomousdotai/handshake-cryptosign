@@ -198,7 +198,7 @@ const collect = (params) => {
  */
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
-		if (params.date && params.date < params.disputeTime && params.disputeTime < params.reportTime) {
+		if (params.date < params.reportTime && params.reportTime < params.disputeTime) {
 			return resolve(utils.generateMarkets(params.outcomes, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
 		}
 		return reject({

@@ -77,10 +77,12 @@ func ScanTx() {
     transactions, err := txDAO.GetAllPending()
     if err != nil {
         log.Println("Scan Tx error", err.Error())
+        scanRunning = false
         return; 
     }
     if len(transactions) == 0 {
         log.Println("Scan Tx: don't have any pending tx")
+        scanRunning = false
         return;
     }
 
@@ -92,6 +94,7 @@ func ScanTx() {
     etherClient, err := ethclient.Dial(networkUrl)
     if err != nil {
         log.Printf("Scan Tx: connect to network %s fail!\n", networkUrl)
+        scanRunning = false
         return;
     }
   

@@ -65,9 +65,10 @@ const submitInitAPI = (options) => {
                             contract_method: options.isFreeBet ? 'initTestDriveTransaction' : 'init',
                             hid: options.hid,
                             odds: parseInt(item.odds * 100),
-                            value: web3.utils.toWei(`${item.amount}`), //TODO: check
+                            amount: web3.utils.toWei(`${item.amount}`), //TODO: check
                             offchain: item.offchain,
                             side: item.side,
+                            maker: item.from_address,
                             options_data: {
                                 response: item,
                                 dataRequest: dataRequest
@@ -79,7 +80,7 @@ const submitInitAPI = (options) => {
                             hid: options.hid,
                             odds: parseInt(item.odds * 100),
                             amount: web3.utils.toWei(`${item.amount}`), //TODO: check
-                            maker: item.maker_address,
+                            maker: item.from_address,
                             offchain: item.offchain,
                             side: item.side,
                             options_data: {
@@ -89,7 +90,7 @@ const submitInitAPI = (options) => {
                         }));
                     }
                 });
-                console.log('RESPONSE CALL HANDSHAKE INIT API: ', results);
+                console.log('RESPONSE CALL HANDSHAKE INIT API: ', JSON.stringify(results));
                 return resolve(results);
             } else {
                 return reject({

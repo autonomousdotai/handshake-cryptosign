@@ -61,7 +61,7 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
 				log.Println("Unknown case", tx.Hash)
 			}
 		} else {
-			log.Printf("Tx %s is pending or error occured\n", transaction.Hash, err.Error())
+			log.Printf("Tx %s is pending or error occured\n", transaction.Hash, err)
 		}
 		results <- true
 	}

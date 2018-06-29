@@ -553,7 +553,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , 
         from: ownerAddress,
         nonce: '0x' + _nonce.toString(16),
         chainId: network_id,
-        data: contract.methods.uninitForTrial(_hid, _side, _odds, _maker, value, web3.utils.fromUtf8(_offchain)).encodeABI()
+        data: contract.methods.uninitTestDrive(_hid, _side, _odds, _maker, value, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
 
       const tx = new ethTx(txParams);

@@ -98,33 +98,32 @@ class TestMatchBluePrint(BaseTestCase):
     def test_get_match_with_public_and_hid_is_none(self):
         self.clear_data_before_test()
         arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=1,
-				remaining_amount=1,
-				from_address='0x123',
-                status=0
+
+        # ----- 
+        match = Match(
+            id=10000
         )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
+        db.session.add(match)
         db.session.commit()
+        arr_hs.append(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=1,
+            public=1
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
 
         with self.client:
             Uid = 66
             
             params = {
-                "outcome_id": 88
+                "public": 1
             }
             response = self.client.post(
-                                    '/handshake',
+                                    '/match',
                                     data=json.dumps(params), 
                                     content_type='application/json',
                                     headers={
@@ -134,18 +133,20 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(data_json['support']), 1)
 
-            self.assertEqual(data_json['support'][0]['odds'], 1.2)
-            self.assertEqual(response.status_code, 200)
+            data_json = data['data']
+            self.assertTrue(data['status'] == 0)
+
+            outcomes = []
+            for match in data_json:
+                if match['id'] == 1:
+                    outcomes = match['outcomes']
+            
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
-
-            
 
 
     def test_get_match_with_private(self):

@@ -141,7 +141,7 @@ def generate_link():
 		if outcome is not None:
 			slug = re.sub('[^\w]+', '-', outcome.name.lower())
 			response = {
-				'slug': '{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid)
+				'slug': 'discover/{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid)
 			}
 			return response_ok(response)
 			

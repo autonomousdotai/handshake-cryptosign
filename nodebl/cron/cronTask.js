@@ -198,8 +198,13 @@ const collect = (params) => {
  */
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
-		// TODO: check time is NULL when world cup 2018 end
-		return resolve(utils.generateMarkets(params.outcomes, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
+		if (params.date && params.date < params.disputeTime && params.disputeTime < params.reportTime) {
+			return resolve(utils.generateMarkets(params.outcomes, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
+		}
+		return reject({
+			err_type: constants.TASK_STATUS.CREATE_MARKET_TIME_INVALID,
+			options_data: { date: params.date, disputeTime: params.disputeTime, reportTime: params.reportTime }
+		});
 	});
 }
 

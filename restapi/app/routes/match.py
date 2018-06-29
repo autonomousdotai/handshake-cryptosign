@@ -16,57 +16,30 @@ from flask_jwt_extended import jwt_required
 
 match_routes = Blueprint('match', __name__)
 
-@match_routes.route('/', methods=['POST'])
+@match_routes.route('/', methods=['GET'])
 @login_required
 def matches():
 	try:
-		data = request.json
-		if data is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		public = int(data.get('public', 1))
 		response = []
+		matches = Match.query.all()
 
-		if public == 0:
-			outcome_id = data.get('outcome_id', -1)
-			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.public==public)).first()
-
-			if outcome is None or outcome.hid is None:
-				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-
-			match = db.session.query(Match).filter(Match.id==outcome.match_id).first()
-
-			arr_outcomes = []
-			outcome_json = outcome.to_json()
-			odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-			outcome_json["market_odds"] = odds
-			outcome_json["market_amount"] = amount
-			arr_outcomes.append(outcome_json)
-
+		for match in matches:
+			#  find best odds which match against
 			match_json = match.to_json()
-			match_json["outcomes"] = arr_outcomes
-			response.append(match_json)
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				if outcome.result == -1 and outcome.hid is not None:
+					outcome_json = outcome.to_json()
+					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
+					outcome_json["market_odds"] = odds
+					outcome_json["market_amount"] = amount
+					arr_outcomes.append(outcome_json)
 			
-		else:
-			matches = Match.query.all()
-
-			for match in matches:
-				#  find best odds which match against
-				match_json = match.to_json()
-				arr_outcomes = []
-				for outcome in match.outcomes:
-					if outcome.result == -1 and outcome.hid is not None and outcome.public == 1:
-						outcome_json = outcome.to_json()
-						odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-						outcome_json["market_odds"] = odds
-						outcome_json["market_amount"] = amount
-						arr_outcomes.append(outcome_json)
-				
-				if len(arr_outcomes) > 0:
-					match_json["outcomes"] = arr_outcomes
-				else:
-					match_json["outcomes"] = []
-				response.append(match_json)
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes
+			else:
+				match_json["outcomes"] = []
+			response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:

@@ -123,6 +123,7 @@ def init():
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 		chain_id = int(data.get('chain_id', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		from_address = data.get('from_address', '')
+		free_bet = data.get('free_bet', 0)
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			return response_error(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE, CODE.HANDSHAKE_INVALID_BETTING_TYPE)
@@ -156,7 +157,8 @@ def init():
 				currency=currency,
 				side=side,
 				remaining_amount=amount,
-				from_address=from_address
+				from_address=from_address,
+				free_bet=free_bet
 			)
 			db.session.add(handshake)
 			db.session.commit()
@@ -215,7 +217,8 @@ def init():
 					side=side,
 					handshake_id=handshake.id,
 					from_address=from_address,
-					chain_id=chain_id
+					chain_id=chain_id,
+					free_bet=free_bet
 				)
 
 				db.session.add(shaker)
@@ -244,7 +247,8 @@ def init():
 					currency=currency,
 					side=side,
 					remaining_amount=shaker_amount,
-					from_address=from_address
+					from_address=from_address,
+					free_bet=free_bet
 				)
 				db.session.add(handshake)
 				db.session.flush()
@@ -372,6 +376,8 @@ def create_bet():
 		data['outcome_name'] = outcome.name
 		data['match_date'] = match.date
 		data['match_name'] = match.name
+		data['uid'] = uid
+		data['payload'] = user.payload
 
 		if user_bl.check_user_is_able_to_create_new_free_bet():
 			user.free_bet = 1
@@ -427,7 +433,9 @@ def uninit_free_bet(handshake_id):
 						'odds': handshake.odds,
 						'maker': handshake.from_address,
 						'value': handshake.amount,
-						'offchain': CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id)
+						'offchain': CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm{}'.format(handshake.id),
+						'uid': uid,
+						'payload': user.payload
 					}
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
@@ -518,6 +526,8 @@ def collect_free_bet():
 			if sk.id == offchain:
 				response = sk.to_json()
 
+		data['uid'] = uid
+		data['payload'] = user.payload
 		# add task
 		task = Task(
 			task_type=CONST.TASK_TYPE['FREE_BET'],

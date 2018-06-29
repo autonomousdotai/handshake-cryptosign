@@ -44,7 +44,8 @@ def login_required(f):
                     )
                     db.session.add(user)
                     db.session.commit()
-                elif user.fcm_token != token:
+                elif user.fcm_token != token or user.payload != payload:
+                    user.payload = payload
                     user.fcm_token = token
                     db.session.commit()
             except Exception as ex:

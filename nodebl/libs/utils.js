@@ -65,10 +65,10 @@ const submitInitAPI = (options) => {
                             contract_method: options.isFreeBet ? 'initTestDriveTransaction' : 'init',
                             hid: options.hid,
                             odds: parseInt(item.odds * 100),
-                            amount: web3.utils.toWei(`${item.amount}`), //TODO: check
+                            amount: web3.utils.toWei(`${item.amount}`),
                             offchain: item.offchain,
                             side: item.side,
-                            maker: item.from_address,
+                            maker: item.maker_address,
                             options_data: {
                                 response: item,
                                 dataRequest: dataRequest
@@ -78,9 +78,11 @@ const submitInitAPI = (options) => {
                         results.push(Object.assign({
                             contract_method: options.isFreeBet ? 'shakeTestDriveTransaction' : 'shake',
                             hid: options.hid,
-                            odds: parseInt(item.odds * 100),
-                            amount: web3.utils.toWei(`${item.amount}`), //TODO: check
-                            maker: item.from_address,
+                            amount: web3.utils.toWei(`${item.amount}`),
+                            taker: item.from_address,
+                            takerOdds: parseInt(item.odds * 100),
+                            maker: item.maker_address,
+                            makerOdds: parseInt(item.maker_odds * 100),
                             offchain: item.offchain,
                             side: item.side,
                             options_data: {

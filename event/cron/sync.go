@@ -1,7 +1,6 @@
 package cron
 
 import (
-    "fmt"
     "log"
     "encoding/json"
     "github.com/ninjadotorg/handshake-cryptosign/event/config"
@@ -9,18 +8,11 @@ import (
     "github.com/ninjadotorg/handshake-cryptosign/event/models"
 )
 
-var syncRunning = false
-
 func SyncTx() {
-    if syncRunning {
-        fmt.Println("Sync job is running.")
-        return;
-    }
-    syncRunning = true
     // todo call etherscan.io to get all transactions
     conf := config.GetConfig()
     predictionHandshakeAddress := conf.GetString("predictionHandshakeAddress")
-   
+    
     page := 1
     recordPerPage := 100
     for ;; {
@@ -67,5 +59,4 @@ func SyncTx() {
             }
         }
     }
-    syncRunning = false
 }

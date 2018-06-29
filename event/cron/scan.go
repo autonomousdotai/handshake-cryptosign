@@ -3,7 +3,6 @@ package cron
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,9 +12,7 @@ import (
 	"github.com/ninjadotorg/handshake-cryptosign/event/utils"
 )
 
-var scanRunning = false
-
-func worker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, results chan<- bool) {
+func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, results chan<- bool) {
 	for transaction := range jobs {
 		log.Printf("start scan %s\n", transaction.Hash)
 		txHash := common.HexToHash(transaction.Hash)
@@ -71,20 +68,15 @@ func worker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, result
 }
 
 func ScanTx() {
-	if scanRunning {
-		fmt.Println("Scan job is running.")
-		return
-	}
-	scanRunning = true
 	// todo get list transaction pending
 	transactions, err := txDAO.GetAllPending()
 	if err != nil {
 		log.Println("Scan Tx error", err.Error())
-		return
+		return;
 	}
 	if len(transactions) == 0 {
 		log.Println("Scan Tx: don't have any pending tx")
-		return
+		return;
 	}
 
 	log.Printf("Have %d pending tx\n", len(transactions))
@@ -92,26 +84,26 @@ func ScanTx() {
 	conf := config.GetConfig()
 	networkUrl := conf.GetString("blockchainNetwork")
 
-	etherClient, err := ethclient.Dial(networkUrl)
-	if err != nil {
-		log.Printf("Scan Tx: connect to network %s fail!\n", networkUrl)
-		return
-	}
-
-	totalJobs := len(transactions)
-	jobs := make(chan models.Tx, 100)
-	results := make(chan bool, totalJobs)
-
-	workers := 10
-	if totalJobs < 50 {
-		workers = 5
-	}
-	if workers < totalJobs {
-		workers = 1
-	}
+    etherClient, err := ethclient.Dial(networkUrl)
+    if err != nil {
+        log.Printf("Scan Tx: connect to network %s fail!\n", networkUrl)
+        return;
+    }
+  
+    totalJobs := len(transactions)
+    jobs := make(chan models.Tx, 100)
+    results := make(chan bool, totalJobs)
+    
+    workers := 10
+    if totalJobs < 50 {
+        workers = 5
+    }
+    if workers < totalJobs {
+        workers = 1
+    }
 
 	for w := 1; w <= workers; w++ {
-		go worker(w, etherClient, jobs, results)
+		go scanWorker(w, etherClient, jobs, results)
 	}
 	// todo loop & parse transaction
 	for _, transaction := range transactions {
@@ -123,5 +115,4 @@ func ScanTx() {
 		<-results
 	}
 	log.Println("scan complete")
-	scanRunning = false
 }

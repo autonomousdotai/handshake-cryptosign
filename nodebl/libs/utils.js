@@ -43,7 +43,8 @@ const submitInitAPI = (options) => {
             currency: options.currency,
             chain_id: network_id,
             side: options.side,
-            from_address: ownerAddress
+            from_address: ownerAddress,
+            free_bet: options.is_free_bet
         };
 
         console.log('CALL HANDSHAKE INIT API: ', dataRequest);
@@ -51,8 +52,8 @@ const submitInitAPI = (options) => {
         axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
             headers: {
                 'Content-Type': 'application/json',
-                'Payload': configs.payload,
-                'UID': configs.uid,
+                'Payload': options.payload || configs.payload,
+                'UID': options.uid || configs.uid,
                 'Fcm-Token': configs.fcm_token
             }
         })

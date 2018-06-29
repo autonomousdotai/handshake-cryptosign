@@ -126,7 +126,10 @@ const initBet = (params, task, isFreeBet) => {
 				side: params.side,
 				from_address: params.from_address || ownerAddress, // TODO: check this address
 				hid: params.hid,
-				isFreeBet: isFreeBet
+				isFreeBet: isFreeBet,
+				payload: params.payload,
+				is_free_bet: params.free_bet,
+				uid: params.uid
 			};
 
 			utils.submitInitAPI(dataRequest)
@@ -196,6 +199,7 @@ const collect = (params) => {
  */
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
+		// TODO: check time is NULL when world cup 2018 end
 		return resolve(utils.generateMarkets(params.outcomes, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
 	});
 }

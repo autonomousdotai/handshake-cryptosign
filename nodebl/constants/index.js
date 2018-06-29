@@ -31,6 +31,7 @@ module.exports = {
     'INIT_TEST_DRIVE_TNX_FAIL': -27,
     'INIT_TNX_EXCEPTION': -28,
     'INIT_TNX_FAIL': -29,
+    'CREATE_MARKET_TIME_INVALID': -30,
     'STATUS_UNKNOW': -100
   },
   TASK_TYPE: {

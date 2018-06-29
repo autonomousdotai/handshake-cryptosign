@@ -103,7 +103,7 @@ const submitInitAPI = (options) => {
         })
         .catch((error) => {
             return reject({
-                err_type: constants.TASK_STATUSINIT_CALL_API_EXCEPTION,
+                err_type: constants.TASK_STATUS.INIT_CALL_API_EXCEPTION,
                 error: error,
                 options_data: {
                     dataRequest: dataRequest

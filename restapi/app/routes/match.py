@@ -192,7 +192,8 @@ def create_market():
 					
 					outcome = Outcome(
 						name='{} wins'.format(item['homeTeamName']),
-						match_id=match.id
+						match_id=match.id,
+						public=1
 					)
 					db.session.add(outcome)
 					db.session.flush()

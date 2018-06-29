@@ -9,6 +9,11 @@ import (
     "github.com/ninjadotorg/handshake-cryptosign/event/config"
 )
 
+type CronStatus struct {
+    Scanning bool
+    Syncing bool
+}
+
 func main() {
     // config Logger 
     logFile, err := os.OpenFile("logs/log.txt", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
@@ -23,15 +28,28 @@ func main() {
     config.Init()
  
     fmt.Println("Start cron")
+    status := &CronStatus{false, false}
     appCron := cron.New()
     // 
     appCron.AddFunc("@every 15s", func() {
         fmt.Println("scan tx every 15s")
-        go cp.ScanTx()
+        if !status.Scanning {
+            status.Scanning = true
+            cp.ScanTx()
+            status.Scanning = false
+        } else {
+            fmt.Println("scan is running")
+        }
     })
     appCron.AddFunc("@every 5m", func() {
         fmt.Println("sync tx every 5m")
-        go cp.SyncTx()
+        if !status.Syncing {
+            status.Syncing = true
+            cp.SyncTx()
+            status.Syncing = false
+        } else {
+            fmt.Println("sync is running")
+        }
     })
     appCron.Start()
     // loop forever

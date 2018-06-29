@@ -268,7 +268,7 @@ def report(match_id):
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
 				report = {}
-				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + item['side']
+				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(item['side'])
 				report['hid'] = outcome.hid
 				report['outcome_result'] = item['side']
 

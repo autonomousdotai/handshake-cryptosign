@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from tests.routes.base import BaseTestCase
 from mock import patch
-from app.models.user import User, Handshake
-import app.bl.user as user_bl
+from app.models import User, Handshake
 from app import db, app
 from app.helpers.message import MESSAGE
 
 import mock
 import json
 import time
+import app.bl.user as user_bl
 
 class TestUserBluePrint(BaseTestCase):
             

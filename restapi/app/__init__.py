@@ -8,6 +8,7 @@ from app.routes import init_routes
 import time
 import decimal
 import flask.json
+import logging, logging.config, yaml
 
 class MyJSONEncoder(flask.json.JSONEncoder):
     def default(self, obj):
@@ -18,6 +19,10 @@ class MyJSONEncoder(flask.json.JSONEncoder):
 
 
 app = Flask(__name__)
+
+logging.config.dictConfig(yaml.load(open('logging.conf')))
+
+# add json encoder for decimal type
 app.json_encoder = MyJSONEncoder
 # disable strict_slashes
 app.url_map.strict_slashes = False
@@ -42,7 +47,6 @@ fcm.init_app(app)
 ipfs.init_app(app)
 # init firebase database
 firebase.init_app(app)
-
 
 @app.before_request
 def before_request():

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 from functools import wraps
 from flask import request
 from app import db
@@ -9,7 +10,6 @@ from app.models import User
 
 trusted_proxies = ('127.0.0.1')
 white_ips = ( '127.0.0.1' )
-
 
 def admin_required(f):
     @wraps(f)
@@ -27,10 +27,7 @@ def admin_required(f):
 
 def login_required(f):
     @wraps(f)
-    def wrap(*args, **kwargs):
-        print 'Uid -> {}'.format(request.headers['Uid'])
-        print 'Fcm-Token -> {}'.format(request.headers['Fcm-Token'])
-        print 'Payload -> {}'.format(request.headers['Payload'])
+    def wrap(*args, **kwargs): 
         if not request.headers["Uid"]:
             return response_error("Please login first!")
         else:
@@ -47,7 +44,8 @@ def login_required(f):
                     )
                     db.session.add(user)
                     db.session.commit()
-                elif user.fcm_token != token:
+                elif user.fcm_token != token or user.payload != payload:
+                    user.payload = payload
                     user.fcm_token = token
                     db.session.commit()
             except Exception as ex:

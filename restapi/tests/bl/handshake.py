@@ -9,11 +9,14 @@ from mock import patch
 from datetime import datetime
 from app import db, app
 from app.models import Handshake, User, Outcome, Match, Shaker
+from app.helpers.message import MESSAGE
+from app.constants import Handshake as HandshakeStatus
 
 import app.bl.handshake as handshake_bl
 import app.constants as CONST
 import mock
 import json
+import time
 
 
 class TestHandshakeBl(BaseTestCase):
@@ -395,6 +398,7 @@ class TestHandshakeBl(BaseTestCase):
         self.assertEqual(float(handshakes[0].amount), 0.3125)
         self.assertEqual(float(handshakes[1].amount), 0.21)
 
+
     def test_find_available_against_handshakes(self):
         self.clear_data_before_test()
         # -----
@@ -523,7 +527,8 @@ class TestHandshakeBl(BaseTestCase):
 					side=1,
 					handshake_id=handshake.id,
 					from_address='0x123',
-					chain_id=4
+					chain_id=4,
+                    status=2
 				)
         db.session.add(shaker)
         db.session.commit()
@@ -533,15 +538,135 @@ class TestHandshakeBl(BaseTestCase):
         db.session.flush()
 
         handshake_bl.save_collect_state_for_shaker(shaker)
+        db.session.commit()
 
         h = Handshake.find_handshake_by_id(handshake.id)
         s = Shaker.find_shaker_by_id(shaker.id)
 
         self.assertEqual(h.status, 6)
         self.assertEqual(s.status, 6)
+    
 
-    def test_save_collect_state_for_maker(self):
-        pass
+    def test_is_init_pending_status(self):
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=99,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0,
+		)
+		actual = handshake_bl.is_init_pending_status(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=99,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=-1
+		)
+
+		actual = handshake_bl.is_init_pending_status(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=99,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=-1,
+			bk_status=-1
+		)
+
+		actual = handshake_bl.is_init_pending_status(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
+    def test_can_uninit(self):
+        self.clear_data_before_test()
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0
+        )
+        db.session.add(handshake)
+        db.session.commit()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = False
+        self.assertEqual(actual, expected)
+
+        # -----
+        shaker = Shaker(
+					shaker_id=88,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+                    status=-1
+				)
+        db.session.add(shaker)
+        db.session.commit()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = False
+        self.assertEqual(actual, expected)
+
+        # decrease date create of shaker
+        shaker.date_created = datetime(2018, 6, 12)
+        db.session.merge(shaker)
+        db.session.flush()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = True
+        self.assertEqual(actual, expected)
+
+
+        # set shaker status = 2
+        shaker.status = 2
+        db.session.merge(shaker)
+        db.session.flush()
+
+        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        expected = False
+        self.assertEqual(actual, expected)
+
 
     def test_rollback_shake_state(self):
         self.clear_data_before_test()
@@ -584,82 +709,102 @@ class TestHandshakeBl(BaseTestCase):
         s = Shaker.find_shaker_by_id(shaker.id)
 
         self.assertEqual(h.remaining_amount, 1)
-        self.assertEqual(s.status, -9)
+        self.assertEqual(s.status, HandshakeStatus['STATUS_SHAKER_ROLLBACK'])
 
+    def test_can_withdraw(self):
+		self.clear_data_before_test()
 
-    def test_data_need_set_result_for_outcome(self):
-        self.clear_data_before_test()
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() + 1000
+		match.reportTime = time.time() + 1000
+		db.session.commit()
+
+		actual = handshake_bl.can_withdraw(None, shaker=None)
+		self.assertNotEqual(len(actual), 0)
 
         # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=2,
-				remaining_amount=0,
-				from_address='0x123',
-                status=0
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=1000,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
         )
-        db.session.add(handshake)
-        db.session.commit()
 
-        hs1 = handshake.id
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, MESSAGE.OUTCOME_INVALID)
 
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=2,
-				remaining_amount=0,
-				from_address='0x123',
-                status=0
+		# -----
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=2,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
         )
-        db.session.add(handshake)
-        db.session.commit()
 
-        hs2 = handshake.id
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT)
 
-        # -----
-        shaker = Shaker(
-					shaker_id=88,
-					amount=0.2,
-					currency='ETH',
-					odds=6,
-					side=1,
-					handshake_id=handshake.id,
-					from_address='0x123',
-					chain_id=4
-				)
-        db.session.add(shaker)
-        db.session.commit()
+		# -----
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=1,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
+        )
 
-        outcome = Outcome.find_outcome_by_id(88)
-        outcome.result = 1
-        db.session.flush()
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE)
 
-        handshakes, shakers = handshake_bl.data_need_set_result_for_outcome(outcome)
-        self.assertEqual(len(handshakes), 2)
-        self.assertEqual(len(shakers), 1)
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() - 1000
+		match.reportTime = time.time() - 1000
+		db.session.commit()
 
-        h1 = handshakes[0]
-        h2 = handshakes[1]
-        s = shakers[0]
+		# -----
+		handshake = Handshake(
+			hs_type=3,
+			chain_id=4,
+			is_private=1,
+			user_id=88,
+			outcome_id=88,
+			odds=1.2,
+			amount=1,
+			currency='ETH',
+			side=1,
+			remaining_amount=0,
+			from_address='0x123',
+			status=0
+        )
 
-        self.assertEqual(h1.id, hs1)
-        self.assertEqual(h2.id, hs2)
-        self.assertEqual(s.id, shaker.id)
-
+		actual = handshake_bl.can_withdraw(handshake, shaker=None)
+		self.assertEqual(actual, '')
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,12 @@
+package: .
+import:
+- package: github.com/gin-gonic/gin
+  version: v1.2
+- package: github.com/jinzhu/gorm
+  version: v1.9.1
+- package: github.com/go-sql-driver/mysql
+  version: v1.4.0
+- package: github.com/robfig/cron
+  version: v1.1
+- package: github.com/spf13/viper
+  version: v1.0.2

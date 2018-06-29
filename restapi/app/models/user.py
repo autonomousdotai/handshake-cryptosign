@@ -15,10 +15,7 @@ class User(BaseModel):
 
 	@classmethod
 	def find_user_with_id(cls, user_id):
-		user = User.query.filter_by(id=user_id).first()
-		if user is not None:
-			return user
-		return None
+		return User.query.filter_by(id=user_id).first()
 
 	def __repr__(self):
 		return '<User {}>'.format(self.id)

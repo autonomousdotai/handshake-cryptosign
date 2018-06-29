@@ -3,10 +3,11 @@
 from flask import jsonify
 
 
-def response_ok(value=None, message=''):
+def response_ok(value=None, message='', code=-1):
 	result = {
 		'status': 1,
-		'message': message
+		'message': message,
+		'code': code
 	}
 
 	if len(message) > 0:
@@ -18,9 +19,10 @@ def response_ok(value=None, message=''):
 	return jsonify(result)
 
 
-def response_error(message='', status=0):
+def response_error(message='', code=-1, status=0):
 	result = {
 		'status': status,
+		'code': code
 	}
 	if message:
 		result.update({'message': message})

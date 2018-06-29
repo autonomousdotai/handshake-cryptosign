@@ -6,7 +6,7 @@ from flask import Blueprint, request, g
 from app import db
 from app.models import Tx
 from datetime import datetime
-from app.helpers.message import MESSAGE
+from app.helpers.message import MESSAGE, CODE
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 
@@ -32,7 +32,7 @@ def add():
 	try:
 		data = request.json
 		if data is None:
-			raise Exception(MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		txs = []
 		response_json = []

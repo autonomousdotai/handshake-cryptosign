@@ -4,9 +4,11 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker
+from app.models import Handshake, User, Outcome, Match, Shaker, Task
 from app.helpers.message import MESSAGE
 from io import BytesIO
+from datetime import datetime
+from app.constants import Handshake as HandshakeStatus
 
 import time
 import os
@@ -77,9 +79,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             outcome.result = -1
             db.session.commit()
 
-    def mock_add_free_bet(handshake):
-        print 'DEBUG {}'.format(handshake)
-
     def clear_data_before_test(self):
         # delete master user
         user = User.find_user_with_id(1)
@@ -87,10 +86,18 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(user)
             db.session.commit()
 
+        user = User.find_user_with_id(88)
+        if user is not None:
+            user.free_bet = 0
+            db.session.commit()
+
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
         for handshake in handshakes:
             db.session.delete(handshake)
             db.session.commit()
+
+        Task.query.delete()
+        db.session.commit()
 
     def test_list_of_handshakes(self):
         self.clear_data_before_test()
@@ -205,13 +212,13 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(len(data_json), 1)
             self.assertEqual(response.status_code, 200)
 
-            handshake = data_json[0]
-            self.assertEqual(len(handshake['shakers']), 1)
-            self.assertEqual(handshake['amount'], 1)
-            self.assertEqual(handshake['remaining_amount'], 0.375)
-
-            shaker = handshake['shakers'][0]
-            self.assertEqual(shaker['amount'], 1.25)
+            hs = data_json[0]
+            handshake = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(hs['type'], 'shake')
+            self.assertEqual(float(handshake.amount), 1)
+            self.assertEqual(float(handshake.remaining_amount), 0.375)
+            
+            self.assertEqual(hs['amount'], 1.25)
 
 
         handshakes = handshake_bl.find_available_support_handshakes(88)
@@ -557,10 +564,14 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 1)
 
-            handshake = data_json[0]
-            self.assertEqual(len(handshake['shakers']), 1)
-            self.assertEqual(handshake['amount'], 0.003)
-            self.assertEqual(handshake['remaining_amount'], 0.0028)
+            hs = data_json[0]
+
+            handshake = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(float(handshake.amount), 0.003)
+            self.assertEqual(float(handshake.remaining_amount), 0.0028)
+
+            self.assertEqual(hs['type'], 'shake')
+            self.assertEqual(hs['amount'], 0.001)
 
 
         for handshake in arr_hs:
@@ -627,13 +638,13 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(len(data_json), 1)
 
 
-            handshake = data_json[0]
-            self.assertEqual(handshake['remaining_amount'], 0)
-            self.assertEqual(handshake['amount'], 0.005)
-            self.assertEqual(len(handshake['shakers']), 1)
+            hs = data_json[0]
+            handshake = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(handshake.remaining_amount, 0)
+            self.assertEqual(float(handshake.amount), 0.005)
 
-            shaker = handshake['shakers'][0]
-            self.assertEqual(shaker['amount'], 0.01)
+            self.assertEqual(hs['type'], 'shake')
+            self.assertEqual(hs['amount'], 0.01)
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -700,7 +711,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             handshake = data_json[0]
             self.assertEqual(len(data_json), 1)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -763,7 +774,7 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             handshake = data_json[0]
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -831,7 +842,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             handshake = data_json[0]
             self.assertEqual(len(data_json), 1)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -896,7 +907,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             handshake = data_json[0]
             self.assertEqual(len(data_json), 2)
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(handshake['shakers']), 1)
+            self.assertEqual(handshake['type'], 'shake')
 
         for handshake in arr_hs:
             db.session.delete(handshake)
@@ -935,7 +946,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 
-    def test_uninit_handshake_with_no_result(self):
+    def test_rollback_handshake_with_shake_state(self):
         self.clear_data_before_test()
         arr_hs = []
         # -----
@@ -952,330 +963,12 @@ class TestHandshakeBluePrint(BaseTestCase):
 				remaining_amount=0.7,
 				from_address='0x123',
                 status=0,
-                bk_status=0
+                bk_status=-1,
         )
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
 
-        with self.client:
-            Uid = 88
-
-            response = self.client.post(
-                                    '/handshake/uninit/{}'.format(handshake.id),
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            handshake = data['data']
-            self.assertEqual(handshake['status'], -8)
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-    def test_uninit_handshake_with_result(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
-                status=0,
-                bk_status=0
-        )
-        arr_hs.append(handshake)
-
-        outcome = Outcome.find_outcome_by_id(88)
-        outcome.result = 1
-        db.session.add(handshake)
-        db.session.commit()
-
-        with self.client:
-            Uid = 88
-
-            response = self.client.post(
-                                    '/handshake/uninit/{}'.format(handshake.id),
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-    def test_uninit_handshake_with_there_is_shaker(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.7,
-				from_address='0x123',
-                status=0,
-                bk_status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        with self.client:
-            Uid = 66
-
-            params = {
-                "type": 3,
-                "extra_data": "", 
-                "description": "TESTING MODE",
-                "outcome_id": 88,
-                "odds": 1.2,
-                "amount": 0.01,
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 2,
-                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
-            }
-            response = self.client.post(
-                                    '/handshake/init',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            data_json = data['data']
-
-            hs = data_json[0]
-            self.assertEqual(len(data_json), 1)
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(hs['shakers']), 1)
-
-
-        with self.client:
-            Uid = 88
-
-            response = self.client.post(
-                                    '/handshake/uninit/{}'.format(handshake.id),
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-    def test_collect_handshake_fail_if_there_is_no_result(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
-                status=0
-        )
-        arr_hs.append(handshake)
-        db.session.add(handshake)
-        db.session.commit()
-
-        with self.client:
-            Uid = 88
-            params = {
-                "offchain": 'cryptosign_m{}'.format(handshake.id)
-            }
-            response = self.client.post(
-                                    '/handshake/collect',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-    def test_collect_handshake_fail_if_result_not_match(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
-                status=0,
-                bk_status=0
-        )
-        arr_hs.append(handshake)
-
-        outcome = Outcome.find_outcome_by_id(88)
-        outcome.result = 1
-        db.session.add(handshake)
-        db.session.commit()
-
-        with self.client:
-            Uid = 88
-            params = {
-                "offchain": 'cryptosign_m{}'.format(handshake.id)
-            }
-            response = self.client.post(
-                                    '/handshake/collect',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-    def test_collect_handshake_fail_if_time_less_dispute_time(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.7,
-				from_address='0x123',
-                status=0,
-                bk_status=0
-        )
-        arr_hs.append(handshake)
-
-        outcome = Outcome.find_outcome_by_id(88)
-        outcome.result = 1
-
-        match = Match.find_match_by_id(outcome.match_id)
-        match.disputeTime = time.time() + 1000
-        match.reportTime = time.time() + 1000
-
-        db.session.add(handshake)
-        db.session.commit()
-
-        with self.client:
-            Uid = 88
-            params = {
-                "offchain": 'cryptosign_m{}'.format(handshake.id)
-            }
-            response = self.client.post(
-                                    '/handshake/collect',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            print data
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-    def test_collect_handshake(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
-                status=0,
-                bk_status=0
-        )
-        arr_hs.append(handshake)
-
-        db.session.add(handshake)
-        db.session.commit()
-
-        handshake1 = None
         with self.client:
             Uid = 66
 
@@ -1284,8 +977,8 @@ class TestHandshakeBluePrint(BaseTestCase):
                 "extra_data": "",
                 "description": "TESTING MODE",
                 "outcome_id": 88,
-                "odds": 1.2,
-                "amount": 6,
+                "odds": "1.2",
+                "amount": "0.5",
                 "currency": "ETH",
                 "chain_id": 4,
                 "side": 1,
@@ -1304,36 +997,20 @@ class TestHandshakeBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             data_json = data['data']
 
-            handshake = data_json[0]
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data_json), 2)
-            self.assertEqual(len(handshake['shakers']), 1)
-            self.assertEqual(handshake['amount'], 0.7)
-            self.assertEqual(handshake['remaining_amount'], 0)
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(float(hs.remaining_amount), 0.6)
 
-            shaker = handshake['shakers'][0]
-            self.assertEqual(shaker['amount'], 3.5)
+            sk = data_json[0]
+            self.assertEqual(sk['amount'], 0.5)
+            shaker_id = sk['id']
+            handshake_id = handshake.id
 
-            handshake1 = data_json[1]
-            self.assertEqual(len(handshake1['shakers']), 0)
-            self.assertEqual(handshake1['amount'], 2.5)
-            self.assertEqual(handshake1['remaining_amount'], 2.5)
-
-        outcome = Outcome.find_outcome_by_id(88)
-        outcome.result = 1
-
-        match = Match.find_match_by_id(outcome.match_id)
-        match.disputeTime = time.time() - 28600
-
-        db.session.commit()
-
-        with self.client:
-            Uid = 66
+            # rollback here
             params = {
-                "offchain": 'cryptosign_s{}'.format(shaker['id'])
+                "offchain": 'cryptosign_s{}'.format(shaker_id)
             }
             response = self.client.post(
-                                    '/handshake/collect',
+                                    '/handshake/rollback',
                                     data=json.dumps(params), 
                                     content_type='application/json',
                                     headers={
@@ -1341,53 +1018,19 @@ class TestHandshakeBluePrint(BaseTestCase):
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
-
-            data = json.loads(response.data.decode()) 
-
-            #  cannnot collect this handshake 'cause shaker status still = -1
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-            shaker = Shaker.find_shaker_by_id(int(shaker['id']))
-            shaker.status = 2
-
-            new_hs = Handshake.find_handshake_by_id(handshake1['id'])
-            new_hs.status = 0
-            db.session.commit()
-            
-            # ----------------------------------------------------------------
-            params = {
-                "offchain": 'cryptosign_s{}'.format(shaker.id)
-            }
-            response = self.client.post(
-                                    '/handshake/collect',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
-            shaker = Shaker.find_shaker_by_id(shaker.id)
-            self.assertEqual(shaker.status, -7) # pending collect method
-            self.assertEqual(shaker.amount, 3.5)
-
-            hs = Handshake.find_handshake_by_id(handshake1['id'])
-            self.assertEqual(hs.status, -7)
+            h = Handshake.find_handshake_by_id(handshake_id)
+            self.assertEqual(float(h.amount), 0.7)
+            self.assertEqual(float(h.remaining_amount), 0.7)
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_rollback_handshake_with_shake_state(self):
-        pass
-
-    def test_rollback_handshake_with_uninit_state(self):
+    def test_rollback_handshake_with_init_state(self):
         self.clear_data_before_test()
         arr_hs = []
         # -----
@@ -1398,13 +1041,13 @@ class TestHandshakeBluePrint(BaseTestCase):
 				user_id=88,
 				outcome_id=88,
 				odds=6,
-				amount=0.7,
+				amount=0.01,
 				currency='ETH',
 				side=2,
 				remaining_amount=0.7,
 				from_address='0x123',
-                status=-8,
-                bk_status=0,
+                status=-1,
+                bk_status=-1,
         )
         arr_hs.append(handshake)
         db.session.add(handshake)
@@ -1431,13 +1074,239 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
             handshake = data['data']
-            self.assertEqual(handshake['status'], handshake['bk_status'])
+            self.assertNotEqual(handshake['status'], handshake['bk_status'])
+            self.assertEqual(handshake['status'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'])
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_rollback_handshake_with_collect_state(self):
+    def test_rollback_handshake_with_init_state_and_free_bet(self):
+        self.clear_data_before_test()
+
+        user = User.find_user_with_id(88)
+        user.free_bet = 1
+        db.session.commit()
+
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=-1,
+                bk_status=-1,
+                free_bet=1
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": 'cryptosign_m{}'.format(handshake.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/rollback',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            handshake = data['data']
+            self.assertNotEqual(handshake['status'], handshake['bk_status'])
+            self.assertEqual(handshake['status'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'])
+
+            user = User.find_user_with_id(88)
+            self.assertEqual(user.free_bet, 0)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+    def test_rollback_handshake_with_shake_state_and_free_bet(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=2,
+				remaining_amount=0,
+				from_address='0x123',
+                status=0,
+                bk_status=-1,
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        shaker = Shaker(
+            shaker_id=66,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake.id,
+            from_address='0x123',
+            chain_id=4,
+            status=-1,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+        user = User.find_user_with_id(66)
+        user.free_bet = 1
+        db.session.commit()
+
+        with self.client:
+            Uid = 66
+
+            # rollback here
+            params = {
+                "offchain": 'cryptosign_s{}'.format(shaker.id)
+            }
+            response = self.client.post(
+                                    '/handshake/rollback',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+            h = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(float(h.amount), 0.7)
+            self.assertEqual(float(h.remaining_amount), 0.7)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+    def test_create_free_bet(self):
+        self.clear_data_before_test()
+        with self.client:
+            Uid = 88
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "DTHTRONG",
+                "outcome_id": 88,
+                "odds": "1.7",
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+            }
+
+            response = self.client.post(
+                                    '/handshake/create_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            data = data['data']
+            self.assertTrue('match' in data)
+
+            user = User.find_user_with_id(88)
+            self.assertEqual(user.free_bet, 1)
+
+
+    def test_collect_free_bet(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 2
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": "cryptosign_m{}".format(handshake.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/collect_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            hs = data['data']
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(hs['status'], HandshakeStatus['STATUS_COLLECT_PENDING'])
+
+        
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
+    def test_collect_free_bet_1(self):
         self.clear_data_before_test()
         arr_hs = []
         # -----
@@ -1457,99 +1326,113 @@ class TestHandshakeBluePrint(BaseTestCase):
                 bk_status=0
         )
         arr_hs.append(handshake)
-
         db.session.add(handshake)
         db.session.commit()
 
-        handshake1 = None
-        shaker = None
-        new_hs = None
+        handshake_id = handshake.id
+
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=66,
+				outcome_id=88,
+				odds=6,
+				amount=0.7,
+				currency='ETH',
+				side=1,
+				remaining_amount=0.7,
+				from_address='0x123',
+                status=0,
+                bk_status=0
+        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        handshake_id_1 = handshake.id
+        
+        shaker = Shaker(
+            shaker_id=66,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake_id,
+            from_address='0x123',
+            chain_id=4,
+            status=-1,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+
+        shaker_id = shaker.id
+
         with self.client:
             Uid = 66
 
             params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "TESTING MODE",
-                "outcome_id": 88,
-                "odds": 1.2,
-                "amount": 6,
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 1,
-                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+                "offchain": "cryptosign_s{}".format(shaker_id)
             }
+
             response = self.client.post(
-                                    '/handshake/init',
-                                    data=json.dumps(params), 
+                                    '/handshake/collect_free_bet',
                                     content_type='application/json',
+                                    data=json.dumps(params),
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
 
+            # cannot withdraw because status = -1
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
 
-            handshake = data_json[0]
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data_json), 2)
-            self.assertEqual(len(handshake['shakers']), 1)
-            self.assertEqual(handshake['amount'], 0.7)
-            self.assertEqual(handshake['remaining_amount'], 0)
-
-            shaker = handshake['shakers'][0]
-            self.assertEqual(shaker['amount'], 3.5)
-
-            handshake1 = data_json[1]
-            self.assertEqual(len(handshake1['shakers']), 0)
-            self.assertEqual(handshake1['amount'], 2.5)
-            self.assertEqual(handshake1['remaining_amount'], 2.5)
+        
+        shaker = Shaker.find_shaker_by_id(shaker_id)
+        shaker.status = 2
 
         outcome = Outcome.find_outcome_by_id(88)
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
         match.disputeTime = time.time() - 28600
-
         db.session.commit()
 
-        
+
         with self.client:
-            Uid = 66
+            Uid = 88
+
             params = {
-                "offchain": 'cryptosign_s{}'.format(shaker['id'])
+                "offchain": "cryptosign_m{}".format(handshake_id)
             }
+
             response = self.client.post(
-                                    '/handshake/collect',
-                                    data=json.dumps(params), 
+                                    '/handshake/collect_free_bet',
                                     content_type='application/json',
+                                    data=json.dumps(params),
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
 
+            # cannot withdraw because handshake now win
             data = json.loads(response.data.decode()) 
-
-            #  cannnot collect this handshake 'cause shaker status still = -1
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
 
-            shaker = Shaker.find_shaker_by_id(int(shaker['id']))
-            shaker.status = 2
-
-            new_hs = Handshake.find_handshake_by_id(handshake1['id'])
-            new_hs.status = 0
-            db.session.commit()
-            
-            # ----------------------------------------------------------------
+            Uid = 66
             params = {
-                "offchain": 'cryptosign_s{}'.format(shaker.id)
+                "offchain": 'cryptosign_s{}'.format(shaker_id)
             }
             response = self.client.post(
-                                    '/handshake/collect',
+                                    '/handshake/collect_free_bet',
                                     data=json.dumps(params), 
                                     content_type='application/json',
                                     headers={
@@ -1562,47 +1445,120 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
-        
-        shaker = Shaker.find_shaker_by_id(shaker.id)
-        self.assertEqual(shaker.status, -7) 
-        self.assertEqual(shaker.amount, 3.5)
-
-        hs = Handshake.find_handshake_by_id(handshake1['id'])
-        self.assertEqual(hs.status, -7)
-
-
-        # rollback here
-        with self.client:
-            Uid = 66
-            params = {
-                "offchain": 'cryptosign_m{}'.format(handshake1['id'])
-            }
-            response = self.client.post(
-                                    '/handshake/rollback',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-
-            shaker = Shaker.find_shaker_by_id(shaker.id)
-            self.assertEqual(shaker.status, shaker.bk_status) 
-            self.assertNotEqual(shaker.status, -7)
+            shaker = Shaker.find_shaker_by_id(shaker_id)
+            self.assertEqual(shaker.status, HandshakeStatus['STATUS_COLLECT_PENDING']) # pending collect method
             self.assertEqual(shaker.amount, 3.5)
 
-            hs = Handshake.find_handshake_by_id(handshake1['id'])
-            self.assertEqual(hs.status, hs.bk_status)
-            self.assertNotEqual(hs.status, -7)
+            hs = Handshake.find_handshake_by_id(handshake_id)
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_INITED'])
+
+            hs1 = Handshake.find_handshake_by_id(handshake_id_1)
+            self.assertEqual(hs1.status, HandshakeStatus['STATUS_COLLECT_PENDING'])
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
+ 
 
+    def test_uninit_free_bet(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            response = self.client.post(
+                                    '/handshake/uninit_free_bet/{}'.format(handshake.id),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+            handshake.date_created=datetime(2018, 6, 18)
+            db.session.flush()
+            db.session.commit()
+
+            # call uninit again
+            response = self.client.post(
+                                    '/handshake/uninit_free_bet/{}'.format(handshake.id),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+        
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+    def test_check_free_bet(self):
+        user = User.find_user_with_id(88)
+        user.free_bet = 0
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            response = self.client.get(
+                                    '/handshake/check_free_bet',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+
+            # update free_bet
+            user = User.find_user_with_id(88)
+            user.free_bet = 1
+            db.session.commit()
+
+            # call check free bet again
+            response = self.client.get(
+                                    '/handshake/check_free_bet',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
     
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,6 @@
+# vim
+*~
+*.swp
 # mac fucking
 .DS_Store
 # vscode editor
@@ -15,16 +18,30 @@ restapi/app/settings.py
 __pycache__
 
 # event ignore
-event/node_modules
-event/configs/config-local.js
-event/configs/config-staging.js
-event/configs/config-production.js
+event/vendor
+event/config/*.yaml
+event/config/*.json
+event/vendor
+event/logs/*.txt
+
+# node-bl ignore
+nodebl/vendor
+nodebl/config/*.yaml
+nodebl/config/*.json
+nodebl/vendor
+nodebl/logs
+nodebl/config-local.js
 
 #event-new ignore
-event-new/node_modules
-event-new/.sonarlint
-event-new/dist
+node_modules
+.sonarlint
+dist
+config-local.js
+config-staging.js
+config-production.js
 
+# log
+debug.log
 
 # virtualenv
 .Python

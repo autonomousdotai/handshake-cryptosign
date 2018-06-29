@@ -7,6 +7,7 @@ import time
 import requests
 import app.constants as CONST
 import math
+import app.bl.match as match_bl
 
 from decimal import *
 from flask import g
@@ -14,13 +15,10 @@ from app import db, fcm, sg, firebase
 from sqlalchemy import and_, or_, func, text
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
-from app.helpers.utils import parse_date_to_int, is_valid_email, parse_shakers_array
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken
-from datetime import datetime
+from app.tasks import update_feed
 from app.helpers.message import MESSAGE
 from datetime import datetime
-from sqlalchemy import literal
 
 getcontext().prec = 18
 
@@ -32,9 +30,9 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		print 'outcome result is {}'.format(outcome.result)
 		return None, None
 
-	handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+	handshakes = db.session.query(Handshake).filter(or_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
 	print 'handshakes {}'.format(handshakes)
-	shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+	shakers = db.session.query(Shaker).filter(or_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
@@ -98,13 +96,93 @@ def data_need_set_result_for_outcome(outcome):
 	return handshakes, shakers
 
 
-def save_handshake_for_event(event_name, offchain, outcome=None):
-	if 'report' in offchain:
+def parse_inputs(inputs):
+	offchain = ''
+	hid = ''
+
+	if 'offchain' in inputs:
+		offchain = inputs['offchain']
+
+	if 'hid' in inputs:
+		hid = inputs['hid']
+
+	return offchain, hid
+
+
+def save_handshake_method_for_event(method, inputs):
+	offchain = inputs['offchain']
+	if method == 'init' or method == 'initTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('m', ''))
+		handshake = Handshake.find_handshake_by_id(offchain)
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
+			db.session.flush()
+
+			if 'maker' in inputs: # free-bet
+				user = User.find_user_with_id(handshake.user_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+					db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+	elif method == 'shake' or method == 'shakeTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('s', ''))
+		shaker = Shaker.find_shaker_by_id(offchain)
+		if shaker is not None:
+			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
+			db.session.flush()
+
+			if 'taker' in inputs: # free-bet
+				user = User.find_user_with_id(shaker.shaker_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+					db.session.flush()
+
+			arr = []
+			arr.append(shaker)
+			return None, arr
+
+	elif method == 'uninit' or method == 'uninitTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('m', ''))
+		handshake = Handshake.find_handshake_by_id(offchain)
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
+			db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+	return None, None
+
+
+def save_handshake_for_event(event_name, inputs):
+	offchain, hid = parse_inputs(inputs)
+	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+
+	if event_name == '__createMarket':
+		offchain = int(offchain.replace('createMarket', ''))
+		outcome = Outcome.find_outcome_by_id(offchain)
+		if outcome is not None:
+			outcome.hid = hid
+			db.session.flush()
+
+		return None, None
+
+	elif event_name == '__report':
+		print '__report'
 		# report1: mean that support win
 		# report2: mean that against win
 		# report0: mean that no one win
 		result = offchain.replace('report', '')
 		print 'result {}'.format(result)
+		outcome = Outcome.find_outcome_by_hid(hid)
 		if len(result) > -1:
 			result = int(result)
 			outcome.result = result
@@ -112,62 +190,81 @@ def save_handshake_for_event(event_name, offchain, outcome=None):
 			db.session.flush()
 			return data_need_set_result_for_outcome(outcome)
 
-	elif 's' in offchain: # shaker
+		return None, None
+
+	elif event_name == '__shake':
+		print '__shake'
 		offchain = offchain.replace('s', '')
 		shaker = Shaker.find_shaker_by_id(int(offchain))
-		print 'shaker = {}'.format(shaker)
 		if shaker is not None:
-			if '__shake' in event_name:
-				print '__shake'
-				shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
-				shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
+			print 'shaker = {}'.format(shaker)
+			shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
+			shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
-				db.session.flush()
+			db.session.flush()
 
-				arr = []
-				arr.append(shaker)
-				return None, arr
+			arr = []
+			arr.append(shaker)
+			return None, arr
 
-			elif '__collect' in event_name:
-				print '__collect'
+		return None, None
+
+	elif event_name == '__collect':
+		print '__collect'
+
+		if 's' in offchain:
+			offchain = offchain.replace('s', '')
+			shaker = Shaker.find_shaker_by_id(int(offchain))
+			if shaker is not None:
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
 				return save_collect_state_for_shaker(shaker)
 
-	else: # maker
-		offchain = offchain.replace('m', '')
-		handshake = Handshake.find_handshake_by_id(int(offchain))
-		print 'handshake = {}, offchain = {}'.format(handshake, offchain)
-		if handshake is not None:
-			if '__init' in event_name:
-				print '__init'
-				handshake.status = HandshakeStatus['STATUS_INITED']
-				handshake.bk_status = HandshakeStatus['STATUS_INITED']
-
-				db.session.flush()
-
-				arr = []
-				arr.append(handshake)
-				return arr, None
-
-			elif '__uninit' in event_name:
-				print '__uninit'
-				handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
-				handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
-
-				db.session.flush()
-
-				arr = []
-				arr.append(handshake)
-				return arr, None
-
-			elif '__collect' in event_name:
-				print '__collect'
+		elif 'm' in offchain:
+			offchain = offchain.replace('m', '')
+			handshake = Handshake.find_handshake_by_id(int(offchain))
+			if handshake is not None:
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join
 				# update all statuses (shaker and handshake) of them to done
 				return save_collect_state_for_maker(handshake)
+
+		return None, None
+
+	elif event_name == '__init':
+		print '__init'
+
+		offchain = offchain.replace('m', '')
+		handshake = Handshake.find_handshake_by_id(int(offchain))
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_INITED']
+			handshake.bk_status = HandshakeStatus['STATUS_INITED']
+
+			db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+		return None, None
+
+	elif event_name == '__uninit':
+		print '__uninit'
+		offchain = offchain.replace('m', '')
+		handshake = Handshake.find_handshake_by_id(int(offchain))
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
+			handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
+
+			db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+		return None, None
+
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -208,6 +305,7 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 			return handshakes
 	return []
 
+
 def find_all_joined_handshakes(side, outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
@@ -215,14 +313,14 @@ def find_all_joined_handshakes(side, outcome_id):
 		return handshakes
 	return []
 
+
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
-		for handshake in handshakes:
-			print "{} - {}".format(handshake[0], handshake[1])
 		return handshakes
 	return []
+
 
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -236,9 +334,6 @@ def rollback_shake_state(shaker):
 	if shaker is None:
 		raise Exception(MESSAGE.SHAKER_NOT_FOUND)
 
-	if shaker.status == HandshakeStatus['STATUS_SHAKER_ROLLBACK']:
-		raise Exception(MESSAGE.SHAKER_ROLLBACK_ALREADY)
-
 	shaker.status = HandshakeStatus['STATUS_SHAKER_ROLLBACK']
 	handshake = db.session.query(Handshake).filter(and_(Handshake.id==shaker.handshake_id, Handshake.status==HandshakeStatus['STATUS_INITED'])).first()
 	if handshake is None:
@@ -247,4 +342,77 @@ def rollback_shake_state(shaker):
 	handshake.remaining_amount += ((shaker.odds * shaker.amount) - shaker.amount)
 	db.session.flush()
 
-	update_feed.delay(handshake.id, shaker.id)
+	return shaker
+
+
+def is_init_pending_status(handshake):
+	if handshake.status == HandshakeStatus['STATUS_PENDING'] and handshake.bk_status == HandshakeStatus['STATUS_PENDING']:
+		return True	
+	return False
+
+
+def update_handshakes_feed(handshakes, shakers):
+	# update feed
+	if handshakes is not None:
+		for handshake in handshakes:
+			update_feed.delay(handshake.id)
+
+	if shakers is not None:
+		for shaker in shakers:
+			update_feed.delay(shaker.handshake_id)
+
+
+def can_withdraw(handshake, shaker=None):
+	outcome = None
+	result = None
+
+	if shaker is None:
+		if handshake is not None:
+			if handshake.status == HandshakeStatus['STATUS_INITED']:
+				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+				result = handshake.side
+			else:
+				return MESSAGE.CANNOT_WITHDRAW
+		else:
+			return MESSAGE.CANNOT_WITHDRAW
+	else:
+		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
+			result = shaker.side
+		else:
+			return MESSAGE.CANNOT_WITHDRAW
+
+	if outcome is not None:
+		if outcome.result != result:
+			return MESSAGE.HANDSHAKE_NOT_THE_SAME_RESULT
+
+		if match_bl.is_exceed_dispute_time(outcome.match_id) == False:
+			return MESSAGE.HANDSHAKE_WITHDRAW_AFTER_DISPUTE
+	else:
+		return MESSAGE.OUTCOME_INVALID
+
+	return ''
+
+def can_uninit(handshake):
+	if handshake is None:
+		return False
+	
+	n = time.mktime(datetime.now().timetuple())
+	if len(handshake.shakers.all()) == 0:
+		ds = time.mktime(handshake.date_created.timetuple()) 
+		if n - ds > 300: #5 minutes
+			return True
+
+	else:
+		for sk in handshake.shakers.all():
+			if sk.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+				return False
+			else:
+				ds = time.mktime(sk.date_created.timetuple()) 
+				if n - ds < 300:
+					return False
+
+		return True
+
+	return False

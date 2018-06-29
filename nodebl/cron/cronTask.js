@@ -245,7 +245,7 @@ const asyncScanTask = () => {
 
 								if (!processTaskFunc) {
 									return reject({
-										err_type: constants.TASK_STATUSTASK_TYPE_NOT_FOUND,
+										err_type: constants.TASK_STATUS.TASK_TYPE_NOT_FOUND,
 										options_data: {
 											task: task.toJSON()
 										}
@@ -266,7 +266,7 @@ const asyncScanTask = () => {
 							})
 							.catch(err => {
 								return reject({
-									err_type: constants.TASK_STATUSUPDATE_TASK_STATUS_FAIL,
+									err_type: constants.TASK_STATUS.UPDATE_TASK_STATUS_FAIL,
 									error: err,
 									options_data: {
 										task: task.toJSON()

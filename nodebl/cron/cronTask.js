@@ -84,7 +84,7 @@ const unInitFreeBet = (params) => {
 			contract_method: 'uninitForTrial',
 			hid: params.hid,
 			side: params.side,
-			odds: params.odds,
+			odds: parseInt(params.odds * 100),
 			maker: params.maker,
 			value: params.value,
 			offchain: params.offchain

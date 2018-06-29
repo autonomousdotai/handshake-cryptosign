@@ -86,7 +86,7 @@ const unInitFreeBet = (params) => {
 			side: params.side,
 			odds: parseInt(params.odds * 100),
 			maker: params.maker,
-			value: parseFloat(params.value + ''),
+			value: `${params.value}`,
 			offchain: params.offchain
 		}])
 	});

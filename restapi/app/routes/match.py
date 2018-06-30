@@ -137,59 +137,6 @@ def add():
 		return response_error(ex.message)
 
 
-@match_routes.route('/create_market', methods=['POST'])
-@admin_required
-def create_market():
-	try:
-		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
-		data = {}
-		with open(fixtures_path, 'r') as f:
-			data = json.load(f)
-
-		matches = []
-		if 'fixtures' in data:
-			fixtures = data['fixtures']
-			for item in fixtures:
-				if len(item['homeTeamName']) > 0 and len(item['awayTeamName']) > 0:
-					match = Match(
-								homeTeamName=item['homeTeamName'],
-								awayTeamName=item['awayTeamName'],
-								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
-								source='football-data.org',
-								market_fee=0,
-								date=item['date'],
-								reportTime=item['reportTime'],
-								disputeTime=item['disputeTime']
-							)
-					matches.append(match)
-					db.session.add(match)
-					db.session.flush()
-					
-					outcome = Outcome(
-						name='{} wins'.format(item['homeTeamName']),
-						match_id=match.id,
-						public=1
-					)
-					db.session.add(outcome)
-					db.session.flush()
-
-					# add Task
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(match.to_json()),
-						action=CONST.TASK_ACTION['CREATE_MARKET'],
-						status=-1
-					)
-					db.session.add(task)
-					db.session.flush()
-
-		db.session.commit()
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
 @match_routes.route('/remove/<int:id>', methods=['POST'])
 @login_required
 @admin_required

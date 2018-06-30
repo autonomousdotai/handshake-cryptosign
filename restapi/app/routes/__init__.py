@@ -12,6 +12,7 @@ from app.routes.user import user_routes
 from app.routes.match import match_routes
 from app.routes.outcome import outcome_routes
 from app.routes.setting import setting_routes
+from app.routes.admin import admin_routes
 from app.routes.tx import tx_routes
 from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
                                 get_jwt_identity, jwt_refresh_token_required)
@@ -28,4 +29,5 @@ def init_routes(app):
     app.register_blueprint(outcome_routes, url_prefix='/outcome')
     app.register_blueprint(setting_routes, url_prefix='/setting')
     app.register_blueprint(tx_routes, url_prefix='/tx')
+    app.register_blueprint(admin_routes, url_prefix='/admin')
     app.register_blueprint(user_routes)

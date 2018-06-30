@@ -3,7 +3,7 @@ from flask import Flask
 
 from app.factory import make_celery
 from app.core import db, configure_app, firebase
-from app.models import Handshake, Outcome, Shaker
+from app.models import Handshake, Outcome, Shaker, Match
 
 import time
 import app.constants as CONST
@@ -35,13 +35,17 @@ def update_feed(handshake_id):
 
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is None:
-			print 'outcome for handshake {} is None'.format(handshake_id)
+			print 'outcome for handshake: {} is None'.format(handshake_id)
+			return
+
+		match = Match.find_match_by_id(outcome.match_id)
+		if match is None:
+			print 'match is None'
 			return
 		
 		print '-----------------------------------------------------------'
 		print 'begin: update feed for user id: {}'.format(handshake.user_id)
 		print '-----------------------------------------------------------'
-		shaker = None
 
 		_id = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
 		amount = handshake.amount
@@ -84,6 +88,9 @@ def update_feed(handshake_id):
 			"result_i": outcome.result,
 			"free_bet_i": handshake.free_bet,
 			"shakers_s": json.dumps(shake_user_infos, use_decimal=True),
+			"closing_time_i": match.date,
+			"reporting_time_i": match.reportTime,
+			"disputing_time_i": match.disputeTime,
 		}
 		print 'create maker {}'.format(hs)
 

@@ -95,7 +95,7 @@ class TestMatchBluePrint(BaseTestCase):
             pass
 
 
-    def test_get_match_with_public_and_hid_is_none(self):
+    def test_get_match(self):
         self.clear_data_before_test()
         arr_hs = []
 
@@ -147,16 +147,6 @@ class TestMatchBluePrint(BaseTestCase):
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
-
-
-    def test_get_match_with_private(self):
-        with self.client:
-            pass
-
-
-    def test_get_match_with_private_and_hid_is_none(self):
-        with self.client:
-            pass
 
     
 if __name__ == '__main__':

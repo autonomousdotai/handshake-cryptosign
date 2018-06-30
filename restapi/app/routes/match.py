@@ -24,21 +24,22 @@ def matches():
 		matches = Match.query.all()
 
 		for match in matches:
-			#  find best odds which match against
-			match_json = match.to_json()
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				if outcome.result == -1 and outcome.hid is not None:
-					outcome_json = outcome.to_json()
-					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-					outcome_json["market_odds"] = odds
-					outcome_json["market_amount"] = amount
-					arr_outcomes.append(outcome_json)
-			
-			if len(arr_outcomes) > 0:
-				match_json["outcomes"] = arr_outcomes
-			else:
-				match_json["outcomes"] = []
+			if match_bl.is_exceed_closing_time(match.id) == False:
+				#  find best odds which match against
+				match_json = match.to_json()
+				arr_outcomes = []
+				for outcome in match.outcomes:
+					if outcome.result == -1 and outcome.hid is not None:
+						outcome_json = outcome.to_json()
+						odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
+						outcome_json["market_odds"] = odds
+						outcome_json["market_amount"] = amount
+						arr_outcomes.append(outcome_json)
+				
+				if len(arr_outcomes) > 0:
+					match_json["outcomes"] = arr_outcomes
+				else:
+					match_json["outcomes"] = []
 			response.append(match_json)
 
 		return response_ok(response)
@@ -137,59 +138,6 @@ def add():
 		return response_error(ex.message)
 
 
-@match_routes.route('/create_market', methods=['POST'])
-@admin_required
-def create_market():
-	try:
-		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
-		data = {}
-		with open(fixtures_path, 'r') as f:
-			data = json.load(f)
-
-		matches = []
-		if 'fixtures' in data:
-			fixtures = data['fixtures']
-			for item in fixtures:
-				if len(item['homeTeamName']) > 0 and len(item['awayTeamName']) > 0:
-					match = Match(
-								homeTeamName=item['homeTeamName'],
-								awayTeamName=item['awayTeamName'],
-								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
-								source='football-data.org',
-								market_fee=0,
-								date=item['date'],
-								reportTime=item['reportTime'],
-								disputeTime=item['disputeTime']
-							)
-					matches.append(match)
-					db.session.add(match)
-					db.session.flush()
-					
-					outcome = Outcome(
-						name='{} wins'.format(item['homeTeamName']),
-						match_id=match.id,
-						public=1
-					)
-					db.session.add(outcome)
-					db.session.flush()
-
-					# add Task
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(match.to_json()),
-						action=CONST.TASK_ACTION['CREATE_MARKET'],
-						status=-1
-					)
-					db.session.add(task)
-					db.session.flush()
-
-		db.session.commit()
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
 @match_routes.route('/remove/<int:id>', methods=['POST'])
 @login_required
 @admin_required
@@ -222,6 +170,7 @@ def report(match_id):
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			
+			print result
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
@@ -230,6 +179,7 @@ def report(match_id):
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
+				print outcome
 				if outcome is not None:
 					if outcome.result != -1:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)

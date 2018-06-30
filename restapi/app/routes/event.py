@@ -13,11 +13,6 @@ event_routes = Blueprint('event', __name__)
 
 @event_routes.route('/', methods=['POST'])
 def event():
-	
-	# TODO:
-	# Uninit free bet/ real bet: state failed
-	# Collect free bet/ real bet: state failed
-	
 	data = request.json
 	print 'event = {}'.format(data)
 

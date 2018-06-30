@@ -165,6 +165,31 @@ def save_handshake_method_for_event(method, inputs):
 			arr.append(handshake)
 			return arr, None
 
+	elif method == 'collect' or method == 'collectTestDrive':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+
+		if 'm' in offchain:
+			offchain = int(offchain.replace('m', ''))
+			handshake = Handshake.find_handshake_by_id(offchain)
+			if handshake is not None:
+				handshake.status = HandshakeStatus['STATUS_COLLECT_FAILED']
+				db.session.flush()
+
+				arr = []
+				arr.append(handshake)
+				return arr, None
+
+		elif 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = Shaker.find_shaker_by_id(offchain)
+			if shaker is not None:
+				shaker.status = HandshakeStatus['STATUS_COLLECT_FAILED']
+				db.session.flush()
+
+				arr = []
+				arr.append(shaker)
+				return None, arr
+
 	return None, None
 
 

@@ -120,6 +120,7 @@ class TestEventBluePrint(BaseTestCase):
                 "contract": "predictionHandshake",
                 "eventName": "__init",
                 "status": 1,
+                "id": 1,
                 "inputs": {
                     "offchain": "cryptosign_m{}".format(handshake_id),
                     "hid": 88
@@ -170,6 +171,7 @@ class TestEventBluePrint(BaseTestCase):
             params = {
                 "contract": "predictionHandshake",
                 "eventName": "__uninit",
+                'id': 1,
                 "inputs": {
                     "offchain": "cryptosign_m{}".format(handshake.id),
                     "hid": 88
@@ -215,6 +217,7 @@ class TestEventBluePrint(BaseTestCase):
             params = {
                 "contract": "predictionHandshake",
                 "eventName": "__createMarket",
+                'id': 1,
                 "inputs": {
                     "offchain": "cryptosign_createMarket{}".format(22),
                     "hid": 88
@@ -287,6 +290,7 @@ class TestEventBluePrint(BaseTestCase):
                 "contract": "predictionHandshake",
                 "eventName": "__collect",
                 "status": 1,
+                'id': 1,
                 "inputs": {
                     "offchain": "cryptosign_s{}".format(shaker.id),
                     "hid": 88
@@ -361,6 +365,7 @@ class TestEventBluePrint(BaseTestCase):
                 "contract": "predictionHandshake",
                 "eventName": "__collect",
                 "status": 1,
+                'id': 1,
                 "inputs": {
                     "offchain": "cryptosign_m{}".format(handshake.id),
                     "hid": 88
@@ -430,6 +435,7 @@ class TestEventBluePrint(BaseTestCase):
                 "contract": "predictionHandshake",
                 "eventName": "__shake",
                 "status": 1,
+                'id': 1,
                 "inputs": {
                     "offchain": "cryptosign_s{}".format(shaker_id),
                     "hid": 88
@@ -480,6 +486,7 @@ class TestEventBluePrint(BaseTestCase):
                 "contract": "predictionHandshake",
                 "eventName": "__report",
                 "status": 1,
+                'id': 1,
                 "inputs": {
                     "offchain": "cryptosign_report1",
                     "hid": 88    

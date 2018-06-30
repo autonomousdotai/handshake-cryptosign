@@ -24,21 +24,22 @@ def matches():
 		matches = Match.query.all()
 
 		for match in matches:
-			#  find best odds which match against
-			match_json = match.to_json()
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				if outcome.result == -1 and outcome.hid is not None:
-					outcome_json = outcome.to_json()
-					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-					outcome_json["market_odds"] = odds
-					outcome_json["market_amount"] = amount
-					arr_outcomes.append(outcome_json)
-			
-			if len(arr_outcomes) > 0:
-				match_json["outcomes"] = arr_outcomes
-			else:
-				match_json["outcomes"] = []
+			if match_bl.is_exceed_closing_time(match.id) == False:
+				#  find best odds which match against
+				match_json = match.to_json()
+				arr_outcomes = []
+				for outcome in match.outcomes:
+					if outcome.result == -1 and outcome.hid is not None:
+						outcome_json = outcome.to_json()
+						odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
+						outcome_json["market_odds"] = odds
+						outcome_json["market_amount"] = amount
+						arr_outcomes.append(outcome_json)
+				
+				if len(arr_outcomes) > 0:
+					match_json["outcomes"] = arr_outcomes
+				else:
+					match_json["outcomes"] = []
 			response.append(match_json)
 
 		return response_ok(response)

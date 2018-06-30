@@ -27,6 +27,15 @@ def is_exceed_report_time(match_id):
 			return True
 	return False
 
+def is_exceed_closing_time(match_id):
+	match = Match.find_match_by_id(match_id)
+	if match.date is not None:
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+		if seconds > match.date:
+			return True
+	return False
+
 def is_exceed_dispute_time(match_id):
 	match = Match.find_match_by_id(match_id)
 	if match.disputeTime is not None:

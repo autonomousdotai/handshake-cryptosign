@@ -4,7 +4,6 @@ from match import *
 from outcome import *
 from shaker import *
 from history import *
-from event import *
 from tx import *
 from setting import *
 from task import *

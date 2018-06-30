@@ -155,6 +155,12 @@ def save_handshake_method_for_event(method, inputs):
 			handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
 			db.session.flush()
 
+			if method == 'uninitTestDrive':
+				user = User.find_user_with_id(handshake.user_id)
+				if user is not None:
+					user.free_bet = 0
+					db.session.flush()
+
 			arr = []
 			arr.append(handshake)
 			return arr, None

@@ -35,12 +35,11 @@ def matches():
 						outcome_json["market_odds"] = odds
 						outcome_json["market_amount"] = amount
 						arr_outcomes.append(outcome_json)
-				
 				if len(arr_outcomes) > 0:
 					match_json["outcomes"] = arr_outcomes
 				else:
 					match_json["outcomes"] = []
-			response.append(match_json)
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:

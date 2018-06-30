@@ -125,8 +125,8 @@ const submitInitAPI = (options) => {
  */
 const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _source ) => {
     const markets = [];
+/*
     const closingTime = _date - Math.floor(+moment.utc()/1000) + 90 * 60 + 15 * 60;
-
     let reportTime = closingTime + (reportTimeConfig * 60 * 60);
     if (_reportTime) {
         reportTime = _reportTime - Math.floor(+moment.utc()/1000);
@@ -136,15 +136,15 @@ const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _s
     if (_disputeTime) {
         dispute = _disputeTime - Math.floor(+moment.utc()/1000);
     }
-
+*/
     _arr.forEach(outcome => {
         markets.push({
 			contract_method: 'createMarket',
             fee: _market_fee,
             source: _source,
-            closingTime: closingTime,
-            reportTime: reportTime,
-            disputeTime: dispute,
+            closingTime: _date - Math.floor(+moment.utc()/1000),
+            reportTime: _reportTime - _date,
+            disputeTime: _disputeTime - _reportTime,
             offchain: `cryptosign_createMarket${outcome.id}`
 		});
     });

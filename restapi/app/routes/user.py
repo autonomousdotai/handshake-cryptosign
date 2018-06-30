@@ -25,7 +25,7 @@ def auth():
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
+		
 		email = data['email']
 		password = data['password']
 

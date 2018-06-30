@@ -143,8 +143,8 @@ const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _s
             fee: _market_fee,
             source: _source,
             closingTime: _date - Math.floor(+moment.utc()/1000),
-            reportTime: _reportTime - Math.floor(+moment.utc()/1000),
-            disputeTime: _disputeTime - Math.floor(+moment.utc()/1000),
+            reportTime: _reportTime - Math.floor(+moment.utc()/1000) - _date,
+            disputeTime: _disputeTime - Math.floor(+moment.utc()/1000) - _reportTime -_date,
             offchain: `cryptosign_createMarket${outcome.id}`
 		});
     });

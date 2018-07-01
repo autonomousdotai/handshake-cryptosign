@@ -169,7 +169,6 @@ def report(match_id):
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			
-			print result
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
@@ -178,12 +177,11 @@ def report(match_id):
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
-				print outcome
 				if outcome is not None:
 					if outcome.result != -1:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
-					elif match_bl.is_exceed_report_time(outcome.match_id):
+					elif not match_bl.is_exceed_closing_time(outcome.match_id):
 						return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
 
 				else:

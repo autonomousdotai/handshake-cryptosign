@@ -14,6 +14,7 @@ from app.models import Match, Outcome, Task
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required
 from app.helpers.response import response_ok, response_error
+from app.tasks import update_feed
 
 admin_routes = Blueprint('admin', __name__)
 
@@ -106,6 +107,15 @@ def init_default_outcomes():
 				db.session.add(task)
 				db.session.flush()
 		
+		return response_ok()
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@admin_routes.route('/factory_reset', methods=['POST'])
+@admin_required
+def factory_reset():
+	try:
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

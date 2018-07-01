@@ -30,9 +30,9 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		print 'outcome result is {}'.format(outcome.result)
 		return None, None
 
-	handshakes = db.session.query(Handshake).filter(or_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+	handshakes = db.session.query(Handshake).filter(or_(and_(Handshake.status==HandshakeStatus['STATUS_COLLECT_FAILED'], Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result), and_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result), and_(Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result))).all()
 	print 'handshakes {}'.format(handshakes)
-	shakers = db.session.query(Shaker).filter(or_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING']), and_(Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+	shakers = db.session.query(Shaker).filter(or_(and_(Shaker.status==HandshakeStatus['STATUS_COLLECT_FAILED'], Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))), and_(Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))), and_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))))).all()
 	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
@@ -45,7 +45,6 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		shaker.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.merge(shaker)
 		
-
 	db.session.flush()
 	return handshakes, shakers
 

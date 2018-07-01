@@ -30,22 +30,10 @@
       "odds": null
     },
     {
-      "homeTeamName":"Uruguay",
-      "awayTeamName":"Portugal",
-      "date":1530387900,
-      "reportTime":1530395100,
-      "disputeTime":1530402300,
-      "homeTeamCode":"",
-      "homeTeamFlag":"",
-      "awayTeamCode":"",
-      "awayTeamFlag":"",
-      "name":"England vs Belgium"
-    },
-    {
       "homeTeamName":"Spain",
       "awayTeamName":"Russia",
       "date":1530459900,
-      "reportTime":1530467100,
+      "reportTime":1530459900,
       "disputeTime":1530474300,
       "homeTeamCode":"",
       "homeTeamFlag":"",
@@ -55,7 +43,7 @@
     },
     {
       "homeTeamName":"Croatia",
-      "awayTeamName":"Denmark",
+      "awayTeamName":"Portugal",
       "date":1530474300,
       "reportTime":1530481500,
       "disputeTime":1530488700,
@@ -63,7 +51,7 @@
       "homeTeamFlag":"",
       "awayTeamCode":"",
       "awayTeamFlag":"",
-      "name":"Croatia vs Denmark"
+      "name":"Croatia vs Portugal"
     }
   ]
 }

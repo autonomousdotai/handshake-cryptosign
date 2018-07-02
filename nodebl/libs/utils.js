@@ -4,12 +4,11 @@ const moment = require('moment');
 const web3 = require('../configs/web3').getWeb3();
 const configs = require('../configs');
 const taskDAO = require('../daos/task');
+const settingDAO = require('../daos/setting');
 const constants = require('../constants');
 
 const network_id = configs.network_id;
-const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
-const reportTimeConfig = configs.network[configs.network_id].reportTimeConfig || 2;
 
 const gennerateExtraData = (match_date, match_name, outcome_name) => {
     return JSON.stringify({
@@ -18,6 +17,41 @@ const gennerateExtraData = (match_date, match_name, outcome_name) => {
         date: moment((match_date || 0) * 1000).format("MMM DD")
     });
 };
+
+const getGaspriceEtherscan = () => {
+    return new Promise((resolve, reject) => {
+        axios.get(`https://api.etherscan.io/api`, {
+            timeout: 1500,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            params: {
+                module: 'proxy',
+                action: 'eth_gasPrice',
+                apikey: '2EW75CUFS1SM3HQ3CE4QVC73JZQMNU5WTD'
+            }
+        })
+        .then(result => {
+            console.log(result);
+            if (result.result && result.result != '') {
+                return resolve( parseInt(web3.fromWei(result.result, 'gwei')));
+            }
+            return reject({
+                err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
+                error: {},
+                options_data: {
+                    result: result
+                }
+            });
+        })
+        .catch((error) => {
+            return reject({
+                err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
+                error: error
+            });
+        });
+    });
+}
 
 /**
  * 
@@ -156,9 +190,30 @@ const handleErrorTask = (task, err_type) => {
     .catch(console.error);
 }
 
+const calculatorGasprice = () => {
+    return new Promise( async (resolve, reject) => {
+        try {
+            // const gasAPI        = await getGaspriceEtherscan();
+            const gasSetting    = await settingDAO.getByName('GasPrice');
+            let gasPrice        = configs.network[network_id].gasPrice;
+
+            if (gasSetting && gasSetting.value && !Number.isNaN(parseInt(gasSetting.value))) {
+                gasPrice = parseInt(gasSetting.value);
+            }
+            return resolve(gasPrice);
+        } catch (e) {
+            return reject({
+                err_type: constants.TASK_STATUS.GAS_PRICE_SETTING_FAIL,
+                error: e
+            });
+        }
+    });
+}
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
     gennerateExtraData,
-    handleErrorTask
+    handleErrorTask,
+    calculatorGasprice
 };

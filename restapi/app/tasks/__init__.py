@@ -130,3 +130,36 @@ def add_shuriken(user_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_shuriken=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def factory_reset():
+	try:
+		handshakes = db.session.query(Handshake).all()
+		shakers = db.session.query(Shaker).all()
+
+		arr = []
+		for h in handshakes:
+			hs = {
+				"id": "{}m{}".format(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, h.id),
+			}
+			arr.append(hs)
+
+		for s in shakers:
+			sk = {
+				"id": "{}s{}".format(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, s.id),
+			}
+			arr.append(sk)
+
+		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+		data = {
+			"delete": arr
+		}
+		res = requests.post(endpoint, json=data)
+		if res.status_code > 400:
+			print('SOLR service is failed.')
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("factory_reset=>",exc_type, fname, exc_tb.tb_lineno)

@@ -32,6 +32,8 @@ module.exports = {
     'INIT_TNX_EXCEPTION': -28,
     'INIT_TNX_FAIL': -29,
     'CREATE_MARKET_TIME_INVALID': -30,
+    'GAS_PRICE_ETHERSCAN_FAIL': -31,
+    'GAS_PRICE_SETTING_FAIL': -32,
     'STATUS_UNKNOW': -100
   },
   TASK_TYPE: {

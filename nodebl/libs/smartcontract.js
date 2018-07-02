@@ -10,7 +10,6 @@ const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddr
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
 const gasLimit = configs.network[network_id].gasLimit;
-const gasPrice = `${configs.network[network_id].gasPrice}`;
 
 const ethTx = require('ethereumjs-tx');
 const PredictionABI = require('../contracts/PredictionHandshake.json').abi;
@@ -23,7 +22,7 @@ const getNonce = async (address, status) => {
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _options) => {
+const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options) => {
   console.log('submitInitTransaction');
   console.log(_nonce, _hid, _side, _odds, _offchain, _value);
   return new Promise(async(resolve, reject) => {
@@ -97,7 +96,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, _o
 // /*
 //     submit init test drive transaction
 // */
-const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce, _options) => {
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce, gasPrice, _options) => {
   console.log('submitInitTestDriveTransaction');
   console.log(_hid, _side, _odds, _maker, _offchain, amount, _nonce);
   return new Promise(async(resolve, reject) => {
@@ -172,7 +171,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
 // /*
 //     submit shake transaction
 // */
-const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, _options) => {
+const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options) => {
   console.log('submitShakeTransaction');
   console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
   return new Promise(async(resolve, reject) => {
@@ -248,7 +247,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 //     submit shake test drive transaction
 // */
 
-const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, _options) => {
+const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options) => {
   console.log('submitShakeTestDriveTransaction');
   console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
   return new Promise(async(resolve, reject) => {
@@ -324,7 +323,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
  * @param {string} params.winner
  * @param {string} params.offchain
  */
-const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _options) => {
+const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gasPrice, _options) => {
   console.log('submitCollectTestDriveTransaction');
   console.log(_hid, _winner, _offchain);
   return new Promise(async(resolve, reject) => {
@@ -405,7 +404,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, _op
   bytes32 offchain
  */
 
-const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, _options) => {
+const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, _options) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('createMarketTransaction');
@@ -479,7 +478,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 };
 
 
-const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _options) => {
+const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options) => {
   return new Promise(async(resolve, reject) => {
     try {
       const offchain = _offchain || ('cryptosign_report' + outcome_result);
@@ -553,7 +552,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, _option
   });
 };
 
-const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce , _options) => {
+const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, gasPrice, _options) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('uninitForTrial');

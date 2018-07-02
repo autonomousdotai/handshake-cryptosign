@@ -40,7 +40,8 @@ def add():
 		for item in data:
 			setting = Setting(
 				name=item['name'],
-				status=int(item['status'])
+				status=item.get('status', 0),
+				value=item.get('value', 0)
 			)
 			settings.append(setting)
 			db.session.add(setting)

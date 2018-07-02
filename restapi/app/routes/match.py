@@ -35,12 +35,11 @@ def matches():
 						outcome_json["market_odds"] = odds
 						outcome_json["market_amount"] = amount
 						arr_outcomes.append(outcome_json)
-				
 				if len(arr_outcomes) > 0:
 					match_json["outcomes"] = arr_outcomes
 				else:
 					match_json["outcomes"] = []
-			response.append(match_json)
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -170,7 +169,6 @@ def report(match_id):
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 			
-			print result
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
@@ -179,12 +177,11 @@ def report(match_id):
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
-				print outcome
 				if outcome is not None:
 					if outcome.result != -1:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
-					elif match_bl.is_exceed_report_time(outcome.match_id):
+					elif not match_bl.is_exceed_closing_time(outcome.match_id):
 						return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
 
 				else:

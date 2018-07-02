@@ -16,7 +16,7 @@ const amountDefaultValue = configs.network[network_id].amountValue;
 let isRunningTask = false;
 
 
-const submitMultiTnx = (arr) => {
+const submitMultiTnx = (arr, gasPrice) => {
 	return new Promise((resolve, reject) => {
 		predictionContract.getNonce(ownerAddress, 'pending')
 		.then(nonce => {
@@ -28,28 +28,28 @@ const submitMultiTnx = (arr) => {
 				const onchainData = item.onchainData;
 				switch (onchainData.contract_method) {
 					case 'createMarket':
-						smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, item);
+						smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPrice, item);
 					break;
 					case 'init':
-						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, item);
+						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPrice, item);
 					break;
 					case 'shake':
-						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
 					break;
 					case 'collectTestDrive':
-						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, item);
+						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPrice, item);
 					break;
 					case 'reportOutcomeTransaction':
-						smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, item);
+						smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPrice, item);
 					break;
 					case 'initTestDriveTransaction':
-						smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+						smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
 					break;
 					case 'shakeTestDriveTransaction':
-						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, item);
+						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
 					break;
 					case 'uninitForTrial':
-						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, item);
+						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPrice, item);
 					break;
 				}
 				index += 1;
@@ -303,27 +303,33 @@ const asyncScanTask = () => {
 						});
 					}
 				});
-
-				submitMultiTnx(tnxs)
-				.then(tnxResults => {
-					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
-					console.log(tnxResults);
-
-					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
-						const taskIds = tnxResults.map(i => { return i.task.id; })
-
-						console.log('UPDATE TASK STATUS ', taskIds);
-						taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
-						.then(updateResults => {
-							return resolve(tnxResults);
-						})
-						.catch(err => {
-							console.error('Error update task status: ', err);
-							return reject(err);
-						})
-					} else {
-						resolve([]);
-					}
+				utils.calculatorGasprice()
+				.then(gasPrice => {
+					submitMultiTnx(tnxs, gasPrice)
+					.then(tnxResults => {
+						console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
+						console.log(tnxResults);
+	
+						if (Array.isArray(tnxResults) && tnxResults.length > 0) {
+							const taskIds = tnxResults.map(i => { return i.task.id; })
+	
+							console.log('UPDATE TASK STATUS ', taskIds);
+							taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
+							.then(updateResults => {
+								return resolve(tnxResults);
+							})
+							.catch(err => {
+								console.error('Error update task status: ', err);
+								return reject(err);
+							})
+						} else {
+							resolve([]);
+						}
+					})
+					.catch(err => {
+						console.error('Error', err);
+						return reject(err);
+					});
 				})
 				.catch(err => {
 					console.error('Error', err);

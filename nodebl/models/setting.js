@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
     },
     name: DataTypes.STRING,
-    status: DataTypes.INTEGER
+    status: DataTypes.INTEGER,
+    value: DataTypes.TEXT
   }, {
     tableName: 'setting',
     timestamps: false,

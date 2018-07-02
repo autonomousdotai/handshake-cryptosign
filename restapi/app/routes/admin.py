@@ -47,13 +47,14 @@ def create_market():
 					db.session.add(match)
 					db.session.flush()
 					
-					outcome = Outcome(
-						name='{} wins'.format(item['homeTeamName']),
-						match_id=match.id,
-						public=1
-					)
-					db.session.add(outcome)
-					db.session.flush()
+					for o in item['outcomes']:
+						outcome = Outcome(
+							name=o.get('name', ''),
+							match_id=match.id,
+							public=1
+						)
+						db.session.add(outcome)
+						db.session.flush()
 
 					# add Task
 					task = Task(

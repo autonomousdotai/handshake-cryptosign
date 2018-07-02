@@ -1,33 +1,21 @@
 {
   "fixtures": [
     {
-      "_links": {
-        "self": {
-          "href": "http://api.football-data.org/v1/fixtures/165069"
-        },
-        "competition": {
-          "href": "http://api.football-data.org/v1/competitions/467"
-        },
-        "homeTeam": {
-          "href": "http://api.football-data.org/v1/teams/808"
-        },
-        "awayTeam": {
-          "href": "http://api.football-data.org/v1/teams/801"
-        }
-      },
       "date": 1530373500,
       "reportTime": 1530380700,
       "disputeTime": 1530387900,
-      "status": "TIMED",
-      "matchday": 1,
       "homeTeamName": "France",
       "awayTeamName": "Argentina",
+      "homeTeamCode":"",
+      "homeTeamFlag":"",
+      "awayTeamCode":"",
+      "awayTeamFlag":"",
       "name":"France vs Argentina",
-      "result": {
-        "goalsHomeTeam": null,
-        "goalsAwayTeam": null
-      },
-      "odds": null
+      "outcomes": [
+        {
+          "name": "France wins"
+        }
+      ]
     },
     {
       "homeTeamName":"Spain",
@@ -39,7 +27,12 @@
       "homeTeamFlag":"",
       "awayTeamCode":"",
       "awayTeamFlag":"",
-      "name":"Spain vs Russia"
+      "name":"Spain vs Russia",
+      "outcomes": [
+        {
+          "name": "Spain wins"
+        }
+      ]
     },
     {
       "homeTeamName":"Croatia",
@@ -51,7 +44,12 @@
       "homeTeamFlag":"",
       "awayTeamCode":"",
       "awayTeamFlag":"",
-      "name":"Croatia vs Portugal"
+      "name":"Croatia vs Portugal",
+      "outcomes": [
+        {
+          "name": "Spain wins"
+        }
+      ]
     }
   ]
 }

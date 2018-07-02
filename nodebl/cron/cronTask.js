@@ -16,13 +16,14 @@ const amountDefaultValue = configs.network[network_id].amountValue;
 let isRunningTask = false;
 
 
-const submitMultiTnx = (arr, gasPrice) => {
+const submitMultiTnx = (arr, _gasPrice) => {
 	return new Promise((resolve, reject) => {
 		predictionContract.getNonce(ownerAddress, 'pending')
 		.then(nonce => {
 			console.log('Current nonce pending: ', nonce);
 			let tasks = [];
 			let index = 0;
+			const gasPrice = `${_gasPrice}`;
 			arr.forEach((item) => {
 				let smartContractFunc = null;
 				const onchainData = item.onchainData;

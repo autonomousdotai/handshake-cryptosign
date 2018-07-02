@@ -1,53 +1,66 @@
 {
   "fixtures": [
     {
-      "date": 1530373500,
-      "reportTime": 1530380700,
-      "disputeTime": 1530387900,
-      "homeTeamName": "France",
-      "awayTeamName": "Argentina",
-      "homeTeamCode":"",
-      "homeTeamFlag":"",
-      "awayTeamCode":"",
-      "awayTeamFlag":"",
-      "name":"France vs Argentina",
+      "homeTeamName": "Brazil",
+      "awayTeamName": "Mexico",
+      "date": 1530540000,
+      "reportTime": 1530546300,
+      "disputeTime": 1530553500,
+      "homeTeamCode": "",
+      "homeTeamFlag": "",
+      "awayTeamCode": "",
+      "awayTeamFlag": "",
+      "name": "Brazil vs Mexico",
       "outcomes": [
         {
-          "name": "France wins"
+          "name": "Brazil wins"
+        },
+        {
+          "name": "Both teams to score"
+        },
+        {
+          "name": "Number of goals is over 1.5"
+        },
+        {
+          "name": "Number of goals is over 2.5"
+        },
+        {
+          "name": "Brazil wins (Handicap 0:1)"
+        },
+        {
+          "name": "Brazil wins (Handicap 0:2)"
         }
       ]
     },
     {
-      "homeTeamName":"Spain",
-      "awayTeamName":"Russia",
-      "date":1530459900,
-      "reportTime":1530459900,
-      "disputeTime":1530474300,
-      "homeTeamCode":"",
-      "homeTeamFlag":"",
-      "awayTeamCode":"",
-      "awayTeamFlag":"",
-      "name":"Spain vs Russia",
+      "homeTeamName": "Belgium",
+      "awayTeamName": "Japan",
+      "date": 1530560700,
+      "reportTime": 1530567900,
+      "disputeTime": 1530575100,
+      "homeTeamCode": "",
+      "homeTeamFlag": "",
+      "awayTeamCode": "",
+      "awayTeamFlag": "",
+      "name": "Belgium vs Japan",
       "outcomes": [
         {
-          "name": "Spain wins"
-        }
-      ]
-    },
-    {
-      "homeTeamName":"Croatia",
-      "awayTeamName":"Portugal",
-      "date":1530474300,
-      "reportTime":1530481500,
-      "disputeTime":1530488700,
-      "homeTeamCode":"",
-      "homeTeamFlag":"",
-      "awayTeamCode":"",
-      "awayTeamFlag":"",
-      "name":"Croatia vs Portugal",
-      "outcomes": [
+          "name": "Belgium wins"
+        },
         {
-          "name": "Spain wins"
+          "name": "Both team to score"
+        },
+        {
+          "name": "Number of goals is over 1.5"
+        },
+        {
+          "name": "Number of goals is over 2.5"
+        },
+        {
+          "name": "Belgium wins (Handicap 0:1)"
+        },
+        {
+          "name": "Belgium wins (Handicap 0:2)"
         }
       ]
     }

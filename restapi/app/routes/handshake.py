@@ -168,6 +168,8 @@ def init():
 			# response data
 			arr_hs = []
 			hs_json = handshake.to_json()
+			hs_json['maker_address'] = handshake.from_address
+			hs_json['maker_odds'] = handshake.odds
 			hs_json['hid'] = outcome.hid
 			hs_json['type'] = 'init'
 			hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)
@@ -255,6 +257,8 @@ def init():
 				hs_feed.append(handshake)			
 
 				hs_json = handshake.to_json()
+				hs_json['maker_address'] = handshake.from_address
+				hs_json['maker_odds'] = handshake.odds
 				hs_json['hid'] = outcome.hid
 				hs_json['type'] = 'init'
 				hs_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(handshake.id)

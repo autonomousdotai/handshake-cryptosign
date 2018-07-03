@@ -164,7 +164,7 @@ def init():
 			db.session.commit()
 
 			update_feed.delay(handshake.id)
-			run_bots.delay(outcome_id)
+			# run_bots.delay(outcome_id)
 
 			# response data
 			arr_hs = []

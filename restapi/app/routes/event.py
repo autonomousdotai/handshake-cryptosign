@@ -25,6 +25,7 @@ def event():
 		handshakes = []
 		shakers = []
 		tx = Tx.find_tx_by_id(tx_id)
+		event_name = ''
 		if status == 1:
 			event_name = data['eventName']
 			inputs = data['inputs']

@@ -78,7 +78,7 @@ const submitInitAPI = (options) => {
             chain_id: network_id,
             side: options.side,
             from_address: options.from_address,
-            free_bet: options.is_free_bet
+            free_bet: options.is_free_bet || 0
         };
 
         console.log('CALL HANDSHAKE INIT API: ', dataRequest);

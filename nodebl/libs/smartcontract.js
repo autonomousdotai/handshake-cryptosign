@@ -191,7 +191,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
           'to'      : contractAddress,
           'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
           // 'value'   : web3.utils.toHex(amount),
-          'data'    : contract.methods.shake(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
+          'data'    : contract.methods.shake(_hid, _side, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
@@ -246,7 +246,6 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 // /*
 //     submit shake test drive transaction
 // */
-
 const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options) => {
   console.log('submitShakeTestDriveTransaction');
   console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
@@ -269,6 +268,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
           'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
+
       const tx                    = new ethTx(rawTransaction);
       tx.sign(privKey);
       const serializedTx          = tx.serialize();

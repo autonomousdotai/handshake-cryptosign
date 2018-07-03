@@ -21,45 +21,45 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
 			receipt, err := etherClient.TransactionReceipt(context.Background(), txHash)
 			if err != nil {
 				log.Println("Scan Tx: get receipt error", err.Error())
-				continue
-			}
-			log.Printf("Tx %s has receipt, status %d\n", transaction.Hash, receipt.Status)
-			if receipt.Status == 0 {
-				// case fail
-				_, methodJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
-				// call REST fail
-				var jsonData map[string]interface{}
-				json.Unmarshal([]byte(methodJson), &jsonData)
-				jsonData["id"] = transaction.TxID
-				jsonData["status"] = 0
-				//log.Println("hook fail", jsonData)
-				err := hookService.Event(jsonData)
-				if err != nil {
-					log.Println("Hook event fail error: ", err.Error())
-					log.Println(methodJson)
-				}
-			} else if receipt.Status == 1 {
-				// case success
-				log.Printf("Tx %s has receipt, logs %d\n", transaction.Hash, len(receipt.Logs))
-				if len(receipt.Logs) > 0 {
-					for _, l := range receipt.Logs {
-						_, eventJson := utils.DecodeTransactionLog("PredictionHandshake", l)
-						var jsonData map[string]interface{}
-						json.Unmarshal([]byte(eventJson), &jsonData)
-						jsonData["id"] = transaction.TxID
-						jsonData["status"] = 1
-						// call REST API SUCCESS with event
-						//log.Println("hook success", jsonData)
-						err := hookService.Event(jsonData)
-						if err != nil {
-							log.Println("Hook event success error: ", err.Error())
-							log.Println(eventJson)
-						}
-					}
-				}
 			} else {
-				log.Println("Unknown case", tx.Hash)
-			}
+                log.Printf("Tx %s has receipt, status %d\n", transaction.Hash, receipt.Status)
+                if receipt.Status == 0 {
+                    // case fail
+                    _, methodJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
+                    // call REST fail
+                    var jsonData map[string]interface{}
+                    json.Unmarshal([]byte(methodJson), &jsonData)
+                    jsonData["id"] = transaction.TxID
+                    jsonData["status"] = 0
+                    //log.Println("hook fail", jsonData)
+                    err := hookService.Event(jsonData)
+                    if err != nil {
+                        log.Println("Hook event fail error: ", err.Error())
+                        log.Println(methodJson)
+                    }
+                } else if receipt.Status == 1 {
+                    // case success
+                    log.Printf("Tx %s has receipt, logs %d\n", transaction.Hash, len(receipt.Logs))
+                    if len(receipt.Logs) > 0 {
+                        for _, l := range receipt.Logs {
+                            _, eventJson := utils.DecodeTransactionLog("PredictionHandshake", l)
+                            var jsonData map[string]interface{}
+                            json.Unmarshal([]byte(eventJson), &jsonData)
+                            jsonData["id"] = transaction.TxID
+                            jsonData["status"] = 1
+                            // call REST API SUCCESS with event
+                            //log.Println("hook success", jsonData)
+                            err := hookService.Event(jsonData)
+                            if err != nil {
+                                log.Println("Hook event success error: ", err.Error())
+                                log.Println(eventJson)
+                            }
+                        }
+                    }
+                } else {
+				    log.Println("Unknown case", tx.Hash)
+			    }
+            }
 		} else {
 			log.Printf("Tx %s is pending or error occured\n", transaction.Hash, err)
 		}

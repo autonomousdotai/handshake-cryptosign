@@ -4,7 +4,7 @@ from app.core import db, configure_app, firebase
 from app.models import Handshake, Outcome, Shaker, Match, Task
 from sqlalchemy import and_
 from decimal import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import sys
 import time
@@ -138,8 +138,8 @@ def add_shuriken(user_id):
 @celery.task()
 def factory_reset():
 	try:
-		handshakes = db.session.query(Handshake).all()
-		shakers = db.session.query(Shaker).all()
+		handshakes = db.session.query(Handshake).filter(Handshake.date_created < '2018-07-03').all()
+		shakers = db.session.query(Shaker).filter(Shaker.date_created < '2018-07-03').all()
 
 		arr = []
 		for h in handshakes:
@@ -177,30 +177,46 @@ def run_bots(outcome_id):
 		# get last odds which match and create handshake with that odds
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None or outcome.result != -1 or outcome.hid is None:
+			return
+		
+
+		print '---------------------------------'
+		print '--------- run bots --------------'
 		arr_support_hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0)).all()
 		arr_oppose_hs = db.session.query(Handshake).filter(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0).all()
 
 		support_odds = ['1.2', '1.5', '1.6']
-		oppose_odds = ['6.0', '5.0', '3.0']
+		oppose_odds = ['2.5', '2.6', '2.7']
 		o = {}
 
 		# processing support side
 		if len(arr_support_hs) == 0:
-			hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_PENDING'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
+			hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
 			result = False
+
 			if hs is not None:
 				n = time.mktime(datetime.now().timetuple())
 				ds = time.mktime(hs.date_created.timetuple()) 
 				if n - ds > 300: #5 minutes
 					result = True
 			else:
-				result = True
+				task = db.session.query(Task).order_by(Task.date_created.desc()).first()
+				if task is not None and task.action == 'INIT':
+					n = time.mktime(datetime.now().timetuple())
+					ds = time.mktime(task.date_created.timetuple()) 
+					if n - ds > 300: #5 minutes
+						result = True
+					
+				else:
+					result = True
 
 			if result:
 				if hs is not None:
 					odds = '{}'.format(hs.odds)
 				else:
 					odds = random.choice(support_odds)
+
 				match = Match.find_match_by_id(outcome.match_id)
 				o['odds'] = odds
 				o['side'] = CONST.SIDE_TYPE['SUPPORT']
@@ -218,20 +234,30 @@ def run_bots(outcome_id):
 				)
 				db.session.add(task)
 				db.session.flush()
+
+				print 'Add support odds --> {}'.format(task.to_json())
 			
 
 		# processing against side
 		if len(arr_oppose_hs) == 0:
-			hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_PENDING'], Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
+			hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
 			result = False
+
 			if hs is not None:
 				n = time.mktime(datetime.now().timetuple())
 				ds = time.mktime(hs.date_created.timetuple()) 
 				if n - ds > 300: #5 minutes
 					result = True
 			else:
-				result = True
-
+				task = db.session.query(Task).order_by(Task.date_created.desc()).first()
+				if task is not None and task.action == 'INIT':
+					n = time.mktime(datetime.now().timetuple())
+					ds = time.mktime(task.date_created.timetuple()) 
+					if n - ds > 300: #5 minutes
+						result = True
+				else:
+					result = True
+				
 			if result:
 				if hs is not None:
 					odds = '{}'.format(hs.odds)
@@ -255,7 +281,9 @@ def run_bots(outcome_id):
 				)
 				db.session.add(task)
 				db.session.flush()
-				
+
+				print 'Add against odds --> {}'.format(task.to_json())
+		print '---------------------------------'
 		db.session.commit()
 
 	except Exception as e:

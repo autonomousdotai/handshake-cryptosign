@@ -4,7 +4,7 @@ from app.core import db, configure_app, firebase
 from app.models import Handshake, Outcome, Shaker, Match, Task
 from sqlalchemy import and_
 from decimal import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import sys
 import time
@@ -138,8 +138,8 @@ def add_shuriken(user_id):
 @celery.task()
 def factory_reset():
 	try:
-		handshakes = db.session.query(Handshake).all()
-		shakers = db.session.query(Shaker).all()
+		handshakes = db.session.query(Handshake).filter(Handshake.date_created < '2018-07-03').all()
+		shakers = db.session.query(Shaker).filter(Shaker.date_created < '2018-07-03').all()
 
 		arr = []
 		for h in handshakes:

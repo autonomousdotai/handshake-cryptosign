@@ -346,7 +346,7 @@ const asyncScanTask = () => {
 };
 
 const runTaskCron = () => {
-    cron.schedule('*/5 * * * * *', async () => {
+    cron.schedule('*/10 * * * * *', async () => {
 		console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');

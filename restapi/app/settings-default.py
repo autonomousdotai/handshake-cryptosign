@@ -3,6 +3,7 @@ from datetime import timedelta
 
 
 class BaseConfig(object):
+	ENV = 'DEV'
 	BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 	UPLOAD_DIR = os.path.join(BASE_DIR, 'files', 'temp')
 	# Mobile

@@ -1,15 +1,18 @@
-import sys
 from flask import Flask
-
 from app.factory import make_celery
 from app.core import db, configure_app, firebase
-from app.models import Handshake, Outcome, Shaker, Match
+from app.models import Handshake, Outcome, Shaker, Match, Task
+from sqlalchemy import and_
+from decimal import *
+from datetime import datetime
 
+import sys
 import time
 import app.constants as CONST
 import simplejson as json
 import os, hashlib
 import requests
+import random
 
 app = Flask(__name__)
 # config app
@@ -160,6 +163,103 @@ def factory_reset():
 			print('SOLR service is failed.')
 
 	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("factory_reset=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def run_bots(outcome_id):
+	try:
+		# find all handshakes of this outcome on both 2 sides: support and oppose
+		# if there is a handshake which is not bot and amount < 0.1 then match it
+		# otherwise
+		# get last odds which match and create handshake with that odds
+
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		arr_support_hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0)).all()
+		arr_oppose_hs = db.session.query(Handshake).filter(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0).all()
+
+		support_odds = ['1.2', '1.5', '1.6']
+		oppose_odds = ['6.0', '5.0', '3.0']
+		o = {}
+
+		# processing support side
+		if len(arr_support_hs) == 0:
+			hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_PENDING'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
+			result = False
+			if hs is not None:
+				n = time.mktime(datetime.now().timetuple())
+				ds = time.mktime(hs.date_created.timetuple()) 
+				if n - ds > 300: #5 minutes
+					result = True
+			else:
+				result = True
+
+			if result:
+				if hs is not None:
+					odds = '{}'.format(hs.odds)
+				else:
+					odds = random.choice(support_odds)
+				match = Match.find_match_by_id(outcome.match_id)
+				o['odds'] = odds
+				o['side'] = CONST.SIDE_TYPE['SUPPORT']
+				o['outcome_id'] = outcome_id
+				o['hid'] = outcome.hid
+				o['match_date'] = match.date
+				o['match_name'] = match.name
+				o['outcome_name'] = outcome.name
+
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(o),
+					action=CONST.TASK_ACTION['INIT'],
+					status=-1
+				)
+				db.session.add(task)
+				db.session.flush()
+			
+
+		# processing against side
+		if len(arr_oppose_hs) == 0:
+			hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_PENDING'], Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
+			result = False
+			if hs is not None:
+				n = time.mktime(datetime.now().timetuple())
+				ds = time.mktime(hs.date_created.timetuple()) 
+				if n - ds > 300: #5 minutes
+					result = True
+			else:
+				result = True
+
+			if result:
+				if hs is not None:
+					odds = '{}'.format(hs.odds)
+				else:
+					odds = random.choice(oppose_odds)
+
+				match = Match.find_match_by_id(outcome.match_id)
+				o['odds'] = odds
+				o['side'] = CONST.SIDE_TYPE['AGAINST']
+				o['outcome_id'] = outcome_id
+				o['hid'] = outcome.hid
+				o['match_date'] = match.date
+				o['match_name'] = match.name
+				o['outcome_name'] = outcome.name
+
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(o),
+					action=CONST.TASK_ACTION['INIT'],
+					status=-1
+				)
+				db.session.add(task)
+				db.session.flush()
+				
+		db.session.commit()
+
+	except Exception as e:
+		db.session.rollback()
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("factory_reset=>",exc_type, fname, exc_tb.tb_lineno)

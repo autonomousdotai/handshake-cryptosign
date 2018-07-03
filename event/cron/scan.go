@@ -94,11 +94,11 @@ func ScanTx() {
     jobs := make(chan models.Tx, 100)
     results := make(chan bool, totalJobs)
     
-    workers := 10
-    if totalJobs < 50 {
-        workers = 5
+    workers := totalJobs / 10
+    if workers > 50 {
+        workers = 50
     }
-    if workers < totalJobs {
+    if workers == 0 {
         workers = 1
     }
 

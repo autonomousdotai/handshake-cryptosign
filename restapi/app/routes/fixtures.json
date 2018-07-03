@@ -1,19 +1,21 @@
 {
   "fixtures": [
     {
-      "homeTeamName": "Brazil",
-      "awayTeamName": "Mexico",
-      "date": 1530540000,
-      "reportTime": 1530546300,
-      "disputeTime": 1530553500,
+      "homeTeamName": "Sweden",
+      "awayTeamName": "Switzerland",
+      "date": 1530632700,
+      "reportTime": 1530639900,
+      "disputeTime": 1530647100,
       "homeTeamCode": "",
       "homeTeamFlag": "",
       "awayTeamCode": "",
       "awayTeamFlag": "",
-      "name": "Brazil vs Mexico",
+      "name": "Sweden vs Switzerland",
+      "source": "football-data.org",
+      "market_fee": 0,
       "outcomes": [
         {
-          "name": "Brazil wins"
+          "name": "Sweden wins"
         },
         {
           "name": "Both teams to score"
@@ -25,30 +27,32 @@
           "name": "Number of goals is over 2.5"
         },
         {
-          "name": "Brazil wins (Handicap 0:1)"
+          "name": "Sweden wins (Handicap 0:1)"
         },
         {
-          "name": "Brazil wins (Handicap 0:2)"
+          "name": "Sweden wins (Handicap 1:0)"
         }
       ]
     },
     {
-      "homeTeamName": "Belgium",
-      "awayTeamName": "Japan",
-      "date": 1530560700,
-      "reportTime": 1530567900,
-      "disputeTime": 1530575100,
+      "homeTeamName": "Colombia",
+      "awayTeamName": "England",
+      "date": 1530647100,
+      "reportTime": 1530654300,
+      "disputeTime": 1530661500,
       "homeTeamCode": "",
       "homeTeamFlag": "",
       "awayTeamCode": "",
       "awayTeamFlag": "",
-      "name": "Belgium vs Japan",
+      "name": "Colombia vs England",
+      "source": "football-data.org",
+      "market_fee": 0,
       "outcomes": [
         {
-          "name": "Belgium wins"
+          "name": "England wins"
         },
         {
-          "name": "Both team to score"
+          "name": "Both teams to score"
         },
         {
           "name": "Number of goals is over 1.5"
@@ -57,10 +61,10 @@
           "name": "Number of goals is over 2.5"
         },
         {
-          "name": "Belgium wins (Handicap 0:1)"
+          "name": "England wins (Handicap 0:1)"
         },
         {
-          "name": "Belgium wins (Handicap 0:2)"
+          "name": "Colombia wins (Handicap 1:0"
         }
       ]
     }

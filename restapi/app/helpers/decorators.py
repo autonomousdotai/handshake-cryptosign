@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
-from flask import request
+from flask import request, g
 from app import db
 from app.helpers.response import response_error
 from app.models import User
@@ -52,5 +52,13 @@ def login_required(f):
                 db.session.rollback()
                 print(str(ex))
 
+        return f(*args, **kwargs)
+    return wrap
+
+def dev_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if g.ENV != 'DEV':
+            return response_error("Access deny!") 
         return f(*args, **kwargs)
     return wrap

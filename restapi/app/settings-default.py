@@ -3,6 +3,7 @@ from datetime import timedelta
 
 
 class BaseConfig(object):
+	ENV = 'DEV'
 	BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 	UPLOAD_DIR = os.path.join(BASE_DIR, 'files', 'temp')
 	# Mobile
@@ -37,6 +38,7 @@ class BaseConfig(object):
 	PASSPHASE = ''
 	EMAIL = ''
 	AUTONOMOUS_WEB_PASSPHASE = ''
+	ENV = os.getenv('ENV', '')
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'
 	REDIS_HOST = 'localhost'

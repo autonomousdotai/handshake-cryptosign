@@ -90,27 +90,36 @@ class TestMatchBluePrint(BaseTestCase):
         Task.query.delete()
         db.session.commit()
 
-    def test_get_match_with_public(self):
-        with self.client:
-            pass
-
 
     def test_get_match(self):
         self.clear_data_before_test()
         arr_hs = []
 
         # ----- 
-        match = Match(
-            id=10000
-        )
-        db.session.add(match)
+
+        match = Match.find_match_by_id(1000)
+        if match is not None:
+            match.date=time.time() - 100,
+            match.reportTime=time.time() + 100,
+            match.disputeTime=time.time() + 200,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1000,
+                date=time.time() - 100,
+                reportTime=time.time() + 100,
+                disputeTime=time.time() + 200,
+            )
+            db.session.add(match)
+
         db.session.commit()
         arr_hs.append(match)
 
         # -----        
         outcome = Outcome(
-            match_id=1,
-            public=1
+            match_id=1000,
+            public=1,
+            hid=0
         )
         db.session.add(outcome)
         db.session.commit()
@@ -119,13 +128,8 @@ class TestMatchBluePrint(BaseTestCase):
         with self.client:
             Uid = 66
             
-            params = {
-                "public": 1
-            }
-            response = self.client.post(
+            response = self.client.get(
                                     '/match',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
@@ -136,13 +140,14 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
-            self.assertTrue(data['status'] == 0)
+            print data_json
+            self.assertTrue(data['status'] == 1)
 
             outcomes = []
             for match in data_json:
-                if match['id'] == 1:
+                if match['id'] == 1000:
                     outcomes = match['outcomes']
-            
+            self.assertEqual(len(outcomes), 1)            
 
         for handshake in arr_hs:
             db.session.delete(handshake)

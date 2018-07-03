@@ -24,7 +24,7 @@ from app.helpers.utils import is_equal
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed
+from app.tasks import update_feed, run_bots
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -164,6 +164,7 @@ def init():
 			db.session.commit()
 
 			update_feed.delay(handshake.id)
+			# run_bots.delay(outcome_id)
 
 			# response data
 			arr_hs = []
@@ -268,6 +269,7 @@ def init():
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
+			# run_bots.delay(outcome_id)
 			return response_ok(arr_hs)
 
 	except Exception, ex:

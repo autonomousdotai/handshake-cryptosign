@@ -37,6 +37,7 @@ class BaseConfig(object):
 	PASSPHASE = ''
 	EMAIL = ''
 	AUTONOMOUS_WEB_PASSPHASE = ''
+	ENV = os.getenv('ENV', '')
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'
 	REDIS_HOST = 'localhost'

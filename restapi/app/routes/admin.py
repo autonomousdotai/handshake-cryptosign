@@ -38,8 +38,8 @@ def create_market():
 								homeTeamName=item['homeTeamName'],
 								awayTeamName=item['awayTeamName'],
 								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
-								source='football-data.org',
-								market_fee=0,
+								source=item['source'],
+								market_fee=item['market_fee'],
 								date=item['date'],
 								reportTime=item['reportTime'],
 								disputeTime=item['disputeTime']
@@ -119,6 +119,54 @@ def init_default_outcomes():
 def reset_all():
 	try:
 		factory_reset.delay()
+		return response_ok()
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@admin_routes.route('/test_market', methods=['POST'])
+def test_market():
+	try:
+		data = request.data
+		matches = []
+		if 'fixtures' in data:
+			fixtures = data['fixtures']
+			for item in fixtures:
+				if len(item['homeTeamName']) > 0 and len(item['awayTeamName']) > 0:
+					match = Match(
+								homeTeamName=item['homeTeamName'],
+								awayTeamName=item['awayTeamName'],
+								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
+								source=item['source'],
+								market_fee=item['market_fee'],
+								date=item['date'],
+								reportTime=item['reportTime'],
+								disputeTime=item['disputeTime']
+							)
+					matches.append(match)
+					db.session.add(match)
+					db.session.flush()
+					
+					for o in item['outcomes']:
+						outcome = Outcome(
+							name=o.get('name', ''),
+							match_id=match.id,
+							public=1
+						)
+						db.session.add(outcome)
+						db.session.flush()
+
+					# add Task
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(match.to_json()),
+						action=CONST.TASK_ACTION['CREATE_MARKET'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.flush()
+
+		db.session.commit()
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

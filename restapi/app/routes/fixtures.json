@@ -11,6 +11,8 @@
       "awayTeamCode": "",
       "awayTeamFlag": "",
       "name": "Brazil vs Mexico",
+      "source": "football-data.org",
+      "market_fee": 0,
       "outcomes": [
         {
           "name": "Brazil wins"
@@ -43,6 +45,8 @@
       "awayTeamCode": "",
       "awayTeamFlag": "",
       "name": "Belgium vs Japan",
+      "source": "football-data.org",
+      "market_fee": 0,
       "outcomes": [
         {
           "name": "Belgium wins"

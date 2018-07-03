@@ -35,7 +35,7 @@ const submitMultiTnx = (arr, _gasPrice) => {
 						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPrice, item);
 					break;
 					case 'shake':
-						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
+						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
 					break;
 					case 'collectTestDrive':
 						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPrice, item);

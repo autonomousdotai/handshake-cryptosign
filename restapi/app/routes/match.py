@@ -24,7 +24,7 @@ def matches():
 		matches = Match.query.all()
 
 		for match in matches:
-			if match_bl.is_exceed_closing_time(match.id) == False:
+			if match_bl.is_exceed_closing_time(match.id):
 				#  find best odds which match against
 				match_json = match.to_json()
 				arr_outcomes = []

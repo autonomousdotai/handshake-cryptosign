@@ -12,7 +12,7 @@ from datetime import datetime
 
 from app.models import Match, Outcome, Task
 from app.helpers.message import MESSAGE, CODE
-from app.helpers.decorators import admin_required
+from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
 from app.tasks import factory_reset
 from flask_jwt_extended import jwt_required
@@ -125,6 +125,7 @@ def reset_all():
 
 
 @admin_routes.route('/test_market', methods=['POST'])
+@dev_required
 def test_market():
 	try:
 		data = request.json

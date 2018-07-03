@@ -60,6 +60,7 @@ def before_request():
 	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
+	g.ENV = app.config.get('ENV')
 
 	g.start = time.time()
 

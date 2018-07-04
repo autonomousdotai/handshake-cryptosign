@@ -74,8 +74,10 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
           txDAO.create(-1, bettingHandshakeAddress, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at submitInitTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at submitInitTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.INIT_TNX_FAIL,
@@ -150,8 +152,10 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
           txDAO.create(-1, bettingHandshakeAddress, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at submitInitTestDriveTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at submitInitTestDriveTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.INIT_TEST_DRIVE_TNX_FAIL,
@@ -229,8 +233,10 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
           txDAO.create(-1, bettingHandshakeAddress, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at submitShakeTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at submitShakeTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.SHAKE_TNX_FAIL,
@@ -308,8 +314,10 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
           txDAO.create(-1, bettingHandshakeAddress, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at submitShakeTestDriveTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at submitShakeTestDriveTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.SHAKE_TEST_DRIVE_TNX_FAIL,
@@ -386,8 +394,10 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
           txDAO.create(-1, bettingHandshakeAddress, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at submitCollectTestDriveTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at submitCollectTestDriveTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.COLLECT_TEST_DRIVE_TNX_FAIL,
@@ -474,8 +484,10 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
           txDAO.create(-1, bettingHandshakeAddress, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at createMarketTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at createMarketTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_FAIL,
@@ -552,8 +564,10 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
           txDAO.create(-1, bettingHandshakeAddress, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at reportOutcomeTransaction');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at reportOutcomeTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.REPORT_TNX_FAIL,
@@ -629,8 +643,10 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
           txDAO.create(-1, bettingHandshakeAddress, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
-          console.log('Remove nonce at uninitForTrial');
-          web3Config.setNonce(web3Config.getNonce() -1);
+          if (!err.includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at uninitForTrial');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
         }
         return reject({
           err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_FAIL,

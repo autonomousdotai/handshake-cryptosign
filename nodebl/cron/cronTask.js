@@ -1,6 +1,7 @@
 
 const cron = require('node-cron');
 const configs = require('../configs');
+const web3 = require('../configs/web3');
 
 // daos
 const taskDAO = require('../daos/task');
@@ -19,7 +20,14 @@ let isRunningTask = false;
 const submitMultiTnx = (arr, _gasPrice) => {
 	return new Promise((resolve, reject) => {
 		predictionContract.getNonce(ownerAddress, 'pending')
-		.then(nonce => {
+		.then(_nonce => {
+			let nonce = web3.getNonce();
+			if (!web3.getNonce() || web3.getNonce() <= _nonce) {
+				console.log('SET NONCE: ', web3.getNonce(), _nonce);
+				web3.setNonce(_nonce);
+				nonce = _nonce;
+			}
+
 			console.log('Current nonce pending: ', nonce);
 			let tasks = [];
 			let index = 0;
@@ -310,10 +318,11 @@ const asyncScanTask = () => {
 					.then(tnxResults => {
 						console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
 						console.log(tnxResults);
-	
+
 						if (Array.isArray(tnxResults) && tnxResults.length > 0) {
+							web3.setNonce( web3.getNonce() + tnxResults.length);
 							const taskIds = tnxResults.map(i => { return i.task.id; })
-	
+							
 							console.log('UPDATE TASK STATUS ', taskIds);
 							taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
 							.then(updateResults => {
@@ -346,7 +355,7 @@ const asyncScanTask = () => {
 };
 
 const runTaskCron = () => {
-    cron.schedule('*/10 * * * * *', async () => {
+    cron.schedule('*/5 * * * * *', async () => {
 		console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');

@@ -21,6 +21,7 @@ const submitMultiTnx = (arr, _gasPrice) => {
 	return new Promise((resolve, reject) => {
 		predictionContract.getNonce(ownerAddress, 'pending')
 		.then(_nonce => {
+			console.log('Current nonce pending from onchain: ', _nonce);
 			let nonce = web3.getNonce();
 			if (!web3.getNonce() || web3.getNonce() <= _nonce) {
 				console.log('SET NONCE: ', web3.getNonce(), _nonce);

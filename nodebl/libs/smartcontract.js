@@ -4,6 +4,7 @@ const constants = require('../constants');
 // models
 const txDAO = require('../daos/tx');
 const web3 = require('../configs/web3').getWeb3();
+const web3Config = require('../configs/web3');
 
 const network_id = configs.network_id;
 const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddress;
@@ -72,6 +73,8 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.INIT_TNX_FAIL,
@@ -145,6 +148,8 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.INIT_TEST_DRIVE_TNX_FAIL,
@@ -221,6 +226,8 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.SHAKE_TNX_FAIL,
@@ -297,6 +304,8 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.SHAKE_TEST_DRIVE_TNX_FAIL,
@@ -372,6 +381,8 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.COLLECT_TEST_DRIVE_TNX_FAIL,
@@ -457,6 +468,8 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_FAIL,
@@ -532,6 +545,8 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.REPORT_TNX_FAIL,
@@ -606,6 +621,8 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
         return reject({
           err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_FAIL,

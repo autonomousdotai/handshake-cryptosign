@@ -189,6 +189,31 @@ def save_handshake_method_for_event(method, inputs):
 				arr.append(shaker)
 				return None, arr
 
+	elif method == 'refund':
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+
+		if 'm' in offchain:
+			offchain = int(offchain.replace('m', ''))
+			handshake = Handshake.find_handshake_by_id(offchain)
+			if handshake is not None:
+				handshake.status = HandshakeStatus['STATUS_REFUND_FAILED']
+				db.session.flush()
+
+				arr = []
+				arr.append(handshake)
+				return arr, None
+
+		elif 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = Shaker.find_shaker_by_id(offchain)
+			if shaker is not None:
+				shaker.status = HandshakeStatus['STATUS_REFUND_FAILED']
+				db.session.flush()
+
+				arr = []
+				arr.append(shaker)
+				return None, arr
+
 	return None, None
 
 
@@ -292,6 +317,35 @@ def save_handshake_for_event(event_name, inputs):
 			arr = []
 			arr.append(handshake)
 			return arr, None
+
+
+	elif event_name == '__refund':
+		print '__refund'
+		if 's' in offchain:
+			offchain = offchain.replace('s', '')
+			shaker = Shaker.find_shaker_by_id(int(offchain))
+			if shaker is not None:
+				shaker.status = HandshakeStatus['STATUS_REFUNDED']
+				shaker.bk_status = HandshakeStatus['STATUS_REFUNDED']
+
+				db.session.flush()
+
+				arr = []
+				arr.append(shaker)
+				return None, arr
+
+		elif 'm' in offchain:
+			offchain = offchain.replace('m', '')
+			handshake = Handshake.find_handshake_by_id(int(offchain))
+			if handshake is not None:
+				handshake.status = HandshakeStatus['STATUS_REFUNDED']
+				handshake.bk_status = HandshakeStatus['STATUS_REFUNDED']
+
+				db.session.flush()
+
+				arr = []
+				arr.append(handshake)
+				return arr, None
 
 		return None, None
 

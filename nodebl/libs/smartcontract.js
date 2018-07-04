@@ -4,6 +4,7 @@ const constants = require('../constants');
 // models
 const txDAO = require('../daos/tx');
 const web3 = require('../configs/web3').getWeb3();
+const web3Config = require('../configs/web3');
 
 const network_id = configs.network_id;
 const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddress;
@@ -66,13 +67,16 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
         console.log(receipt);
       })
       .on('error', err => {
+        console.log('submitInitTransaction Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at submitInitTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.INIT_TNX_FAIL,
           error: err,
@@ -139,13 +143,16 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         console.log(receipt);
       })
       .on('error', err => {
+        console.log('submitInitTestDriveTransaction Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at submitInitTestDriveTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.INIT_TEST_DRIVE_TNX_FAIL,
           error: err,
@@ -214,13 +221,17 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
         console.log(receipt);
       })
       .on('error', err => {
+        console.log('submitShakeTransaction Error');
+        console.log(err);
+
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at submitShakeTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.SHAKE_TNX_FAIL,
           error: err,
@@ -290,13 +301,16 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         console.log(receipt);
       })
       .on('error', err => {
+        console.log('submitShakeTestDriveTransaction Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at submitShakeTestDriveTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.SHAKE_TEST_DRIVE_TNX_FAIL,
           error: err,
@@ -365,13 +379,16 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
         console.log(receipt);
       })
       .on('error', err => {
+        console.log('submitCollectTestDriveTransaction Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at submitCollectTestDriveTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.COLLECT_TEST_DRIVE_TNX_FAIL,
           error: err,
@@ -450,13 +467,16 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         console.log(receipt);
       })
       .on('error', err => {
+        console.log('createMarketTransaction Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at createMarketTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_FAIL,
           error: err,
@@ -483,7 +503,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
     try {
       const offchain = _offchain || ('cryptosign_report' + outcome_result);
       console.log('reportOutcomeTransaction');
-      console.log(hid, outcome_result, offchain);
+      console.log(hid, outcome_result, nonce, _offchain, gasPrice);
 
       const contractAddress = bettingHandshakeAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
@@ -525,13 +545,16 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
         console.log('report tnxHash: ', receipt);
       })
       .on('error', err => {
+        console.log('reportOutcomeTransaction Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at reportOutcomeTransaction');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.REPORT_TNX_FAIL,
           error: err,
@@ -599,13 +622,16 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
         console.log('uninitForTrial tnxHash: ', receipt);
       })
       .on('error', err => {
+        console.log('uninitForTrial Error');
+        console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
           txDAO.create(-1, bettingHandshakeAddress, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
+        } else {
+          console.log('Remove nonce at uninitForTrial');
+          web3Config.setNonce(web3Config.getNonce() -1);
         }
-
-        console.log(err);
         return reject({
           err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_FAIL,
           error: err,

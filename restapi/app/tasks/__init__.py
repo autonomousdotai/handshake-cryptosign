@@ -290,4 +290,4 @@ def run_bots(outcome_id):
 		db.session.rollback()
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("factory_reset=>",exc_type, fname, exc_tb.tb_lineno)
+		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)

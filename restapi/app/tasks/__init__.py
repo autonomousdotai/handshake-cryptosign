@@ -4,7 +4,7 @@ from app.core import db, configure_app, firebase
 from app.models import Handshake, Outcome, Shaker, Match, Task
 from sqlalchemy import and_
 from decimal import *
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import sys
 import time
@@ -13,6 +13,7 @@ import simplejson as json
 import os, hashlib
 import requests
 import random
+import app.bl.task as task_bl
 
 app = Flask(__name__)
 # config app
@@ -190,99 +191,80 @@ def run_bots(outcome_id):
 		oppose_odds = ['2.5', '2.6', '2.7']
 		o = {}
 
-		# processing support side
-		if len(arr_support_hs) == 0:
-			hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
-			result = False
+		if task_bl.is_able_to_create_new_task(outcome_id):
+			# processing support side
+			if len(arr_support_hs) == 0:
+				hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
+				result = True
 
-			if hs is not None:
-				n = time.mktime(datetime.now().timetuple())
-				ds = time.mktime(hs.date_created.timetuple()) 
-				if n - ds > 300: #5 minutes
-					result = True
-			else:
-				task = db.session.query(Task).order_by(Task.date_created.desc()).first()
-				if task is not None and task.action == 'INIT':
-					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(task.date_created.timetuple()) 
-					if n - ds > 300: #5 minutes
-						result = True
-					
-				else:
-					result = True
-
-			if result:
 				if hs is not None:
-					odds = '{}'.format(hs.odds)
-				else:
-					odds = random.choice(support_odds)
-
-				match = Match.find_match_by_id(outcome.match_id)
-				o['odds'] = odds
-				o['side'] = CONST.SIDE_TYPE['SUPPORT']
-				o['outcome_id'] = outcome_id
-				o['hid'] = outcome.hid
-				o['match_date'] = match.date
-				o['match_name'] = match.name
-				o['outcome_name'] = outcome.name
-
-				task = Task(
-					task_type=CONST.TASK_TYPE['REAL_BET'],
-					data=json.dumps(o),
-					action=CONST.TASK_ACTION['INIT'],
-					status=-1
-				)
-				db.session.add(task)
-				db.session.flush()
-
-				print 'Add support odds --> {}'.format(task.to_json())
-			
-
-		# processing against side
-		if len(arr_oppose_hs) == 0:
-			hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
-			result = False
-
-			if hs is not None:
-				n = time.mktime(datetime.now().timetuple())
-				ds = time.mktime(hs.date_created.timetuple()) 
-				if n - ds > 300: #5 minutes
-					result = True
-			else:
-				task = db.session.query(Task).order_by(Task.date_created.desc()).first()
-				if task is not None and task.action == 'INIT':
 					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(task.date_created.timetuple()) 
-					if n - ds > 300: #5 minutes
-						result = True
-				else:
-					result = True
+					ds = time.mktime(hs.date_created.timetuple()) 
+					if n - ds <= 300: #5 minutes
+						result = False
+				if result:
+					if hs is not None:
+						odds = '{}'.format(hs.odds)
+					else:
+						odds = random.choice(support_odds)
+
+					match = Match.find_match_by_id(outcome.match_id)
+					o['odds'] = odds
+					o['side'] = CONST.SIDE_TYPE['SUPPORT']
+					o['outcome_id'] = outcome_id
+					o['hid'] = outcome.hid
+					o['match_date'] = match.date
+					o['match_name'] = match.name
+					o['outcome_name'] = outcome.name
+
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(o),
+						action=CONST.TASK_ACTION['INIT'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.flush()
+
+					print 'Add support odds --> {}'.format(task.to_json())
 				
-			if result:
+
+			# processing against side
+			if len(arr_oppose_hs) == 0:
+				hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
+				result = True
+
 				if hs is not None:
-					odds = '{}'.format(hs.odds)
-				else:
-					odds = random.choice(oppose_odds)
+					n = time.mktime(datetime.now().timetuple())
+					ds = time.mktime(hs.date_created.timetuple()) 
+					if n - ds <= 300: #5 minutes
+						result = False
+					
+				if result:
+					if hs is not None:
+						odds = '{}'.format(hs.odds)
+					else:
+						odds = random.choice(oppose_odds)
 
-				match = Match.find_match_by_id(outcome.match_id)
-				o['odds'] = odds
-				o['side'] = CONST.SIDE_TYPE['AGAINST']
-				o['outcome_id'] = outcome_id
-				o['hid'] = outcome.hid
-				o['match_date'] = match.date
-				o['match_name'] = match.name
-				o['outcome_name'] = outcome.name
+					match = Match.find_match_by_id(outcome.match_id)
+					o['odds'] = odds
+					o['side'] = CONST.SIDE_TYPE['AGAINST']
+					o['outcome_id'] = outcome_id
+					o['hid'] = outcome.hid
+					o['match_date'] = match.date
+					o['match_name'] = match.name
+					o['outcome_name'] = outcome.name
 
-				task = Task(
-					task_type=CONST.TASK_TYPE['REAL_BET'],
-					data=json.dumps(o),
-					action=CONST.TASK_ACTION['INIT'],
-					status=-1
-				)
-				db.session.add(task)
-				db.session.flush()
+					task = Task(
+						task_type=CONST.TASK_TYPE['REAL_BET'],
+						data=json.dumps(o),
+						action=CONST.TASK_ACTION['INIT'],
+						status=-1
+					)
+					db.session.add(task)
+					db.session.flush()
 
-				print 'Add against odds --> {}'.format(task.to_json())
+					print 'Add against odds --> {}'.format(task.to_json())
 		print '---------------------------------'
 		db.session.commit()
 

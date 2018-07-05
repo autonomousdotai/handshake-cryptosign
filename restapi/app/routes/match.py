@@ -5,14 +5,16 @@ import app.constants as CONST
 import app.bl.match as match_bl
 
 from sqlalchemy import and_
+from flask_jwt_extended import jwt_required
 from flask import g, Blueprint, request, current_app as app
+from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
+from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
 from app.models import User, Match, Outcome, Task
 from app.helpers.message import MESSAGE, CODE
-from flask_jwt_extended import jwt_required
 
 match_routes = Blueprint('match', __name__)
 
@@ -22,29 +24,28 @@ def matches():
 	try:
 		report = int(request.args.get('report', 0))
 		response = []
-		matches = Match.query.all()
+		matches = []
+
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		if report == 1:
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).all()
+		else:
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).all()
+			
+		print matches
 
 		for match in matches:	
-			if report == 1:
-				if match_bl.is_exceed_closing_time(match.id) == False:
-					continue
-			else:
-				if match_bl.is_exceed_closing_time(match.id):
-					continue
-
-			if match.date is None or match.reportTime is None or match.disputeTime is None:
-				continue
-				
 			#  find best odds which match against
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.result == -1 and outcome.hid is not None:
-					outcome_json = outcome.to_json()
-					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-					outcome_json["market_odds"] = odds
-					outcome_json["market_amount"] = amount
-					arr_outcomes.append(outcome_json)
+				outcome_json = outcome.to_json()
+				odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
+				outcome_json["market_odds"] = odds
+				outcome_json["market_amount"] = amount
+				arr_outcomes.append(outcome_json)
 			if len(arr_outcomes) > 0:
 				match_json["outcomes"] = arr_outcomes
 			else:

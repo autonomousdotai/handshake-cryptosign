@@ -91,7 +91,7 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.commit()
 
 
-    def test_get_match(self):
+    def test_get_match_with_no_report_and_time_exceed_closing_time(self):
         self.clear_data_before_test()
         arr_hs = []
 
@@ -140,19 +140,198 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
-            print data_json
             self.assertTrue(data['status'] == 1)
-
-            outcomes = []
-            for match in data_json:
-                if match['id'] == 1000:
-                    outcomes = match['outcomes']
-            self.assertEqual(len(outcomes), 1)            
+            self.assertEqual(len(data_json), 0)            
 
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
 
+
+    def test_get_match_with_no_report_and_time_not_exceed_closing_time(self):
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # ----- 
+
+        match = Match.find_match_by_id(1000)
+        if match is not None:
+            match.date=time.time() + 100,
+            match.reportTime=time.time() + 200,
+            match.disputeTime=time.time() + 300,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1000,
+                date=time.time() + 100,
+                reportTime=time.time() + 200,
+                disputeTime=time.time() + 300,
+            )
+            db.session.add(match)
+
+        db.session.commit()
+        arr_hs.append(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=1000,
+            public=1,
+            hid=0
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
+
+        with self.client:
+            Uid = 66
+            
+            response = self.client.get(
+                                    '/match',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            data_json = data['data']
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(len(data_json), 1)
+
+            print data_json
+            o = None
+            tmp = data_json[0]['outcomes'][0]
+            if tmp['id'] == outcome.id:
+                o = tmp
+
+            self.assertNotEqual(o, None)
+
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
+    def test_get_match_with_report_and_time_exceed_closing_time(self):
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # ----- 
+
+        match = Match.find_match_by_id(1000)
+        if match is not None:
+            match.date=time.time() - 100,
+            match.reportTime=time.time() + 100,
+            match.disputeTime=time.time() + 200,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1000,
+                date=time.time() - 100,
+                reportTime=time.time() + 100,
+                disputeTime=time.time() + 200,
+            )
+            db.session.add(match)
+
+        db.session.commit()
+        arr_hs.append(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=1000,
+            public=1,
+            hid=0
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
+
+        with self.client:
+            Uid = 66
+            
+            response = self.client.get(
+                                    '/match?report=1',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            data_json = data['data']
+            self.assertTrue(data['status'] == 1)
+            self.assertNotEqual(len(data_json), 0)            
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
+    def test_get_match_with_report_and_time_not_exceed_closing_time(self):
+        self.clear_data_before_test()
+        arr_hs = []
+
+        # ----- 
+
+        match = Match.find_match_by_id(1000)
+        if match is not None:
+            match.date=time.time() + 100,
+            match.reportTime=time.time() + 100,
+            match.disputeTime=time.time() + 200,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1000,
+                date=time.time() + 100,
+                reportTime=time.time() + 100,
+                disputeTime=time.time() + 200,
+            )
+            db.session.add(match)
+
+        db.session.commit()
+        arr_hs.append(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=1000,
+            public=1,
+            hid=0
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
+
+        with self.client:
+            Uid = 66
+            
+            response = self.client.get(
+                                    '/match?report=1',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertTrue(data['status'] == 1)
+
+            tmp = None
+            for m in data_json:
+                if m['id'] == 1000:
+                    tmp = m
+                    break
+
+            self.assertEqual(tmp, None)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
     
 if __name__ == '__main__':
     unittest.main()

@@ -5,5 +5,6 @@ from outcome import *
 from shaker import *
 from history import *
 from tx import *
+from onchaintask import *
 from setting import *
 from task import *

@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     deleted: DataTypes.INTEGER,
     description: DataTypes.STRING,
     is_erc20: DataTypes.STRING, //ETH, ERC20
-    address: DataTypes,
+    address: DataTypes.STRING,
     contract_name: DataTypes.STRING,
     method_name: DataTypes.STRING,
     data: DataTypes.TEXT,

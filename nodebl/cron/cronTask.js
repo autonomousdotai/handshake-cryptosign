@@ -303,7 +303,7 @@ const asyncScanTask = () => {
 				console.log('START SUBMIT MULTI TRANSACTION!');
 
 				let tnxs = [];
-				results.forEach(i => {
+				(results || []).forEach(i => {
 					if (Array.isArray(i.onchainData)) {
 						i.onchainData.forEach(tnxData => {
 							tnxs.push({
@@ -315,6 +315,7 @@ const asyncScanTask = () => {
 				});
 				utils.calculatorGasprice()
 				.then(gasPrice => {
+					console.log("GAS PRICE: ", gasPrice)
 					submitMultiTnx(tnxs, gasPrice)
 					.then(tnxResults => {
 						console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');

@@ -1478,7 +1478,9 @@ class TestHandshakeBluePrint(BaseTestCase):
                             from_address='0x123',
                             status=0,
                             bk_status=0,
-                            free_bet=1
+                            free_bet=1,
+                            date_created=datetime.now(),
+                            date_modified=datetime.now()
                         )
         arr_hs.append(handshake)
         db.session.add(handshake)

@@ -117,7 +117,7 @@ def init():
 		description = data.get('description', '')
 		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds'))
+		odds = Decimal(data.get('odds')).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN)
 		amount = Decimal(data.get('amount'))
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))

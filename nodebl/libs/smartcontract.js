@@ -200,8 +200,8 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
-          // 'value'   : web3.utils.toHex(amount),
+          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
+          'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shake(_hid, _side, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
       const tx                    = new ethTx(rawTransaction);

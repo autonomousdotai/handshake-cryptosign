@@ -25,55 +25,76 @@ const asyncScanOnchainTask = () => {
 			.then(_tasks => {
 				_tasks.forEach(task => {
 					if (task && task.data) {
-						let smartContractFunc = null;
-						const item = JSON.parse(task.data);
-						const onchainData = item.onchainData;
-
-						switch (item.contract_name) {
-							case 'PredictionHandshake':
-								switch (onchainData.contract_method) {
-									case 'createMarket':
-										smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item);
-									break;
-									case 'init':
-										smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPriceStr, item);
-									break;
-									case 'shake':
-										smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item);
-									break;
-									case 'collectTestDrive':
-										smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPriceStr, item);
-									break;
-									case 'reportOutcomeTransaction':
-										smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item);
-									break;
-									case 'initTestDriveTransaction':
-										smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item);
-									break;
-									case 'shakeTestDriveTransaction':
-										smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item);
-									break;
-									case 'uninitForTrial':
-										smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item);
-									break;
-								}
-							break;
-							case '': // different token
-							break;
-						}
-						index += 1;
-						tasks.push(smartContractFunc);
+						tasks.push(
+							new Promise((resolve, reject) => {
+								onchainTaskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PROGRESSING)
+								.then( resultUpdate => {
+									let smartContractFunc = null;
+									const item = JSON.parse(task.data);
+									const onchainData = item.onchainData;
+		
+									switch (item.contract_name) {
+										case 'PredictionHandshake':
+											switch (onchainData.contract_method) {
+												case 'createMarket':
+													smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item);
+												break;
+												case 'init':
+													smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPriceStr, item);
+												break;
+												case 'shake':
+													smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item);
+												break;
+												case 'collectTestDrive':
+													smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPriceStr, item);
+												break;
+												case 'reportOutcomeTransaction':
+													smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item);
+												break;
+												case 'initTestDriveTransaction':
+													smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item);
+												break;
+												case 'shakeTestDriveTransaction':
+													smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item);
+												break;
+												case 'uninitForTrial':
+													smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item);
+												break;
+											}
+										break;
+										case '': // different token
+										break;
+									}
+		
+									if (smartContractFunc) {
+										index += 1;
+										smartContractFunc.then(result => {
+											return resolve(Object.assign(result, { onchainTaskId: task.id}));
+										}).catch(reject);
+									}
+								})
+								.catch(err => {
+									return reject({
+										err_type: constants.TASK_STATUS.UPDATE_TASK_STATUS_FAIL,
+										error: err,
+										options_data: {
+											task: task.toJSON()
+										}
+									});
+								})
+							})
+						);
 					} else {
 						console.error('Task is empty with id: ', task.id);
 					}
 				});
+
 				Promise.all(tasks)
 				.then(results => {
 					if (Array.isArray(results) && results.length > 0) {
 						web3.setNonce( web3.getNonce() + results.length);
-						console.log(results);
-						const taskIds = results.map(i => { return i.task.id; })
-						
+						const taskIds = results.map(i => { console.log(i);return i.onchainTaskId; })
+
 						console.log('UPDATE ONCHAIN TASK STATUS ', taskIds);
 						onchainTaskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
 						.then(updateResults => {

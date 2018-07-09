@@ -120,11 +120,14 @@ def update_feed(handshake_id):
 
 
 @celery.task()
-def add_shuriken(user_id):
+def add_shuriken(user_id, shuriken_type):
 	try:
 		if user_id is not None:
 			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
-			res = requests.post(endpoint)
+			params = {
+				"type": str(shuriken_type)
+			}
+			res = requests.post(endpoint, params=params)
 			print 'add_shuriken {}'.format(res)
 			if res.status_code > 400:
 				print('Add shuriken is failed.')

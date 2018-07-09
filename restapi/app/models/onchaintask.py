@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class OnchainTask(BaseModel):
 	__tablename__ = 'onchain_task'
-	__json_public__ = ['id', 'description', 'is_erc20', 'contract_address', 'contract_name', 'method_name', 'from_address', 'data', 'status', 'task_id']
+	__json_public__ = ['id', 'description', 'is_erc20', 'contract_address', 'contract_name', 'contract_method', 'from_address', 'data', 'status', 'task_id']
 	
 	description = db.Column(db.String(255))
 	is_erc20 = db.Column(db.Integer,

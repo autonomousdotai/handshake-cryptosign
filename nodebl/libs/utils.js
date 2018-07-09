@@ -2,13 +2,16 @@
 const axios = require('axios');
 const moment = require('moment');
 const web3 = require('../configs/web3').getWeb3();
+const web3Util = require('../configs/web3');
 const configs = require('../configs');
 const taskDAO = require('../daos/task');
 const settingDAO = require('../daos/setting');
 const constants = require('../constants');
 
 const network_id = configs.network_id;
+const predictionContract = require('../libs/smartcontract');
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
+const ownerAddress = configs.network[network_id].ownerAddress;
 
 const gennerateExtraData = (match_date, match_name, outcome_name) => {
     return JSON.stringify({
@@ -32,23 +35,24 @@ const getGaspriceEtherscan = () => {
             }
         })
         .then(result => {
-            console.log(result);
             if (result.result && result.result != '') {
                 return resolve( parseInt(web3.fromWei(result.result, 'gwei')));
             }
-            return reject({
+            console.error({
                 err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
                 error: {},
                 options_data: {
                     result: result
                 }
             });
+            return resolve();
         })
         .catch((error) => {
-            return reject({
+            console.error({
                 err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
                 error: error
             });
+            return resolve();
         });
     });
 }
@@ -193,14 +197,26 @@ const handleErrorTask = (task, err_type) => {
 const calculatorGasprice = () => {
     return new Promise( async (resolve, reject) => {
         try {
-            // const gasAPI        = await getGaspriceEtherscan();
-            const gasSetting    = await settingDAO.getByName('GasPrice');
-            let gasPrice        = configs.network[network_id].gasPrice;
+            const gasSetting = await settingDAO.getByName('GasPrice');
+            let gasPrice = parseInt(gasSetting.value);
 
-            if (gasSetting && gasSetting.value && !Number.isNaN(parseInt(gasSetting.value))) {
-                gasPrice = parseInt(gasSetting.value);
+            if (gasSetting.status == 0) {
+                getGaspriceEtherscan()
+                .then(gasAPI => {
+                    if (gasPrice > gasAPI) {
+                        console.log('GAS PRICE API: ', gasAPI);
+                        return resolve(gasAPI);
+                    }
+                    console.log('GAS PRICE SETTING: ', gasAPI);
+                    return resolve(gasPrice);
+                })
+                .catch(ex => {
+                    console.error('Etherscan gasprice error: ', ex);
+                    return resolve(gasPrice);
+                });
+            } else {
+                return resolve(gasPrice);
             }
-            return resolve(gasPrice);
         } catch (e) {
             return reject({
                 err_type: constants.TASK_STATUS.GAS_PRICE_SETTING_FAIL,
@@ -210,10 +226,40 @@ const calculatorGasprice = () => {
     });
 }
 
+const getGasAndNonce = () => {
+	return new Promise((resolve, reject) => {
+		calculatorGasprice()
+		.then(gasPrice => {
+			predictionContract.getNonce(ownerAddress, 'pending')
+			.then(_nonce => {
+				console.log('Current nonce pending from onchain: ', _nonce);
+				let nonce = web3Util.getNonce();
+				if (!web3Util.getNonce() || web3Util.getNonce() <= _nonce) {
+					console.log('SET NONCE: ', web3Util.getNonce(), _nonce);
+					web3Util.setNonce(_nonce);
+					nonce = _nonce;
+				}
+				console.log('Current nonce pending: ', nonce);
+				resolve({
+					gasPriceStr: `${gasPrice}`,
+					nonce: nonce
+				});
+			})
+			.catch(err => {
+				return reject(err);
+			});	
+		})
+		.catch(err => {
+			return reject(err);
+		});
+	});
+};
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
     gennerateExtraData,
     handleErrorTask,
-    calculatorGasprice
+    calculatorGasprice,
+    getGasAndNonce
 };

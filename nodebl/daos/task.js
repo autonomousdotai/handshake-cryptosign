@@ -14,9 +14,6 @@ module.exports = {
                     status: constants.TASK_STATUS.STATUS_RETRY
                 }]
             },
-            order: [
-                ['id', 'ASC'],
-            ],
             limit: 10
         });
     },

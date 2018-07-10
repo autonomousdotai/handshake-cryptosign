@@ -87,6 +87,11 @@ SIDE_TYPE = {
 	'AGAINST': 2
 }
 
+SHURIKEN_TYPE = {
+	'FREE': '0',
+	'REAL': '1'
+}
+
 TASK_TYPE = {
 	'FREE_BET': 'FREE_BET',
 	'REAL_BET': 'REAL_BET'

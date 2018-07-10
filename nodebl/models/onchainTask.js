@@ -12,10 +12,11 @@ module.exports = (sequelize, DataTypes) => {
     date_modified: DataTypes.DATE,
     deleted: DataTypes.INTEGER,
     description: DataTypes.STRING,
-    is_erc20: DataTypes.STRING, //ETH, ERC20
-    address: DataTypes.STRING,
+    is_erc20: DataTypes.INTEGER, //ETH, ERC20
+    contract_address: DataTypes.STRING,
     contract_name: DataTypes.STRING,
-    method_name: DataTypes.STRING,
+    contract_method: DataTypes.STRING,
+    from_address: DataTypes.STRING,
     data: DataTypes.TEXT,
     status: DataTypes.INTEGER,
     task_id: DataTypes.INTEGER

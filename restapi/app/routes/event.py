@@ -6,7 +6,6 @@ from app import db
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, Outcome, Shaker, Match, Tx
 from app.helpers.message import MESSAGE, CODE
-from app.tasks import update_feed, add_shuriken
 
 event_routes = Blueprint('event', __name__)
 
@@ -45,18 +44,7 @@ def event():
 				db.session.flush()
 
 		db.session.commit()
-		# update feed
-		if handshakes is not None:
-			for handshake in handshakes:
-				update_feed.delay(handshake.id)
-				if event_name == '__init':
-					add_shuriken(handshake.user_id)
-
-		if shakers is not None:
-			for shaker in shakers:
-				update_feed.delay(shaker.handshake_id)
-				if event_name == '__shake':
-					add_shuriken(shaker.shaker_id)
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
 		return response_ok()
 	except Exception, ex:

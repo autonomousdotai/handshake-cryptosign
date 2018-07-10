@@ -9,6 +9,8 @@ Tx = {
 
 # handshake
 Handshake = {
+	'STATUS_MAKER_SHOULD_UNINIT': -12,
+
 	'STATUS_SHAKE_FAILED': -11,
 	'STATUS_INIT_FAILED': -10,
 

@@ -49,7 +49,6 @@ class TestHandshakeBl(BaseTestCase):
             db.session.add(user)
             db.session.commit()
 
-
         user = User.find_user_with_id(66)
         if user is None:
             user = User(
@@ -73,7 +72,8 @@ class TestHandshakeBl(BaseTestCase):
             db.session.commit()
 
     def clear_data_before_test(self):
-        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        handshakes = db.session.query(Handshake).filter(
+            Handshake.outcome_id == 88).all()
         for handshake in handshakes:
             db.session.delete(handshake)
             db.session.commit()
@@ -115,13 +115,13 @@ class TestHandshakeBl(BaseTestCase):
         )
         db.session.add(handshake)
         db.session.commit()
-        
-        handshakes = handshake_bl.find_all_matched_handshakes(side=2, odds=5.0, outcome_id=88, amount=0.25)
+
+        handshakes = handshake_bl.find_all_matched_handshakes(
+            side=2, odds=5.0, outcome_id=88, amount=0.25)
 
         self.assertEqual(len(handshakes), 2)
         self.assertEqual(float(handshakes[0].odds), 1.1)
         self.assertEqual(float(handshakes[1].odds), 1.2)
-    
 
     def test_find_all_matched_handshakes_with_side_support(self):
         self.clear_data_before_test()
@@ -160,11 +160,11 @@ class TestHandshakeBl(BaseTestCase):
         )
         db.session.add(handshake)
         db.session.commit()
-        
-        handshakes = handshake_bl.find_all_matched_handshakes(side=1, odds=5.0, outcome_id=88, amount=0.25)
+
+        handshakes = handshake_bl.find_all_matched_handshakes(
+            side=1, odds=5.0, outcome_id=88, amount=0.25)
         self.assertEqual(len(handshakes), 1)
         self.assertEqual(float(handshakes[0].odds), 1.2)
-        
 
     def test_find_all_joined_handshakes_with_side_support(self):
         self.clear_data_before_test()
@@ -203,8 +203,9 @@ class TestHandshakeBl(BaseTestCase):
         )
         db.session.add(handshake)
         db.session.commit()
-        
-        handshakes = handshake_bl.find_all_joined_handshakes(side=1, outcome_id=88)
+
+        handshakes = handshake_bl.find_all_joined_handshakes(
+            side=1, outcome_id=88)
         self.assertEqual(len(handshakes), 1)
         self.assertEqual(float(handshakes[0].odds), 1.1)
 
@@ -226,12 +227,11 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-
-        handshakes = handshake_bl.find_all_joined_handshakes(side=1, outcome_id=88)
+        handshakes = handshake_bl.find_all_joined_handshakes(
+            side=1, outcome_id=88)
         self.assertEqual(len(handshakes), 2)
         self.assertEqual(float(handshakes[0].odds), 1.1)
         self.assertEqual(float(handshakes[1].odds), 1.0)
-        
 
     def test_find_all_joined_handshakes_with_side_against(self):
         self.clear_data_before_test()
@@ -270,11 +270,11 @@ class TestHandshakeBl(BaseTestCase):
         )
         db.session.add(handshake)
         db.session.commit()
-        
-        handshakes = handshake_bl.find_all_joined_handshakes(side=2, outcome_id=88)
+
+        handshakes = handshake_bl.find_all_joined_handshakes(
+            side=2, outcome_id=88)
         self.assertEqual(len(handshakes), 1)
         self.assertEqual(float(handshakes[0].odds), 1.2)
-
 
         # -----
         handshake = Handshake(
@@ -293,12 +293,12 @@ class TestHandshakeBl(BaseTestCase):
         )
         db.session.add(handshake)
         db.session.commit()
-        
-        handshakes = handshake_bl.find_all_joined_handshakes(side=2, outcome_id=88)
+
+        handshakes = handshake_bl.find_all_joined_handshakes(
+            side=2, outcome_id=88)
         self.assertEqual(len(handshakes), 2)
         self.assertEqual(float(handshakes[0].odds), 1.2)
         self.assertEqual(float(handshakes[1].odds), 1.2)
-
 
     def test_find_available_support_handshakes(self):
         self.clear_data_before_test()
@@ -374,7 +374,6 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -393,11 +392,11 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        handshakes = handshake_bl.find_available_support_handshakes(outcome_id=88)
+        handshakes = handshake_bl.find_available_support_handshakes(
+            outcome_id=88)
         self.assertEqual(len(handshakes), 2)
         self.assertEqual(float(handshakes[0].amount), 0.3125)
         self.assertEqual(float(handshakes[1].amount), 0.21)
-
 
     def test_find_available_against_handshakes(self):
         self.clear_data_before_test()
@@ -473,7 +472,6 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -492,11 +490,11 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        handshakes = handshake_bl.find_available_against_handshakes(outcome_id=88)
+        handshakes = handshake_bl.find_available_against_handshakes(
+            outcome_id=88)
         self.assertEqual(len(handshakes), 2)
         self.assertEqual(float(handshakes[0].amount), 0.3125)
         self.assertEqual(float(handshakes[1].amount), 0.21)
-
 
     def test_save_collect_state_for_shaker(self):
         self.clear_data_before_test()
@@ -545,7 +543,6 @@ class TestHandshakeBl(BaseTestCase):
 
         self.assertEqual(h.status, 6)
         self.assertEqual(s.status, 6)
-    
 
     def test_is_init_pending_status(self):
 		handshake = Handshake(
@@ -625,7 +622,8 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
-        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        actual = handshake_bl.can_uninit(
+            Handshake.find_handshake_by_id(handshake.id))
         expected = False
         self.assertEqual(actual, expected)
 
@@ -644,7 +642,8 @@ class TestHandshakeBl(BaseTestCase):
         db.session.add(shaker)
         db.session.commit()
 
-        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        actual = handshake_bl.can_uninit(
+            Handshake.find_handshake_by_id(handshake.id))
         expected = False
         self.assertEqual(actual, expected)
 
@@ -653,20 +652,20 @@ class TestHandshakeBl(BaseTestCase):
         db.session.merge(shaker)
         db.session.flush()
 
-        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        actual = handshake_bl.can_uninit(
+            Handshake.find_handshake_by_id(handshake.id))
         expected = True
         self.assertEqual(actual, expected)
-
 
         # set shaker status = 2
         shaker.status = 2
         db.session.merge(shaker)
         db.session.flush()
 
-        actual = handshake_bl.can_uninit(Handshake.find_handshake_by_id(handshake.id))
+        actual = handshake_bl.can_uninit(
+            Handshake.find_handshake_by_id(handshake.id))
         expected = False
         self.assertEqual(actual, expected)
-
 
     def test_rollback_shake_state(self):
         self.clear_data_before_test()
@@ -805,6 +804,56 @@ class TestHandshakeBl(BaseTestCase):
 
 		actual = handshake_bl.can_withdraw(handshake, shaker=None)
 		self.assertEqual(actual, '')
+
+    def test_has_valid_shaker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+
+        # -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+		actual = handshake_bl.has_valid_shaker(handshake)
+		
+		shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+					status=2
+				)
+		db.session.add(shaker)
+		db.session.commit()
+		arr_hs.append(shaker)
+
+		actual = handshake_bl.has_valid_shaker(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

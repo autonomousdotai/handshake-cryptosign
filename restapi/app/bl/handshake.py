@@ -87,11 +87,32 @@ def save_collect_state_for_shaker(shaker):
 
 	return None, None
 
+
+def has_valid_shaker(handshake):
+	if handshake is not None:
+		shakers = handshake.shakers.all()
+		if shakers is not None:
+			for sk in shakers:
+				if sk.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+					return True
+	return False
+
+
 def data_need_set_result_for_outcome(outcome):
 	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
 
+	if outcome.result == -1:
+		return None, None
+
 	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
 	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
+
+	for hs in handshakes:
+		if not has_valid_shaker(handshake):
+			hs.status = HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']
+			db.session.merge(hs)
+			db.session.flush()
+
 	return handshakes, shakers
 
 

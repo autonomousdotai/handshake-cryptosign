@@ -304,7 +304,6 @@ const asyncScanTask = () => {
 					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ', tnxResults.length);
 
 					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
-						web3.setNonce( web3.getNonce() + tnxResults.length);
 						const taskIds = tnxResults.map(i => { return i.task_id; })
 						
 						console.log('UPDATE TASK STATUS ', taskIds);

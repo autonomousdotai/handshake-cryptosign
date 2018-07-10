@@ -4,51 +4,48 @@ import app.constants as CONST
 
 from flask import Blueprint, request, current_app as app
 from app.helpers.response import response_ok, response_error
-from app.helpers.decorators import login_required, admin_required
+from app.helpers.decorators import login_required
 from app import db
-from app.models import Setting
+from app.models import Source
 from app.helpers.message import MESSAGE, CODE
 
-setting_routes = Blueprint('setting', __name__)
+source_routes = Blueprint('source', __name__)
 
-@setting_routes.route('/', methods=['GET'])
+@source_routes.route('/', methods=['GET'])
 @login_required
-def settings():
+def sources():
 	try:
-		settings = Setting.query.all()
+		sources = Source.query.all()
 		data = []
 
-		for setting in settings:
-			data.append(setting.to_json())
+		for source in sources:
+			data.append(source.to_json())
 
 		return response_ok(data)
 	except Exception, ex:
 		return response_error(ex.message)
 
 
-@setting_routes.route('/add', methods=['POST'])
+@source_routes.route('/add', methods=['POST'])
 @login_required
-@admin_required
 def add():
 	try:
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		settings = []
+		sources = []
 		response_json = []
 		for item in data:
-			setting = Setting(
+			source = Source(
 				name=item['name'],
-				status=item.get('status', 0),
-				value=item.get('value', 0)
+				url=item['url']
 			)
-			db.session.add(setting)
+			db.session.add(source)
 			db.session.flush()
-			settings.append(setting)
+			sources.append(source)
 
-			response_json.append(setting.to_json())
-
+			response_json.append(source.to_json())
 		db.session.commit()
 		return response_ok(response_json)
 	except Exception, ex:
@@ -56,16 +53,15 @@ def add():
 		return response_error(ex.message)
 
 
-@setting_routes.route('/remove/<int:id>', methods=['POST'])
+@source_routes.route('/remove/<int:id>', methods=['POST'])
 @login_required
-@admin_required
 def remove(id):
 	try:
-		setting = Setting.find_setting_by_id(id)
-		if setting is not None:
-			db.session.delete(setting)
+		source = db.session.query(Source).filter(Source.id==id).first()
+		if source is not None:
+			db.session.delete(source)
 			db.session.commit()
-			return response_ok(message="{} has been deleted!".format(setting.id))
+			return response_ok(message="{} has been deleted!".format(source.id))
 		else:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
@@ -74,26 +70,21 @@ def remove(id):
 		return response_error(ex.message)
 
 
-@setting_routes.route('/update/<int:id>', methods=['POST'])
+@source_routes.route('/update/<int:id>', methods=['POST'])
 @login_required
-@admin_required
 def update(id):
 	try:
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		setting = Setting.find_setting_by_id(id)
-		if setting is not None:
-			status = int(data['status'])
-			setting.status = status
-
-			if 'value' in data:
-				setting.value = data['value']
-
+		source = db.session.query(Source).filter(Source.id==id).first()
+		if source is not None:
+			source.name = data['name']
+			source.url = data['url']
 			db.session.commit()
 
-			return response_ok(message='{} has been updated'.format(setting.id))
+			return response_ok(message='{} has been updated'.format(source.id))
 		else:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 

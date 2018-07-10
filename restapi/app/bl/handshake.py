@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_, func, text
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed
+from app.tasks import update_feed, add_shuriken
 from app.helpers.message import MESSAGE
 from datetime import datetime
 
@@ -257,6 +257,11 @@ def save_handshake_for_event(event_name, inputs):
 			shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
 			db.session.flush()
+			# Add shuriken
+			if shaker.free_bet == 1:
+				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['FREE'])
+			else:
+				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['REAL'])
 
 			arr = []
 			arr.append(shaker)
@@ -300,6 +305,13 @@ def save_handshake_for_event(event_name, inputs):
 
 			arr = []
 			arr.append(handshake)
+
+			# Add shuriken
+			if handshake.free_bet == 1:
+				add_shuriken.delay(handshake.user_id, CONST.SHURIKEN_TYPE['FREE'])
+			else:
+				add_shuriken.delay(handshake.user_id, CONST.SHURIKEN_TYPE['REAL'])
+
 			return arr, None
 
 		return None, None

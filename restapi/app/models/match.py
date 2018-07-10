@@ -6,7 +6,7 @@ from app.models.base import BaseModel
 
 class Match(BaseModel):
 	__tablename__ = 'match'
-	__json_public__ = ['id', 'homeTeamName', 'homeTeamCode', 'homeTeamFlag', 'awayTeamName', 'awayTeamCode', 'awayTeamFlag', 'date', 'reportTime', 'disputeTime', 'outcomes', 'homeScore', 'awayScore', 'name', 'market_fee', 'source']	
+	__json_public__ = ['id', 'homeTeamName', 'homeTeamCode', 'homeTeamFlag', 'awayTeamName', 'awayTeamCode', 'awayTeamFlag', 'date', 'reportTime', 'disputeTime', 'outcomes', 'homeScore', 'awayScore', 'name', 'market_fee', 'source_id', 'category_id']	
 	__json_modifiers__ = {
         'outcomes': lambda outcomes, _: [outcome.to_json() for outcome in outcomes]
     }
@@ -17,7 +17,6 @@ class Match(BaseModel):
 	awayTeamCode = db.Column(db.String(10))
 	awayTeamFlag = db.Column(db.String(512))
 	name = db.Column(db.String(512))
-	source = db.Column(db.String(256))
 	homeScore = db.Column(db.Integer)
 	awayScore = db.Column(db.Integer)
 	market_fee = db.Column(db.Integer,
@@ -29,6 +28,8 @@ class Match(BaseModel):
 	reportTime = db.Column(db.BigInteger)
 	disputeTime = db.Column(db.BigInteger)
 
+	category_id = db.Column('category_id', db.ForeignKey('category.id'))
+	source_id = db.Column('source_id', db.ForeignKey('source.id'))
 	outcomes = db.relationship('Outcome', backref='match', primaryjoin="Match.id == Outcome.match_id", lazy='dynamic')
 
 	@classmethod

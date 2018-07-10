@@ -38,7 +38,6 @@ def create_market():
 								homeTeamName=item['homeTeamName'],
 								awayTeamName=item['awayTeamName'],
 								name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
-								source=item['source'],
 								market_fee=item['market_fee'],
 								date=item['date'],
 								reportTime=item['reportTime'],
@@ -111,6 +110,7 @@ def init_default_outcomes():
 		
 		return response_ok()
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)
 
 
@@ -136,7 +136,6 @@ def test_market():
 							homeTeamName=item['homeTeamName'],
 							awayTeamName=item['awayTeamName'],
 							name='{} vs {}'.format(item['homeTeamName'], item['awayTeamName']),
-							source=item['source'],
 							market_fee=item['market_fee'],
 							date=item['date'],
 							reportTime=item['reportTime'],
@@ -168,4 +167,5 @@ def test_market():
 		db.session.commit()
 		return response_ok()
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)

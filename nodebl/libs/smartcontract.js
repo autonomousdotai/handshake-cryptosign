@@ -451,7 +451,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
           'value'   : '0x0',
-          'data'    : contract.methods.createMarket(fee, web3.utils.fromUtf8(source || ''), closingTime, reportTime, dispute, web3.utils.fromUtf8(offchain)).encodeABI()
+          'data'    : contract.methods.createMarket(fee, web3.utils.fromUtf8(source || '-'), closingTime, reportTime, dispute, web3.utils.fromUtf8(offchain)).encodeABI()
       };
 
       const tx                    = new ethTx(rawTransaction);

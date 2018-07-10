@@ -34,15 +34,15 @@ const getGaspriceEtherscan = () => {
                 apikey: '2EW75CUFS1SM3HQ3CE4QVC73JZQMNU5WTD'
             }
         })
-        .then(result => {
-            if (result.result && result.result != '') {
-                return resolve( parseInt(web3.fromWei(result.result, 'gwei')));
+        .then(response => {
+            if (response.data && response.data.result && response.data.result != '') {
+                return resolve( parseInt(web3.utils.fromWei(response.data.result, 'gwei')));
             }
             console.error({
                 err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
                 error: {},
                 options_data: {
-                    result: result
+                    result: response
                 }
             });
             return resolve();
@@ -204,10 +204,8 @@ const calculatorGasprice = () => {
                 getGaspriceEtherscan()
                 .then(gasAPI => {
                     if (gasPrice > gasAPI) {
-                        console.log('GAS PRICE API: ', gasAPI);
                         return resolve(gasAPI);
                     }
-                    console.log('GAS PRICE SETTING: ', gasAPI);
                     return resolve(gasPrice);
                 })
                 .catch(ex => {

@@ -93,7 +93,7 @@ const asyncScanOnchainTask = () => {
 				.then(results => {
 					if (Array.isArray(results) && results.length > 0) {
 						web3.setNonce( web3.getNonce() + results.length);
-						const taskIds = results.map(i => { console.log(i);return i.onchainTaskId; })
+						const taskIds = results.map(i => { return i.onchainTaskId; })
 
 						console.log('UPDATE ONCHAIN TASK STATUS ', taskIds);
 						onchainTaskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)

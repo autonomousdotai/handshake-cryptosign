@@ -11,6 +11,9 @@ class Category(BaseModel):
 	__json_public__ = ['id', 'name']
 	
 	name = db.Column(db.String(255))
+	approved = db.Column(db.Integer,
+						server_default=str(-1),
+	                   	default=-1)
 	matches = db.relationship('Match', backref='category', primaryjoin="Category.id == Match.category_id",
 	                             lazy='dynamic')
 

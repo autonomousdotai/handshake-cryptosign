@@ -14,7 +14,6 @@ def is_able_to_create_new_task(outcome_id):
 		for task in tasks:
 			try:
 				j = json.loads(task.data)
-				print j
 				if int(j['outcome_id']) == int(outcome_id):
 					n = time.mktime(datetime.now().timetuple())
 					ds = time.mktime(task.date_created.timetuple())

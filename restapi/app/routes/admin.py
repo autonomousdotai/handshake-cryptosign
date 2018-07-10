@@ -110,6 +110,7 @@ def init_default_outcomes():
 		
 		return response_ok()
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)
 
 
@@ -166,4 +167,5 @@ def test_market():
 		db.session.commit()
 		return response_ok()
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)

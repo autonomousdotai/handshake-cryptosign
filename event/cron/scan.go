@@ -38,7 +38,18 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
                             log.Println("Hook event fail error: ", err.Error())
                             log.Println(methodJson)
                         }
-                    } 
+                    } else {
+                        var jsonData map[string]interface{}
+                        jsonData["id"] = transaction.TxID
+                        jsonData["status"] = 2
+                        jsonData["error"] = methodJson
+                        //log.Println("hook fail", jsonData)
+                        err := hookService.Event(jsonData)
+                        if err != nil {
+                            log.Println("Hook event fail error: ", err.Error())
+                            log.Println(methodJson)
+                        }
+                    }
                 } else if receipt.Status == 1 {
                     // case success
                     log.Printf("Tx %s has receipt, logs %d\n", transaction.Hash, len(receipt.Logs))

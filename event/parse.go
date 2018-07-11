@@ -25,6 +25,7 @@ func main() {
     txHash := common.HexToHash(hash)
 
     tx, pending, err := etherClient.TransactionByHash(context.Background(), txHash)
+    fmt.Println("tx", tx)
     if err == nil && !pending {
         _, inputJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
         fmt.Println("input", inputJson)

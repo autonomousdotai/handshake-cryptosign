@@ -165,8 +165,6 @@ def remove(id):
 		return response_error(ex.message)
 
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
-@login_required
-@jwt_required
 def report(match_id):
 	try:
 		data = request.json
@@ -191,8 +189,11 @@ def report(match_id):
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
-					if outcome.result != -1:
+					if outcome.result > -1:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+					if outcome.result == -2:
+						return response_error(MESSAGE.OUTCOME_REPORTED)
+					outcome.result = -2;
 
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)

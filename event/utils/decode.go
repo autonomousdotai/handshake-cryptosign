@@ -12,6 +12,7 @@ import (
 )
 
 func DecodeTransactionInput(contractName string, encodeData string) (bool, string){
+    status := true
     methods := make(map[string]abi.Method)
 
     raw, err := ioutil.ReadFile(fmt.Sprintf("./contracts/%s.json", contractName))
@@ -37,35 +38,37 @@ func DecodeTransactionInput(contractName string, encodeData string) (bool, strin
         return false, "invalid hash"
     }
 
-    values, unpackErr := method.Inputs.UnpackValues(data)
-
-    if unpackErr != nil {
-        return false, unpackErr.Error()
-    }
+    values, unpackErr := method.Inputs.UnpackValues(data) 
 
     result := map[string]interface{}{}
     result["contract"] = contractName
     result["methodName"] = method.Name
-    
-    inputs := map[string]interface{}{}
-    for i, input := range method.Inputs {
-        value := values[i]
-        
-        if strings.HasPrefix(fmt.Sprint(input.Type), "bytes") {
-            value = reflect.ValueOf(value)
-            valueStr := fmt.Sprintf("%s", value)
-            valueStr = strings.TrimRight(valueStr, "\x00")
-            value = valueStr
-        }
-        inputs[input.Name] = value          
-    }
-    result["inputs"] = inputs
 
+    if unpackErr == nil {
+        inputs := map[string]interface{}{}
+        for i, input := range method.Inputs {
+            value := values[i]
+            
+            if strings.HasPrefix(fmt.Sprint(input.Type), "bytes") {
+                value = reflect.ValueOf(value)
+                valueStr := fmt.Sprintf("%s", value)
+                valueStr = strings.TrimRight(valueStr, "\x00")
+                value = valueStr
+            }
+            inputs[input.Name] = value          
+        }
+        result["inputs"] = inputs
+    } else {
+        status = false
+        result["error"] = unpackErr.Error()
+    }
+ 
     resultJson, _ := json.Marshal(result)
-    return true, string(resultJson[:])
+    return status, string(resultJson[:])
 }
 
 func DecodeTransactionLog(contractName string, log *types.Log) (bool, string) {
+    status := true
     events := make(map[string]abi.Event)
 
     raw, err := ioutil.ReadFile(fmt.Sprintf("./contracts/%s.json", contractName))
@@ -99,29 +102,30 @@ func DecodeTransactionLog(contractName string, log *types.Log) (bool, string) {
 
     values, unpackErr := event.Inputs.UnpackValues(log.Data)
 
-    if unpackErr != nil {
-        return false, unpackErr.Error()
-    }
-
     result := map[string]interface{}{}
     result["contract"] = contractName
     result["eventName"] = event.Name
 
-    inputs := map[string]interface{}{}
-    for i, input := range event.Inputs {
-        value := values[i]
-        
-        if strings.HasPrefix(fmt.Sprint(input.Type), "bytes") {
-            value = reflect.ValueOf(value)
-            valueStr := fmt.Sprintf("%s", value)
-            valueStr = strings.TrimRight(valueStr, "\x00")
-            value = valueStr
+    if unpackErr == nil {
+        inputs := map[string]interface{}{}
+        for i, input := range event.Inputs {
+            value := values[i]
+            
+            if strings.HasPrefix(fmt.Sprint(input.Type), "bytes") {
+                value = reflect.ValueOf(value)
+                valueStr := fmt.Sprintf("%s", value)
+                valueStr = strings.TrimRight(valueStr, "\x00")
+                value = valueStr
+            }
+            inputs[input.Name] = value          
         }
-        inputs[input.Name] = value          
+
+        result["inputs"] = inputs
+    } else {
+        status = false
+        result["error"] = unpackErr.Error()
     }
-
-    result["inputs"] = inputs
-
+ 
     resultJson, _ := json.Marshal(result)
-    return true, string(resultJson[:])
+    return status, string(resultJson[:])
 }

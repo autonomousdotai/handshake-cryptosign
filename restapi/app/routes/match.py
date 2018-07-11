@@ -45,7 +45,13 @@ def matches():
 				odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
 				outcome_json["market_odds"] = odds
 				outcome_json["market_amount"] = amount
-				arr_outcomes.append(outcome_json)
+
+				if report == 1:
+					if outcome.result != -2:
+						arr_outcomes.append(outcome_json)
+				else:
+					arr_outcomes.append(outcome_json)
+
 			if len(arr_outcomes) > 0:
 				match_json["outcomes"] = arr_outcomes
 			else:
@@ -191,8 +197,11 @@ def report(match_id):
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
-					if outcome.result != -1:
+					if outcome.result > -1:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
+					if outcome.result == -2:
+						return response_error(MESSAGE.OUTCOME_REPORTED)
+					outcome.result = -2;
 
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)

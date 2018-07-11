@@ -25,35 +25,40 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
                 log.Printf("Tx %s has receipt, status %d\n", transaction.Hash, receipt.Status)
                 if receipt.Status == 0 {
                     // case fail
-                    _, methodJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
+                    decodeStatus, methodJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
                     // call REST fail
                     var jsonData map[string]interface{}
                     json.Unmarshal([]byte(methodJson), &jsonData)
-                    jsonData["id"] = transaction.TxID
-                    jsonData["status"] = 0
-                    //log.Println("hook fail", jsonData)
+                    jsonData["id"] = transaction.TxID 
+                    status := 0
+                    if !decodeStatus {
+                        status = 2
+                    }
+                    jsonData["status"] = status
                     err := hookService.Event(jsonData)
                     if err != nil {
                         log.Println("Hook event fail error: ", err.Error())
-                        log.Println(methodJson)
+                        log.Println(jsonData)
                     }
                 } else if receipt.Status == 1 {
                     // case success
                     log.Printf("Tx %s has receipt, logs %d\n", transaction.Hash, len(receipt.Logs))
                     if len(receipt.Logs) > 0 {
                         for _, l := range receipt.Logs {
-                            _, eventJson := utils.DecodeTransactionLog("PredictionHandshake", l)
+                            decodeStatus, eventJson := utils.DecodeTransactionLog("PredictionHandshake", l)
                             var jsonData map[string]interface{}
                             json.Unmarshal([]byte(eventJson), &jsonData)
                             jsonData["id"] = transaction.TxID
                             jsonData["status"] = 1
-                            // call REST API SUCCESS with event
-                            //log.Println("hook success", jsonData)
-                            err := hookService.Event(jsonData)
-                            if err != nil {
-                                log.Println("Hook event success error: ", err.Error())
-                                log.Println(eventJson)
+                            if decodeStatus {
+                                // call REST API SUCCESS with event
+                                //log.Println("hook success", jsonData)
+                                err := hookService.Event(jsonData)
+                                if err != nil {
+                                    log.Println("Hook event success error: ", err.Error())
+                                }
                             }
+                            log.Println(jsonData)
                         }
                     }
                 } else {

@@ -43,7 +43,7 @@ func (h HookService) Event(jsonData map[string]interface{}) (error) {
     } else {
         errStr := "Unknown"
         if hasMessage {
-            errStr := message.(string)
+            errStr = message.(string)
         }
         return errors.New(errStr)
     }

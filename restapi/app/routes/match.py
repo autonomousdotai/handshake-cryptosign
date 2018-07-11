@@ -45,7 +45,9 @@ def matches():
 				odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
 				outcome_json["market_odds"] = odds
 				outcome_json["market_amount"] = amount
-				arr_outcomes.append(outcome_json)
+
+				if report != 1 and outcome.result != -2:
+					arr_outcomes.append(outcome_json)
 			if len(arr_outcomes) > 0:
 				match_json["outcomes"] = arr_outcomes
 			else:
@@ -165,6 +167,8 @@ def remove(id):
 		return response_error(ex.message)
 
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
+@login_required
+@jwt_required
 def report(match_id):
 	try:
 		data = request.json

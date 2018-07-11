@@ -26,30 +26,19 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
                 if receipt.Status == 0 {
                     // case fail
                     decodeStatus, methodJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
-                    if decodeStatus {
-                        // call REST fail
-                        var jsonData map[string]interface{}
-                        json.Unmarshal([]byte(methodJson), &jsonData)
-                        jsonData["id"] = transaction.TxID
-                        jsonData["status"] = 0
-                        //log.Println("hook fail", jsonData)
-                        err := hookService.Event(jsonData)
-                        if err != nil {
-                            log.Println("Hook event fail error: ", err.Error())
-                            log.Println(methodJson)
-                        }
-                    } else {
-                        // call REST fail
-                        jsonData := map[string]interface{}{}
-                        jsonData["id"] = transaction.TxID
-                        jsonData["status"] = 2
-                        jsonData["error"] = methodJson
-                        //log.Println("hook fail", jsonData)
-                        err := hookService.Event(jsonData)
-                        if err != nil {
-                            log.Println("Hook event fail error: ", err.Error())
-                            log.Println(methodJson)
-                        }
+                    // call REST fail
+                    var jsonData map[string]interface{}
+                    json.Unmarshal([]byte(methodJson), &jsonData)
+                    jsonData["id"] = transaction.TxID 
+                    status := 0
+                    if !decodeStatus {
+                        status = 2
+                    }
+                    jsonData["status"] = status
+                    err := hookService.Event(jsonData)
+                    if err != nil {
+                        log.Println("Hook event fail error: ", err.Error())
+                        log.Println(jsonData)
                     }
                 } else if receipt.Status == 1 {
                     // case success
@@ -57,19 +46,19 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
                     if len(receipt.Logs) > 0 {
                         for _, l := range receipt.Logs {
                             decodeStatus, eventJson := utils.DecodeTransactionLog("PredictionHandshake", l)
+                            var jsonData map[string]interface{}
+                            json.Unmarshal([]byte(eventJson), &jsonData)
+                            jsonData["id"] = transaction.TxID
+                            jsonData["status"] = 1
                             if decodeStatus {
-                                var jsonData map[string]interface{}
-                                json.Unmarshal([]byte(eventJson), &jsonData)
-                                jsonData["id"] = transaction.TxID
-                                jsonData["status"] = 1
                                 // call REST API SUCCESS with event
                                 //log.Println("hook success", jsonData)
                                 err := hookService.Event(jsonData)
                                 if err != nil {
                                     log.Println("Hook event success error: ", err.Error())
-                                    log.Println(eventJson)
                                 }
                             }
+                            log.Println(jsonData)
                         }
                     }
                 } else {

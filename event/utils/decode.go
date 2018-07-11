@@ -37,7 +37,11 @@ func DecodeTransactionInput(contractName string, encodeData string) (bool, strin
         return false, "invalid hash"
     }
 
-    values, _ := method.Inputs.UnpackValues(data)
+    values, unpackErr := method.Inputs.UnpackValues(data)
+
+    if unpackErr != nil {
+        return false, unpackErr.Error()
+    }
 
     result := map[string]interface{}{}
     result["contract"] = contractName
@@ -93,7 +97,11 @@ func DecodeTransactionLog(contractName string, log *types.Log) (bool, string) {
         return false, "invalid hash"
     }
 
-    values, _ := event.Inputs.UnpackValues(log.Data)
+    values, unpackErr := event.Inputs.UnpackValues(log.Data)
+
+    if unpackErr != nil {
+        return false, unpackErr.Error()
+    }
 
     result := map[string]interface{}{}
     result["contract"] = contractName

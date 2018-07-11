@@ -1,8 +1,8 @@
-package parse
+package main
 
 import (
     "context"
-    _ "os"
+    "os"
     "fmt"
     "github.com/ninjadotorg/handshake-cryptosign/event/utils"
     "github.com/ethereum/go-ethereum/ethclient"

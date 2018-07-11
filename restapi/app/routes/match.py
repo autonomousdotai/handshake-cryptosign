@@ -46,7 +46,7 @@ def matches():
 				outcome_json["market_odds"] = odds
 				outcome_json["market_amount"] = amount
 
-				if report != 1:
+				if report == 1:
 					if outcome.result != -2:
 						arr_outcomes.append(outcome_json)
 				else:

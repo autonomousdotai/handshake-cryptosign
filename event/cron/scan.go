@@ -39,7 +39,8 @@ func scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, re
                             log.Println(methodJson)
                         }
                     } else {
-                        var jsonData map[string]interface{}
+                        // call REST fail
+                        jsonData := map[string]interface{}{}
                         jsonData["id"] = transaction.TxID
                         jsonData["status"] = 2
                         jsonData["error"] = methodJson

@@ -78,6 +78,7 @@ STATE_TYPE = {
 
 RESULT_TYPE = {
 	'PROCESSING': -2,
+	'DISPUTED': -3,
 	'PENDING': -1,
 	'DRAW': 0,
 	'SUPPORT_WIN': 1,

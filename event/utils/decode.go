@@ -41,6 +41,7 @@ func DecodeTransactionInput(contractName string, encodeData string) (bool, strin
     payloadSize := len(method.Inputs.NonIndexed()) * 32
 
     if len(data) < payloadSize {
+        status = false
         dataSize := len(data)
         for i := 0; i < payloadSize - dataSize; i++ {
             data = append(data, 0)

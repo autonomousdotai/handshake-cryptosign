@@ -47,7 +47,7 @@ def matches():
 				outcome_json["market_amount"] = amount
 
 				if report == 1:
-					if outcome.result != -2:
+					if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
 						arr_outcomes.append(outcome_json)
 				else:
 					arr_outcomes.append(outcome_json)
@@ -197,11 +197,13 @@ def report(match_id):
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
-					if outcome.result > -1:
+					if outcome.result > CONST.RESULT_TYPE['PENDING']:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
-					if outcome.result == -2:
+
+					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
 						return response_error(MESSAGE.OUTCOME_REPORTED)
-					outcome.result = -2
+
+					outcome.result = CONST.RESULT_TYPE['PROCESSING']
 
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)

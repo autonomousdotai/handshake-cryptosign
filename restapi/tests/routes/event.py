@@ -86,6 +86,11 @@ class TestEventBluePrint(BaseTestCase):
             db.session.delete(user)
             db.session.commit()
 
+        outcome = Outcome.find_outcome_by_id(88)
+        if outcome is not None:
+            outcome.result = -1
+            db.session.commit()
+
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
         for handshake in handshakes:
             db.session.delete(handshake)
@@ -459,6 +464,197 @@ class TestEventBluePrint(BaseTestCase):
             s = Shaker.find_shaker_by_id(shaker_id)
             self.assertEqual(s.status, 2)
 
+    def test_reiceive_refund_event(self):
+        self.clear_data_before_test()
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=66,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=1,
+				from_address='0x123',
+                status=0
+        )
+        db.session.add(handshake)
+        db.session.commit()
+        handshake_id = handshake.id
+
+        # -----
+        shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+                    status=-1
+				)
+        db.session.add(shaker)
+        db.session.commit()
+        shaker_id = shaker.id
+
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "contract": "predictionHandshake",
+                "eventName": "__refund",
+                "status": 1,
+                'id': 1,
+                "inputs": {
+                    "offchain": "cryptosign_s{}".format(shaker_id),
+                    "hid": 88
+                }   
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            db.session.close()
+
+            s = Shaker.find_shaker_by_id(shaker_id)
+            self.assertEqual(s.status, 3)
+
+    # def test_reiceive_shake_event_with_status_0(self):
+    #     self.clear_data_before_test()
+    #     # -----
+    #     handshake = Handshake(
+	# 			hs_type=3,
+	# 			chain_id=4,
+	# 			is_private=1,
+	# 			user_id=66,
+	# 			outcome_id=88,
+	# 			odds=1.2,
+	# 			amount=1,
+	# 			currency='ETH',
+	# 			side=2,
+	# 			remaining_amount=0,
+	# 			from_address='0x123',
+    #             status=0
+    #     )
+    #     db.session.add(handshake)
+    #     db.session.commit()
+    #     handshake_id = handshake.id
+
+    #     # -----
+    #     shaker = Shaker(
+	# 				shaker_id=66,
+	# 				amount=0.2,
+	# 				currency='ETH',
+	# 				odds=6,
+	# 				side=1,
+	# 				handshake_id=handshake.id,
+	# 				from_address='0x123',
+	# 				chain_id=4,
+    #                 status=-1
+	# 			)
+    #     db.session.add(shaker)
+    #     db.session.commit()
+
+    #     shaker_id = shaker.id
+
+    #     with self.client:
+    #         Uid = 1
+            
+    #         params = {
+    #             "contract": "predictionHandshake",
+    #             "methodName": "shake",
+    #             "status": 0,
+    #             'id': 1,
+    #             "inputs": {
+    #                 "offchain": "cryptosign_s{}".format(shaker_id),
+    #                 "hid": 88
+    #             }   
+    #         }
+
+    #         response = self.client.post(
+    #                                 '/event',
+    #                                 data=json.dumps(params), 
+    #                                 content_type='application/json',
+    #                                 headers={
+    #                                     "Uid": "{}".format(Uid),
+    #                                     "Fcm-Token": "{}".format(123),
+    #                                     "Payload": "{}".format(123),
+    #                                 })
+
+    #         data = json.loads(response.data.decode()) 
+    #         self.assertTrue(data['status'] == 1)
+    #         db.session.close()
+
+    #         s = Shaker.find_shaker_by_id(shaker_id)
+    #         self.assertEqual(s.status, HandshakeStatus['STATUS_SHAKE_FAILED'])
+
+    #         h = Handshake.find_handshake_by_id(handshake_id)
+    #         self.assertEqual(float(h.remaining_amount), 1)
+
+
+    def test_reiceive_report_event_with_status_0(self):
+        self.clear_data_before_test()
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x123',
+                status=0
+        )
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "contract": "predictionHandshake",
+                "methodName": "report",
+                "status": 0,
+                'id': 1,
+                "inputs": {
+                    "offchain": "cryptosign_report1",
+                    "hid": 88    
+                }   
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+        hs = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(hs.status, 0)
+
     def test_reiceive_report_event(self):
         self.clear_data_before_test()
         # -----
@@ -508,6 +704,9 @@ class TestEventBluePrint(BaseTestCase):
 
         hs = Handshake.find_handshake_by_id(handshake.id)
         self.assertEqual(hs.status, 0)
+
+        outcome = Outcome.find_outcome_by_hid(88)
+        self.assertEqual(outcome.result, 1)
 
     
 if __name__ == '__main__':

@@ -5,8 +5,8 @@ import os
 import sys
 import time
 import requests
+import json
 import app.constants as CONST
-import math
 import app.bl.match as match_bl
 
 from decimal import *
@@ -130,7 +130,7 @@ def parse_inputs(inputs):
 
 
 def save_handshake_method_for_event(method, inputs):
-	offchain = inputs['offchain']
+	offchain, hid = parse_inputs(inputs)
 	if method == 'init' or method == 'initTestDrive':
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		offchain = int(offchain.replace('m', ''))
@@ -154,6 +154,9 @@ def save_handshake_method_for_event(method, inputs):
 		offchain = int(offchain.replace('s', ''))
 		shaker = Shaker.find_shaker_by_id(offchain)
 		if shaker is not None:
+			if shaker.status == HandshakeStatus['STATUS_PENDING']:
+				shaker = rollback_shake_state(shaker)
+
 			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
 			db.session.flush()
 
@@ -234,6 +237,73 @@ def save_handshake_method_for_event(method, inputs):
 				arr = []
 				arr.append(shaker)
 				return None, arr
+
+	elif method == 'report':
+		hid = int(hid)
+		outcome =Outcome.find_outcome_by_hid(hid)
+		if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
+			outcome.result = CONST.RESULT_TYPE['PENDING']
+			db.session.flush()
+
+	return None, None
+
+
+def save_failed_handshake_method_for_event(method, tx):
+	if method == 'init' or method == 'initTestDrive':
+		offchain = tx.offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('m', ''))
+		handshake = Handshake.find_handshake_by_id(offchain)
+		if handshake is not None:
+			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
+			db.session.flush()
+
+			if method == 'initTestDrive': # free-bet
+				user = User.find_user_with_id(handshake.user_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+					db.session.flush()
+
+			arr = []
+			arr.append(handshake)
+			return arr, None
+
+	elif method == 'shake' or method == 'shakeTestDrive':
+		offchain = tx.offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		offchain = int(offchain.replace('s', ''))
+		shaker = Shaker.find_shaker_by_id(offchain)
+		if shaker is not None:
+			if shaker.status == HandshakeStatus['STATUS_PENDING']:
+				shaker = rollback_shake_state(shaker)
+
+			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
+			db.session.flush()
+
+			if method == 'shakeTestDrive': # free-bet
+				user = User.find_user_with_id(shaker.shaker_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+					db.session.flush()
+
+			arr = []
+			arr.append(shaker)
+			return None, arr
+
+	elif method == 'report':
+		payload = tx.payload
+		data = json.loads(payload)
+
+		if '_options' in data:
+			options = data['_options']
+			if 'onchainData' in options:
+				onchain = options['onchainData']
+				if 'hid' in onchain:
+					hid = int(onchain['hid'])
+					outcome =Outcome.find_outcome_by_hid(hid)
+					if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
+						outcome.result = CONST.RESULT_TYPE['PENDING']
+						db.session.flush()
+
+		return None, None
 
 	return None, None
 

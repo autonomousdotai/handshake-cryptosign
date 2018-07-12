@@ -20,8 +20,8 @@ let isRunningTask = false;
 /**
  * 
  * @param {array} arr
- * * @param {object} onchainData
- * * @param {object} task
+ * @param {object} onchainData
+ * @param {object} task
  */								
 const saveTnxs = (arr) => {
 	return new Promise((resolve, reject) => {
@@ -185,6 +185,29 @@ const createMarket = (params) => {
 	});
 }
 
+/**
+ * @param {JSON} hs
+ * @param {Object} task
+ */
+const addFeed = (hs, task) => {
+	return new Promise((resolve, reject) => {
+		try {
+			utils.addFeedAPI(hs, task)
+			.then((result) => {
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_SUCCESS);
+				resolve({});
+			})
+			.catch(err => {
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PENDING);
+				resolve({});
+			});
+		} catch (error) {
+			console.log('addFeed error: ', error);
+			resolve({});
+		}
+	});
+};
+
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
@@ -200,7 +223,19 @@ const asyncScanTask = () => {
 								let processTaskFunc = undefined;
 								let contract_name = '';
 								let contract_address = '';
+
 								switch (task.task_type) {
+									case 'NORMAL': // ETHER
+										contract_name = 'PredictionHandshake';
+										contract_address = configs.network[network_id].bettingHandshakeAddress;
+
+										switch (task.action) {
+											case 'ADD_FEED':
+												processTaskFunc = addFeed(params, task);
+											break;
+										}
+									break;
+
 									case 'REAL_BET': // ETHER
 										contract_name = 'PredictionHandshake';
 										contract_address = configs.network[network_id].bettingHandshakeAddress;
@@ -282,7 +317,7 @@ const asyncScanTask = () => {
 
 			Promise.all(tasks)
 			.then(results => {
-				console.log('START SUBMIT MULTI TRANSACTION!');
+				// console.log('START SUBMIT MULTI TRANSACTION!');
 				let tnxs = [];
 				(results || []).forEach(i => {
 					if (Array.isArray(i.onchainData)) {
@@ -334,26 +369,26 @@ const asyncScanTask = () => {
 
 const runTaskCron = () => {
     cron.schedule('*/5 * * * * *', async () => {
-		console.log('task cron running a task every 5s at ' + new Date());
+		// console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');
 				if (!setting) {
-					console.log('TaskCronJob setting is null. Exit!');
+					// console.log('TaskCronJob setting is null. Exit!');
 					return;
 				}
 				if(!setting.status) {
-					console.log('Exit TaskCronJob setting with status: ' + setting.status);
+					// console.log('Exit TaskCronJob setting with status: ' + setting.status);
 					return;
 				}
-				console.log('Begin run TaskCronJob!');
+				// console.log('Begin run TaskCronJob!');
 
 			if (isRunningTask === false) {
 				isRunningTask = true;
 				
 				asyncScanTask()
 				.then(results => {
-					console.log('task cron done at ' + new Date());
-					console.log('EXIT SCAN TASK');
+					// console.log('task cron done at ' + new Date());
+					// console.log('EXIT SCAN TASK');
 					isRunningTask = false;
 				})
 				.catch(e => {

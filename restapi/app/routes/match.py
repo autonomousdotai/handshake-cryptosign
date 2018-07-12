@@ -201,7 +201,7 @@ def report(match_id):
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 					if outcome.result == -2:
 						return response_error(MESSAGE.OUTCOME_REPORTED)
-					outcome.result = -2;
+					outcome.result = -2
 
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)

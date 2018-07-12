@@ -107,9 +107,11 @@ def update_feed(handshake_id):
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
 			"add": arr_handshakes
-		}
+		}			
 		res = requests.post(endpoint, json=data)
-		if res.status_code >= 400:
+		if res.status_code > 400 or \
+			res.content is None or \
+			(isinstance(res.content, str) and 'null' in res.content):
 			print('SOLR service is failed. Save to task')
 			task = Task(
 						task_type=CONST.TASK_TYPE['NORMAL'],

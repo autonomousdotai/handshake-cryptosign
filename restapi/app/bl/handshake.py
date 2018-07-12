@@ -240,7 +240,7 @@ def save_handshake_method_for_event(method, inputs):
 
 	elif method == 'report':
 		hid = int(hid)
-		outcome =Outcome.find_outcome_by_hid(hid)
+		outcome = Outcome.find_outcome_by_hid(hid)
 		if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
 			outcome.result = CONST.RESULT_TYPE['PENDING']
 			db.session.flush()
@@ -256,7 +256,7 @@ def save_failed_handshake_method_for_event(method, tx):
 		if handshake is not None:
 			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
 			db.session.flush()
-
+	
 			if method == 'initTestDrive': # free-bet
 				user = User.find_user_with_id(handshake.user_id)
 				if user is not None and user.free_bet == 1:

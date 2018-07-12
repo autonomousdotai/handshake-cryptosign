@@ -192,7 +192,7 @@ const createMarket = (params) => {
 const addFeed = (hs, task) => {
 	return new Promise((resolve, reject) => {
 		try {
-			utils.addFeedAPI(hs, task)
+			utils.addFeedAPI(hs)
 			.then((result) => {
 				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_SUCCESS);
 				resolve({});

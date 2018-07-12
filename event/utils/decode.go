@@ -38,6 +38,15 @@ func DecodeTransactionInput(contractName string, encodeData string) (bool, strin
         return false, "invalid hash"
     }
 
+    payloadSize := len(method.Inputs.NonIndexed()) * 32
+
+    if len(data) < payloadSize {
+        dataSize := len(data)
+        for i := 0; i < payloadSize - dataSize; i++ {
+            data = append(data, 0)
+        }
+    }
+
     values, unpackErr := method.Inputs.UnpackValues(data) 
 
     result := map[string]interface{}{}

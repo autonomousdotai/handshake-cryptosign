@@ -107,13 +107,23 @@ def update_feed(handshake_id):
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
 			"add": arr_handshakes
-		}
+		}			
 		res = requests.post(endpoint, json=data)
-		if res.status_code > 400:
-			print('SOLR service is failed.')
-
+		if res.status_code > 400 or \
+			res.content is None or \
+			(isinstance(res.content, str) and 'null' in res.content):
+			print('SOLR service is failed. Save to task')
+			task = Task(
+						task_type=CONST.TASK_TYPE['NORMAL'],
+						data=json.dumps(hs),
+						action=CONST.TASK_ACTION['ADD_FEED'],
+						status=-1
+					)
+			db.session.add(task)
+			db.session.commit()
 
 	except Exception as e:
+		db.session.rollback()
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_feed=>",exc_type, fname, exc_tb.tb_lineno)

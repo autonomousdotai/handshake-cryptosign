@@ -317,7 +317,7 @@ const asyncScanTask = () => {
 
 			Promise.all(tasks)
 			.then(results => {
-				// console.log('START SUBMIT MULTI TRANSACTION!');
+				console.log('START SUBMIT MULTI TRANSACTION!');
 				let tnxs = [];
 				(results || []).forEach(i => {
 					if (Array.isArray(i.onchainData)) {
@@ -369,26 +369,26 @@ const asyncScanTask = () => {
 
 const runTaskCron = () => {
     cron.schedule('*/5 * * * * *', async () => {
-		// console.log('task cron running a task every 5s at ' + new Date());
+		console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');
 				if (!setting) {
-					// console.log('TaskCronJob setting is null. Exit!');
+					console.log('TaskCronJob setting is null. Exit!');
 					return;
 				}
 				if(!setting.status) {
-					// console.log('Exit TaskCronJob setting with status: ' + setting.status);
+					console.log('Exit TaskCronJob setting with status: ' + setting.status);
 					return;
 				}
-				// console.log('Begin run TaskCronJob!');
+				console.log('Begin run TaskCronJob!');
 
 			if (isRunningTask === false) {
 				isRunningTask = true;
 				
 				asyncScanTask()
 				.then(results => {
-					// console.log('task cron done at ' + new Date());
-					// console.log('EXIT SCAN TASK');
+					console.log('task cron done at ' + new Date());
+					console.log('EXIT SCAN TASK');
 					isRunningTask = false;
 				})
 				.catch(e => {

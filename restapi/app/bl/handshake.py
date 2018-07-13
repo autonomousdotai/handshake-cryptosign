@@ -106,9 +106,10 @@ def data_need_set_result_for_outcome(outcome):
 
 	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
 	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
-
+	
 	for hs in handshakes:
-		if not has_valid_shaker(hs):
+		if not has_valid_shaker(hs) and hs.status == HandshakeStatus['STATUS_INITED']:
+			hs.bk_status = hs.status
 			hs.status = HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']
 			db.session.merge(hs)
 			db.session.flush()

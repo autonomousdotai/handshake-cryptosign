@@ -283,6 +283,49 @@ class TestHandshakeBl(BaseTestCase):
 			db.session.delete(item)
 			db.session.commit()
 
+	def test_data_need_set_result_for_outcome_failed(self):
+		self.clear_data_before_test()
+		arr_hs = []
+		
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=-1
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		handshake_bl.data_need_set_result_for_outcome(outcome)
+		hs = Handshake.find_handshake_by_id(handshake.id)
+		self.assertEqual(hs.status, -1)
+
+		hs.status = 0
+		db.session.merge(hs)
+		db.session.commit()
+
+		handshake_bl.data_need_set_result_for_outcome(outcome)
+		hs = Handshake.find_handshake_by_id(handshake.id)
+		self.assertEqual(hs.status, HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'])
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+	
+
 	def test_find_all_joined_handshakes_with_side_against(self):
 		self.clear_data_before_test()
 		# -----

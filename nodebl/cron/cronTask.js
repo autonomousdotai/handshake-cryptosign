@@ -20,8 +20,8 @@ let isRunningTask = false;
 /**
  * 
  * @param {array} arr
- * * @param {object} onchainData
- * * @param {object} task
+ * @param {object} onchainData
+ * @param {object} task
  */								
 const saveTnxs = (arr) => {
 	return new Promise((resolve, reject) => {
@@ -185,6 +185,29 @@ const createMarket = (params) => {
 	});
 }
 
+/**
+ * @param {JSON} hs
+ * @param {Object} task
+ */
+const addFeed = (hs, task) => {
+	return new Promise((resolve, reject) => {
+		try {
+			utils.addFeedAPI(hs)
+			.then((result) => {
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_SUCCESS);
+				resolve({});
+			})
+			.catch(err => {
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PENDING);
+				resolve({});
+			});
+		} catch (error) {
+			console.log('addFeed error: ', error);
+			resolve({});
+		}
+	});
+};
+
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
@@ -200,7 +223,19 @@ const asyncScanTask = () => {
 								let processTaskFunc = undefined;
 								let contract_name = '';
 								let contract_address = '';
+
 								switch (task.task_type) {
+									case 'NORMAL': // ETHER
+										contract_name = 'PredictionHandshake';
+										contract_address = configs.network[network_id].bettingHandshakeAddress;
+
+										switch (task.action) {
+											case 'ADD_FEED':
+												processTaskFunc = addFeed(params, task);
+											break;
+										}
+									break;
+
 									case 'REAL_BET': // ETHER
 										contract_name = 'PredictionHandshake';
 										contract_address = configs.network[network_id].bettingHandshakeAddress;

@@ -9,7 +9,6 @@ import json
 
 def is_able_to_create_new_task(outcome_id):
 	tasks = db.session.query(Task).filter(and_(Task.action == 'INIT', (Task.date_created + timedelta(seconds=300)) > datetime.now())).order_by(Task.date_created.desc()).all()
-	print tasks
 	if tasks is not None:
 		for task in tasks:
 			try:

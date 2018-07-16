@@ -253,11 +253,46 @@ const getGasAndNonce = () => {
 	});
 };
 
+/**
+ * @param {JSON string} hs
+ */
+const addFeedAPI = (hs) => {
+    return new Promise((resolve, reject) => {
+        const arr = [];
+        arr.push(hs);
+        const dataRequest = {
+            add: arr
+        }
+
+        axios.post(`${configs.solrApiEndpoint}/handshake/update`, dataRequest, {
+            timeout: 1500,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.status >= 400) {
+                return reject({});
+            } else {
+                if (response.data.Success) {
+                    return resolve({});   
+                } else {
+                    return reject({});
+                }
+            }
+        })
+        .catch((error) => {
+            return reject(error);
+        });
+    });
+};
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
     gennerateExtraData,
     handleErrorTask,
     calculatorGasprice,
-    getGasAndNonce
+    getGasAndNonce,
+    addFeedAPI
 };

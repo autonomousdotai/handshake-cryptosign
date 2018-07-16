@@ -40,8 +40,11 @@ def matches():
 			#  find best odds which match against
 			match_json = match.to_json()
 			
-			total_user = db.engine.execute('SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp'.format(match.id)).scalar()
-			match_json["total_user"] = total_user
+			total_users = db.engine.execute('SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp'.format(match.id)).scalar()
+			match_json["total_users"] = total_users
+
+			total_bets = db.engine.execute('SELECT count(id) AS total FROM (SELECT shaker.id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp'.format(match.id)).scalar()
+			match_json["total_bets"] = total_bets
 
 			arr_outcomes = []
 			for outcome in match.outcomes:

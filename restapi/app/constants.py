@@ -86,7 +86,6 @@ RESULT_TYPE = {
 }
 
 SIDE_TYPE = {
-	'DRAW': 0,
 	'SUPPORT': 1,
 	'AGAINST': 2
 }

@@ -457,31 +457,32 @@ def save_handshake_for_event(event_name, inputs):
 
 	elif event_name == '__dispute':
 		print '__dispute'
-		shaker_dispute = None
-		handshake_dispute = None
+		shaker_dispute = []
+		handshake_dispute = []
 		if state < 2:
-    			return None, None
+			return None, None
     	
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
 			if shaker is not None:
+				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_DISPUTED']
 				db.session.flush()
-				shaker_dispute = []
 				shaker_dispute.append(shaker)
+				
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			if handshake is not None:
+				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_DISPUTED']
 				db.session.flush()
-				handshake_dispute = []
 				handshake_dispute.append(handshake)
 
 		if state == 3:
-			outcome_id = ''
-			if handshake_dispute is not None:
+			outcome_id = -1
+			if len(handshake_dispute) != 0:
 				outcome_id = handshake_dispute[0].outcome_id
 			else:
 				handshake = Handshake.find_handshake_by_id(shaker_dispute[0].handshake_id)
@@ -490,15 +491,14 @@ def save_handshake_for_event(event_name, inputs):
 			outcome = Outcome.find_outcome_by_id(outcome_id)
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
+
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
 		print '__resolve'
 		outcome = Outcome.find_outcome_by_id(offchain)
 		if outcome is not None:
-			outcome.hid = hid
-			db.session.flush()
-			return None, None
+			pass
 		return None, None
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):

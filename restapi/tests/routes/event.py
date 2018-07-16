@@ -1169,7 +1169,7 @@ class TestEventBluePrint(BaseTestCase):
     def test_reiceive_dispute_event_with_state_3_shaker (self):
         self.clear_data_before_test()
         # -----
-        outcome = Outcome.find_outcome_by_hid(100)
+        outcome = Outcome.find_outcome_by_id(100)
         if outcome is not None:
             outcome.result = -1
             db.session.commit()
@@ -1179,9 +1179,9 @@ class TestEventBluePrint(BaseTestCase):
                 match_id=1,
                 hid=100
             )
-            
-        db.session.add(outcome)
-        db.session.commit()
+            db.session.add(outcome)
+            db.session.commit()
+        
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -1231,13 +1231,13 @@ class TestEventBluePrint(BaseTestCase):
         hs = Handshake.find_handshake_by_id(handshake.id)
         self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
 
-        outcome = Outcome.find_outcome_by_hid(100)
+        outcome = Outcome.find_outcome_by_id(100)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
 
     def test_reiceive_dispute_event_with_state_3_maker (self):
         self.clear_data_before_test()
         # -----
-        outcome = Outcome.find_outcome_by_hid(100)
+        outcome = Outcome.find_outcome_by_id(100)
         if outcome is not None:
             outcome.result = -1
             db.session.commit()
@@ -1248,9 +1248,8 @@ class TestEventBluePrint(BaseTestCase):
                 hid=100
             )
             
-        db.session.add(outcome)
-        db.session.commit()
-        # -----
+            db.session.add(outcome)
+            db.session.commit()
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -1313,7 +1312,7 @@ class TestEventBluePrint(BaseTestCase):
         hs = Shaker.find_shaker_by_id(shaker.id)
         self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
 
-        outcome = Outcome.find_outcome_by_hid(100)
+        outcome = Outcome.find_outcome_by_id(100)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
 
 if __name__ == '__main__':

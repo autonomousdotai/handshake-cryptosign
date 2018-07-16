@@ -80,9 +80,9 @@ RESULT_TYPE = {
 	'DISPUTED': -3,
 	'PROCESSING': -2,
 	'PENDING': -1,
-	'DRAW': 0,
 	'SUPPORT_WIN': 1,
-	'AGAINST_WIN': 2
+	'AGAINST_WIN': 2,
+	'DRAW': 3
 }
 
 SIDE_TYPE = {

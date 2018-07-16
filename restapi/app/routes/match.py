@@ -19,7 +19,6 @@ from app.helpers.message import MESSAGE, CODE
 match_routes = Blueprint('match', __name__)
 
 @match_routes.route('/', methods=['GET'])
-@login_required
 def matches():
 	try:
 		report = int(request.args.get('report', 0))
@@ -39,6 +38,10 @@ def matches():
 		for match in matches:	
 			#  find best odds which match against
 			match_json = match.to_json()
+			
+			total_user = db.engine.execute('SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp'.format(match.id)).scalar()
+			match_json["total_user"] = total_user
+
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				outcome_json = outcome.to_json()

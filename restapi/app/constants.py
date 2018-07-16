@@ -77,16 +77,15 @@ STATE_TYPE = {
 }
 
 RESULT_TYPE = {
-	'PROCESSING': -2,
 	'DISPUTED': -3,
+	'PROCESSING': -2,
 	'PENDING': -1,
-	'DRAW': 0,
 	'SUPPORT_WIN': 1,
-	'AGAINST_WIN': 2
+	'AGAINST_WIN': 2,
+	'DRAW': 3
 }
 
 SIDE_TYPE = {
-	'DRAW': 0,
 	'SUPPORT': 1,
 	'AGAINST': 2
 }

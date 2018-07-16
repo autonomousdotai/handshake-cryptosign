@@ -12,6 +12,7 @@ func SyncTx() {
     // todo call etherscan.io to get all transactions
     conf := config.GetConfig()
     predictionHandshakeAddress := conf.GetString("predictionHandshakeAddress")
+    chainID := conf.GetInt("blockchainId")
     
     page := 1
     recordPerPage := 100
@@ -45,7 +46,7 @@ func SyncTx() {
                         ContractAddress: predictionHandshakeAddress,
                         ContractMethod: jsonData["methodName"].(string),
                         Payload: input,
-                        ChainID: 4,
+                        ChainID: chainID,
                     }
 
                     if hasOffchain {

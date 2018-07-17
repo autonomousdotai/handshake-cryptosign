@@ -36,13 +36,13 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
+		handshake.bk_status = handshake.status
 		handshake.status = HandshakeStatus['STATUS_DONE']
-		handshake.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.merge(handshake)
 
 	for shaker in shakers:
+		shaker.bk_status = shaker.status
 		shaker.status = HandshakeStatus['STATUS_DONE']
-		shaker.bk_status = HandshakeStatus['STATUS_DONE']
 		db.session.merge(shaker)
 		
 	db.session.flush()
@@ -54,8 +54,8 @@ def save_collect_state_for_maker(handshake):
 		if outcome is not None:
 			if handshake.side == outcome.result:
 				shaker = Shaker.find_shaker_by_handshake_id(handshake.id)
+				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_DONE']
-				shaker.bk_status = HandshakeStatus['STATUS_DONE']
 
 				db.session.merge(shaker)
 				db.session.flush()
@@ -73,8 +73,8 @@ def save_collect_state_for_shaker(shaker):
 
 		if outcome is not None:
 			if shaker.side == outcome.result:
+				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_DONE']
-				handshake.bk_status = HandshakeStatus['STATUS_DONE']
 
 				db.session.merge(handshake)
 				db.session.flush()
@@ -84,6 +84,55 @@ def save_collect_state_for_shaker(shaker):
 					handshakes = []
 				handshakes.append(handshake)
 				return handshakes, shakers
+
+	return None, None
+
+
+def save_refund_state_for_shaker(shaker):
+	if shaker is not None:
+		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+		if outcome is not None:
+			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==shaker.shaker_id, Handshake.outcome_id==handshake.outcome_id)).all()
+			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==shaker.shaker_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+
+			for hs in handshakes:
+				hs.bk_status = hs.status
+				hs.status = HandshakeStatus['STATUS_REFUNDED']
+				db.session.merge(hs)
+
+			for sk in shakers:
+				sk.bk_status = sk.status
+				sk.status = HandshakeStatus['STATUS_REFUNDED']
+				db.session.merge(sk)
+				
+			db.session.flush()
+			return handshakes, shakers
+
+	return None, None
+
+
+def save_refund_state_for_maker(handshake):
+	if handshake is not None:
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+		if outcome is not None:
+			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==handshake.user_id, Handshake.outcome_id==handshake.outcome_id)).all()
+			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==handshake.user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+			for hs in handshakes:
+				hs.bk_status = hs.status
+				hs.status = HandshakeStatus['STATUS_REFUNDED']
+				db.session.merge(hs)
+
+			for sk in shakers:
+				sk.bk_status = sk.status
+				shaker.sk = HandshakeStatus['STATUS_REFUNDED']
+				db.session.merge(sk)
+				
+			db.session.flush()
+			return handshakes, shakers
 
 	return None, None
 
@@ -141,6 +190,7 @@ def save_handshake_method_for_event(method, inputs):
 		offchain = int(offchain.replace('m', ''))
 		handshake = Handshake.find_handshake_by_id(offchain)
 		if handshake is not None:
+			handshake.bk_status = handshake.status
 			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
 			db.session.flush()
 
@@ -162,6 +212,7 @@ def save_handshake_method_for_event(method, inputs):
 			if shaker.status == HandshakeStatus['STATUS_PENDING']:
 				shaker = rollback_shake_state(shaker)
 
+			shaker.bk_status = shaker.status
 			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
 			db.session.flush()
 
@@ -180,6 +231,7 @@ def save_handshake_method_for_event(method, inputs):
 		offchain = int(offchain.replace('m', ''))
 		handshake = Handshake.find_handshake_by_id(offchain)
 		if handshake is not None:
+			handshake.bk_status = handshake.status
 			handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
 			db.session.flush()
 
@@ -200,6 +252,7 @@ def save_handshake_method_for_event(method, inputs):
 			offchain = int(offchain.replace('m', ''))
 			handshake = Handshake.find_handshake_by_id(offchain)
 			if handshake is not None:
+				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_COLLECT_FAILED']
 				db.session.flush()
 
@@ -211,6 +264,7 @@ def save_handshake_method_for_event(method, inputs):
 			offchain = int(offchain.replace('s', ''))
 			shaker = Shaker.find_shaker_by_id(offchain)
 			if shaker is not None:
+				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_COLLECT_FAILED']
 				db.session.flush()
 
@@ -225,6 +279,7 @@ def save_handshake_method_for_event(method, inputs):
 			offchain = int(offchain.replace('m', ''))
 			handshake = Handshake.find_handshake_by_id(offchain)
 			if handshake is not None:
+				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_REFUND_FAILED']
 				db.session.flush()
 
@@ -236,6 +291,7 @@ def save_handshake_method_for_event(method, inputs):
 			offchain = int(offchain.replace('s', ''))
 			shaker = Shaker.find_shaker_by_id(offchain)
 			if shaker is not None:
+				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_REFUND_FAILED']
 				db.session.flush()
 
@@ -430,28 +486,12 @@ def save_handshake_for_event(event_name, inputs):
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
-			if shaker is not None:
-				shaker.status = HandshakeStatus['STATUS_REFUNDED']
-				shaker.bk_status = HandshakeStatus['STATUS_REFUNDED']
-
-				db.session.flush()
-
-				arr = []
-				arr.append(shaker)
-				return None, arr
+			return save_refund_state_for_shaker(shaker)
 
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			if handshake is not None:
-				handshake.status = HandshakeStatus['STATUS_REFUNDED']
-				handshake.bk_status = HandshakeStatus['STATUS_REFUNDED']
-
-				db.session.flush()
-
-				arr = []
-				arr.append(handshake)
-				return arr, None
+			return save_refund_state_for_maker(handshake)
 
 		return None, None
 

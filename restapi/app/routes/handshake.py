@@ -164,7 +164,7 @@ def init():
 			db.session.commit()
 
 			update_feed.delay(handshake.id)
-			run_bots.delay(outcome_id)
+			# run_bots.delay(outcome_id)
 
 			# response data
 			arr_hs = []
@@ -269,7 +269,7 @@ def init():
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
-			run_bots.delay(outcome_id)
+			# run_bots.delay(outcome_id)
 			return response_ok(arr_hs)
 
 	except Exception, ex:

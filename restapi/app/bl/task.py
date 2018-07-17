@@ -18,6 +18,9 @@ def is_able_to_create_new_task(outcome_id):
 					ds = time.mktime(task.date_created.timetuple())
 					if n - ds > 300:
 						return True
+
+					print '----- WTF -----'
+					print '{} {}'.format(n, ds)
 					return False
 			except Exception as ex:
 				print(str(ex))

@@ -198,6 +198,7 @@ const addFeed = (hs, task) => {
 				resolve({});
 			})
 			.catch(err => {
+				console.error(err);
 				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PENDING);
 				resolve({});
 			});

@@ -198,7 +198,8 @@ const addFeed = (hs, task) => {
 				resolve({});
 			})
 			.catch(err => {
-				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PENDING);
+				console.error(err);
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.CALL_SOLR_FAIL);
 				resolve({});
 			});
 		} catch (error) {

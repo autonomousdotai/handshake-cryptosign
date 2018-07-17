@@ -949,6 +949,107 @@ class TestHandshakeBl(BaseTestCase):
 		for item in arr_hs:
 			db.session.delete(item)
 			db.session.commit()
+
+	def test_test_save_refund_state_for_maker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		hs1_id = handshake.id
+
+		handshakes, shakers = handshake_bl.save_refund_state_for_maker(handshake)
+		actual = None
+		for hs in handshakes:
+			if hs.id == hs1_id:
+				actual = hs
+				break
+		
+		self.assertNotEqual(actual, None)
+		self.assertEqual(actual.status, 3)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+
+	def test_save_refund_state_for_shaker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		hs1_id = handshake.id
+
+		# -----
+		shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+					status=2
+				)
+		db.session.add(shaker)
+		db.session.commit()
+		arr_hs.append(shaker)
+
+		sk1_id = shaker.id
+
+		handshakes, shakers = handshake_bl.save_refund_state_for_shaker(shaker)
+		actual = None
+		for sk in shakers:
+			if sk.id == sk1_id:
+				actual = sk
+				break
+		
+		self.assertNotEqual(actual, None)
+		self.assertEqual(actual.status, 3)
+
+
+		h = Handshake.find_handshake_by_id(hs1_id)
+		self.assertNotEqual(h.status, 3)
+		self.assertEqual(h.status, 0)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
 		
 if __name__ == '__main__':
 	unittest.main()

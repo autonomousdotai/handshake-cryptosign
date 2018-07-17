@@ -589,6 +589,9 @@ class TestEventBluePrint(BaseTestCase):
             s = Shaker.find_shaker_by_id(shaker_id)
             self.assertEqual(s.status, 3)
 
+            h = Handshake.find_handshake_by_id(handshake_id)
+            self.assertEqual(h.status, 3)
+
     def test_reiceive_shake_event_with_status_0(self):
         self.clear_data_before_test()
         # -----

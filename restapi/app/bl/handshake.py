@@ -18,6 +18,7 @@ from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
 from app.tasks import update_feed, add_shuriken
 from app.helpers.message import MESSAGE
+from app.helpers.utils import utc_to_local
 from datetime import datetime
 
 getcontext().prec = 18
@@ -674,19 +675,19 @@ def can_uninit(handshake):
 	
 	n = time.mktime(datetime.now().timetuple())
 	if len(handshake.shakers.all()) == 0:
-		ds = time.mktime(handshake.date_created.timetuple()) 
-		if n - ds > 300: #5 minutes
-			return True
+		# avoid maker uninit too fast
+		if handshake.free_bet == 1:
+			ds = time.mktime(utc_to_local(handshake.date_created.timetuple()))
+			if n - ds < 300.0: #5 minutes
+				return False
 
 	else:
 		for sk in handshake.shakers.all():
 			if sk.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
 				return False
 			else:
-				ds = time.mktime(sk.date_created.timetuple()) 
-				if n - ds < 300:
+				ds = time.mktime(utc_to_local(sk.date_created.timetuple()))
+				if n - ds < 300.0:
 					return False
 
-		return True
-
-	return False
+	return True

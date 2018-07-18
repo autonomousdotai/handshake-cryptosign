@@ -7,8 +7,8 @@ from app.helpers import JsonSerializer
 class BaseModel(db.Model, JsonSerializer):
 	__abstract__ = True
 	id = db.Column(db.Integer, primary_key=True)
-	date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
-	date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+	date_created = db.Column(db.DateTime, default=db.func.utc_timestamp())
+	date_modified = db.Column(db.DateTime, default=db.func.utc_timestamp(), onupdate=db.func.utc_timestamp())
 	deleted = db.Column(db.Integer, default=0)
 
 	@declared_attr

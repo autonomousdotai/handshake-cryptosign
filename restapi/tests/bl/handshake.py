@@ -715,8 +715,17 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(handshake)
 		db.session.commit()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		# not free-bet
+		actual = handshake_bl.can_uninit(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
+		handshake.free_bet = 1
+		db.session.merge(handshake)
+		db.session.commit()
+
+		# free-bet
+		actual = handshake_bl.can_uninit(handshake)
 		expected = False
 		self.assertEqual(actual, expected)
 
@@ -735,8 +744,8 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(shaker)
 		db.session.commit()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		# free-bet with shaker status = -1
+		actual = handshake_bl.can_uninit(handshake)
 		expected = False
 		self.assertEqual(actual, expected)
 
@@ -745,8 +754,7 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.merge(shaker)
 		db.session.flush()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		actual = handshake_bl.can_uninit(handshake)
 		expected = True
 		self.assertEqual(actual, expected)
 
@@ -755,8 +763,14 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.merge(shaker)
 		db.session.flush()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		actual = handshake_bl.can_uninit(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		handshake.free_bet = 0
+		db.session.flush()
+
+		actual = handshake_bl.can_uninit(handshake)
 		expected = False
 		self.assertEqual(actual, expected)
 

@@ -113,6 +113,23 @@ def save_refund_state_for_shaker(shaker):
 
 	return None, None
 
+def save_dispute_state_all(outcome_id, state):
+	handshakes = []
+	shakers = []
+	if outcome is not None:
+		handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id).all()
+		for hs in handshakes:
+			hs.bk_status = hs.status
+			hs.status = state
+			db.session.merge(hs)
+
+			shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
+			for shaker in shakers:
+				shaker.bk_status = shaker.status
+				shaker.status = state
+				db.session.merge(shaker)
+	db.session.flush()
+	return handshakes, shakers
 
 def save_refund_state_for_maker(handshake):
 	if handshake is not None:
@@ -149,7 +166,7 @@ def has_valid_shaker(handshake):
 
 
 def data_need_set_result_for_outcome(outcome):
-	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
+    	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
 
 	if outcome.result == -1:
 		return None, None
@@ -521,26 +538,53 @@ def save_handshake_for_event(event_name, inputs):
 				db.session.flush()
 				handshake_dispute.append(handshake)
 
-		if state == 3:
-			outcome_id = -1
-			if len(handshake_dispute) != 0:
-				outcome_id = handshake_dispute[0].outcome_id
-			else:
-				handshake = Handshake.find_handshake_by_id(shaker_dispute[0].handshake_id)
-				outcome_id = handshake.outcome_id
+		outcome_id = -1
+		if len(handshake_dispute) != 0:
+			outcome_id = handshake_dispute[0].outcome_id
+		else:
+			handshake = Handshake.find_handshake_by_id(shaker_dispute[0].handshake_id)
+			outcome_id = handshake.outcome_id
 
-			outcome = Outcome.find_outcome_by_id(outcome_id)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None:
+			return None, None
+		
+		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
+			total_dispute_amount = db.engine.execute('SELECT SUM(amount) AS total FROM (SELECT * FROM handshake WHERE outcome_id = {} AND status = {}) as tmp'.format(outcome.id, HandshakeStatus['STATUS_DISPUTED'])).scalar()
+			if total_dispute_amount is not None:
+				outcome.total_dispute_amount = total_dispute_amount
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
+			handshake_dispute, shaker_dispute = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_DISPUTED'])
 
+			# Send mail to admin
+			endpoint = '{}'.format(g.MAIL_SERVICE)
+			body = 'Outcome name: {}. Outcome id: {}'.format(outcome.name, outcome.id)
+			subject = 'Dispute'
+			multipart_form_data = {
+				'body': body,
+				'subject': subject,
+				'from': g.EMAIL,
+				'to[]': g.EMAIL
+			}
+			res = requests.post(endpoint,  headers={'Content-Type': 'multipart/form-data'}, data=multipart_form_data)
+			print '===================sfsaf==='
+			print res
+			if res.status_code > 400:
+				print('Send mail is failed.')
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
 		print '__resolve'
 		outcome = Outcome.find_outcome_by_id(offchain)
-		if outcome is not None:
-			pass
-		return None, None
+		if outcome is None:
+			return None, None
+		outcome.result = CONST.RESULT_TYPE['STATUS_RESOLVED']
+		outcome.total_dispute_amount = 0
+		db.session.flush()
+		handshakes, shakers = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_RESOLVED'])
+		return handshakes, shakers
+		
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()

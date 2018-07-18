@@ -34,6 +34,7 @@ module.exports = {
     'CREATE_MARKET_TIME_INVALID': -30,
     'GAS_PRICE_ETHERSCAN_FAIL': -31,
     'GAS_PRICE_SETTING_FAIL': -32,
+    'CALL_SOLR_FAIL': -33,
     'STATUS_UNKNOW': -100
   },
   TASK_TYPE: {

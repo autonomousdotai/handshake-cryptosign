@@ -588,6 +588,8 @@ def refund_free_bet():
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
 				db.session.merge(shaker)
 				db.session.flush()
+				shakers.append(shaker)
+
 			else:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 
@@ -601,6 +603,8 @@ def refund_free_bet():
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
 				db.session.merge(handshake)
 				db.session.flush()
+				handshakes.append(handshake)
+
 			else:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 			

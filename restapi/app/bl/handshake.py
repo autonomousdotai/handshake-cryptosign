@@ -184,7 +184,7 @@ def data_need_set_result_for_outcome(outcome):
 
 
 def can_refund(handshake, shaker=None):
-	if handshake is None and shaker is None:
+    	if handshake is None and shaker is None:
 		return False
 
 	outcome = None
@@ -607,10 +607,16 @@ def save_handshake_for_event(event_name, inputs):
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
-		outcome = Outcome.find_outcome_by_id(offchain)
+		result = offchain.replace('resolve', '')
+		outcome = Outcome.find_outcome_by_hid(hid)
 		if outcome is None:
 			return None, None
+
+		if len(result) == 0 or int(result) not in [1, 2, 3]:
+			return None, None
+
 		outcome.total_dispute_amount = 0
+		outcome.result = int(result)
 		db.session.flush()
 		handshakes, shakers = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_RESOLVED'])
 		return handshakes, shakers

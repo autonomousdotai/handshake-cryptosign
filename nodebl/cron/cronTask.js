@@ -134,6 +134,24 @@ const initBet = (params, task, isFreeBet) => {
  * @param {string} params.offchain
  */
 
+const resolveReport = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'resolveOutcomeTransaction',
+			hid: params.hid,
+			outcome_result: params.outcome_result,
+			offchain: params.offchain
+		}])
+	});
+};
+
+/**
+ * @param {string} params.offchain
+ * @param {number} params.hid
+ * @param {number} params.outcome_result
+ * @param {string} params.offchain
+ */
+
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
@@ -252,6 +270,9 @@ const asyncScanTask = () => {
 											break;
 											case 'CREATE_MARKET':
 												processTaskFunc = createMarket(params);
+											break;
+											case 'RESOLVE':
+												processTaskFunc = resolveReport(params);
 											break;
 										}
 									break;

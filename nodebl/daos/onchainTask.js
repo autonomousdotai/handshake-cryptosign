@@ -1,5 +1,6 @@
 const models = require('../models');
 const constants = require('../constants');
+const moment = require('moment');
 const Op = models.Sequelize.Op;
 
 module.exports = {
@@ -19,8 +20,8 @@ module.exports = {
             status: status,
             task_id: task_id,
             deleted: 0,
-            date_created: new Date(),
-            date_modified: new Date()
+            date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+            date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
         }, {
           transaction: tx
         })

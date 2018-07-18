@@ -1,6 +1,7 @@
 
 const models = require('../models');
 const constants = require('../constants');
+const moment = require('moment');
 
 const Op = models.Sequelize.Op;
 
@@ -19,12 +20,14 @@ module.exports = {
     },
     updateStatusById: (task, status) => {
         return task.update({
-            status: status
+            status: status,
+            date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
         });
     },
     multiUpdateStatusById: (ids, status) => {
         return models.Task.update({
-            status: status
+            status: status,
+            date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
         }, {
             where: {
                 id: ids

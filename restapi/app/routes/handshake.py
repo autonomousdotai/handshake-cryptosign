@@ -422,8 +422,10 @@ def uninit_free_bet(handshake_id):
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
-		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.free_bet==1)).first()
-		if handshake is not None:
+		handshake = db.session.query(Handshake).filter(and_(Handshake.id==handshake_id, Handshake.chain_id==chain_id, Handshake.user_id==uid, Handshake.free_bet==1)).first()
+		if handshake is not None and \
+			(handshake.status == CONST.Handshake['STATUS_INITED'] or \
+			handshake.status == CONST.Handshake['STATUS_MAKER_SHOULD_UNINIT']):
 			if handshake_bl.can_uninit(handshake) == False:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)
 			else:
@@ -586,6 +588,8 @@ def refund_free_bet():
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
 				db.session.merge(shaker)
 				db.session.flush()
+				shakers.append(shaker)
+
 			else:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 
@@ -599,6 +603,8 @@ def refund_free_bet():
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
 				db.session.merge(handshake)
 				db.session.flush()
+				handshakes.append(handshake)
+
 			else:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 			

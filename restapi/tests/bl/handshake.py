@@ -1064,6 +1064,104 @@ class TestHandshakeBl(BaseTestCase):
 		for item in arr_hs:
 			db.session.delete(item)
 			db.session.commit()
+
+	def test_can_refund_for_maker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		actual = handshake_bl.can_refund(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+		db.session.merge(outcome)
+		db.session.flush()
+
+		actual = handshake_bl.can_refund(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+
+	def test_can_refund_for_shaker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		# -----
+		shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+					status=2
+				)
+		db.session.add(shaker)
+		db.session.commit()
+		arr_hs.append(shaker)
+
+
+		actual = handshake_bl.can_refund(None, shaker=shaker)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+		db.session.merge(outcome)
+		db.session.flush()
+
+		actual = handshake_bl.can_refund(None, shaker=shaker)
+		expected = True
+		self.assertEqual(actual, expected)
+
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
 		
 if __name__ == '__main__':
 	unittest.main()

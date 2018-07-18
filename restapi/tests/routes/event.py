@@ -377,7 +377,6 @@ class TestEventBluePrint(BaseTestCase):
             self.assertEqual(hs.status, 6)
             self.assertEqual(s.status, 6)
 
-
     def test_reiceive_collect_event_for_maker(self):
         self.clear_data_before_test()
         # -----
@@ -1230,9 +1229,13 @@ class TestEventBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
-
-        hs = Handshake.find_handshake_by_id(handshake.id)
-        self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+        
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==100).all()
+        for hs in handshakes:
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+            shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
+            for shaker in shakers:
+                self.assertEqual(shaker.status, HandshakeStatus['STATUS_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_id(100)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
@@ -1311,12 +1314,106 @@ class TestEventBluePrint(BaseTestCase):
                                     })
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
-            
+
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==100).all()
+        for hs in handshakes:
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+            shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
+            for shaker in shakers:
+                self.assertEqual(shaker.status, HandshakeStatus['STATUS_DISPUTED'])
+
         hs = Shaker.find_shaker_by_id(shaker.id)
         self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_id(100)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
+
+    def test_reiceive_resolve_event (self):
+        self.clear_data_before_test()
+        # -----
+        outcome = Outcome.find_outcome_by_id(100)
+        if outcome is not None:
+            outcome.result = 1
+            db.session.commit()
+        else:
+            outcome = Outcome(
+                id=100,
+                match_id=1,
+                hid=100,
+                result=-3,
+                total_dispute_amount=1
+            )
+            
+            db.session.add(outcome)
+            db.session.commit()
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=33,
+				outcome_id=100,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=1,
+				from_address='0x1233464576',
+                status=4
+        )
+        db.session.add(handshake)
+        db.session.commit()
+        # -----
+        shaker = Shaker(
+					shaker_id=33,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x1235678',
+					chain_id=4,
+                    status=4
+				)
+        db.session.add(shaker)
+        db.session.commit()
+
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "contract": "predictionHandshake",
+                "eventName": "__resolve",
+                "status": 1,
+                'id': 1,
+                "inputs": {
+                    "offchain": "cryptosign_{}".format(outcome.id),
+                    "hid": 100
+                }   
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==100).all()
+        for hs in handshakes:
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_RESOLVED'])
+            shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
+            for shaker in shakers:
+                self.assertEqual(shaker.status, HandshakeStatus['STATUS_RESOLVED'])
+
+        outcome = Outcome.find_outcome_by_id(100)
+        self.assertEqual(outcome.total_dispute_amount, 0)
+        self.assertGreater(outcome.result, 0)
 
 if __name__ == '__main__':
     unittest.main()

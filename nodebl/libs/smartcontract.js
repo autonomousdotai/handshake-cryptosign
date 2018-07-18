@@ -753,6 +753,7 @@ module.exports = {
   submitInitTestDriveTransaction,
   getNonce,
   reportOutcomeTransaction,
+  resolveOutcomeTransaction,
   submitShakeTransaction,
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction,

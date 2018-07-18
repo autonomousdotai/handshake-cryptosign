@@ -183,6 +183,35 @@ def data_need_set_result_for_outcome(outcome):
 	return handshakes, shakers
 
 
+def can_refund(handshake, shaker=None):
+	if handshake is None and shaker is None:
+		return False
+
+	outcome = None
+	if handshake is not None:
+		if handshake.status == HandshakeStatus['STATUS_REFUNDED']:
+			return False
+
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+	else:
+		if shaker.status == HandshakeStatus['STATUS_REFUNDED']:
+			return False
+		
+		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+
+	if outcome is not None and \
+		outcome.hid is not None and \
+		(outcome.result == CONST.RESULT_TYPE['SUPPORT_WIN'] or \
+		outcome.result == CONST.RESULT_TYPE['AGAINST_WIN'] or \
+		outcome.result == CONST.RESULT_TYPE['DRAW']):
+
+		return True
+
+	return False
+
 def parse_inputs(inputs):
 	offchain = ''
 	hid = ''

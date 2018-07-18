@@ -53,6 +53,7 @@ class MESSAGE(object):
 	HANDSHAKE_CANNOT_UNINIT = 'There is an error happens or you are calling cancel too fast. Need wait for 5 minutes!'
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
+	HANDSHAKE_CANNOT_REFUND = 'Cannot refund this handshake!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
@@ -115,7 +116,8 @@ class CODE(object):
 	HANDSHAKE_INVALID_BETTING_TYPE = '1034' 								
 	HANDSHAKE_CANNOT_UNINIT = '1035' 										
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
-	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 								
+	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
+	HANDSHAKE_CANNOT_REFUND = '1044'							
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												

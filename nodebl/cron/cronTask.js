@@ -1,7 +1,7 @@
 
 const cron = require('node-cron');
 const configs = require('../configs');
-const web3 = require('../configs/web3');
+const moment = require('moment');
 
 // daos
 const taskDAO = require('../daos/task');
@@ -38,7 +38,9 @@ const saveTnxs = (arr) => {
 					data: JSON.stringify(item),
 					status: -1,
 					task_id: item.task.id,
-					deleted: 0
+					deleted: 0,
+					date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+					date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
 				});
 			}
 		});
@@ -132,6 +134,24 @@ const initBet = (params, task, isFreeBet) => {
  * @param {string} params.offchain
  */
 
+const resolveReport = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'resolveOutcomeTransaction',
+			hid: params.hid,
+			outcome_result: params.outcome_result,
+			offchain: params.offchain
+		}])
+	});
+};
+
+/**
+ * @param {string} params.offchain
+ * @param {number} params.hid
+ * @param {number} params.outcome_result
+ * @param {string} params.offchain
+ */
+
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
@@ -198,7 +218,8 @@ const addFeed = (hs, task) => {
 				resolve({});
 			})
 			.catch(err => {
-				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PENDING);
+				console.error(err);
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.CALL_SOLR_FAIL);
 				resolve({});
 			});
 		} catch (error) {
@@ -249,6 +270,9 @@ const asyncScanTask = () => {
 											break;
 											case 'CREATE_MARKET':
 												processTaskFunc = createMarket(params);
+											break;
+											case 'RESOLVE':
+												processTaskFunc = resolveReport(params);
 											break;
 										}
 									break;

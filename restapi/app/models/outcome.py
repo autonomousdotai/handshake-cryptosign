@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
-	__json_public__ = ['id', 'name', 'hid', 'result', 'public']
+	__json_public__ = ['id', 'name', 'hid', 'result', 'public', 'total_amount', 'total_dispute_amount']
 	
 	name = db.Column(db.String(255))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
@@ -16,6 +16,8 @@ class Outcome(BaseModel):
 	result = db.Column(db.Integer,
 						server_default=str(CONST.RESULT_TYPE['PENDING']),
 	                   	default=CONST.RESULT_TYPE['PENDING'])
+	total_amount = db.Column(db.Numeric(20, 18))
+	total_dispute_amount = db.Column(db.Numeric(20, 18))
 	tx = db.Column(db.String(255))
 	public = db.Column(db.Integer,
 						server_default=str(1),

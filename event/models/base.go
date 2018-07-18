@@ -12,12 +12,12 @@ type BaseModel struct {
 }
 
 func (m *BaseModel) BeforeCreate() (err error) {
-	m.DateCreated = time.Now()
-	m.DateModified = time.Now()
+	m.DateCreated = time.Now().UTC()
+	m.DateModified = time.Now().UTC()
 	return
 }
 
 func (m *BaseModel) BeforeUpdate() (err error) {
-	m.DateModified = time.Now()
+	m.DateModified = time.Now().UTC()
 	return
 }

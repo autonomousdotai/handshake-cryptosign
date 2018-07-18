@@ -10,7 +10,7 @@ class Shaker(BaseModel):
 	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'currency', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address', 'free_bet']
 
 	shaker_id = db.Column(db.Integer)
-	amount = db.Column(db.Numeric(20, 18))
+	amount = db.Column(db.Numeric(36, 18))
 	currency = db.Column(db.String(10))
 	odds = db.Column(db.Numeric(20, 1))
 	chain_id = db.Column(db.Integer,

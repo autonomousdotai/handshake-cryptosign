@@ -58,12 +58,13 @@ def before_request():
 	g.DISPATCHER_SERVICE_ENDPOINT = app.config.get('DISPATCHER_SERVICE_ENDPOINT')
 	g.SOLR_SERVICE = app.config.get('SOLR_SERVICE')
 	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
+	g.MAIL_SERVICE = app.config.get('MAIL_SERVICE')
+	g.MAIL_SERVER_KEY = app.config.get('MAIL_SERVER_KEY')
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
 
 	g.start = time.time()
-
 
 @app.after_request
 def after_request(response):

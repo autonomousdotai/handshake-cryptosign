@@ -2,6 +2,7 @@ from flask import Flask
 from app.factory import make_celery
 from app.core import db, configure_app, firebase
 from app.models import Handshake, Outcome, Shaker, Match, Task
+from app.helpers.utils import utc_to_local
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -188,7 +189,7 @@ def run_bots(outcome_id):
 		# find all handshakes of this outcome on both 2 sides: support and oppose
 		# if there is a handshake which is not bot and amount < 0.1 then match it
 		# otherwise
-		# get last odds which match and create handshake with that odds
+		# get last odds of this outcome and create handshake with that odds
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None or outcome.result != -1 or outcome.hid is None:
@@ -212,7 +213,7 @@ def run_bots(outcome_id):
 
 				if hs is not None:
 					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(hs.date_created.timetuple()) 
+					ds = time.mktime(utc_to_local(hs.date_created.timetuple())) 
 					if n - ds <= 300: #5 minutes
 						result = False
 				if result:
@@ -249,7 +250,7 @@ def run_bots(outcome_id):
 
 				if hs is not None:
 					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(hs.date_created.timetuple()) 
+					ds = time.mktime(utc_to_local(hs.date_created.timetuple()))
 					if n - ds <= 300: #5 minutes
 						result = False
 					

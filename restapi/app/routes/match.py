@@ -40,8 +40,11 @@ def matches():
 			#  find best odds which match against
 			match_json = match.to_json()
 			
-			total_user = db.engine.execute('SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp'.format(match.id)).scalar()
-			match_json["total_user"] = total_user
+			total_users = db.engine.execute('SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp'.format(match.id)).scalar()
+			match_json["total_users"] = total_users
+
+			total_bets = db.engine.execute('SELECT count(id) AS total FROM (SELECT shaker.id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp'.format(match.id)).scalar()
+			match_json["total_bets"] = total_bets
 
 			arr_outcomes = []
 			for outcome in match.outcomes:
@@ -179,6 +182,7 @@ def remove(id):
 @jwt_required
 def report(match_id):
 	try:
+		dispute = int(request.args.get('dispute', 0))
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -191,11 +195,11 @@ def report(match_id):
 			
 			if not match_bl.is_exceed_closing_time(match.id):
 				return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
-			
+
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
-					
+				
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
@@ -205,7 +209,10 @@ def report(match_id):
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
 					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						return response_error(MESSAGE.OUTCOME_REPORTED)
+						return  response_error(MESSAGE.OUTCOME_REPORTED)
+
+					if dispute == 1 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
+						return response_error(MESSAGE.OUTCOME_DISPUTE_INVALID)
 
 					outcome.result = CONST.RESULT_TYPE['PROCESSING']
 
@@ -220,9 +227,10 @@ def report(match_id):
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
-					action=CONST.TASK_ACTION['REPORT'],
+					action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
 					status=-1
 				)
+
 				db.session.add(task)
 				db.session.flush()
 

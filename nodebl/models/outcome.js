@@ -16,6 +16,8 @@ module.exports = (sequelize, DataTypes) => {
     hid: DataTypes.STRING,
     result: DataTypes.INTEGER,
     tx: DataTypes.STRING,
+    total_amount: DataTypes.DECIMAL(36, 18),
+    total_dispute_amount: DataTypes.DECIMAL(36, 18),
     modified_user_id: DataTypes.INTEGER,
     created_user_id: DataTypes.INTEGER,
   }, {

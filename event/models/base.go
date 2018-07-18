@@ -18,6 +18,6 @@ func (m *BaseModel) BeforeCreate() (err error) {
 }
 
 func (m *BaseModel) BeforeUpdate() (err error) {
-	m.DateModified = time.UTC()
+	m.DateModified = time.Now().UTC()
 	return
 }

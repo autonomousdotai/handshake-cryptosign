@@ -67,6 +67,11 @@ class MESSAGE(object):
 	WALLET_REJECT_FREE_ETH = 'Your account can\'t get free ETH.'
 
 
+	# NOTIFICATION
+	NOTIF_TIME_INVALID = 'Notification time is invalid.'
+	NOTIF_INVALID = 'Please check your notif id'
+
+
 class CODE(object):
 	# ERROR
 	INVALID_DATA = '1000' 													
@@ -129,3 +134,6 @@ class CODE(object):
 	WALLET_EXCEED_FREE_ETH = '1040' 										
 	WALLET_RECEIVE_ETH_ALREADY = '1041' 									
 	WALLET_REJECT_FREE_ETH = '1042' 										
+
+	# NOTIF
+	NOTIF_INVALID = '1100'

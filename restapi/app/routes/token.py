@@ -40,7 +40,8 @@ def add():
 			token = Token(
 				symbol=item['symbol'],
 				name=item['name'],
-				decimal=int(item['decimal'])
+				decimal=int(item['decimal']),
+                contract_address=item['contract_address']
 			)
 			db.session.add(token)
 			db.session.flush()

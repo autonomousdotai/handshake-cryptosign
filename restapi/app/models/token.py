@@ -8,12 +8,13 @@ from app.models.base import BaseModel
 
 class Token(BaseModel):
 	__tablename__ = 'token'
-	__json_public__ = ['id', 'tid', 'symbol', 'name', 'decimal', 'status']
+	__json_public__ = ['id', 'tid', 'symbol', 'name', 'decimal', 'status', 'contract_address']
 	
 	tid = db.Column(db.Integer)
 	symbol = db.Column(db.String(20))
 	name = db.Column(db.String(50))
 	decimal = db.Column(db.Integer)
+	contract_address = db.Column(db.String(255))
 	status = db.Column(db.Integer,
 						server_default=str(CONST.TOKEN_STATUS['PENDING']),
 						default=CONST.TOKEN_STATUS['PENDING'])

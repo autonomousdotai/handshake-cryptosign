@@ -9,3 +9,4 @@ from setting import *
 from task import *
 from category import *
 from source import *
+from token import *

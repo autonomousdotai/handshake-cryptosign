@@ -35,6 +35,8 @@ module.exports = {
     'GAS_PRICE_ETHERSCAN_FAIL': -31,
     'GAS_PRICE_SETTING_FAIL': -32,
     'CALL_SOLR_FAIL': -33,
+    'RESOLVE_TNX_EXCEPTION': -16,
+    'RESOLVE_TNX_FAIL': -17,
     'STATUS_UNKNOW': -100
   },
   TASK_TYPE: {

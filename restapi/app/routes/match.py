@@ -182,6 +182,7 @@ def remove(id):
 @jwt_required
 def report(match_id):
 	try:
+		dispute = int(request.args.get('dispute', 0))
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -194,11 +195,11 @@ def report(match_id):
 			
 			if not match_bl.is_exceed_closing_time(match.id):
 				return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
-			
+
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
-					
+				
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
@@ -208,7 +209,10 @@ def report(match_id):
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
 					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						return response_error(MESSAGE.OUTCOME_REPORTED)
+						return  response_error(MESSAGE.OUTCOME_REPORTED)
+
+					if dispute == 1 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
+						return response_error(MESSAGE.OUTCOME_DISPUTE_INVALID)
 
 					outcome.result = CONST.RESULT_TYPE['PROCESSING']
 
@@ -223,9 +227,10 @@ def report(match_id):
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
-					action=CONST.TASK_ACTION['REPORT'],
+					action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
 					status=-1
 				)
+
 				db.session.add(task)
 				db.session.flush()
 

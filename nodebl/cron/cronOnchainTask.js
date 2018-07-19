@@ -60,6 +60,9 @@ const asyncScanOnchainTask = () => {
 												case 'uninitForTrial':
 													smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item);
 												break;
+												case 'resolveOutcomeTransaction':
+													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item);
+												break;
 											}
 										break;
 										case '': // different token

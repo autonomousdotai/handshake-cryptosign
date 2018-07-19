@@ -36,7 +36,6 @@ class MESSAGE(object):
 
 	# HANSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = 'You\'re out of gas! Please wait while we add ETH to your account.'
-	HANDSHAKE_CANNOT_SEND_TO_MYSELF = 'You can\'t Handshake with yourself!'
 	HANDSHAKE_EMPTY = 'This Handshake seems to be empty.'
 	HANDSHAKE_NO_PERMISSION = 'You are not authorized to make this Handshake.'
 	HANDSHAKE_NO_CONTRACT_FILE = 'Contract file not found!'
@@ -64,6 +63,9 @@ class MESSAGE(object):
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'
 	WALLET_RECEIVE_ETH_ALREADY = 'You can only request free Handshakes once.'
 	WALLET_REJECT_FREE_ETH = 'Your account can\'t get free ETH.'
+
+	# TOKEN
+	TOKEN_NOT_FOUND = 'Token not found. Please try again.'
 
 
 class CODE(object):
@@ -99,8 +101,7 @@ class CODE(object):
 	USER_RECEIVED_FREE_BET_ALREADY = '1020' 								
 
 	# HANSHAKE
-	HANDSHAKE_NOT_ENOUGH_GAS = '1021' 										
-	HANDSHAKE_CANNOT_SEND_TO_MYSELF = '1021' 								
+	HANDSHAKE_NOT_ENOUGH_GAS = '1021'	
 	HANDSHAKE_EMPTY = '1022' 												
 	HANDSHAKE_NO_PERMISSION = '1023' 										
 	HANDSHAKE_NO_CONTRACT_FILE = '1024' 									
@@ -127,4 +128,8 @@ class CODE(object):
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = '1040' 										
 	WALLET_RECEIVE_ETH_ALREADY = '1041' 									
-	WALLET_REJECT_FREE_ETH = '1042' 										
+	WALLET_REJECT_FREE_ETH = '1042'
+
+	# TOKEN
+	TOKEN_NOT_FOUND = '1045'
+	

@@ -89,12 +89,88 @@ class TestNotifBluePrint(BaseTestCase):
 
 			data = json.loads(response.data.decode())
 			self.assertTrue(data['status'] == 1)
-			print data
+
 			data_json = data['data']
 			self.assertTrue(data['status'] == 1)
 			for item in data_json:
 				if item['expire_time'] < local_to_utc(datetime.now().timetuple()):
 					return False
-    
+
+	def test_post_newnotif(self):
+		self.clear_data_before_test()
+		# ----- 
+		with self.client:
+			Uid = 66
+			params = [{
+				"name": "Notification private",
+				"start_time": local_to_utc((datetime.utcnow()+ timedelta(days=1)).timetuple()),
+				"expire_time": local_to_utc((datetime.utcnow()+ timedelta(days=2)).timetuple()),
+				"data": "{\"a\":1}",
+				"type": "{}".format(CONST.COMMUNITY_TYPE['PUBLIC']),
+				"status": "{}".format(CONST.NOTIF_STATUS['ACTIVE'])
+			}]
+
+			response = self.client.post(
+									'/notif/add',
+									data=json.dumps(params), 
+									content_type='application/json',
+									headers={
+										"Uid": "{}".format(Uid),
+										"Fcm-Token": "{}".format(123),
+										"Payload": "{}".format(123),
+									})
+			data = json.loads(response.data.decode())
+			self.assertTrue(data['status'] == 1)
+			data_json = data['data']
+			self.assertTrue(data['status'] == 1)
+
+	def test_edit_notif(self):
+		self.clear_data_before_test()
+		# ----- 
+		with self.client:
+			Uid = 66
+			start_time = local_to_utc((datetime.utcnow() - timedelta(days=1)).timetuple())
+			expire_time = local_to_utc((datetime.utcnow() - timedelta(days=2)).timetuple())
+			params = {
+				"name": "Notification private edit",
+				"start_time": start_time,
+				"expire_time": expire_time
+			}
+
+			response = self.client.put(
+									'/notif/edit/2',
+									data=json.dumps(params), 
+									content_type='application/json',
+									headers={
+										"Uid": "{}".format(Uid),
+										"Fcm-Token": "{}".format(123),
+										"Payload": "{}".format(123),
+									})
+			data = json.loads(response.data.decode())
+			self.assertTrue(data['status'] == 1)
+			data_json = data['data']
+			self.assertTrue(data_json['name'] == "Notification private edit")
+			self.assertTrue(data_json['start_time'] == start_time)
+			self.assertTrue(data_json['expire_time'] == expire_time)
+
+	def test_delete_notif(self):
+		self.clear_data_before_test()
+		# ----- 
+		with self.client:
+			Uid = 66
+			params = {}
+
+			response = self.client.delete(
+									'/notif/remove/2',
+									data=json.dumps(params), 
+									content_type='application/json',
+									headers={
+										"Uid": "{}".format(Uid),
+										"Fcm-Token": "{}".format(123),
+										"Payload": "{}".format(123),
+									})
+			data = json.loads(response.data.decode())
+			self.assertTrue(data['status'] == 1)
+
 if __name__ == '__main__':
 	unittest.main()

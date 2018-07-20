@@ -170,7 +170,9 @@ class TestNotifBluePrint(BaseTestCase):
 										"Payload": "{}".format(123),
 									})
 			data = json.loads(response.data.decode())
+			notif = Notification.find_notif_by_id(2)
 			self.assertTrue(data['status'] == 1)
+			self.assertTrue(notif == None)
 
 if __name__ == '__main__':
 	unittest.main()

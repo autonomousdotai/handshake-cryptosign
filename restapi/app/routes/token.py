@@ -82,12 +82,18 @@ def approve(id):
 		if token is None:
 			return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
 			
-		token.status = 1
+		if token.status == CONST.TOKEN_STATUS['APPROVED']:
+			return response_error(MESSAGE.TOKEN_APPROVED_ALREADY, CODE.TOKEN_APPROVED_ALREADY)
+
+		token.status = CONST.TOKEN_STATUS['APPROVED']
 		db.session.merge(token)
 
+		# add offchain
+		data = token.to_json()
+		data['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'token{}'.format(token.id)
 		task = Task(
 					task_type=CONST.TASK_TYPE['ERC_20'],
-					data=json.dumps(token.to_json()),
+					data=json.dumps(data),
 					action=CONST.TASK_ACTION['ADD_TOKEN'],
 					status=-1
 				)

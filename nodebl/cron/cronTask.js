@@ -10,6 +10,8 @@ const onchainDataDAO = require('../daos/onchainTask');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
+const bl = require('../bl');
+
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[network_id].amountValue;
@@ -187,10 +189,10 @@ const collect = (params) => {
  * @param {number} params.market_fee
  * @param {number} params.id
  * @param {array} params.outcomes
- * * @param {number} outcomes.result
- * * @param {number} outcomes.public
- * * @param {number} outcomes.hid
- * * @param {string} outcomes.name
+ * @param {number} outcomes.result
+ * @param {number} outcomes.public
+ * @param {number} outcomes.hid
+ * @param {string} outcomes.name
  * 
  */
 const createMarket = (params) => {
@@ -295,8 +297,14 @@ const asyncScanTask = () => {
 									break;
 
 									case 'ERC_20':
-										contract_name = '';
-										contract_address = '';
+										switch (task.action) {
+											case 'ADD_TOKEN':
+												contract_name = 'TokenRegistry';
+												contract_address = configs.network[network_id].tokenRegistryAddress;
+												processTaskFunc = bl.tokenRegistryAddress.addToken(params);
+											break;
+										}
+										
 									break;
 								}
 

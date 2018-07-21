@@ -67,6 +67,7 @@ class MESSAGE(object):
 
 	# TOKEN
 	TOKEN_NOT_FOUND = 'Token not found. Please try again.'
+	TOKEN_APPROVED_ALREADY = 'Token has been approved already.'
 
 
 class CODE(object):
@@ -133,4 +134,5 @@ class CODE(object):
 
 	# TOKEN
 	TOKEN_NOT_FOUND = '1045'
+	TOKEN_APPROVED_ALREADY = '1046'
 	

@@ -28,6 +28,7 @@ class FirebaseDatabase(object):
 		auth = self.firebase.auth()
 		db = self.firebase.database()
 		results = db.child("users").child(user_id).child('betting').push(data)
+		return results
 
 		
 # if __name__ == '__main__':

@@ -421,14 +421,12 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
 };
 
 /**
- * Create Market
- * 
-  uint fee, 
-  bytes32 source,
-  uint closingWindow, 
-  uint reportWindow, 
-  uint disputeWindow,
-  bytes32 offchain
+ * @param {uint} fee
+ * @param {bytes32} source
+ * @param {uint} closingWindow
+ * @param {uint} reportWindow
+ * @param {uint} disputeWindow
+ * @param {bytes32} offchain
  */
 
 const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, _options) => {

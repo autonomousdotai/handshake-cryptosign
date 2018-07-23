@@ -17,6 +17,7 @@ const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[network_id].amountValue;
 
 let isRunningTask = false;
+let taskIdTracking = 0;
 
 
 /**
@@ -24,7 +25,7 @@ let isRunningTask = false;
  * @param {array} arr
  * @param {object} onchainData
  * @param {object} task
- */								
+ */
 const saveTnxs = (arr) => {
 	return new Promise((resolve, reject) => {
 		const tnxs = [];
@@ -234,8 +235,12 @@ const addFeed = (hs, task) => {
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
-		taskDAO.getTasksByStatus()
+		// taskDAO.getTasksByStatus()
+		console.log('Tracking task_id: ', taskIdTracking);
+		utils.taskMarkId(taskIdTracking)
 		.then(_tasks => {
+			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0; 
+			console.log('Set tracking task_id: ', taskIdTracking);
 			_tasks.forEach(task => {
 				if (task && task.task_type && task.data) {
 					tasks.push(

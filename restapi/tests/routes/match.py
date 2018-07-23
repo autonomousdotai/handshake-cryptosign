@@ -112,6 +112,41 @@ class TestMatchBluePrint(BaseTestCase):
             )
             db.session.add(match)
 
+        # ----- 
+
+        match = Match.find_match_by_id(1001)
+        if match is not None:
+            match.date=time.time() - 100,
+            match.reportTime=time.time() + 100,
+            match.disputeTime=time.time() + 200,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1001,
+                date=time.time() - 100,
+                reportTime=time.time() + 100,
+                disputeTime=time.time() + 200,
+            )
+            db.session.add(match)
+
+
+        # ----- 
+
+        match = Match.find_match_by_id(1002)
+        if match is not None:
+            match.date=time.time() - 100,
+            match.reportTime=time.time() + 100,
+            match.disputeTime=time.time() + 200,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1002,
+                date=time.time() - 100,
+                reportTime=time.time() + 100,
+                disputeTime=time.time() + 200,
+            )
+            db.session.add(match)
+
         db.session.commit()
         arr_hs.append(match)
 
@@ -153,8 +188,7 @@ class TestMatchBluePrint(BaseTestCase):
         arr_hs = []
 
         # ----- 
-
-        match = Match.find_match_by_id(1000)
+        match = Match.find_match_by_id(1001)
         if match is not None:
             match.date=time.time() + 100,
             match.reportTime=time.time() + 200,
@@ -162,8 +196,27 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.flush()
         else:
             match = Match(
-                id=1000,
+                id=1001,
                 date=time.time() + 100,
+                reportTime=time.time() + 200,
+                disputeTime=time.time() + 300,
+            )
+            db.session.add(match)
+        db.session.commit()
+        arr_hs.append(match)
+        match_id_1 = match.id
+
+        # ----- 
+        match = Match.find_match_by_id(1002)
+        if match is not None:
+            match.date=time.time() + 50,
+            match.reportTime=time.time() + 200,
+            match.disputeTime=time.time() + 300,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1002,
+                date=time.time() + 50,
                 reportTime=time.time() + 200,
                 disputeTime=time.time() + 300,
             )
@@ -171,12 +224,23 @@ class TestMatchBluePrint(BaseTestCase):
 
         db.session.commit()
         arr_hs.append(match)
+        match_id_2 = match.id
 
         # -----        
         outcome = Outcome(
-            match_id=1000,
+            match_id=1001,
             public=1,
             hid=0
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
+    
+        # -----        
+        outcome = Outcome(
+            match_id=1002,
+            public=1,
+            hid=1
         )
         db.session.add(outcome)
         db.session.commit()
@@ -198,15 +262,11 @@ class TestMatchBluePrint(BaseTestCase):
 
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
-            self.assertEqual(len(data_json), 1)
+            self.assertEqual(len(data_json), 2)
 
-            print data_json
-            o = None
-            tmp = data_json[0]['outcomes'][0]
-            if tmp['id'] == outcome.id:
-                o = tmp
-
-            self.assertNotEqual(o, None)
+            m = data_json[0]
+            self.assertNotEqual(m, None)
+            self.assertEqual(m['id'], match_id_2)
 
 
         for handshake in arr_hs:

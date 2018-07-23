@@ -289,6 +289,7 @@ const taskMarkId = (id) => {
     });
 };
 
+
 module.exports = {
     submitInitAPI,
     generateMarkets,

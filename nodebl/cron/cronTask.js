@@ -236,11 +236,9 @@ const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
 		// taskDAO.getTasksByStatus()
-		console.log('Tracking task_id: ', taskIdTracking);
 		utils.taskMarkId(taskIdTracking)
 		.then(_tasks => {
-			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0; 
-			console.log('Set tracking task_id: ', taskIdTracking);
+			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0;
 			_tasks.forEach(task => {
 				if (task && task.task_type && task.data) {
 					tasks.push(

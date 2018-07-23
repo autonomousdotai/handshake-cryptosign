@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 3488bfeda9f3
-Revises: 995ec7f25428
-Create Date: 2018-07-19 12:04:14.703166
+Revision ID: ccfccd7f5f71
+Revises: 52061d603b39
+Create Date: 2018-07-23 13:47:52.011439
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3488bfeda9f3'
-down_revision = '995ec7f25428'
+revision = 'ccfccd7f5f71'
+down_revision = '52061d603b39'
 branch_labels = None
 depends_on = None
 
@@ -24,12 +24,12 @@ def upgrade():
     sa.Column('date_modified', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Integer(), nullable=True),
     sa.Column('name', sa.String(length=255), nullable=True),
-    sa.Column('start_time', sa.DateTime(), nullable=True),
-    sa.Column('expire_time', sa.DateTime(), nullable=True),
     sa.Column('to', sa.String(length=512), nullable=True),
     sa.Column('data', sa.Text(), nullable=True),
     sa.Column('type', sa.Integer(), server_default='0', nullable=True),
-    sa.Column('status', sa.Integer(), server_default='1', nullable=True),
+    sa.Column('status', sa.Integer(), server_default='0', nullable=True),
+    sa.Column('start_time', sa.DateTime(), nullable=True),
+    sa.Column('expire_time', sa.DateTime(), nullable=True),
     sa.Column('modified_user_id', sa.Integer(), nullable=True),
     sa.Column('created_user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_user_id'], ['user.id'], ),

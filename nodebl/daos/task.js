@@ -6,9 +6,12 @@ const moment = require('moment');
 const Op = models.Sequelize.Op;
 
 module.exports = {
-    getTasksByStatus: () => {
+    getTasksByStatus: (id) => {
         return models.Task.findAll({
             where: {
+                id: {
+                    gt: id || 0
+                },
                 [Op.or]: [{
                     status: constants.TASK_STATUS.STATUS_PENDING
                 }, {
@@ -32,6 +35,21 @@ module.exports = {
             where: {
                 id: ids
             }
+        });
+    },
+    getLastIdByStatus: () => {
+        return models.Task.findOne({
+            where: {
+                [Op.or]: [{
+                    status: constants.TASK_STATUS.STATUS_PENDING
+                }, {
+                    status: constants.TASK_STATUS.STATUS_RETRY
+                }]
+            },
+            order: [
+                ['id', 'DESC']
+            ],
+            attributes: ['id'] 
         });
     }
 };

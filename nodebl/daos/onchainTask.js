@@ -39,9 +39,12 @@ module.exports = {
       .catch(reject)
     });
   },
-  getOnchainTasksByStatus: () => {
+  getOnchainTasksByStatus: (id) => {
     return models.OnchainTask.findAll({
       where: {
+        id: {
+          gt: id || 0
+        },
         [Op.or]: [{
           status: constants.TASK_STATUS.STATUS_PENDING
         }, {
@@ -66,5 +69,20 @@ module.exports = {
         id: ids
       }
     });
+  },
+  getLastIdByStatus: () => {
+      return models.OnchainTask.findOne({
+          where: {
+              [Op.or]: [{
+                  status: constants.TASK_STATUS.STATUS_PENDING
+              }, {
+                  status: constants.TASK_STATUS.STATUS_RETRY
+              }]
+          },
+          order: [
+              ['id', 'DESC']
+          ],
+          attributes: ['id'] 
+      });
   }
 };

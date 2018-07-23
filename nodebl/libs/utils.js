@@ -275,6 +275,21 @@ const addFeedAPI = (hs) => {
     });
 };
 
+const taskMarkId = (id) => {
+    return new Promise((resolve, reject) => {
+        if (id == 0) {
+            return resolve(taskDAO.getTasksByStatus(0));
+        } else {
+            taskDAO.getLastIdByStatus()
+            .then(result => {
+                return resolve(taskDAO.getTasksByStatus((result && id < result.id) ? id : 0));
+            })
+            .catch(reject);
+        }
+    });
+};
+
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
@@ -282,5 +297,6 @@ module.exports = {
     handleErrorTask,
     calculatorGasprice,
     getGasAndNonce,
-    addFeedAPI
+    addFeedAPI,
+    taskMarkId
 };

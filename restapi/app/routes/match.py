@@ -43,7 +43,7 @@ def matches():
 			total_users = db.engine.execute('SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp'.format(match.id)).scalar()
 			match_json["total_users"] = total_users
 
-			total_bets = db.engine.execute('SELECT count(id) AS total FROM (SELECT shaker.id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp'.format(match.id)).scalar()
+			total_bets = db.engine.execute('SELECT SUM(amount) AS total FROM (SELECT handshake.amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp'.format(match.id)).scalar()
 			match_json["total_bets"] = total_bets
 
 			arr_outcomes = []

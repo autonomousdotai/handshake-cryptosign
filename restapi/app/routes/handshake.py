@@ -641,7 +641,7 @@ def has_received_free_bet():
 		return response_error(ex.message)
 
 @handshake_routes.route('/feed/uninit', methods=['POST'])
-# @login_required
+@login_required
 def update_uninit_feed():
 	try:
 		uid = int(request.headers['Uid'])
@@ -669,8 +669,8 @@ def update_uninit_feed():
 				db.session.flush()
 				shakers.append(shaker)
 
-			else:
-				return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
+			# else:
+			# 	return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
 
 		elif 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
@@ -682,8 +682,8 @@ def update_uninit_feed():
 				db.session.flush()
 				handshakes.append(handshake)
 
-			else:
-				return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
+			# else:
+			# 	return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
 			
 		else:
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
@@ -697,7 +697,7 @@ def update_uninit_feed():
 		return response_error(ex.message)
 
 @handshake_routes.route('/feed/withdraw', methods=['POST'])
-# @login_required
+@login_required
 def update_withdraw_feed():
 	try:
 		uid = int(request.headers['Uid'])
@@ -719,8 +719,8 @@ def update_withdraw_feed():
 				db.session.flush()
 				shakers.append(shaker)
 
-		else:
-			return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
+		# else:
+		# 	return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
 
 		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
 		for handshake in handshake_arr:
@@ -731,8 +731,8 @@ def update_withdraw_feed():
 				db.session.flush()
 				handshakes.append(handshake)
 
-		else:
-			return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
+		# else:
+		# 	return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
 		
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
@@ -743,7 +743,7 @@ def update_withdraw_feed():
 		return response_error(ex.message)
 
 @handshake_routes.route('/feed/refund', methods=['POST'])
-# @login_required
+@login_required
 def update_refund_feed():
 	try:
 		uid = int(request.headers['Uid'])
@@ -765,8 +765,8 @@ def update_refund_feed():
 				db.session.flush()
 				shakers.append(shaker)
 
-		else:
-			return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
+		# else:
+		# 	return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
 
 		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
 		for handshake in handshake_arr:
@@ -777,8 +777,8 @@ def update_refund_feed():
 				db.session.flush()
 				handshakes.append(handshake)
 
-		else:
-			return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
+		# else:
+		# 	return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
 		
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)

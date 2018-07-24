@@ -54,11 +54,12 @@ class MESSAGE(object):
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 	HANDSHAKE_CANNOT_REFUND = 'Cannot refund this handshake!'
+	HANDSHAKE_CANNOT_UPDATE_STATUS = 'Cannot update this handshake!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
 	SHAKER_ROLLBACK_ALREADY = 'You have rollbacked already!'
-
+	SHAKER_CANNOT_UPDATE_STATUS = 'Cannot update this shaker!'
 
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'
@@ -126,11 +127,12 @@ class CODE(object):
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
 	HANDSHAKE_CANNOT_REFUND = '1044'							
+	HANDSHAKE_CANNOT_UPDATE_STATUS= '1047'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												
 	SHAKER_ROLLBACK_ALREADY = '1039' 										
-
+	SHAKER_CANNOT_UPDATE_STATUS = '1048' 										
 
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = '1040' 										

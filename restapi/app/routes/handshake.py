@@ -639,3 +639,133 @@ def has_received_free_bet():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
+@handshake_routes.route('/feed/uninit', methods=['POST'])
+@login_required
+def update_uninit_feed():
+	try:
+		uid = int(request.headers['Uid'])
+		user = User.find_user_with_id(uid)
+
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		offchain = data.get('offchain', '')
+		if len(offchain) == 0:
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
+
+		handshakes = []
+		shakers = []
+
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		if 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			if handshake_bl.can_uninit(None, shaker=shaker):
+				shaker.bk_status = shaker.status
+				shaker.status = HandshakeStatus['STATUS_MAKER_UNINIT_PENDING'] # TODO check 
+				db.session.merge(shaker)
+				db.session.flush()
+				shakers.append(shaker)
+
+		elif 'm' in offchain:
+			offchain = int(offchain.replace('m', ''))
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			if handshake_bl.can_uninit(handshake):
+				handshake.bk_status = handshake.status
+				handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']
+				db.session.merge(handshake)
+				db.session.flush()
+				handshakes.append(handshake)
+
+		else:
+			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
+
+		db.session.commit()
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+@handshake_routes.route('/feed/withdraw', methods=['POST'])
+@login_required
+def update_withdraw_feed():
+	try:
+		uid = int(request.headers['Uid'])
+		user = User.find_user_with_id(uid)
+
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		handshakes = []
+		shakers = []
+
+		shaker_arr = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id)).all()
+		for shaker in shaker_arr:
+			if handshake_bl.can_withdraw(None, shaker=shaker):
+				shaker.bk_status = shaker.status
+				shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+				db.session.merge(shaker)
+				db.session.flush()
+				shakers.append(shaker)
+
+		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
+		for handshake in handshake_arr:
+			if handshake_bl.can_withdraw(handshake):
+				handshake.bk_status = handshake.status
+				handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+				db.session.merge(handshake)
+				db.session.flush()
+				handshakes.append(handshake)
+
+		db.session.commit()
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+@handshake_routes.route('/feed/refund', methods=['POST'])
+@login_required
+def update_refund_feed():
+	try:
+		uid = int(request.headers['Uid'])
+		user = User.find_user_with_id(uid)
+
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		handshakes = []
+		shakers = []
+
+		shaker_arr = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id)).all()
+		for shaker in shaker_arr:
+			if handshake_bl.can_refund(None, shaker=shaker):
+				shaker.bk_status = shaker.status
+				shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+				db.session.merge(shaker)
+				db.session.flush()
+				shakers.append(shaker)
+
+		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
+		for handshake in handshake_arr:
+			if handshake_bl.can_refund(handshake):
+				handshake.bk_status = handshake.status
+				handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+				db.session.merge(handshake)
+				db.session.flush()
+				handshakes.append(handshake)
+
+		db.session.commit()
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)

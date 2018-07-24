@@ -39,7 +39,7 @@ def matches():
 			match_json = match.to_json()
 
 			total_users = db.engine.execute('SELECT ( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)).first()
-			match_json["total_users"] = total_users['total_users_s'] if total_bets['total_users_s'] is not None else 0 + total_users['total_users_m'] if total_bets['total_users_m'] is not None else 0
+			match_json["total_users"] = total_users['total_users_s'] if total_users['total_users_s'] is not None else 0 + total_users['total_users_m'] if total_users['total_users_m'] is not None else 0
 
 			total_bets = db.engine.execute('SELECT ( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)).first()
 			match_json["total_bets"] = total_bets['total_amount_s'] if total_bets['total_amount_s'] is not None else 0  + total_bets['total_amount_m'] if total_bets['total_amount_m'] is not None else 0

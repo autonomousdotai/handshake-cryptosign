@@ -182,7 +182,7 @@ def data_need_set_result_for_outcome(outcome):
 
 	return handshakes, shakers
 
-
+# when time exceed report time and there is no result or outcome result is draw
 def can_refund(handshake, shaker=None):
     	if handshake is None and shaker is None:
 		return False
@@ -203,12 +203,10 @@ def can_refund(handshake, shaker=None):
 
 
 	if outcome is not None and \
-		outcome.hid is not None and \
-		(outcome.result == CONST.RESULT_TYPE['SUPPORT_WIN'] or \
-		outcome.result == CONST.RESULT_TYPE['AGAINST_WIN'] or \
-		outcome.result == CONST.RESULT_TYPE['DRAW']):
+		outcome.hid is not None:
 
-		return True
+		if outcome.result == CONST.RESULT_TYPE['DRAW'] or (match_bl.is_exceed_report_time(outcome.match_id) and outcome.result == -1):
+			return True
 
 	return False
 
@@ -576,7 +574,6 @@ def save_handshake_for_event(event_name, inputs):
 			outcome_id = handshake.outcome_id
 
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-		print outcome
 		if outcome is None:
 			return None, None
 

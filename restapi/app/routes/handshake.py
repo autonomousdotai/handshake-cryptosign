@@ -640,9 +640,9 @@ def has_received_free_bet():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@handshake_routes.route('/feed/uninit', methods=['POST'])
+@handshake_routes.route('/uninit', methods=['POST'])
 @login_required
-def update_uninit_feed():
+def uninit():
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -659,25 +659,16 @@ def update_uninit_feed():
 		shakers = []
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
-		if 's' in offchain:
-			offchain = int(offchain.replace('s', ''))
-			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
-			if handshake_bl.can_uninit(None, shaker=shaker):
-				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_MAKER_UNINIT_PENDING'] # TODO check 
-				db.session.merge(shaker)
-				db.session.flush()
-				shakers.append(shaker)
-
-		elif 'm' in offchain:
+		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_uninit(handshake):
 				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']
-				db.session.merge(handshake)
 				db.session.flush()
 				handshakes.append(handshake)
+			else:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)		
 
 		else:
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
@@ -690,9 +681,9 @@ def update_uninit_feed():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@handshake_routes.route('/feed/withdraw', methods=['POST'])
+@handshake_routes.route('/collect', methods=['POST'])
 @login_required
-def update_withdraw_feed():
+def withdraw():
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -701,27 +692,47 @@ def update_withdraw_feed():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		handshakes = []
-		shakers = []
+		offchain = data.get('offchain', '')
+		if len(offchain) == 0:
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
-		shaker_arr = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id)).all()
-		for shaker in shaker_arr:
-			if handshake_bl.can_withdraw(None, shaker=shaker):
-				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-				db.session.merge(shaker)
-				db.session.flush()
-				shakers.append(shaker)
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		outcome = None
+		if 'm' in offchain:
+			offchain = int(offchain.replace('m', ''))
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			msg = handshake_bl.can_withdraw(handshake)
+			if len(msg) != 0:
+				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
-		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
-		for handshake in handshake_arr:
-			if handshake_bl.can_withdraw(handshake):
-				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-				db.session.merge(handshake)
-				db.session.flush()
-				handshakes.append(handshake)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
+		elif 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			msg = handshake_bl.can_withdraw(None, shaker=shaker)
+			if len(msg) != 0:
+				return response_error(msg, CODE.CANNOT_WITHDRAW)
+
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+		if outcome is None:
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+		shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+		for h in handshakes:
+			h.bk_status = h.status
+			h.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.merge(h)
+
+		for s in shakers:
+			s.bk_status = s.status
+			s.status = HandshakeStatus['STATUS_COLLECT_PENDING']
+			db.session.merge(s)
+			
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
@@ -730,9 +741,9 @@ def update_withdraw_feed():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@handshake_routes.route('/feed/refund', methods=['POST'])
+@handshake_routes.route('/refund', methods=['POST'])
 @login_required
-def update_refund_feed():
+def refund():
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -741,27 +752,46 @@ def update_refund_feed():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		handshakes = []
-		shakers = []
+		offchain = data.get('offchain', '')
+		if len(offchain) == 0:
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
-		shaker_arr = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id)).all()
-		for shaker in shaker_arr:
-			if handshake_bl.can_refund(None, shaker=shaker):
-				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-				db.session.merge(shaker)
-				db.session.flush()
-				shakers.append(shaker)
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		outcome = None
+		if 'm' in offchain:
+			offchain = int(offchain.replace('m', ''))
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			if not handshake_bl.can_refund(handshake):
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 
-		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
-		for handshake in handshake_arr:
-			if handshake_bl.can_refund(handshake):
-				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
-				db.session.merge(handshake)
-				db.session.flush()
-				handshakes.append(handshake)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
+		elif 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			if not handshake_bl.can_refund(None, shaker=shaker):
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
+
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+
+		if outcome is None:
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.user_id==user.id, Handshake.outcome_id==outcome.id)).all()
+		shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.shaker_id==user.id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+		for h in handshakes:
+			h.bk_status = h.status
+			h.status = HandshakeStatus['STATUS_REFUND_PENDING']
+			db.session.merge(h)
+
+		for s in shakers:
+			s.bk_status = s.status
+			s.status = HandshakeStatus['STATUS_REFUND_PENDING']
+			db.session.merge(s)
+			
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 

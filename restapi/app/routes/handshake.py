@@ -664,27 +664,21 @@ def update_uninit_feed():
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if handshake_bl.can_uninit(None, shaker=shaker):
 				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_PENDING']
+				shaker.status = HandshakeStatus['STATUS_MAKER_UNINIT_PENDING'] # TODO check 
 				db.session.merge(shaker)
 				db.session.flush()
 				shakers.append(shaker)
-
-			# else:
-			# 	return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
 
 		elif 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_uninit(handshake):
 				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_PENDING']
+				handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']
 				db.session.merge(handshake)
 				db.session.flush()
 				handshakes.append(handshake)
 
-			# else:
-			# 	return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
-			
 		else:
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
 
@@ -714,26 +708,20 @@ def update_withdraw_feed():
 		for shaker in shaker_arr:
 			if handshake_bl.can_withdraw(None, shaker=shaker):
 				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_PENDING']
+				shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
 				db.session.merge(shaker)
 				db.session.flush()
 				shakers.append(shaker)
-
-		# else:
-		# 	return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
 
 		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
 		for handshake in handshake_arr:
 			if handshake_bl.can_withdraw(handshake):
 				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_PENDING']
+				handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
 				db.session.merge(handshake)
 				db.session.flush()
 				handshakes.append(handshake)
 
-		# else:
-		# 	return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
-		
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
@@ -760,26 +748,20 @@ def update_refund_feed():
 		for shaker in shaker_arr:
 			if handshake_bl.can_refund(None, shaker=shaker):
 				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_PENDING']
+				shaker.status = HandshakeStatus['STATUS_COLLECT_PENDING']
 				db.session.merge(shaker)
 				db.session.flush()
 				shakers.append(shaker)
-
-		# else:
-		# 	return response_error(MESSAGE.SHAKER_CANNOT_UPDATE_STATUS, CODE.SHAKER_CANNOT_UPDATE_STATUS)
 
 		handshake_arr = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id)).all()
 		for handshake in handshake_arr:
 			if handshake_bl.can_refund(handshake):
 				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_PENDING']
+				handshake.status = HandshakeStatus['STATUS_COLLECT_PENDING']
 				db.session.merge(handshake)
 				db.session.flush()
 				handshakes.append(handshake)
 
-		# else:
-		# 	return response_error(MESSAGE.HANDSHAKE_CANNOT_UPDATE_STATUS, CODE.HANDSHAKE_CANNOT_UPDATE_STATUS)
-		
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 

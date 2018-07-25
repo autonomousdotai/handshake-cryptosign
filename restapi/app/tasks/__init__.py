@@ -6,6 +6,7 @@ from app.helpers.utils import utc_to_local
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 import sys
 import time
@@ -287,3 +288,26 @@ def run_bots(outcome_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def send_mail(outcome_id, outcome_name):
+	try:
+		# Send mail to admin
+		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
+		multipart_form_data = MultipartEncoder(
+    		fields= {
+				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
+				'subject': 'Dispute',
+				'to[]': app.config['EMAIL'],
+				'from': app.config['EMAIL']
+			}
+    	)
+		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})
+
+		if res.status_code > 400:
+			print('Send mail is failed.')
+		print 'Send mail result: {}'.format(res.json())
+
+	except Exception as e:
+		print("Send mail notification fail!")
+		print e

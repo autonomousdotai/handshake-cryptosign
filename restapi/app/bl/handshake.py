@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_, func, text
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken
+from app.tasks import update_feed, add_shuriken, send_mail
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local
 from datetime import datetime
@@ -551,7 +551,7 @@ def save_handshake_for_event(event_name, inputs):
 			shaker = Shaker.find_shaker_by_id(int(offchain))
 			if shaker is not None:
 				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_DISPUTED']
+				shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
 				db.session.flush()
 				shaker_dispute.append(shaker)
 				
@@ -560,7 +560,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			if handshake is not None:
 				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_DISPUTED']
+				handshake.status = HandshakeStatus['STATUS_USER_DISPUTED']
 				db.session.flush()
 				handshake_dispute.append(handshake)
 
@@ -578,7 +578,7 @@ def save_handshake_for_event(event_name, inputs):
 			return None, None
 
 		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
-			total_dispute_amount = db.engine.execute('SELECT SUM(amount) AS total FROM (SELECT * FROM handshake WHERE outcome_id = {} AND status = {}) as tmp'.format(outcome.id, HandshakeStatus['STATUS_DISPUTED'])).scalar()
+			total_dispute_amount = db.engine.execute('SELECT SUM(amount) AS total FROM (SELECT * FROM handshake WHERE outcome_id = {} AND status = {}) as tmp'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'])).scalar()
 			if total_dispute_amount is not None:
 				outcome.total_dispute_amount = total_dispute_amount
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
@@ -587,20 +587,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake_dispute, shaker_dispute = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_DISPUTED'])
 
 			# Send mail to admin
-			# endpoint = '{}'.format(g.MAIL_SERVICE)
-			# body = 'Outcome name: {}. Outcome id: {}'.format(outcome.name, outcome.id)
-			# subject = 'Dispute'
-			# multipart_form_data = {
-			# 	'body': body,
-			# 	'subject': subject,
-			# 	'from': g.EMAIL,
-			# 	'to[]': g.EMAIL
-			# }
-			# res = requests.post(endpoint,  headers={'Content-Type': 'multipart/form-data'}, data=multipart_form_data)
-			# print '===================sfsaf==='
-			# print res
-			# if res.status_code > 400:
-			# 	print('Send mail is failed.')
+			send_mail(outcome.id, outcome.name)
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':

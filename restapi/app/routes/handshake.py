@@ -799,3 +799,12 @@ def refund():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
+@handshake_routes.route('/dispute', methods=['POST'])
+@login_required
+def update_dispute_status():
+	try:
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)

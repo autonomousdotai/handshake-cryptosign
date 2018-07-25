@@ -1314,6 +1314,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         db.session.commit()
         
         arr_hs = []
+
         # -----
         handshake = Handshake(
                             hs_type=3,
@@ -1333,6 +1334,23 @@ class TestHandshakeBluePrint(BaseTestCase):
                         )
         arr_hs.append(handshake)
         db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+            shaker_id=88,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake.id,
+            from_address='0x123',
+            chain_id=4,
+            status=2,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
         db.session.commit()
         
         outcome = Outcome.find_outcome_by_id(88)
@@ -1381,6 +1399,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             
             hs = Handshake.find_handshake_by_id(handshake.id)
             self.assertEqual(hs.status, HandshakeStatus['STATUS_REFUND_PENDING'])
+
+            sk = Shaker.find_shaker_by_id(shaker.id)
+            self.assertEqual(sk.status, HandshakeStatus['STATUS_REFUND_PENDING'])
 
         for handshake in arr_hs:
             db.session.delete(handshake)

@@ -701,8 +701,7 @@ def withdraw():
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
-			msg = handshake_bl.can_withdraw(handshake)
-			if len(msg) != 0:
+			if handshake is None:
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
@@ -710,8 +709,7 @@ def withdraw():
 		elif 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
-			msg = handshake_bl.can_withdraw(None, shaker=shaker)
-			if len(msg) != 0:
+			if shaker is None:
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
@@ -761,7 +759,7 @@ def refund():
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
-			if not handshake_bl.can_refund(handshake):
+			if handshake is None:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 
 			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
@@ -769,7 +767,7 @@ def refund():
 		elif 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
-			if not handshake_bl.can_refund(None, shaker=shaker):
+			if shaker is None:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)

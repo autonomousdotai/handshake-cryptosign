@@ -1376,7 +1376,8 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode())
             self.assertEqual(response.status_code, 200)
-            self.assertTrue(data['status'] == 0)
+            # If hacker know????
+            self.assertTrue(data['status'] == 1)
 
             outcome.result = 3
             db.session.merge(outcome)

@@ -33,19 +33,16 @@ def matches():
 			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
 		else:
 			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
-			
-		print matches
 
 		for match in matches:	
 			#  find best odds which match against
 			match_json = match.to_json()
-			
-			# total_users = db.engine.execute('SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp'.format(match.id)).scalar()
-			total_users = db.engine.execute('SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp'.format(match.id)).scalar()
-			match_json["total_users"] = total_users
 
-			total_bets = db.engine.execute('SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp'.format(match.id)).scalar()
-			match_json["total_bets"] = total_bets
+			total_users = db.engine.execute('SELECT ( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)).first()
+			match_json["total_users"] = total_users['total_users_s'] if total_users['total_users_s'] is not None else 0 + total_users['total_users_m'] if total_users['total_users_m'] is not None else 0
+
+			total_bets = db.engine.execute('SELECT ( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)).first()
+			match_json["total_bets"] = total_bets['total_amount_s'] if total_bets['total_amount_s'] is not None else 0  + total_bets['total_amount_m'] if total_bets['total_amount_m'] is not None else 0
 
 			arr_outcomes = []
 			for outcome in match.outcomes:

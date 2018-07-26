@@ -59,7 +59,6 @@ class MESSAGE(object):
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
 	SHAKER_ROLLBACK_ALREADY = 'You have rollbacked already!'
 
-
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = 'Busy day for Handshakes - we\'re out of freebies! Please try again tomorrow.'
 	WALLET_RECEIVE_ETH_ALREADY = 'You can only request free Handshakes once.'
@@ -125,12 +124,11 @@ class CODE(object):
 	HANDSHAKE_CANNOT_UNINIT = '1035' 										
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
-	HANDSHAKE_CANNOT_REFUND = '1044'							
+	HANDSHAKE_CANNOT_REFUND = '1044'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												
-	SHAKER_ROLLBACK_ALREADY = '1039' 										
-
+	SHAKER_ROLLBACK_ALREADY = '1039'
 
 	# WALLET
 	WALLET_EXCEED_FREE_ETH = '1040' 										

@@ -1067,6 +1067,13 @@ class TestHandshakeBl(BaseTestCase):
 
 	def test_can_refund_for_maker(self):
 		self.clear_data_before_test()
+
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() + 1000
+		match.reportTime = time.time() + 1000
+		db.session.merge(match)
+		db.session.commit()
+
 		arr_hs = []
 
 		# -----
@@ -1092,10 +1099,20 @@ class TestHandshakeBl(BaseTestCase):
 		expected = False
 		self.assertEqual(actual, expected)
 
+		# test cannot refund
 		outcome = Outcome.find_outcome_by_id(88)
 		outcome.result = 1
 		db.session.merge(outcome)
 		db.session.flush()
+
+		actual = handshake_bl.can_refund(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		# test refund if time exceed report time
+		match.reportTime = time.time() - 1000
+		db.session.merge(match)
+		db.session.commit()
 
 		actual = handshake_bl.can_refund(handshake)
 		expected = True
@@ -1107,6 +1124,13 @@ class TestHandshakeBl(BaseTestCase):
 
 	def test_can_refund_for_shaker(self):
 		self.clear_data_before_test()
+
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() + 1000
+		match.reportTime = time.time() + 1000
+		db.session.merge(match)
+		db.session.commit()
+
 		arr_hs = []
 
 		# -----
@@ -1150,7 +1174,7 @@ class TestHandshakeBl(BaseTestCase):
 		self.assertEqual(actual, expected)
 
 		outcome = Outcome.find_outcome_by_id(88)
-		outcome.result = 1
+		outcome.result = 3
 		db.session.merge(outcome)
 		db.session.flush()
 

@@ -32,8 +32,8 @@ const saveTnxs = (arr) => {
 		(arr || []).forEach(item => {
 			if (item.onchainData) {
 				tnxs.push({
-					contract_name: item.contract_name,
-					contract_address: item.contract_address,
+					contract_name: (item.contract_name.length > 0) ? item.contract_name: item.onchainData.contract_name,
+					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
 					contract_method: item.onchainData.contract_method,
 					is_erc20: item.is_erc20 || 0,
 					from_address: item.onchainData.from_address,
@@ -301,10 +301,9 @@ const asyncScanTask = () => {
 
 									case 'ERC_20':
 										switch (task.action) {
-											case 'ADD_TOKEN':
-												contract_name = 'TokenRegistry';
-												contract_address = configs.network[network_id].tokenRegistryAddress;
-												processTaskFunc = bl.tokenRegistryAddress.addToken(params);
+											case 'ADD_TOKEN': {
+												processTaskFunc = bl.tokenRegistry.addToken(params);
+											}
 											break;
 										}
 										
@@ -366,7 +365,7 @@ const asyncScanTask = () => {
 								});
 							}
 						});
-					}
+					} 
 				});
 
 				saveTnxs(tnxs)

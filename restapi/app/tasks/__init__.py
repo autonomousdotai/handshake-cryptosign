@@ -97,6 +97,8 @@ def update_feed(handshake_id):
 			"closing_time_i": match.date,
 			"reporting_time_i": match.reportTime,
 			"disputing_time_i": match.disputeTime,
+			"outcome_total_amount_f": outcome.total_amount if outcome.total_amount is not None else 0,
+			"outcome_total_dispute_amount_f": outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0
 		}
 		print 'create maker {}'.format(hs)
 

@@ -587,7 +587,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake_dispute, shaker_dispute = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_DISPUTED'])
 
 			# Send mail to admin
-			send_mail(outcome.id, outcome.name)
+			send_mail.delay(outcome.id, outcome.name)
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':

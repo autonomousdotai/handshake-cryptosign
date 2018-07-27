@@ -5,7 +5,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 
 from sqlalchemy import and_
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
 from datetime import datetime
 from app.helpers.response import response_ok, response_error
@@ -239,4 +239,54 @@ def report(match_id):
 
 	except Exception, ex:
 		db.session.rollback()
+		return response_error(ex.message)
+
+
+@match_routes.route('/list/report', methods=['GET'])
+@login_required
+def getMatchReport():
+	try:
+		is_admin = False
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		if 'Authorization' in request.headers:
+
+			auth_value = decode_token(request.headers["Authorization"].replace('Bearer ', ''))
+			if 'identity' in auth_value and auth_value['identity'] == g.EMAIL:
+				is_admin = True
+			if auth_value['exp'] < seconds:
+				return response_error(MESSAGE.USER_TOKE_EXPIRED, CODE.USER_INVALID)		
+
+		if is_admin == False and request.headers['Uid'] is None:
+			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
+		
+		uid = int(request.headers['Uid'])
+
+		response = []
+		matches = []
+
+		if is_admin:
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.disputeTime <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+		else:
+			matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date <= seconds, Match.disputeTime >= Match.date, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+
+		for match in matches:	
+			match_json = match.to_json()
+
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				outcome_json = outcome.to_json()
+
+				if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
+					arr_outcomes.append(outcome_json)
+
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes
+			else:
+				match_json["outcomes"] = []
+			response.append(match_json)
+
+		return response_ok(response)
+	except Exception, ex:
 		return response_error(ex.message)

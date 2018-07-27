@@ -392,6 +392,132 @@ class TestMatchBluePrint(BaseTestCase):
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
+
+    def test_get_list_match_report_with_user(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        uid = 66
+        # ----- 
+
+        match = Match.find_match_by_id(1000)
+        if match is not None:
+            match.date=time.time() - 100,
+            match.reportTime=time.time() + 200,
+            match.disputeTime=time.time() + 300,
+            created_user_id=uid,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1000,
+                date=time.time() - 100,
+                reportTime=time.time() + 200,
+                disputeTime=time.time() + 300,
+                created_user_id=uid
+            )
+            db.session.add(match)
+        match = Match.find_match_by_id(1000)
+
+        db.session.commit()
+        arr_hs.append(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=1000,
+            public=1,
+            hid=0,
+            result=-1
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
+
+        with self.client:
+            Uid = uid
+            
+            response = self.client.get(
+                                    '/match/list/report',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertTrue(data['status'] == 1)
+
+            tmp = None
+            for m in data_json:
+                if m['id'] == 1000:
+                    tmp = m
+                    break
+
+            self.assertNotEqual(tmp, None)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
+    def test_get_list_match_report_with_admin(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        uid = 66
+        # ----- 
+
+        match = Match.find_match_by_id(1000)
+        if match is not None:
+            match.date=time.time() - 100,
+            match.reportTime=time.time() + 200,
+            match.disputeTime=time.time() + 300,
+            created_user_id=uid,
+            db.session.flush()
+        else:
+            match = Match(
+                id=1000,
+                date=time.time() - 100,
+                reportTime=time.time() + 200,
+                disputeTime=time.time() + 300,
+                created_user_id=uid
+            )
+            db.session.add(match)
+        match = Match.find_match_by_id(1000)
+
+        db.session.commit()
+        arr_hs.append(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=1000,
+            public=1,
+            hid=0,
+            result=-1
+        )
+        db.session.add(outcome)
+        db.session.commit()
+        arr_hs.append(outcome)
+
+        with self.client:
+            Uid = uid
+            
+            response = self.client.get(
+                                    '/match/list/report',
+                                    headers={
+                                        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwYzBlOTBjMS0xZjc3LTRmMzgtYjFhZi1kY2UzNzE3MDkyN2MiLCJleHAiOjE1MzY0Mjg4ODUsImZyZXNoIjp0cnVlLCJpYXQiOjE1MzEyNDQ4ODUsInR5cGUiOiJhY2Nlc3MiLCJuYmYiOjE1MzEyNDQ4ODUsImlkZW50aXR5IjoiYWRtaW5AbmluamEub3JnIn0.M48Ngokr0wDEhVEPG1Qjn8j6qNC5B1H1cSX6rBXv8xo",
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertTrue(data['status'] == 1)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
     
 if __name__ == '__main__':
     unittest.main()

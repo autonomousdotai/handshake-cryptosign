@@ -20,11 +20,12 @@ from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
-from app.helpers.utils import is_equal
+from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
+from datetime import datetime
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -802,7 +803,45 @@ def refund():
 @login_required
 def update_dispute_status():
 	try:
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		outcome_id = data.get('outcome_id', -1)
+		if outcome_id < 0:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		outcome = db.session.query(Outcome).filter(Outcome.id==outcome_id, Outcome.result > 0).first()
+		if outcome is None:
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+		match = Match.find_match_by_id(outcome.match_id)
+		match = db.session.query(Match).filter(Match.id==outcome.match_id, Match.date <= seconds, Match.disputeTime >= seconds).first()
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.status != HandshakeStatus['STATUS_DISPUTE_PENDING'], Handshake.outcome_id==outcome.id)).all()
+		shakers = db.session.query(Shaker).filter(and_(Shaker.status != HandshakeStatus['STATUS_DISPUTE_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+
+		for h in handshakes:
+			h.bk_status = h.status
+			h.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
+			db.session.merge(h)
+
+		for s in shakers:
+			s.bk_status = s.status
+			s.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
+			db.session.merge(s)
+
+		outcome.result = CONST.RESULT_TYPE['DISPUTE_PENDING']
+
+		db.session.commit()
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+

@@ -8,7 +8,7 @@ from app.models import Handshake, User, Outcome, Match, Shaker, Task
 from app.helpers.message import MESSAGE
 from io import BytesIO
 from datetime import datetime
-from app.constants import Handshake as HandshakeStatus
+from app.constants import Handshake as HandshakeStatus, RESULT_TYPE
 
 import time
 import os
@@ -1797,6 +1797,94 @@ class TestHandshakeBluePrint(BaseTestCase):
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
-    
+
+    def test_dispute_real_bet(self):
+        self.clear_data_before_test()
+
+        match = Match.find_match_by_id(1)
+        match.disputeTime = time.time() + 1000
+        match.date = time.time() - 1000
+        db.session.merge(match)
+        db.session.commit()
+        
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+            shaker_id=88,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake.id,
+            from_address='0x123',
+            chain_id=4,
+            status=2,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+        
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 2
+        db.session.commit()
+        
+        with self.client:
+            Uid = 88
+
+            params = {
+                "outcome_id": 88
+            }
+
+            response = self.client.post(
+                                    '/handshake/dispute',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['status'] == 1)
+
+            outcome = Outcome.find_outcome_by_id(88)
+            self.assertEqual(outcome.result, RESULT_TYPE['DISPUTE_PENDING'])
+
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
+
+            sk = Shaker.find_shaker_by_id(shaker.id)
+            self.assertEqual(sk.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
 if __name__ == '__main__':
     unittest.main()

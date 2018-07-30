@@ -441,8 +441,8 @@ class TestHandshakeBluePrint(BaseTestCase):
             }
             response = self.client.post(
                                     '/handshake/init',
-                                    data=json.dumps(params), 
                                     content_type='application/json',
+                                    data=json.dumps(params), 
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
@@ -1855,7 +1855,33 @@ class TestHandshakeBluePrint(BaseTestCase):
             Uid = 88
 
             params = {
-                "outcome_id": 88
+                "offchain": 'cryptosign_s{}'.format(shaker.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/dispute',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['status'] == 1)
+
+            outcome = Outcome.find_outcome_by_id(88)
+            self.assertEqual(outcome.result, RESULT_TYPE['DISPUTE_PENDING'])
+
+            sk = Shaker.find_shaker_by_id(shaker.id)
+            self.assertEqual(sk.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
+
+            outcome.result = 1;
+            db.session.commit()
+            params = {
+                "offchain": 'cryptosign_m{}'.format(handshake.id)
             }
 
             response = self.client.post(
@@ -1878,9 +1904,6 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             hs = Handshake.find_handshake_by_id(handshake.id)
             self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
-
-            sk = Shaker.find_shaker_by_id(shaker.id)
-            self.assertEqual(sk.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
 
         for handshake in arr_hs:
             db.session.delete(handshake)

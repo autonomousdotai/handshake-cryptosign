@@ -13,7 +13,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task
+from app.models import User, Match, Outcome, Task, Source
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -114,10 +114,22 @@ def add():
 
 		matches = []
 		response_json = []
-		for item in data:
 
+		for item in data:
+			source = None
 			if match_bl.is_validate_match_time(item) == False:				
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
+
+			if "source_id" in item:
+				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
+			else:
+				if "source" in item and "name" in item["source"] and "url" in item["source"]:
+					source = Source(
+						name=item["source"]["name"],
+						url=item["source"]["url"]
+					)
+					db.session.add(source)
+					db.session.flush()					
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -130,7 +142,8 @@ def add():
 				market_fee=int(item['market_fee']),
 				date=item['date'],
 				reportTime=item['reportTime'],
-				disputeTime=item['disputeTime']
+				disputeTime=item['disputeTime'],
+				source_id=None if source is None else source.id
 			)
 			matches.append(match)
 			db.session.add(match)

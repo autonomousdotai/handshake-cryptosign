@@ -4,7 +4,7 @@ from app.helpers.decorators import login_required, admin_required
 from app import db
 from app.models import User, Outcome, Match, Task
 from app.helpers.message import MESSAGE, CODE
-from sqlalchemy import or_, and_, text, func
+from sqlalchemy import or_, and_, text, func, desc
 
 import re
 import json
@@ -18,7 +18,7 @@ outcome_routes = Blueprint('outcome', __name__)
 @login_required
 def outcomes():
 	try:
-		outcomes = Outcome.query.all()
+		outcomes = Outcome.query.order_by(desc(Outcome.index)).all()
 		data = []
 		for outcome in outcomes:
 			data.append(outcome.to_json())

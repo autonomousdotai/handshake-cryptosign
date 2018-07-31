@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
-	__json_public__ = ['id', 'name', 'hid', 'result', 'public', 'total_amount', 'total_dispute_amount']
+	__json_public__ = ['id', 'name', 'hid', 'result', 'public', 'total_amount', 'total_dispute_amount', 'index']
 	
 	name = db.Column(db.String(255))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
@@ -22,6 +22,9 @@ class Outcome(BaseModel):
 	public = db.Column(db.Integer,
 						server_default=str(1),
 	                   	default=0)
+	index = db.Column(db.Integer,
+							server_default=str(1),
+	                      	default=1)
 	handshakes = db.relationship('Handshake', backref='outcome', primaryjoin="Outcome.id == Handshake.outcome_id",
 	                             lazy='dynamic')
 

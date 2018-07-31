@@ -4,7 +4,7 @@ import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
 from datetime import datetime
@@ -30,9 +30,9 @@ def matches():
 		seconds = local_to_utc(t)
 
 		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id).order_by(desc(Outcome.index)))).order_by(Match.date.asc()).all()
 		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id).order_by(desc(Outcome.index)))).order_by(Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against

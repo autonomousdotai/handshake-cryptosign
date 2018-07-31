@@ -4,7 +4,7 @@ import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
 from datetime import datetime
@@ -13,7 +13,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task
+from app.models import User, Match, Outcome, Task, Source
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -30,9 +30,9 @@ def matches():
 		seconds = local_to_utc(t)
 
 		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id).order_by(Outcome.index.desc()))).order_by(Match.index.desc(), Match.date.asc()).all()
 		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id).order_by(Outcome.index.desc()))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against
@@ -114,10 +114,22 @@ def add():
 
 		matches = []
 		response_json = []
-		for item in data:
 
+		for item in data:
+			source = None
 			if match_bl.is_validate_match_time(item) == False:				
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
+
+			if "source_id" in item:
+				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
+			else:
+				if "source" in item and "name" in item["source"] and "url" in item["source"]:
+					source = Source(
+						name=item["source"]["name"],
+						url=item["source"]["url"]
+					)
+					db.session.add(source)
+					db.session.flush()					
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -130,7 +142,8 @@ def add():
 				market_fee=int(item['market_fee']),
 				date=item['date'],
 				reportTime=item['reportTime'],
-				disputeTime=item['disputeTime']
+				disputeTime=item['disputeTime'],
+				source_id=None if source is None else source.id
 			)
 			matches.append(match)
 			db.session.add(match)

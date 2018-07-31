@@ -2,7 +2,7 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db
 from app.helpers.message import MESSAGE
-from app.models import Handshake, User, Outcome, Match, Shaker, Task
+from app.models import Handshake, User, Outcome, Match, Shaker, Task, Source
 from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
@@ -380,6 +380,7 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
@@ -549,6 +550,90 @@ class TestMatchBluePrint(BaseTestCase):
         for oc in arr_oc:
             db.session.delete(oc)
             db.session.commit()
-    
+
+
+    def test_add_match(self):
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        source = db.session.query(Source).filter(Source.id == 1).first()
+
+        if source is None:
+            source = Source(
+                name="a",
+                url="b"
+            )
+            db.session.add(source)
+            db.session.commit()
+        # -----
+
+        with self.client:
+            Uid = 88
+
+            params = [{
+                "homeTeamName":"-",
+                "homeTeamCode":"-",
+                "homeTeamFlag":"-",
+                "awayTeamName":"-",
+                "awayTeamCode":"-",
+                "awayTeamFlag":"-",
+                "name":"source is nonce",
+                "market_fee":2,
+                "source_id":999999,
+                "date":seconds + 100,
+                "reportTime":seconds + 200,
+                "disputeTime":seconds + 300
+            }, {
+                "homeTeamName":"-",
+                "homeTeamCode":"-",
+                "homeTeamFlag":"-",
+                "awayTeamName":"-",
+                "awayTeamCode":"-",
+                "awayTeamFlag":"-",
+                "name":"source is existed",
+                "market_fee":2,
+                "source_id": source.id,
+                "date":seconds + 100,
+                "reportTime":seconds + 200,
+                "disputeTime":seconds + 300
+            }, {
+                "homeTeamName":"-",
+                "homeTeamCode":"-",
+                "homeTeamFlag":"-",
+                "awayTeamName":"-",
+                "awayTeamCode":"-",
+                "awayTeamFlag":"-",
+                "name":"new source",
+                "market_fee":2,
+                "source":{
+                    "name": "test",
+                    "url": "test url"
+                },
+                "date":seconds + 100,
+                "reportTime":seconds + 200,
+                "disputeTime":seconds + 300
+            }]
+
+            response = self.client.post(
+                                    '/match/add',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['status'] == 1)
+
+            for item in data["data"]:
+                if item["name"] == "source is nonce":
+                    self.assertEqual(item["source_id"], None)
+                if item["name"] == "source is existed":
+                    self.assertEqual(item["source_id"], source.id)
+                if item["name"] == "new source":
+                    self.assertNotEqual(item["source_id"], None)
+
 if __name__ == '__main__':
     unittest.main()

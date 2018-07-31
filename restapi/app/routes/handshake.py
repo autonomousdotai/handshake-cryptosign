@@ -803,40 +803,52 @@ def refund():
 @login_required
 def update_dispute_status():
 	try:
-		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
+		handshakes = []
+		shakers = []
+		uid = int(request.headers['Uid'])
+		user = User.find_user_with_id(uid)
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		outcome_id = data.get('outcome_id', -1)
-		if outcome_id < 0:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+		offchain = data.get('offchain', '')
+		if len(offchain) == 0:
+			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
-		outcome = db.session.query(Outcome).filter(Outcome.id==outcome_id, Outcome.result > 0).first()
+		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
+		outcome = None
+		if 'm' in offchain:
+			offchain = int(offchain.replace('m', ''))
+			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
+			if handshake is None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
+
+			handshake.bk_status = handshake.status
+			handshake.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
+			db.session.flush()
+			handshakes.append(handshake)
+
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+		elif 's' in offchain:
+			offchain = int(offchain.replace('s', ''))
+			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
+			if shaker is None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
+
+			shaker.bk_status = shaker.status
+			shaker.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
+			db.session.flush()
+			shakers.append(shaker)
+			
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-		match = Match.find_match_by_id(outcome.match_id)
-		match = db.session.query(Match).filter(Match.id==outcome.match_id, Match.date <= seconds, Match.disputeTime >= seconds).first()
-		if match is None:
-			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
-
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.status != HandshakeStatus['STATUS_DISPUTE_PENDING'], Handshake.outcome_id==outcome.id)).all()
-		shakers = db.session.query(Shaker).filter(and_(Shaker.status != HandshakeStatus['STATUS_DISPUTE_PENDING'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
-
-		for h in handshakes:
-			h.bk_status = h.status
-			h.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
-			db.session.merge(h)
-
-		for s in shakers:
-			s.bk_status = s.status
-			s.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
-			db.session.merge(s)
-
 		outcome.result = CONST.RESULT_TYPE['DISPUTE_PENDING']
-
+		db.session.flush()
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 

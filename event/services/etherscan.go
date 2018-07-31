@@ -1,22 +1,23 @@
 package services
 
 import (
-	"io/ioutil"
-	"net/http"
-    "log"
-	"fmt"
 	"encoding/json"
-    "github.com/ninjadotorg/handshake-cryptosign/event/config"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+
+	"github.com/ninjadotorg/handshake-cryptosign/event/config"
 )
 
 type EtherscanService struct{}
 
 func (s EtherscanService) ListTransactions(address string, page int, offset int) (bool, []interface{}) {
-    conf := config.GetConfig()
-    endpoint := conf.GetString("etherScanEndpoint")
-    apiKey := conf.GetString("etherScanKey")
+	conf := config.GetConfig()
+	endpoint := conf.GetString("etherScanEndpoint")
+	apiKey := conf.GetString("etherScanKey")
 
-    endpoint = fmt.Sprintf("%s?module=account&action=txlist&startblock=0&endblock=99999999&address=%s&page=%d&offset=%d&sort=asc&apikey=%s", endpoint, address, page, offset, apiKey)
+	endpoint = fmt.Sprintf("%s?module=account&action=txlist&startblock=0&endblock=99999999&address=%s&page=%d&offset=%d&sort=asc&apikey=%s", endpoint, address, page, offset, apiKey)
 
 	request, _ := http.NewRequest("GET", endpoint, nil)
 
@@ -33,13 +34,13 @@ func (s EtherscanService) ListTransactions(address string, page int, offset int)
 	json.Unmarshal(b, &data)
 
 	status, ok := data["status"]
-    message, _ := data["message"]
-    result, _ := data["result"] 
+	message, _ := data["message"]
+	result, _ := data["result"]
 
-    if ok && status.(string) == "1" {
-        return true, result.([]interface{})
-    } else {
-        log.Println(message)
-        return false, nil
-    }
-}	
+	if ok && status.(string) == "1" {
+		return true, result.([]interface{})
+	} else {
+		log.Println(message)
+		return false, nil
+	}
+}

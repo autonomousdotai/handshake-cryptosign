@@ -34,7 +34,6 @@ def add():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		sources = []
 		response_json = []
 		for item in data:
 			source = Source(
@@ -43,7 +42,6 @@ def add():
 			)
 			db.session.add(source)
 			db.session.flush()
-			sources.append(source)
 
 			response_json.append(source.to_json())
 		db.session.commit()

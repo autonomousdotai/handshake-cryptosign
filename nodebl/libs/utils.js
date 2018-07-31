@@ -163,18 +163,6 @@ const submitInitAPI = (options) => {
  */
 const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _source ) => {
     const markets = [];
-/*
-    const closingTime = _date - Math.floor(+moment.utc()/1000) + 90 * 60 + 15 * 60;
-    let reportTime = closingTime + (reportTimeConfig * 60 * 60);
-    if (_reportTime) {
-        reportTime = _reportTime - Math.floor(+moment.utc()/1000);
-    }
-
-    let dispute = reportTime + (reportTimeConfig * 60 * 60);
-    if (_disputeTime) {
-        dispute = _disputeTime - Math.floor(+moment.utc()/1000);
-    }
-*/
     _arr.forEach(outcome => {
         markets.push({
 			contract_method: 'createMarket',
@@ -253,11 +241,62 @@ const getGasAndNonce = () => {
 	});
 };
 
+/**
+ * @param {JSON string} hs
+ */
+const addFeedAPI = (hs) => {
+    return new Promise((resolve, reject) => {
+        const arr = [];
+        arr.push(hs);
+        const dataRequest = {
+            add: arr
+        }
+
+        axios.post(`${configs.solrApiEndpoint}/handshake/update`, dataRequest, {
+            timeout: 1500,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.status >= 400) {
+                return reject({});
+            } else {
+                if (response.data.Success) {
+                    return resolve({});   
+                } else {
+                    return reject({});
+                }
+            }
+        })
+        .catch((error) => {
+            return reject(error);
+        });
+    });
+};
+
+const taskMarkId = (id) => {
+    return new Promise((resolve, reject) => {
+        if (id == 0) {
+            return resolve(taskDAO.getTasksByStatus(0));
+        } else {
+            taskDAO.getLastIdByStatus()
+            .then(result => {
+                return resolve(taskDAO.getTasksByStatus((result && id < result.id) ? id : 0));
+            })
+            .catch(reject);
+        }
+    });
+};
+
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
     gennerateExtraData,
     handleErrorTask,
     calculatorGasprice,
-    getGasAndNonce
+    getGasAndNonce,
+    addFeedAPI,
+    taskMarkId
 };

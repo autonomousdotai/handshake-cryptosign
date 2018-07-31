@@ -8,7 +8,11 @@ const settingDAO = require('../daos/setting');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
+
+// contracts
 const predictionContract = require('../libs/smartcontract');
+const tokenRegistryContract = require('../libs/tokenRegistryContract');
+const predictionWithTokenContract = require('../libs/tokenRegistryContract');
 
 let isRunningOnchainTask = false;
 
@@ -60,9 +64,24 @@ const asyncScanOnchainTask = () => {
 												case 'uninitForTrial':
 													smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item);
 												break;
+												case 'resolveOutcomeTransaction':
+													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item);
+												break;
 											}
 										break;
-										case '': // different token
+										case 'TokenRegistry': 
+											switch (onchainData.contract_method) {
+												case 'addNewToken':
+													smartContractFunc = tokenRegistryContract.addNewTokenTransaction(nonce + index, onchainData.token_address);
+												break;
+											}
+										break;
+										case 'PredictionHandshakeWithToken': 
+											switch (onchainData.contract_method) {
+												case 'approveNewToken':
+													smartContractFunc = predictionWithTokenContract.approveNewToken(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item);
+												break;
+											}
 										break;
 									}
 		

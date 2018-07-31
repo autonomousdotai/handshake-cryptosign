@@ -1,5 +1,6 @@
 const models = require('../models');
 const constants = require('../constants');
+const moment = require('moment');
 
 module.exports = {
   getAllPending: function () {
@@ -25,8 +26,8 @@ module.exports = {
             offchain: offchain,
             payload: payload,
             deleted: 0,
-            date_created: new Date(),
-            date_modified: new Date()
+            date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+            date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
         }, {
           transaction: tx
         })

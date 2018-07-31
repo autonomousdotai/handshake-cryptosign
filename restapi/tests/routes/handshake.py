@@ -8,7 +8,7 @@ from app.models import Handshake, User, Outcome, Match, Shaker, Task
 from app.helpers.message import MESSAGE
 from io import BytesIO
 from datetime import datetime
-from app.constants import Handshake as HandshakeStatus
+from app.constants import Handshake as HandshakeStatus, RESULT_TYPE
 
 import time
 import os
@@ -104,17 +104,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=1,
-				remaining_amount=1,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=1.2,
+                amount=1,
+                currency='ETH',
+                side=1,
+                remaining_amount=1,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -164,17 +164,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=3,
-				amount=1,
-				currency='ETH',
-				side=1,
-				remaining_amount=1,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=3,
+                amount=1,
+                currency='ETH',
+                side=1,
+                remaining_amount=1,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -256,17 +256,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=3,
-				amount=0.2,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.2,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=3,
+                amount=0.2,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.2,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -275,17 +275,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=2.9,
-				amount=0.1,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.1,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=99,
+                outcome_id=88,
+                odds=2.9,
+                amount=0.1,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.1,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -294,17 +294,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=109,
-				outcome_id=88,
-				odds=2.8,
-				amount=0.3,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.3,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=109,
+                outcome_id=88,
+                odds=2.8,
+                amount=0.3,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.3,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -369,17 +369,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.5,
-				amount=0.2,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.2,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=1.5,
+                amount=0.2,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.2,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -388,17 +388,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.4,
-				amount=0.1,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.1,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=99,
+                outcome_id=88,
+                odds=1.4,
+                amount=0.1,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.1,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -407,17 +407,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=109,
-				outcome_id=88,
-				odds=1.3,
-				amount=0.3,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.3,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=109,
+                outcome_id=88,
+                odds=1.3,
+                amount=0.3,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.3,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -479,17 +479,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=6,
+                amount=0.7,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.7,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -498,17 +498,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.5,
-				amount=0.007,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.007,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=99,
+                outcome_id=88,
+                odds=1.5,
+                amount=0.007,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.007,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -517,17 +517,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=109,
-				outcome_id=88,
-				odds=1.2,
-				amount=0.003,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.003,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=109,
+                outcome_id=88,
+                odds=1.2,
+                amount=0.003,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.003,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -591,17 +591,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=3,
-				amount=0.005,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.005,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=3,
+                amount=0.005,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.005,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -664,17 +664,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.6,
-				amount=0.01,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.01,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=1.6,
+                amount=0.01,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.01,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -727,17 +727,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=2.2,
-				amount=0.001,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.001,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=2.2,
+                amount=0.001,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.001,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -794,17 +794,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=2.4,
-				amount=0.000003,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.000003,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=2.4,
+                amount=0.000003,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.000003,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -859,17 +859,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=1.37,
-				amount=0.001,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.001,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=1.37,
+                amount=0.001,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.001,
+                from_address='0x123',
                 status=0
         )
         arr_hs.append(handshake)
@@ -951,17 +951,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=6,
+                amount=0.7,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.7,
+                from_address='0x123',
                 status=0,
                 bk_status=-1,
         )
@@ -1035,17 +1035,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.01,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=6,
+                amount=0.01,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.7,
+                from_address='0x123',
                 status=-1,
                 bk_status=-1,
         )
@@ -1091,17 +1091,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=6,
+                amount=0.7,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.7,
+                from_address='0x123',
                 status=-1,
                 bk_status=-1,
                 free_bet=1
@@ -1146,17 +1146,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=6,
+                amount=0.7,
+                currency='ETH',
+                side=2,
+                remaining_amount=0,
+                from_address='0x123',
                 status=0,
                 bk_status=-1,
         )
@@ -1248,6 +1248,165 @@ class TestHandshakeBluePrint(BaseTestCase):
             user = User.find_user_with_id(88)
             self.assertEqual(user.free_bet, 1)
 
+    def test_collect_real_bet(self):
+        self.clear_data_before_test()
+
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+        
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 2
+        db.session.commit()
+        
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": "cryptosign_m{}".format(handshake.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/collect',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['status'] == 1)
+            
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_COLLECT_PENDING'])
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+    def test_refund_real_bet(self):
+        self.clear_data_before_test()
+
+        match = Match.find_match_by_id(1)
+        match.reportTime = time.time() - 1000
+        db.session.merge(match)
+        db.session.commit()
+        
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+            shaker_id=88,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake.id,
+            from_address='0x123',
+            chain_id=4,
+            status=2,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+        
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 2
+        db.session.commit()
+        
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": "cryptosign_m{}".format(handshake.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/refund',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            self.assertEqual(response.status_code, 200)
+            # If hacker know????
+            self.assertTrue(data['status'] == 1)
+
+            outcome.result = 3
+            db.session.merge(outcome)
+            db.session.commit()
+
+            # call again
+            response = self.client.post(
+                                    '/handshake/refund',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['status'] == 1)
+            
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_REFUND_PENDING'])
+
+            sk = Shaker.find_shaker_by_id(shaker.id)
+            self.assertEqual(sk.status, HandshakeStatus['STATUS_REFUND_PENDING'])
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
 
     def test_collect_free_bet(self):
         self.clear_data_before_test()
@@ -1311,17 +1470,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs = []
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=88,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=2,
-				remaining_amount=0.7,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=88,
+                outcome_id=88,
+                odds=6,
+                amount=0.7,
+                currency='ETH',
+                side=2,
+                remaining_amount=0.7,
+                from_address='0x123',
                 status=0,
                 bk_status=0
         )
@@ -1333,17 +1492,17 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         # -----
         handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=66,
-				outcome_id=88,
-				odds=6,
-				amount=0.7,
-				currency='ETH',
-				side=1,
-				remaining_amount=0.7,
-				from_address='0x123',
+                hs_type=3,
+                chain_id=4,
+                is_private=1,
+                user_id=66,
+                outcome_id=88,
+                odds=6,
+                amount=0.7,
+                currency='ETH',
+                side=1,
+                remaining_amount=0.7,
+                from_address='0x123',
                 status=0,
                 bk_status=0
         )
@@ -1561,6 +1720,171 @@ class TestHandshakeBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 0)
             self.assertEqual(response.status_code, 200)
-    
+
+    def test_refund_free_bet(self):
+        self.clear_data_before_test()
+
+        match = Match.find_match_by_id(1)
+        match.reportTime = time.time() + 1000
+        db.session.merge(match)
+        db.session.commit()
+
+        arr_hs = []
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1,
+                            date_created=datetime.now(),
+                            date_modified=datetime.now()
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+
+            params = {
+                "offchain": "cryptosign_m{}".format(handshake.id)
+            }
+
+            response = self.client.post(
+                                    '/handshake/refund_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+            outcome = Outcome.find_outcome_by_id(88)
+            outcome.result = 3
+            db.session.merge(outcome)
+            db.session.commit()
+
+            # call refund again
+            response = self.client.post(
+                                    '/handshake/refund_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+        
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+    def test_dispute_real_bet(self):
+        self.clear_data_before_test()
+
+        match = Match.find_match_by_id(1)
+        match.disputeTime = time.time() + 1000
+        match.date = time.time() - 1000
+        db.session.merge(match)
+        db.session.commit()
+        
+        arr_hs = []
+
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        shaker = Shaker(
+            shaker_id=88,
+            amount=3.5,
+            currency='ETH',
+            odds=1.2,
+            side=1,
+            handshake_id=handshake.id,
+            from_address='0x123',
+            chain_id=4,
+            status=2,
+            free_bet=1
+        )
+        arr_hs.append(shaker)
+        db.session.add(shaker)
+        db.session.commit()
+        
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 2
+        db.session.commit()
+        
+        with self.client:
+            Uid = 88
+
+            params = {
+                "outcome_id": 88
+            }
+
+            response = self.client.post(
+                                    '/handshake/dispute',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['status'] == 1)
+
+            outcome = Outcome.find_outcome_by_id(88)
+            self.assertEqual(outcome.result, RESULT_TYPE['DISPUTE_PENDING'])
+
+            hs = Handshake.find_handshake_by_id(handshake.id)
+            self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
+
+            sk = Shaker.find_shaker_by_id(shaker.id)
+            self.assertEqual(sk.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
 if __name__ == '__main__':
     unittest.main()

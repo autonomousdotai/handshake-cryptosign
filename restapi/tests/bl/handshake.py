@@ -283,6 +283,49 @@ class TestHandshakeBl(BaseTestCase):
 			db.session.delete(item)
 			db.session.commit()
 
+	def test_data_need_set_result_for_outcome_failed(self):
+		self.clear_data_before_test()
+		arr_hs = []
+		
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=-1
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		handshake_bl.data_need_set_result_for_outcome(outcome)
+		hs = Handshake.find_handshake_by_id(handshake.id)
+		self.assertEqual(hs.status, -1)
+
+		hs.status = 0
+		db.session.merge(hs)
+		db.session.commit()
+
+		handshake_bl.data_need_set_result_for_outcome(outcome)
+		hs = Handshake.find_handshake_by_id(handshake.id)
+		self.assertEqual(hs.status, HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'])
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+	
+
 	def test_find_all_joined_handshakes_with_side_against(self):
 		self.clear_data_before_test()
 		# -----
@@ -672,8 +715,17 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(handshake)
 		db.session.commit()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		# not free-bet
+		actual = handshake_bl.can_uninit(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
+		handshake.free_bet = 1
+		db.session.merge(handshake)
+		db.session.commit()
+
+		# free-bet
+		actual = handshake_bl.can_uninit(handshake)
 		expected = False
 		self.assertEqual(actual, expected)
 
@@ -692,8 +744,8 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(shaker)
 		db.session.commit()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		# free-bet with shaker status = -1
+		actual = handshake_bl.can_uninit(handshake)
 		expected = False
 		self.assertEqual(actual, expected)
 
@@ -702,8 +754,7 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.merge(shaker)
 		db.session.flush()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		actual = handshake_bl.can_uninit(handshake)
 		expected = True
 		self.assertEqual(actual, expected)
 
@@ -712,8 +763,14 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.merge(shaker)
 		db.session.flush()
 
-		actual = handshake_bl.can_uninit(
-			Handshake.find_handshake_by_id(handshake.id))
+		actual = handshake_bl.can_uninit(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		handshake.free_bet = 0
+		db.session.flush()
+
+		actual = handshake_bl.can_uninit(handshake)
 		expected = False
 		self.assertEqual(actual, expected)
 
@@ -902,6 +959,229 @@ class TestHandshakeBl(BaseTestCase):
 		actual = handshake_bl.has_valid_shaker(handshake)
 		expected = True
 		self.assertEqual(actual, expected)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+
+	def test_test_save_refund_state_for_maker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		hs1_id = handshake.id
+
+		handshakes, shakers = handshake_bl.save_refund_state_for_maker(handshake)
+		actual = None
+		for hs in handshakes:
+			if hs.id == hs1_id:
+				actual = hs
+				break
+		
+		self.assertNotEqual(actual, None)
+		self.assertEqual(actual.status, 3)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+
+	def test_save_refund_state_for_shaker(self):
+		self.clear_data_before_test()
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		hs1_id = handshake.id
+
+		# -----
+		shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+					status=2
+				)
+		db.session.add(shaker)
+		db.session.commit()
+		arr_hs.append(shaker)
+
+		sk1_id = shaker.id
+
+		handshakes, shakers = handshake_bl.save_refund_state_for_shaker(shaker)
+		actual = None
+		for sk in shakers:
+			if sk.id == sk1_id:
+				actual = sk
+				break
+		
+		self.assertNotEqual(actual, None)
+		self.assertEqual(actual.status, 3)
+
+
+		h = Handshake.find_handshake_by_id(hs1_id)
+		self.assertNotEqual(h.status, 3)
+		self.assertEqual(h.status, 0)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+
+	def test_can_refund_for_maker(self):
+		self.clear_data_before_test()
+
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() + 1000
+		match.reportTime = time.time() + 1000
+		db.session.merge(match)
+		db.session.commit()
+
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		actual = handshake_bl.can_refund(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		# test cannot refund
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 1
+		db.session.merge(outcome)
+		db.session.flush()
+
+		actual = handshake_bl.can_refund(handshake)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		# test refund if time exceed report time
+		match.reportTime = time.time() - 1000
+		db.session.merge(match)
+		db.session.commit()
+
+		actual = handshake_bl.can_refund(handshake)
+		expected = True
+		self.assertEqual(actual, expected)
+
+		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+
+	def test_can_refund_for_shaker(self):
+		self.clear_data_before_test()
+
+		match = Match.find_match_by_id(1)
+		match.disputeTime = time.time() + 1000
+		match.reportTime = time.time() + 1000
+		db.session.merge(match)
+		db.session.commit()
+
+		arr_hs = []
+
+		# -----
+		handshake = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=88,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake)
+		db.session.commit()
+		arr_hs.append(handshake)
+
+		# -----
+		shaker = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake.id,
+					from_address='0x123',
+					chain_id=4,
+					status=2
+				)
+		db.session.add(shaker)
+		db.session.commit()
+		arr_hs.append(shaker)
+
+
+		actual = handshake_bl.can_refund(None, shaker=shaker)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		outcome = Outcome.find_outcome_by_id(88)
+		outcome.result = 3
+		db.session.merge(outcome)
+		db.session.flush()
+
+		actual = handshake_bl.can_refund(None, shaker=shaker)
+		expected = True
+		self.assertEqual(actual, expected)
+
 
 		for item in arr_hs:
 			db.session.delete(item)

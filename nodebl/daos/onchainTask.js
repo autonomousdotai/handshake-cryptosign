@@ -1,5 +1,6 @@
 const models = require('../models');
 const constants = require('../constants');
+const moment = require('moment');
 const Op = models.Sequelize.Op;
 
 module.exports = {
@@ -19,8 +20,8 @@ module.exports = {
             status: status,
             task_id: task_id,
             deleted: 0,
-            date_created: new Date(),
-            date_modified: new Date()
+            date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+            date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
         }, {
           transaction: tx
         })
@@ -38,9 +39,12 @@ module.exports = {
       .catch(reject)
     });
   },
-  getOnchainTasksByStatus: () => {
+  getOnchainTasksByStatus: (id) => {
     return models.OnchainTask.findAll({
       where: {
+        id: {
+          gt: id || 0
+        },
         [Op.or]: [{
           status: constants.TASK_STATUS.STATUS_PENDING
         }, {
@@ -52,16 +56,33 @@ module.exports = {
   },
   updateStatusById: (task, status) => {
     return task.update({
-      status: status
+      status: status,
+      date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
     });
   },
   multiUpdateStatusById: (ids, status) => {
     return models.OnchainTask.update({
-      status: status
+      status: status,
+      date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
     }, {
       where: {
         id: ids
       }
     });
+  },
+  getLastIdByStatus: () => {
+      return models.OnchainTask.findOne({
+          where: {
+              [Op.or]: [{
+                  status: constants.TASK_STATUS.STATUS_PENDING
+              }, {
+                  status: constants.TASK_STATUS.STATUS_RETRY
+              }]
+          },
+          order: [
+              ['id', 'DESC']
+          ],
+          attributes: ['id'] 
+      });
   }
 };

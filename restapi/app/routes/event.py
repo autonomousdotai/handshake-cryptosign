@@ -30,18 +30,18 @@ def event():
 			inputs = data['inputs']
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, inputs)
 
-			if tx is not None:
-				tx.status = 1
-				db.session.flush()
-
-		else:
+		elif status == 0:
 			method = data.get('methodName', '')
 			inputs = data['inputs']
-
 			handshakes, shakers = handshake_bl.save_handshake_method_for_event(method, inputs)
-			if tx is not None:
-				tx.status = 0
-				db.session.flush()
+
+		elif status == 2:
+			method = data.get('methodName', '')
+			handshakes, shakers = handshake_bl.save_failed_handshake_method_for_event(method, tx)
+
+		if tx is not None:
+			tx.status = status
+			db.session.flush()
 
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)

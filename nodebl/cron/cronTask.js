@@ -1,7 +1,7 @@
 
 const cron = require('node-cron');
 const configs = require('../configs');
-const web3 = require('../configs/web3');
+const moment = require('moment');
 
 // daos
 const taskDAO = require('../daos/task');
@@ -10,27 +10,30 @@ const onchainDataDAO = require('../daos/onchainTask');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
+const bl = require('../bl');
+
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[network_id].amountValue;
 
 let isRunningTask = false;
+let taskIdTracking = 0;
 
 
 /**
  * 
  * @param {array} arr
- * * @param {object} onchainData
- * * @param {object} task
- */								
+ * @param {object} onchainData
+ * @param {object} task
+ */
 const saveTnxs = (arr) => {
 	return new Promise((resolve, reject) => {
 		const tnxs = [];
 		(arr || []).forEach(item => {
 			if (item.onchainData) {
 				tnxs.push({
-					contract_name: item.contract_name,
-					contract_address: item.contract_address,
+					contract_name: (item.contract_name.length > 0) ? item.contract_name: item.onchainData.contract_name,
+					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
 					contract_method: item.onchainData.contract_method,
 					is_erc20: item.is_erc20 || 0,
 					from_address: item.onchainData.from_address,
@@ -38,7 +41,9 @@ const saveTnxs = (arr) => {
 					data: JSON.stringify(item),
 					status: -1,
 					task_id: item.task.id,
-					deleted: 0
+					deleted: 0,
+					date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+					date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
 				});
 			}
 		});
@@ -132,6 +137,24 @@ const initBet = (params, task, isFreeBet) => {
  * @param {string} params.offchain
  */
 
+const resolveReport = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'resolveOutcomeTransaction',
+			hid: params.hid,
+			outcome_result: params.outcome_result,
+			offchain: params.offchain
+		}])
+	});
+};
+
+/**
+ * @param {string} params.offchain
+ * @param {number} params.hid
+ * @param {number} params.outcome_result
+ * @param {string} params.offchain
+ */
+
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
@@ -167,10 +190,10 @@ const collect = (params) => {
  * @param {number} params.market_fee
  * @param {number} params.id
  * @param {array} params.outcomes
- * * @param {number} outcomes.result
- * * @param {number} outcomes.public
- * * @param {number} outcomes.hid
- * * @param {string} outcomes.name
+ * @param {number} outcomes.result
+ * @param {number} outcomes.public
+ * @param {number} outcomes.hid
+ * @param {string} outcomes.name
  * 
  */
 const createMarket = (params) => {
@@ -185,11 +208,37 @@ const createMarket = (params) => {
 	});
 }
 
+/**
+ * @param {JSON} hs
+ * @param {Object} task
+ */
+const addFeed = (hs, task) => {
+	return new Promise((resolve, reject) => {
+		try {
+			utils.addFeedAPI(hs)
+			.then((result) => {
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_SUCCESS);
+				resolve({});
+			})
+			.catch(err => {
+				console.error(err);
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.CALL_SOLR_FAIL);
+				resolve({});
+			});
+		} catch (error) {
+			console.log('addFeed error: ', error);
+			resolve({});
+		}
+	});
+};
+
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
-		taskDAO.getTasksByStatus()
+		// taskDAO.getTasksByStatus()
+		utils.taskMarkId(taskIdTracking)
 		.then(_tasks => {
+			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0;
 			_tasks.forEach(task => {
 				if (task && task.task_type && task.data) {
 					tasks.push(
@@ -200,7 +249,19 @@ const asyncScanTask = () => {
 								let processTaskFunc = undefined;
 								let contract_name = '';
 								let contract_address = '';
+
 								switch (task.task_type) {
+									case 'NORMAL': // ETHER
+										contract_name = 'PredictionHandshake';
+										contract_address = configs.network[network_id].bettingHandshakeAddress;
+
+										switch (task.action) {
+											case 'ADD_FEED':
+												processTaskFunc = addFeed(params, task);
+											break;
+										}
+									break;
+
 									case 'REAL_BET': // ETHER
 										contract_name = 'PredictionHandshake';
 										contract_address = configs.network[network_id].bettingHandshakeAddress;
@@ -214,6 +275,9 @@ const asyncScanTask = () => {
 											break;
 											case 'CREATE_MARKET':
 												processTaskFunc = createMarket(params);
+											break;
+											case 'RESOLVE':
+												processTaskFunc = resolveReport(params);
 											break;
 										}
 									break;
@@ -236,8 +300,13 @@ const asyncScanTask = () => {
 									break;
 
 									case 'ERC_20':
-										contract_name = '';
-										contract_address = '';
+										switch (task.action) {
+											case 'ADD_TOKEN': {
+												processTaskFunc = bl.tokenRegistry.addToken(params);
+											}
+											break;
+										}
+										
 									break;
 								}
 
@@ -296,7 +365,7 @@ const asyncScanTask = () => {
 								});
 							}
 						});
-					}
+					} 
 				});
 
 				saveTnxs(tnxs)

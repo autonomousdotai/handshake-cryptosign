@@ -4,8 +4,8 @@ import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
-from sqlalchemy import and_
-from flask_jwt_extended import jwt_required
+from sqlalchemy import and_, or_
+from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
 from datetime import datetime
 from app.helpers.response import response_ok, response_error
@@ -30,15 +30,20 @@ def matches():
 		seconds = local_to_utc(t)
 
 		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
 		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).all()
-			
-		print matches
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against
 			match_json = match.to_json()
+
+			total_users = db.engine.execute('SELECT ( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)).first()
+			match_json["total_users"] = (total_users['total_users_s'] if total_users['total_users_s'] is not None else 0) + (total_users['total_users_m'] if total_users['total_users_m'] is not None else 0)
+
+			total_bets = db.engine.execute('SELECT ( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)).first()
+			match_json["total_bets"] = (total_bets['total_amount_s'] if total_bets['total_amount_s'] is not None else 0)  + (total_bets['total_amount_m'] if total_bets['total_amount_m'] is not None else 0)
+
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				outcome_json = outcome.to_json()
@@ -47,7 +52,7 @@ def matches():
 				outcome_json["market_amount"] = amount
 
 				if report == 1:
-					if outcome.result != -2:
+					if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
 						arr_outcomes.append(outcome_json)
 				else:
 					arr_outcomes.append(outcome_json)
@@ -175,6 +180,7 @@ def remove(id):
 @jwt_required
 def report(match_id):
 	try:
+		dispute = int(request.args.get('dispute', 0))
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -187,21 +193,26 @@ def report(match_id):
 			
 			if not match_bl.is_exceed_closing_time(match.id):
 				return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
-			
+
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
-					
+				
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
-					if outcome.result > -1:
+					if outcome.result > CONST.RESULT_TYPE['PENDING']:
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
-					if outcome.result == -2:
-						return response_error(MESSAGE.OUTCOME_REPORTED)
-					outcome.result = -2;
+
+					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
+						return  response_error(MESSAGE.OUTCOME_REPORTED)
+
+					if dispute == 1 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
+						return response_error(MESSAGE.OUTCOME_DISPUTE_INVALID)
+
+					outcome.result = CONST.RESULT_TYPE['PROCESSING']
 
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)
@@ -214,9 +225,10 @@ def report(match_id):
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
-					action=CONST.TASK_ACTION['REPORT'],
+					action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
 					status=-1
 				)
+
 				db.session.add(task)
 				db.session.flush()
 
@@ -227,4 +239,56 @@ def report(match_id):
 
 	except Exception, ex:
 		db.session.rollback()
+		return response_error(ex.message)
+
+
+@match_routes.route('/list/report', methods=['GET'])
+@login_required
+def getMatchReport():
+	try:
+		is_admin = False
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		if 'Authorization' in request.headers:
+
+			auth_value = decode_token(request.headers["Authorization"].replace('Bearer ', ''))
+			if 'identity' in auth_value and auth_value['identity'] == g.EMAIL:
+				is_admin = True
+			if auth_value['exp'] < seconds:
+				return response_error(MESSAGE.USER_TOKE_EXPIRED, CODE.USER_INVALID)		
+
+		if is_admin == False and request.headers['Uid'] is None:
+			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
+		
+		uid = int(request.headers['Uid'])
+
+		response = []
+		matches = []
+
+		if is_admin:
+			# Get all matchs are DISPUTED or PENDING (-3 or -1)
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(or_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.result == CONST.RESULT_TYPE['DISPUTED']), Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+		else:
+			# Get all matchs are PENDING (-1)
+			matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+
+		for match in matches:	
+			match_json = match.to_json()
+
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				outcome_json = outcome.to_json()
+
+				if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
+					arr_outcomes.append(outcome_json)
+
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes
+			else:
+				match_json["outcomes"] = []
+			response.append(match_json)
+
+		return response_ok(response)
+	except Exception, ex:
 		return response_error(ex.message)

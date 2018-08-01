@@ -143,8 +143,7 @@ def add():
 				date=item['date'],
 				reportTime=item['reportTime'],
 				disputeTime=item['disputeTime'],
-				source_id=None if source is None else source.id,
-				source_name=None if source is None else source.name
+				source_id=None if source is None else source.id
 			)
 			matches.append(match)
 			db.session.add(match)
@@ -161,8 +160,9 @@ def add():
 					)
 					db.session.add(outcome)
 					db.session.flush()
-
-			response_json.append(match.to_json())
+			match_json = match.to_json()
+			match_json["source_name"]=None if source is None else source.name
+			response_json.append(match_json)
 
 		db.session.commit()
 

@@ -702,12 +702,10 @@ def update_handshakes_feed(handshakes, shakers):
 	# update feed
 	if handshakes is not None:
 		for handshake in handshakes:
-			print handshake.id
 			update_feed.delay(handshake.id)
 
 	if shakers is not None:
 		for shaker in shakers:
-			print shaker.handshake_id
 			update_feed.delay(shaker.handshake_id)
 
 

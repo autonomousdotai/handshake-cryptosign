@@ -175,8 +175,7 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
-            self.assertTrue(data['status'] == 100)
+            self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
             self.assertTrue(data['status'] == 1)

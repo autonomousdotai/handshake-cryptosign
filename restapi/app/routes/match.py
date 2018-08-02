@@ -19,7 +19,7 @@ from app.helpers.message import MESSAGE, CODE
 match_routes = Blueprint('match', __name__)
 
 @match_routes.route('/', methods=['GET'])
-# @login_required
+@login_required
 def matches():
 	try:
 		report = int(request.args.get('report', 0))
@@ -30,9 +30,9 @@ def matches():
 		seconds = local_to_utc(t)
 
 		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.reportTime > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.reportTime > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
 		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against

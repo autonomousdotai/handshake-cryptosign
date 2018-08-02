@@ -101,7 +101,7 @@ def generate_link():
 			slug = re.sub('[^\w]+', '-', outcome.name.lower())
 			response = {
 				'slug': 'discover/{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid),
-				'slug_short': 'match={}&out_come={}&ref={}&is_private=1'.format(outcome.match_id, outcome.id, uid)
+				'slug_short': 'exchange?match={}&out_come={}&ref={}&is_private=1'.format(outcome.match_id, outcome.id, uid)
 			}
 			return response_ok(response)
 			

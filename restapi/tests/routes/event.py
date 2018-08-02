@@ -1108,7 +1108,7 @@ class TestEventBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
         hs = Shaker.find_shaker_by_id(shaker.id)
-        self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_USER_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_hid(88)
         self.assertNotEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
@@ -1163,7 +1163,7 @@ class TestEventBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
-        self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_USER_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_hid(88)
         self.assertNotEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
@@ -1184,6 +1184,24 @@ class TestEventBluePrint(BaseTestCase):
             db.session.add(outcome)
             db.session.commit()
         
+        # -----
+        handshake_ = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=100,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=HandshakeStatus['STATUS_USER_DISPUTED']
+        )
+        db.session.add(handshake_)
+        db.session.commit()
+
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -1388,7 +1406,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_resolve{}".format(result_report),
+                    "offchain": "cryptosign_report{}".format(result_report),
                     "hid": 100
                 }   
             }
@@ -1483,7 +1501,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_resolve{}".format(result_report),
+                    "offchain": "cryptosign_report{}".format(result_report),
                     "hid": 100
                 }   
             }
@@ -1497,7 +1515,7 @@ class TestEventBluePrint(BaseTestCase):
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
-            data = json.loads(response.data.decode()) 
+            data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
 
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==100).all()

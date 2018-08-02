@@ -19,7 +19,7 @@ from app.helpers.message import MESSAGE, CODE
 match_routes = Blueprint('match', __name__)
 
 @match_routes.route('/', methods=['GET'])
-@login_required
+# @login_required
 def matches():
 	try:
 		report = int(request.args.get('report', 0))
@@ -30,26 +30,25 @@ def matches():
 		seconds = local_to_utc(t)
 
 		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id).order_by(Outcome.index.desc()))).order_by(Match.index.desc(), Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.reportTime > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id).order_by(Outcome.index.desc()))).order_by(Match.index.desc(), Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against
 			match_json = match.to_json()
 
-			total_users = db.engine.execute('SELECT ( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)).first()
-			match_json["total_users"] = (total_users['total_users_s'] if total_users['total_users_s'] is not None else 0) + (total_users['total_users_m'] if total_users['total_users_m'] is not None else 0)
+			total_users_query = '( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)
+			total_bets_query = '( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)
 
-			total_bets = db.engine.execute('SELECT ( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)).first()
-			match_json["total_bets"] = (total_bets['total_amount_s'] if total_bets['total_amount_s'] is not None else 0)  + (total_bets['total_amount_m'] if total_bets['total_amount_m'] is not None else 0)
+			total = db.engine.execute('SELECT {}, {}'.format( total_users_query, total_bets_query)).first()
 
+			match_json["total_bets"] = (total['total_amount_s'] if total['total_amount_s'] is not None else 0)  + (total['total_amount_m'] if total['total_amount_m'] is not None else 0)
+			match_json["total_users"] = (total['total_users_s'] if total['total_users_s'] is not None else 0) + (total['total_users_m'] if total['total_users_m'] is not None else 0)
+			
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				outcome_json = outcome.to_json()
-				odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-				outcome_json["market_odds"] = odds
-				outcome_json["market_amount"] = amount
 
 				if report == 1:
 					if outcome.result != CONST.RESULT_TYPE['PROCESSING']:

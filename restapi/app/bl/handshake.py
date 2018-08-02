@@ -596,6 +596,9 @@ def save_handshake_for_event(event_name, inputs):
 
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
+		print "@@@@@@@@@@@@@@@@"
+		print handshake_dispute
+		print shaker_dispute
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
@@ -702,10 +705,12 @@ def update_handshakes_feed(handshakes, shakers):
 	# update feed
 	if handshakes is not None:
 		for handshake in handshakes:
+			print handshake.id
 			update_feed.delay(handshake.id)
 
 	if shakers is not None:
 		for shaker in shakers:
+			print shaker.handshake_id
 			update_feed.delay(shaker.handshake_id)
 
 

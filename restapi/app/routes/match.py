@@ -255,7 +255,7 @@ def report(match_id):
 		return response_error(ex.message)
 
 
-@match_routes.route('/list/report', methods=['GET'])
+@match_routes.route('/report', methods=['GET'])
 @login_required
 def getMatchReport():
 	try:

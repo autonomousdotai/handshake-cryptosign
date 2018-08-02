@@ -130,6 +130,23 @@ def save_dispute_state_all(outcome_id, state):
 	db.session.flush()
 	return handshakes, shakers
 
+def save_dispute_state_all_by_user(handshake, state):
+	handshakes = []
+	shakers = []
+	handshakes = db.session.query(Handshake).filter(Handshake.user_id == handshake.user_id, Handshake.outcome_id == handshake.outcome_id).all()
+	for hs in handshakes:
+		hs.bk_status = hs.status
+		hs.status = state
+		db.session.merge(hs)
+
+		shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
+		for shaker in shakers:
+			shaker.bk_status = shaker.status
+			shaker.status = state
+			db.session.merge(shaker)
+	db.session.flush()
+	return handshakes, shakers
+
 def save_refund_state_for_maker(handshake):
 	if handshake is not None:
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
@@ -543,6 +560,7 @@ def save_handshake_for_event(event_name, inputs):
 		print '__dispute'
 		shaker_dispute = []
 		handshake_dispute = []
+		handshake = None
 		if state < 2:
 			return None, None
 
@@ -550,30 +568,16 @@ def save_handshake_for_event(event_name, inputs):
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
 			if shaker is not None:
-				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
-				db.session.flush()
-				shaker_dispute.append(shaker)
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 				
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			if handshake is not None:
-				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_USER_DISPUTED']
-				db.session.flush()
-				handshake_dispute.append(handshake)
 
-		outcome_id = -1
-		if len(handshake_dispute) != 0:
-			outcome_id = handshake_dispute[0].outcome_id
-		else:
-			handshake = Handshake.find_handshake_by_id(shaker_dispute[0].handshake_id)
-			if handshake is None:
-				return None, None
-			outcome_id = handshake.outcome_id
+		if handshake is None:
+			return None, None
 
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is None:
 			return None, None
 
@@ -593,9 +597,11 @@ def save_handshake_for_event(event_name, inputs):
 			db.session.flush()
 
 			handshake_dispute, shaker_dispute = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_DISPUTED'])
-			db.session.commit()
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
+		else:
+			handshake_dispute, shaker_dispute = save_dispute_state_all_by_user(handshake, HandshakeStatus['STATUS_USER_DISPUTED'])
+
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':

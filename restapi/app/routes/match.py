@@ -281,10 +281,10 @@ def getMatchReport():
 
 		if is_admin:
 			# Get all matchs are DISPUTED or PENDING (-3 or -1)
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(or_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.result == CONST.RESULT_TYPE['DISPUTED']), Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(or_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.result == CONST.RESULT_TYPE['DISPUTED']), Outcome.hid != None)).group_by(Outcome.match_id))).all()
 		else:
 			# Get all matchs are PENDING (-1)
-			matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
 
 		for match in matches:	
 			match_json = match.to_json()

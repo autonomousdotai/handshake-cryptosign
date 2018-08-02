@@ -1062,6 +1062,22 @@ class TestEventBluePrint(BaseTestCase):
     def test_reiceive_dispute_event_with_state_2_maker (self):
         self.clear_data_before_test()
         # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake)
+        db.session.commit()
         shaker = Shaker(
 				hs_type=3,
 				chain_id=4,
@@ -1074,7 +1090,8 @@ class TestEventBluePrint(BaseTestCase):
 				side=1,
 				remaining_amount=1,
 				from_address='0x1234',
-                status=0
+                status=0,
+                handshake_id=handshake.id
         )
         db.session.add(shaker)
         db.session.commit()
@@ -1105,9 +1122,12 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
 
         hs = Shaker.find_shaker_by_id(shaker.id)
+        print hs
+        print hs.status
         self.assertEqual(hs.status, HandshakeStatus['STATUS_USER_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_hid(88)

@@ -44,9 +44,6 @@ def event():
 			db.session.flush()
 
 		db.session.commit()
-		print "#################"
-		print handshakes
-		print shakers
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
 		return response_ok()

@@ -12,7 +12,7 @@ import app.bl.match as match_bl
 from decimal import *
 from flask import g
 from app import db, fcm, sg, firebase
-from sqlalchemy import and_, or_, func, text
+from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
@@ -95,8 +95,8 @@ def save_refund_state_for_shaker(shaker):
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 		if outcome is not None:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==shaker.shaker_id, Handshake.outcome_id==handshake.outcome_id)).all()
-			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==shaker.shaker_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
+			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==shaker.shaker_id, Handshake.outcome_id==handshake.outcome_id, not_( Handshake.status.in_([HandshakeStatus['STATUS_MAKER_UNINITED'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'], HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']])))).all()
+			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==shaker.shaker_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)), not_( Shaker.status.in_([HandshakeStatus['STATUS_MAKER_UNINITED'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'], HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']])))).all()
 
 			for hs in handshakes:
 				hs.bk_status = hs.status
@@ -581,15 +581,15 @@ def save_handshake_for_event(event_name, inputs):
 		if outcome is None:
 			return None, None
 
-		dispute_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND (handshake.status = {} OR handshake.status = {})) AS tmp) AS total_dispute_amount_m".format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
-		dispute_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND (shaker.status = {} OR shaker.status = {})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
-		amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_m'.format(outcome.id)
-		amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_s'.format(outcome.id)
+		dispute_matched_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND (handshake.status = {} OR handshake.status = {})) AS tmp) AS total_dispute_amount_m".format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
+		dispute_matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND (shaker.status = {} OR shaker.status = {})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
+		matched_amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_m'.format(outcome.id)
+		matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_s'.format(outcome.id)
 
-		total_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_amount_query_m, dispute_amount_query_s, amount_query_m, amount_query_s)).first()
+		total_matched_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_matched_amount_query_m, dispute_matched_amount_query_s, matched_amount_query_m, matched_amount_query_s)).first()
 
-		outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
-		outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
+		outcome.total_dispute_amount = (total_matched_amount['total_dispute_amount_m'] if total_matched_amount['total_dispute_amount_m'] is not None else 0) + (total_matched_amount['total_dispute_amount_s'] if total_matched_amount['total_dispute_amount_s'] is not None else 0)
+		outcome.total_amount = (total_matched_amount['total_amount_m'] if total_matched_amount['total_amount_m'] is not None else 0) + (total_matched_amount['total_amount_s'] if total_matched_amount['total_amount_s'] is not None else 0)
 		db.session.flush()
 
 		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:    

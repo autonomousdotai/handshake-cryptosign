@@ -1820,6 +1820,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                             amount=0.7,
                             currency='ETH',
                             side=2,
+                            shake_count=1,
                             remaining_amount=0.7,
                             from_address='0x123',
                             status=0,
@@ -1895,7 +1896,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
-
+            print data
             self.assertEqual(response.status_code, 200)
             self.assertTrue(data['status'] == 1)
 

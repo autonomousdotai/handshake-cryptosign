@@ -116,7 +116,7 @@ def save_refund_state_for_shaker(shaker):
 def save_dispute_state_all(outcome_id, state):
 	handshakes = []
 	shakers = []
-	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id).all()
+	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id, Handshake.shake_count > 0).all()
 	for hs in handshakes:
 		hs.bk_status = hs.status
 		hs.status = state
@@ -133,13 +133,13 @@ def save_dispute_state_all(outcome_id, state):
 def save_dispute_state_all_by_user(handshake, state):
 	handshakes = []
 	shakers = []
-	handshakes = db.session.query(Handshake).filter(Handshake.user_id == handshake.user_id, Handshake.outcome_id == handshake.outcome_id).all()
+	handshakes = db.session.query(Handshake).filter(Handshake.user_id == handshake.user_id, Handshake.outcome_id == handshake.outcome_id, Handshake.shake_count > 0).all()
 	for hs in handshakes:
 		hs.bk_status = hs.status
 		hs.status = state
 		db.session.merge(hs)
 
-		shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
+		shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id, Shaker.shaker_id == handshake.user_id).all()
 		for shaker in shakers:
 			shaker.bk_status = shaker.status
 			shaker.status = state
@@ -536,6 +536,11 @@ def save_handshake_for_event(event_name, inputs):
 			handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
 			handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
 
+			if handshake.free_bet != 0:
+				user = User.find_user_with_id(handshake.user_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+    				
 			db.session.flush()
 
 			arr = []
@@ -574,15 +579,15 @@ def save_handshake_for_event(event_name, inputs):
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 
-		if handshake is None:
+		if handshake is None or handshake.shake_count <= 0:
 			return None, None
 
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is None:
 			return None, None
 
-		dispute_matched_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND (handshake.status = {} OR handshake.status = {})) AS tmp) AS total_dispute_amount_m".format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
-		dispute_matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND (shaker.status = {} OR shaker.status = {})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
+		dispute_matched_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.status IN ({},{},{})) AS tmp) AS total_dispute_amount_m".format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
+		dispute_matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.status IN ({},{},{})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
 		matched_amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_m'.format(outcome.id)
 		matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_s'.format(outcome.id)
 

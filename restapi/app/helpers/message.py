@@ -55,6 +55,7 @@ class MESSAGE(object):
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 	HANDSHAKE_CANNOT_REFUND = 'Cannot refund this handshake!'
+	HANDSHAKE_CANNOT_DISPUTE = 'Cannot dispute this handshake!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
@@ -126,6 +127,7 @@ class CODE(object):
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
 	HANDSHAKE_CANNOT_REFUND = '1044'
+	HANDSHAKE_CANNOT_DISPUTE = '1045'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												

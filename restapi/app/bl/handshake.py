@@ -147,7 +147,7 @@ def save_resolve_state_all(outcome_id, state):
 	db.session.flush()
 	return handshakes, shakers
 
-def save_dispute_state_all_by_user(user_id, outcome_id, state):
+def save_dispute_state_all_by_user(user_id, handshake_id, outcome_id, state):
 	handshakes = []
 	shakers = []
 	handshakes = db.session.query(Handshake).filter(Handshake.user_id == user_id, Handshake.outcome_id == outcome_id, Handshake.shake_count > 0).all()
@@ -156,7 +156,7 @@ def save_dispute_state_all_by_user(user_id, outcome_id, state):
 		hs.status = state
 		db.session.merge(hs)
 
-	shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id, Shaker.shaker_id == user_id).all()
+	shakers = db.session.query(Shaker).filter(Shaker.handshake_id == handshake_id, Shaker.shaker_id == user_id).all()
 	for shaker in shakers:
 		# shaker.bk_status = shaker.status
 		shaker.status = state
@@ -626,7 +626,7 @@ def save_handshake_for_event(event_name, inputs):
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
 		else:
-			handshake_dispute, shaker_dispute = save_dispute_state_all_by_user(user_id, outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'])
+			handshake_dispute, shaker_dispute = save_dispute_state_all_by_user(user_id, handshake.id, outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'])
 
 		return handshake_dispute, shaker_dispute
 

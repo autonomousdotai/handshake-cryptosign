@@ -1137,6 +1137,7 @@ class TestEventBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
 
+    # Dispute all makers were same user_id and outcome_id and matched
     def test_reiceive_dispute_event_with_state_2_maker (self):
         self.clear_data_before_test()
         # -----
@@ -1234,7 +1235,7 @@ class TestEventBluePrint(BaseTestCase):
         outcome = Outcome.find_outcome_by_hid(88)
         self.assertNotEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
 
-
+    # Dispute all shakers are same user_id and outcome_id
     def test_reiceive_dispute_event_with_state_2_shaker (self):
         self.clear_data_before_test()
         # -----
@@ -1374,6 +1375,8 @@ class TestEventBluePrint(BaseTestCase):
         outcome = Outcome.find_outcome_by_hid(88)
         self.assertNotEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
 
+    # Dispute all makers and shakers matched
+    # Dont dispute all makers did not match
     def test_reiceive_dispute_event_with_state_3_shaker (self):
         self.clear_data_before_test()
         # -----
@@ -1534,6 +1537,8 @@ class TestEventBluePrint(BaseTestCase):
         outcome = Outcome.find_outcome_by_id(88)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
 
+    # Dispute all makers and shakers matched
+    # Dont dispute all makers did not match
     def test_reiceive_dispute_event_with_state_3_maker (self):
         self.clear_data_before_test()
         # -----

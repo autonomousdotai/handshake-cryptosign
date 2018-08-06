@@ -15,7 +15,12 @@ source_routes = Blueprint('source', __name__)
 @login_required
 def sources():
 	try:
-		sources = Source.query.all()
+		get_all = int(request.args.get('all', 0))
+		sources = []
+		if get_all == 1:
+			sources = Source.query.all()
+		else:
+			sources = db.session.query(Source).filter(Source.approved==1).all()
 		data = []
 
 		for source in sources:

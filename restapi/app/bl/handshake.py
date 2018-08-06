@@ -147,21 +147,24 @@ def save_resolve_state_all(outcome_id, state):
 	db.session.flush()
 	return handshakes, shakers
 
-def save_dispute_state_all_by_user(user_id, handshake_id, outcome_id, state):
+def save_dispute_state_all_by_user(user_id, outcome_id, state, is_maker):
 	handshakes = []
 	shakers = []
-	handshakes = db.session.query(Handshake).filter(Handshake.user_id == user_id, Handshake.outcome_id == outcome_id, Handshake.shake_count > 0).all()
-	for hs in handshakes:
-		# hs.bk_status = hs.status
-		hs.status = state
-		db.session.merge(hs)
-
-	shakers = db.session.query(Shaker).filter(Shaker.handshake_id == handshake_id, Shaker.shaker_id == user_id).all()
-	for shaker in shakers:
-		# shaker.bk_status = shaker.status
-		shaker.status = state
-		db.session.merge(shaker)
+	if is_maker:
+		handshakes = db.session.query(Handshake).filter(Handshake.user_id == user_id, Handshake.outcome_id == outcome_id, Handshake.shake_count > 0).all()
+		for hs in handshakes:
+			# hs.bk_status = hs.status
+			hs.status = state
+			db.session.merge(hs)
+	else:
+		shakers = db.session.query(Shaker).filter(Shaker.shaker_id == user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome_id, Handshake.user_id==user_id).group_by(Handshake.id))).all()
+		for shaker in shakers:
+			# shaker.bk_status = shaker.status
+			shaker.status = state
+			db.session.merge(shaker)
 	db.session.flush()
+	print handshakes
+	print shakers
 	return handshakes, shakers
 
 def save_refund_state_for_maker(handshake):
@@ -583,22 +586,20 @@ def save_handshake_for_event(event_name, inputs):
 		shaker_dispute = []
 		handshake_dispute = []
 		handshake = None
-		user_id = None
+		is_maker = True
 		if state < 2:
 			return None, None
 
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
-			is_shake = True
+			is_maker = False
 			shaker = Shaker.find_shaker_by_id(int(offchain))
 			if shaker is not None:
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-				user_id = shaker.shaker_id
 				
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			user_id = handshake.user_id
 
 		if handshake is None or handshake.shake_count <= 0:
 			return None, None
@@ -626,7 +627,7 @@ def save_handshake_for_event(event_name, inputs):
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
 		else:
-			handshake_dispute, shaker_dispute = save_dispute_state_all_by_user(user_id, handshake.id, outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'])
+			handshake_dispute, shaker_dispute = save_dispute_state_all_by_user(handshake.user_id, outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], is_maker)
 
 		return handshake_dispute, shaker_dispute
 

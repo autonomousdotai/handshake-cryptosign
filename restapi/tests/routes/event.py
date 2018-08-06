@@ -1150,6 +1150,7 @@ class TestEventBluePrint(BaseTestCase):
 				amount=1,
 				currency='ETH',
 				side=1,
+                shake_count=1,
 				remaining_amount=1,
 				from_address='0x12345',
                 status=0
@@ -1160,7 +1161,7 @@ class TestEventBluePrint(BaseTestCase):
 				hs_type=3,
 				chain_id=4,
 				is_private=0,
-				user_id=99,
+				shaker_id=99,
 				outcome_id=88,
 				odds=1.2,
 				amount=1,
@@ -1174,6 +1175,24 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(shaker)
         db.session.commit()
 
+        shaker2 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=100,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='not change',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker2)
+        db.session.commit()
+
         with self.client:
             Uid = 1
             
@@ -1183,7 +1202,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_s{}".format(shaker.id),
+                    "offchain": "cryptosign_m{}".format(handshake.id),
                     "hid": 88,
                     "state": 2
                 }   
@@ -1203,8 +1222,14 @@ class TestEventBluePrint(BaseTestCase):
             print data
             self.assertTrue(data['status'] == 1)
 
-        hs = Shaker.find_shaker_by_id(shaker.id)
-        self.assertEqual(hs.status, HandshakeStatus['STATUS_INITED'])
+        hs = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        s1 = Shaker.find_shaker_by_id(shaker.id)
+        self.assertEqual(s1.status, HandshakeStatus['INDUSTRIES_NONE'])
+
+        s2 = Shaker.find_shaker_by_id(shaker2.id)
+        self.assertEqual(s2.status, HandshakeStatus['INDUSTRIES_NONE'])
 
         outcome = Outcome.find_outcome_by_hid(88)
         self.assertNotEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
@@ -1231,6 +1256,78 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(handshake)
         db.session.commit()
 
+        handshake1 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=2.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake1)
+        db.session.commit()
+
+        shaker = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker)
+        db.session.commit()
+
+        shaker1 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake1.id
+        )
+        db.session.add(shaker1)
+        db.session.commit()
+
+        shaker2 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=100,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='not change',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker2)
+        db.session.commit()
+
         with self.client:
             Uid = 1
             
@@ -1240,7 +1337,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_m{}".format(handshake.id),
+                    "offchain": "cryptosign_s{}".format(shaker.id),
                     "hid": 88,
                     "state": 2
                 }   
@@ -1260,46 +1357,25 @@ class TestEventBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
-        self.assertEqual(hs.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+        self.assertEqual(hs.status, HandshakeStatus['INDUSTRIES_NONE'])
+
+        hs1 = Handshake.find_handshake_by_id(handshake1.id)
+        self.assertEqual(hs1.status, HandshakeStatus['INDUSTRIES_NONE'])
+
+        s = Shaker.find_shaker_by_id(shaker.id)
+        self.assertEqual(s.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        s1 = Shaker.find_shaker_by_id(shaker1.id)
+        self.assertEqual(s1.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        s2 = Shaker.find_shaker_by_id(shaker2.id)
+        self.assertEqual(s2.status, HandshakeStatus['INDUSTRIES_NONE'])
 
         outcome = Outcome.find_outcome_by_hid(88)
         self.assertNotEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
 
     def test_reiceive_dispute_event_with_state_3_shaker (self):
         self.clear_data_before_test()
-        # -----
-        outcome = Outcome.find_outcome_by_id(88)
-        if outcome is not None:
-            outcome.result = -1
-            db.session.commit()
-        else:
-            outcome = Outcome(
-                id=88,
-                match_id=1,
-                hid=88
-            )
-            db.session.add(outcome)
-            db.session.commit()
-        
-        # -----
-        handshake_ = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=99,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=1,
-                shake_count=1,
-				remaining_amount=1,
-				from_address='0x12345',
-                status=HandshakeStatus['STATUS_USER_DISPUTED']
-        )
-        db.session.add(handshake_)
-        db.session.commit()
-
         # -----
         handshake = Handshake(
 				hs_type=3,
@@ -1318,7 +1394,96 @@ class TestEventBluePrint(BaseTestCase):
         )
         db.session.add(handshake)
         db.session.commit()
-        print handshake.id
+
+        handshake1 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=2.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake1)
+        db.session.commit()
+
+        handshake2 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+                shake_count=0,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake2)
+        db.session.commit()
+
+        shaker = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker)
+        db.session.commit()
+
+        shaker1 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake1.id
+        )
+        db.session.add(shaker1)
+        db.session.commit()
+
+        shaker2 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=100,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='not change',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker2)
+        db.session.commit()
 
         with self.client:
             Uid = 1
@@ -1329,7 +1494,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_m{}".format(handshake.id),
+                    "offchain": "cryptosign_s{}".format(shaker1.id),
                     "hid": 88,
                     "state": 3
                 }   
@@ -1348,12 +1513,23 @@ class TestEventBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
         
-        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
-        for hs in handshakes:
-            self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
-            shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
-            for shaker in shakers:
-                self.assertEqual(shaker.status, HandshakeStatus['STATUS_DISPUTED'])
+        hs = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        hs1 = Handshake.find_handshake_by_id(handshake1.id)
+        self.assertEqual(hs1.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        hs2 = Handshake.find_handshake_by_id(handshake2.id)
+        self.assertEqual(hs2.status, HandshakeStatus['INDUSTRIES_NONE'])
+
+        s = Shaker.find_shaker_by_id(shaker.id)
+        self.assertEqual(s.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        s1 = Shaker.find_shaker_by_id(shaker1.id)
+        self.assertEqual(s1.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        s2 = Shaker.find_shaker_by_id(shaker2.id)
+        self.assertEqual(s2.status, HandshakeStatus['STATUS_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_id(88)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])
@@ -1361,68 +1537,112 @@ class TestEventBluePrint(BaseTestCase):
     def test_reiceive_dispute_event_with_state_3_maker (self):
         self.clear_data_before_test()
         # -----
-        outcome = Outcome.find_outcome_by_id(88)
-        if outcome is not None:
-            outcome.result = -1
-            db.session.commit()
-        else:
-            outcome = Outcome(
-                id=88,
-                match_id=1,
-                hid=88
-            )
-            
-            db.session.add(outcome)
-            db.session.commit()
-        # -----
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
 				is_private=1,
-				user_id=33,
+				user_id=99,
 				outcome_id=88,
 				odds=1.2,
 				amount=1,
 				currency='ETH',
-				side=2,
+				side=1,
+                shake_count=1,
 				remaining_amount=1,
-				from_address='0x1233464576',
-                status=-1
+				from_address='0x12345',
+                status=0
         )
         db.session.add(handshake)
         db.session.commit()
 
-        # -----
-        handshake_shaked = Handshake(
+        handshake1 = Handshake(
 				hs_type=3,
 				chain_id=4,
 				is_private=1,
-				user_id=33,
+				user_id=99,
+				outcome_id=88,
+				odds=2.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake1)
+        db.session.commit()
+
+        handshake2 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
 				outcome_id=88,
 				odds=1.2,
 				amount=1,
 				currency='ETH',
-				side=2,
-                shake_count=1,
+				side=1,
+                shake_count=0,
 				remaining_amount=1,
-				from_address='0x1233464576',
-                status=-1
+				from_address='0x12345',
+                status=0
         )
-        db.session.add(handshake_shaked)
+        db.session.add(handshake2)
         db.session.commit()
-        # -----
+
         shaker = Shaker(
-					shaker_id=33,
-					amount=0.2,
-					currency='ETH',
-					odds=6,
-					side=1,
-					handshake_id=handshake_shaked.id,
-					from_address='0x1235678',
-					chain_id=4,
-                    status=2
-				)
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake.id
+        )
         db.session.add(shaker)
+        db.session.commit()
+
+        shaker1 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake1.id
+        )
+        db.session.add(shaker1)
+        db.session.commit()
+
+        shaker2 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=100,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='not change',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker2)
         db.session.commit()
 
         with self.client:
@@ -1452,18 +1672,23 @@ class TestEventBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
 
-        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
-        for hs in handshakes:
-            if hs.shake_count <= 0:
-                self.assertNotEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])        
-            else:
-                self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
-                shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
-                for shaker in shakers:
-                    self.assertEqual(shaker.status, HandshakeStatus['STATUS_DISPUTED'])
+        hs = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        hs1 = Handshake.find_handshake_by_id(handshake1.id)
+        self.assertEqual(hs1.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        hs2 = Handshake.find_handshake_by_id(handshake2.id)
+        self.assertEqual(hs2.status, HandshakeStatus['INDUSTRIES_NONE'])
 
         s = Shaker.find_shaker_by_id(shaker.id)
         self.assertEqual(s.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        s1 = Shaker.find_shaker_by_id(shaker1.id)
+        self.assertEqual(s1.status, HandshakeStatus['STATUS_DISPUTED'])
+
+        s2 = Shaker.find_shaker_by_id(shaker2.id)
+        self.assertEqual(s2.status, HandshakeStatus['STATUS_DISPUTED'])
 
         outcome = Outcome.find_outcome_by_id(88)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['DISPUTED'])

@@ -142,6 +142,7 @@ def add():
 				date=item['date'],
 				reportTime=item['reportTime'],
 				disputeTime=item['disputeTime'],
+				created_user_id=uid,
 				source_id=None if source is None else source.id
 			)
 			matches.append(match)

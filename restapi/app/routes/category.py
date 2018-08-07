@@ -30,6 +30,7 @@ def cates():
 @login_required
 def add():
 	try:
+		uid = int(request.headers['Uid'])
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -38,7 +39,8 @@ def add():
 		response_json = []
 		for item in data:
 			cate = Category(
-				name=item['name']
+				name=item['name'],
+				created_user_id=uid
 			)
 			db.session.add(cate)
 			db.session.flush()

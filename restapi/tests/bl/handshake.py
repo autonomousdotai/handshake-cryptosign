@@ -11,6 +11,7 @@ from app import db, app
 from app.models import Handshake, User, Outcome, Match, Shaker
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
+from app.helpers.utils import local_to_utc
 
 import app.bl.handshake as handshake_bl
 import app.constants as CONST
@@ -1068,9 +1069,12 @@ class TestHandshakeBl(BaseTestCase):
 	def test_can_refund_for_maker(self):
 		self.clear_data_before_test()
 
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
 		match = Match.find_match_by_id(1)
-		match.disputeTime = time.time() + 1000
-		match.reportTime = time.time() + 1000
+		match.disputeTime = seconds + 1100
+		match.reportTime = seconds + 1000
 		db.session.merge(match)
 		db.session.commit()
 
@@ -1110,7 +1114,11 @@ class TestHandshakeBl(BaseTestCase):
 		self.assertEqual(actual, expected)
 
 		# test refund if time exceed report time
-		match.reportTime = time.time() - 1000
+		outcome.result = -1
+		db.session.merge(outcome)
+		db.session.flush()
+
+		match.reportTime = seconds - 2000
 		db.session.merge(match)
 		db.session.commit()
 

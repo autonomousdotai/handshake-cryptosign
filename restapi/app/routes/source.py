@@ -35,6 +35,7 @@ def sources():
 @login_required
 def add():
 	try:
+		uid = int(request.headers['Uid'])
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -43,7 +44,8 @@ def add():
 		for item in data:
 			source = Source(
 				name=item['name'],
-				url=item['url']
+				url=item['url'],
+				created_user_id=uid
 			)
 			db.session.add(source)
 			db.session.flush()

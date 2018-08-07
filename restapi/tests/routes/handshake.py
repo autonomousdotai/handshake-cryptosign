@@ -9,6 +9,7 @@ from app.helpers.message import MESSAGE
 from io import BytesIO
 from datetime import datetime
 from app.constants import Handshake as HandshakeStatus, RESULT_TYPE
+from app.helpers.utils import local_to_utc
 
 import time
 import os
@@ -1436,6 +1437,14 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = 2
         db.session.commit()
 
+        match = Match.find_match_by_id(outcome.match_id)
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        match.date = seconds = 100
+        match.disputeTime = seconds + 1100
+        match.reportTime = seconds + 1000
+        db.session.commit()
+
         with self.client:
             Uid = 88
 
@@ -1454,11 +1463,10 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            hs = data['data']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
+            hs = data['data']
             self.assertEqual(hs['status'], HandshakeStatus['STATUS_COLLECT_PENDING'])
-
         
         for handshake in arr_hs:
             db.session.delete(handshake)

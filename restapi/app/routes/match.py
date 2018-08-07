@@ -13,7 +13,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task, Source
+from app.models import User, Match, Outcome, Task, Source, Category
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -116,19 +116,34 @@ def add():
 
 		for item in data:
 			source = None
+			category = None
+
 			if match_bl.is_validate_match_time(item) == False:				
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
 			if "source_id" in item:
+    			# TODO: check deleted and approved
 				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
 					source = Source(
 						name=item["source"]["name"],
-						url=item["source"]["url"]
+						url=item["source"]["url"],
+						created_user_id=uid
 					)
 					db.session.add(source)
-					db.session.flush()					
+					db.session.flush()
+
+			if "category_id" in item:
+				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
+			else:
+				if "category" in item and "name" in item["category"]:
+					category = Category(
+						name=item["category"]["name"],
+						created_user_id=uid
+					)
+					db.session.add(category)
+					db.session.flush()
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -143,7 +158,8 @@ def add():
 				reportTime=item['reportTime'],
 				disputeTime=item['disputeTime'],
 				created_user_id=uid,
-				source_id=None if source is None else source.id
+				source_id=None if source is None else source.id,
+				category_id=None if category is None else category.id
 			)
 			matches.append(match)
 			db.session.add(match)
@@ -162,6 +178,7 @@ def add():
 					db.session.flush()
 			match_json = match.to_json()
 			match_json["source_name"]=None if source is None else source.name
+			match_json["category_name"]=None if category is None else category.name
 			response_json.append(match_json)
 
 		db.session.commit()

@@ -441,13 +441,12 @@ class TestMatchBluePrint(BaseTestCase):
             Uid = uid
             
             response = self.client.get(
-                                    '/match/list/report',
+                                    '/match/report',
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
-
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
@@ -520,7 +519,7 @@ class TestMatchBluePrint(BaseTestCase):
         with self.client:
             Uid = uid
             response = self.client.get(
-                                    '/match/list/report',
+                                    '/match/report',
                                     headers={
                                         "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
                                         "Uid": "{}".format(Uid),
@@ -607,6 +606,9 @@ class TestMatchBluePrint(BaseTestCase):
                 "source":{
                     "name": "test",
                     "url": "test url"
+                },
+                "category": {
+                    "name": "Ahihi"
                 },
                 "date":seconds + 100,
                 "reportTime":seconds + 200,

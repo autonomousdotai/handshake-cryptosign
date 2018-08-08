@@ -278,8 +278,7 @@ def getMatchReport():
 		matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.reportTime <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
 
 		for match in matches:	
-			match_json = match.to_json()
-			response.append(match_json)
+			response.append(match.to_json())
 
 		return response_ok(response)
 	except Exception, ex:

@@ -10,6 +10,7 @@ from flask_jwt_extended import (create_access_token)
 import mock
 import json
 import time
+import app.constants as CONST
 
 class TestMatchBluePrint(BaseTestCase):
 
@@ -90,6 +91,10 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
+        matchs = db.session.query(Match).filter(Match.created_user_id==88).all()
+        for m in matchs:
+            db.session.delete(m)
+            db.session.commit()
         Task.query.delete()
         db.session.commit()
 
@@ -97,21 +102,22 @@ class TestMatchBluePrint(BaseTestCase):
     def test_get_match_with_no_report_and_time_exceed_closing_time(self):
         self.clear_data_before_test()
         arr_hs = []
-
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
         # ----- 
 
         match = Match.find_match_by_id(1000)
         if match is not None:
-            match.date=time.time() - 100,
-            match.reportTime=time.time() + 100,
-            match.disputeTime=time.time() + 200,
+            match.date=seconds - 100,
+            match.reportTime=seconds + 100,
+            match.disputeTime=seconds + 200,
             db.session.flush()
         else:
             match = Match(
                 id=1000,
-                date=time.time() - 100,
-                reportTime=time.time() + 100,
-                disputeTime=time.time() + 200,
+                date=seconds - 100,
+                reportTime=seconds + 100,
+                disputeTime=seconds + 200,
             )
             db.session.add(match)
 
@@ -119,16 +125,16 @@ class TestMatchBluePrint(BaseTestCase):
 
         match = Match.find_match_by_id(1001)
         if match is not None:
-            match.date=time.time() - 100,
-            match.reportTime=time.time() + 100,
-            match.disputeTime=time.time() + 200,
+            match.date=seconds - 100,
+            match.reportTime=seconds + 100,
+            match.disputeTime=seconds + 200,
             db.session.flush()
         else:
             match = Match(
                 id=1001,
-                date=time.time() - 100,
-                reportTime=time.time() + 100,
-                disputeTime=time.time() + 200,
+                date=seconds - 100,
+                reportTime=seconds + 100,
+                disputeTime=seconds + 200,
             )
             db.session.add(match)
 
@@ -137,16 +143,16 @@ class TestMatchBluePrint(BaseTestCase):
 
         match = Match.find_match_by_id(1002)
         if match is not None:
-            match.date=time.time() - 100,
-            match.reportTime=time.time() + 100,
-            match.disputeTime=time.time() + 200,
+            match.date=seconds - 100,
+            match.reportTime=seconds + 100,
+            match.disputeTime=seconds + 200,
             db.session.flush()
         else:
             match = Match(
                 id=1002,
-                date=time.time() - 100,
-                reportTime=time.time() + 100,
-                disputeTime=time.time() + 200,
+                date=seconds - 100,
+                reportTime=seconds + 100,
+                disputeTime=seconds + 200,
             )
             db.session.add(match)
 
@@ -189,20 +195,21 @@ class TestMatchBluePrint(BaseTestCase):
     def test_get_match_with_no_report_and_time_not_exceed_closing_time(self):
         self.clear_data_before_test()
         arr_hs = []
-
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
         # ----- 
         match = Match.find_match_by_id(1001)
         if match is not None:
-            match.date=time.time() + 100,
-            match.reportTime=time.time() + 200,
-            match.disputeTime=time.time() + 300,
+            match.date=seconds + 100,
+            match.reportTime=seconds + 200,
+            match.disputeTime=seconds + 300,
             db.session.flush()
         else:
             match = Match(
                 id=1001,
-                date=time.time() + 100,
-                reportTime=time.time() + 200,
-                disputeTime=time.time() + 300,
+                date=seconds + 100,
+                reportTime=seconds + 200,
+                disputeTime=seconds + 300,
             )
             db.session.add(match)
         db.session.commit()
@@ -212,16 +219,16 @@ class TestMatchBluePrint(BaseTestCase):
         # ----- 
         match = Match.find_match_by_id(1002)
         if match is not None:
-            match.date=time.time() + 50,
-            match.reportTime=time.time() + 200,
-            match.disputeTime=time.time() + 300,
+            match.date=seconds + 50,
+            match.reportTime=seconds + 200,
+            match.disputeTime=seconds + 300,
             db.session.flush()
         else:
             match = Match(
                 id=1002,
-                date=time.time() + 50,
-                reportTime=time.time() + 200,
-                disputeTime=time.time() + 300,
+                date=seconds + 50,
+                reportTime=seconds + 200,
+                disputeTime=seconds + 300,
             )
             db.session.add(match)
 
@@ -233,7 +240,8 @@ class TestMatchBluePrint(BaseTestCase):
         outcome = Outcome(
             match_id=1001,
             public=1,
-            hid=0
+            hid=0,
+            result=-1
         )
         db.session.add(outcome)
         db.session.commit()
@@ -243,7 +251,8 @@ class TestMatchBluePrint(BaseTestCase):
         outcome = Outcome(
             match_id=1002,
             public=1,
-            hid=1
+            hid=1,
+            result=-1
         )
         db.session.add(outcome)
         db.session.commit()
@@ -264,6 +273,7 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
+            print data_json
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 2)
 
@@ -276,174 +286,50 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-
-    def test_get_match_with_report_and_time_exceed_closing_time(self):
-        self.clear_data_before_test()
-        arr_hs = []
-
-        # ----- 
-
-        match = Match.find_match_by_id(1000)
-        if match is not None:
-            match.date=time.time() - 100,
-            match.reportTime=time.time() + 100,
-            match.disputeTime=time.time() + 200,
-            db.session.flush()
-        else:
-            match = Match(
-                id=1000,
-                date=time.time() - 100,
-                reportTime=time.time() + 100,
-                disputeTime=time.time() + 200,
-            )
-            db.session.add(match)
-
-        db.session.commit()
-        arr_hs.append(match)
-
-        # -----        
-        outcome = Outcome(
-            match_id=1000,
-            public=1,
-            hid=0
-        )
-        db.session.add(outcome)
-        db.session.commit()
-        arr_hs.append(outcome)
-
-        with self.client:
-            Uid = 66
-            
-            response = self.client.get(
-                                    '/match?report=1',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-
-            data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-            self.assertNotEqual(len(data_json), 0)            
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-
-    def test_get_match_with_report_and_time_not_exceed_closing_time(self):
-        self.clear_data_before_test()
-        arr_hs = []
-
-        # ----- 
-
-        match = Match.find_match_by_id(1000)
-        if match is not None:
-            match.date=time.time() + 100,
-            match.reportTime=time.time() + 100,
-            match.disputeTime=time.time() + 200,
-            db.session.flush()
-        else:
-            match = Match(
-                id=1000,
-                date=time.time() + 100,
-                reportTime=time.time() + 100,
-                disputeTime=time.time() + 200,
-            )
-            db.session.add(match)
-
-        db.session.commit()
-        arr_hs.append(match)
-
-        # -----        
-        outcome = Outcome(
-            match_id=1000,
-            public=1,
-            hid=0
-        )
-        db.session.add(outcome)
-        db.session.commit()
-        arr_hs.append(outcome)
-
-        with self.client:
-            Uid = 66
-            
-            response = self.client.get(
-                                    '/match?report=1',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            print data
-            self.assertTrue(data['status'] == 1)
-            data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-
-            tmp = None
-            for m in data_json:
-                if m['id'] == 1000:
-                    tmp = m
-                    break
-
-            self.assertEqual(tmp, None)
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
     def test_get_list_match_report_with_user(self):
         self.clear_data_before_test()
-        arr_hs = []
-        uid = 66
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
         # ----- 
 
-        match = Match.find_match_by_id(1000)
-        if match is not None:
-            match.date=seconds - 100,
-            match.reportTime=seconds + 200,
-            match.disputeTime=seconds + 300,
-            created_user_id=uid,
-            db.session.flush()
-        else:
-            match = Match(
-                id=1000,
-                date=seconds - 100,
-                reportTime=seconds + 200,
-                disputeTime=seconds + 300,
-                created_user_id=uid
-            )
-            db.session.add(match)
-        match = Match.find_match_by_id(1000)
-
+        match = Match(
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match)
         db.session.commit()
-        arr_hs.append(match)
-
+        match2 = Match(
+            date=seconds - 200,
+            reportTime=seconds - 100,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match2)
+        db.session.commit()
         # -----        
         outcome = Outcome(
-            match_id=1000,
+            match_id=match2.id,
             public=1,
             hid=0,
-            result=-1
+            result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome)
+        outcome1 = Outcome(
+            match_id=match2.id,
+            public=1,
+            hid=1,
+            result=CONST.RESULT_TYPE['PROCESSING']
+        )
+        db.session.add(outcome1)
         db.session.commit()
-        arr_hs.append(outcome)
 
         with self.client:
-            Uid = uid
-            
             response = self.client.get(
                                     '/match/report',
                                     headers={
-                                        "Uid": "{}".format(Uid),
+                                        "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
@@ -454,75 +340,60 @@ class TestMatchBluePrint(BaseTestCase):
 
             tmp = None
             for m in data_json:
-                if m['id'] == 1000:
+                if m['id'] == match2.id:
                     tmp = m
                     break
 
             self.assertNotEqual(tmp, None)
 
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
-
-
     def test_get_list_match_report_with_admin(self):
         self.clear_data_before_test()
-        arr_oc = []
-        arr_match = []
-        uid = 66
+        arr_hs = []
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
-
         # ----- 
-
-        match = Match.find_match_by_id(1000)
-        if match is not None:
-            match.date=seconds - 100,
-            match.reportTime=seconds + 200,
-            match.disputeTime=seconds + 300,
-            created_user_id=uid,
-            db.session.flush()
-        else:
-            match = Match(
-                id=1000,
-                date=seconds - 100,
-                reportTime=seconds + 200,
-                disputeTime=seconds + 300,
-                created_user_id=uid
-            )
-            db.session.add(match)
-
+        match = Match(
+            date=seconds - 200,
+            reportTime=seconds - 100,
+            disputeTime=seconds + 300
+        )
+        db.session.add(match)
         db.session.commit()
-        arr_match.append(match)
+
+        match2 = Match(
+            date=seconds - 200,
+            reportTime=seconds - 100,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match2)
+        db.session.commit()
 
         # -----        
         outcome = Outcome(
-            match_id=1000,
+            match_id=match.id,
             public=1,
             hid=0,
-            result=-1
+            result=CONST.RESULT_TYPE['PENDING']
         )
-        arr_oc.append(outcome)
-        db.session.add(outcome)
-
-        outcome = Outcome(
-            match_id=1000,
-            public=1,
-            hid=0,
-            result=-3
-        )
-        arr_oc.append(outcome)
         db.session.add(outcome)
         db.session.commit()
-        
+
+        outcome = Outcome(
+            match_id=match2.id,
+            public=1,
+            hid=1,
+            result=CONST.RESULT_TYPE['DISPUTED']
+        )
+        db.session.add(outcome)
+        db.session.commit()        
 
         with self.client:
-            Uid = uid
             response = self.client.get(
-                                    '/match/report',
+                                    'admin/match/report',
                                     headers={
                                         "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
-                                        "Uid": "{}".format(Uid),
+                                        "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
@@ -531,111 +402,14 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
+            print data_json
+            tmp = None
+            for m in data_json:
+                if m['id'] == match.id:
+                    tmp = m
+                    break
 
-            count_pending = 0
-            count_dispute = 0
-            for oc in arr_oc:
-                print oc
-                if oc.result == -1:
-                    count_pending += 1
-                if oc.result == -3:
-                    count_dispute += 1
-            self.assertTrue(count_pending == 1)
-            self.assertTrue(count_dispute == 1)
-        for handshake in arr_match:
-            db.session.delete(handshake)
-            db.session.commit()
-
-        for oc in arr_oc:
-            db.session.delete(oc)
-            db.session.commit()
-
-
-    def test_add_match(self):
-        t = datetime.now().timetuple()
-        seconds = local_to_utc(t)
-        source = db.session.query(Source).filter(Source.id == 1).first()
-
-        if source is None:
-            source = Source(
-                name="a",
-                url="b"
-            )
-            db.session.add(source)
-            db.session.commit()
-        # -----
-
-        with self.client:
-            Uid = 88
-
-            params = [{
-                "homeTeamName":"-",
-                "homeTeamCode":"-",
-                "homeTeamFlag":"-",
-                "awayTeamName":"-",
-                "awayTeamCode":"-",
-                "awayTeamFlag":"-",
-                "name":"source is nonce",
-                "market_fee":2,
-                "source_id":999999,
-                "date":seconds + 100,
-                "reportTime":seconds + 200,
-                "disputeTime":seconds + 300
-            }, {
-                "homeTeamName":"-",
-                "homeTeamCode":"-",
-                "homeTeamFlag":"-",
-                "awayTeamName":"-",
-                "awayTeamCode":"-",
-                "awayTeamFlag":"-",
-                "name":"source is existed",
-                "market_fee":2,
-                "source_id": source.id,
-                "date":seconds + 100,
-                "reportTime":seconds + 200,
-                "disputeTime":seconds + 300
-            }, {
-                "homeTeamName":"-",
-                "homeTeamCode":"-",
-                "homeTeamFlag":"-",
-                "awayTeamName":"-",
-                "awayTeamCode":"-",
-                "awayTeamFlag":"-",
-                "name":"new source",
-                "market_fee":2,
-                "source":{
-                    "name": "test",
-                    "url": "test url"
-                },
-                "category": {
-                    "name": "Ahihi"
-                },
-                "date":seconds + 100,
-                "reportTime":seconds + 200,
-                "disputeTime":seconds + 300
-            }]
-
-            response = self.client.post(
-                                    '/match/add',
-                                    content_type='application/json',
-                                    data=json.dumps(params),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertEqual(response.status_code, 200)
-            self.assertTrue(data['status'] == 1)
-
-            for item in data["data"]:
-                if item["name"] == "source is nonce":
-                    self.assertEqual(item["source_id"], None)
-                if item["name"] == "source is existed":
-                    self.assertEqual(item["source_id"], source.id)
-                if item["name"] == "new source":
-                    self.assertNotEqual(item["source_id"], None)
+            self.assertNotEqual(tmp, None)
 
 if __name__ == '__main__':
     unittest.main()

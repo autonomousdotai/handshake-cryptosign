@@ -11,6 +11,7 @@ from flask import Blueprint, request, g
 from app import db, sg, s3
 from datetime import datetime
 from app.helpers.utils import local_to_utc
+from sqlalchemy import and_
 
 from app.models import Match, Outcome, Task
 from app.helpers.message import MESSAGE, CODE

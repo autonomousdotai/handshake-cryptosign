@@ -54,15 +54,19 @@ def before_request():
 	if rp != '/' and rp.endswith('/'):
 		return redirect(rp[:-1])
 
-	g.BLOCKCHAIN_SERVER_ENDPOINT = app.config.get('BLOCKCHAIN_SERVER_ENDPOINT')
 	g.DISPATCHER_SERVICE_ENDPOINT = app.config.get('DISPATCHER_SERVICE_ENDPOINT')
 	g.SOLR_SERVICE = app.config.get('SOLR_SERVICE')
 	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
 	g.MAIL_SERVICE = app.config.get('MAIL_SERVICE')
-	g.MAIL_SERVER_KEY = app.config.get('MAIL_SERVER_KEY')
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
+
+	# SmartContract
+	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')
+	g.PREDICTION_JSON = app.config.get('PREDICTION_JSON')
+	g.ERC20_PREDICTION_SMART_CONTRACT = app.config.get('ERC20_PREDICTION_SMART_CONTRACT')
+	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
 
 	g.start = time.time()
 

@@ -24,11 +24,11 @@ const tokenRegistryAbi = require('../contracts/TokenRegistry.json').abi;
  * @param {bytes32} offchain
  */
 
-const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice) => {
+const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice, _options) => {
   return new Promise(async(resolve, reject) => {
     try {
-      console.log('addNewTokenTransaction');
-      console.log(_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice);
+      console.log('----> addNewTokenTransaction');
+      console.log(_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice, _options);
       const contractAddress = tokenRegistryAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
@@ -74,12 +74,12 @@ const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, o
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
-            console.log('Remove nonce at createMarketTransaction');
+            console.log('Remove nonce at addNewTokenTransaction');
             web3Config.setNonce(web3Config.getNonce() - 1);
           }
         }
         return reject({
-          err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_FAIL,
+          err_type: constants.TASK_STATUS.ADD_TOKEN_FAILED,
           error: err,
           options_data: {
             task: _options.task
@@ -88,7 +88,7 @@ const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, o
       });
     } catch (e) {
       reject({
-        err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_EXCEPTION,
+        err_type: constants.TASK_STATUS.ADD_TOKEN_TNX_EXCEPTION,
         error: e,
         options_data: {
           task: _options.task

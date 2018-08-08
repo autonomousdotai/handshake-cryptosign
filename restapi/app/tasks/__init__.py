@@ -79,7 +79,6 @@ def update_feed(handshake_id):
 			"text_search_ss": [handshake.description],
 			"shake_count_i": handshake.shake_count,
 			"view_count_i": handshake.view_count,
-			"comment_count_i": 0,
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
@@ -98,7 +97,9 @@ def update_feed(handshake_id):
 			"reporting_time_i": match.reportTime,
 			"disputing_time_i": match.disputeTime,
 			"outcome_total_amount_s": '{0:f}'.format(outcome.total_amount if outcome.total_amount is not None else 0),
-			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0)
+			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0),
+			"contract_address": handshake.contract_address,
+			"contract_json": handshake.contract_json
 		}
 		print 'create maker {}'.format(hs)
 

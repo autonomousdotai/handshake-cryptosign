@@ -36,8 +36,7 @@ const asyncScanOnchainTask = () => {
 									let smartContractFunc = null;
 									const item = JSON.parse(task.data);
 									const onchainData = item.onchainData;
-		
-									switch (item.contract_name) {
+									switch (task.contract_name) {
 										case 'PredictionHandshake':
 											switch (onchainData.contract_method) {
 												case 'createMarket':
@@ -72,7 +71,7 @@ const asyncScanOnchainTask = () => {
 										case 'TokenRegistry': 
 											switch (onchainData.contract_method) {
 												case 'addNewToken':
-													smartContractFunc = tokenRegistryContract.addNewTokenTransaction(nonce + index, onchainData.token_address);
+													smartContractFunc = tokenRegistryContract.addNewTokenTransaction(nonce + index, onchainData.token_address, onchainData.symbol, onchainData.name, onchainData.decimals, onchainData.offchain, gasPriceStr, item);
 												break;
 											}
 										break;

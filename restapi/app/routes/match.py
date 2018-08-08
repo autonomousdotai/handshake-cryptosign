@@ -279,12 +279,6 @@ def getMatchReport():
 
 		for match in matches:	
 			match_json = match.to_json()
-
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				outcome_json = outcome.to_json()
-
-			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
 			response.append(match_json)
 
 		return response_ok(response)

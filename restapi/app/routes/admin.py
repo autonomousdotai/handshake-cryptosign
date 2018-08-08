@@ -13,11 +13,11 @@ from datetime import datetime
 from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
-from app.models import Match, Outcome, Task
+from app.models import Match, Outcome, Task, Handshake, Shaker, Setting
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
-from app.tasks import factory_reset
+from app.tasks import factory_reset, update_contract_feed
 from flask_jwt_extended import jwt_required
 
 admin_routes = Blueprint('admin', __name__)
@@ -142,12 +142,6 @@ def get_match():
 
 		for match in matches_by_admin:
 			match_json = match.to_json()
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				outcome_json = outcome.to_json()
-				arr_outcomes.append(outcome_json)
-
-			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
 			response.append(match_json)
 
 		for match in matches_disputed:
@@ -156,7 +150,7 @@ def get_match():
 			for outcome in match.outcomes:
 				if outcome.result == CONST.RESULT_TYPE['DISPUTED']:
 					outcome_json = outcome.to_json()
-				arr_outcomes.append(outcome_json)
+					arr_outcomes.append(outcome_json)
 
 			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
 			match_json["is_disputed"] = 1
@@ -272,6 +266,44 @@ def test_market():
 			db.session.flush()
 
 		db.session.commit()
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+@admin_routes.route('/change-contract', methods=['POST'])
+@jwt_required
+def change_contract():
+	try:
+		setting = db.session.query(Setting).filter(Setting.name == "ChangeContract").first()
+		if setting is None or setting.status is None or setting.status == 0:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		data = request.json
+		from_id = int(data.get('from', 0))
+		to_id = int(data.get('to', 0))
+
+		if from_id >= to_id:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		handshakes = db.session.query(Handshake).filter(Handshake.id >= from_id, Handshake.id <= to_id).all()
+		arr_id = []
+		for hs in handshakes:
+			if hs.contract_address is None and hs.contract_json is None:
+				arr_id.append(hs.id)
+				hs.contract_address = g.PREDICTION_SMART_CONTRACT
+				hs.contract_json = g.PREDICTION_JSON
+				db.session.flush()
+				
+				shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
+				for sk in shakers:
+					sk.contract_address = g.PREDICTION_SMART_CONTRACT
+					sk.contract_json = g.PREDICTION_JSON
+					db.session.flush()
+				db.session.commit()
+
+		if len(arr_id) > 0:
+			update_contract_feed.delay(arr_id)
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()

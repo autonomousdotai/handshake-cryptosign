@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, g
 from app.factory import make_celery
 from app.core import db, configure_app, firebase
 from app.models import Handshake, Outcome, Shaker, Match, Task
@@ -98,8 +98,8 @@ def update_feed(handshake_id):
 			"disputing_time_i": match.disputeTime,
 			"outcome_total_amount_s": '{0:f}'.format(outcome.total_amount if outcome.total_amount is not None else 0),
 			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0),
-			"contract_address": handshake.contract_address,
-			"contract_json": handshake.contract_json
+			"contract_address_s": handshake.contract_address,
+			"contract_json_s": handshake.contract_json
 		}
 		print 'create maker {}'.format(hs)
 
@@ -314,3 +314,32 @@ def send_mail(outcome_id, outcome_name):
 	except Exception as e:
 		print("Send mail notification fail!")
 		print e
+
+
+@celery.task()
+def update_contract_feed(arr_id):
+	try:
+		arr_handshakes = []
+		for _id in arr_id:
+			hs = {
+				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+				"contract_address_s": g.PREDICTION_SMART_CONTRACT,
+				"contract_json_s": g.PREDICTION_JSON
+			}
+			arr_handshakes.append(hs)
+
+		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+		data = {
+			"add": arr_handshakes
+		}
+		res = requests.post(endpoint, json=data)
+		if res.status_code > 400 or \
+			res.content is None or \
+			(isinstance(res.content, str) and 'null' in res.content):
+			print "Update contract feeds fail"
+			print res
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("add_feed=>",exc_type, fname, exc_tb.tb_lineno)

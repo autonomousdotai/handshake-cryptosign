@@ -4,6 +4,7 @@ from app.models import Shaker, Handshake, Outcome, Shaker, User, Match, Tx
 from app import db, app
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
+from sqlalchemy import or_
 
 import mock
 import json
@@ -80,6 +81,19 @@ class TestEventBluePrint(BaseTestCase):
             outcome.result = -1
             db.session.commit()
 
+        outcome = Outcome.find_outcome_by_id(100)
+        if outcome is None:
+            outcome = Outcome(
+                id=100,
+                match_id=1,
+                hid=100
+            )
+            db.session.add(outcome)
+            db.session.commit()
+        else:
+            outcome.result = -1
+            db.session.commit()
+
     def clear_data_before_test(self):
         # delete master user
         user = User.find_user_with_id(1)
@@ -92,7 +106,12 @@ class TestEventBluePrint(BaseTestCase):
             outcome.result = -1
             db.session.commit()
 
-        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
+        outcome = Outcome.find_outcome_by_id(100)
+        if outcome is not None:
+            outcome.result = -1
+            db.session.commit()
+
+        handshakes = db.session.query(Handshake).filter(or_(Handshake.outcome_id==88, Handshake.outcome_id==100)).all()
         for handshake in handshakes:
             db.session.delete(handshake)
             db.session.commit()
@@ -522,24 +541,62 @@ class TestEventBluePrint(BaseTestCase):
 
     def test_reiceive_refund_event(self):
         self.clear_data_before_test()
+        arr_hs = []
+        arr_sk = []
         # -----
-        handshake = Handshake(
-				hs_type=3,
-				chain_id=4,
-				is_private=1,
-				user_id=66,
-				outcome_id=88,
-				odds=1.2,
-				amount=1,
-				currency='ETH',
-				side=2,
-				remaining_amount=1,
-				from_address='0x123',
-                status=0
-        )
-        db.session.add(handshake)
+        handshake1 = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=66,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=HandshakeStatus['STATUS_REFUND_PENDING']
+					)
+        db.session.add(handshake1)
         db.session.commit()
-        handshake_id = handshake.id
+        arr_hs.append(handshake1)
+
+        handshake2 = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=66,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=HandshakeStatus['STATUS_MAKER_UNINITED']
+					)
+        db.session.add(handshake2)
+        db.session.commit()
+        arr_hs.append(handshake2)
+
+        handshake3 = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=99,
+						outcome_id=100,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=HandshakeStatus['STATUS_INITED']
+					)
+        db.session.add(handshake3)
+        db.session.commit()
+        arr_hs.append(handshake3)        
 
         handshake_uninited = Handshake(
 				hs_type=3,
@@ -558,6 +615,7 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(handshake_uninited)
         db.session.commit()
         handshake_uninited_id = handshake_uninited.id
+        arr_hs.append(handshake_uninited)
 
         handshake_uninit_failed = Handshake(
 				hs_type=3,
@@ -576,6 +634,37 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(handshake_uninit_failed)
         db.session.commit()
         handshake_uninit_failed_id = handshake_uninit_failed.id
+        arr_hs.append(handshake_uninit_failed)
+        # -----
+        shaker1 = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake1.id,
+					from_address='0x123',
+					chain_id=4,
+					status=HandshakeStatus['STATUS_REFUND_PENDING']
+				)
+        db.session.add(shaker1)
+        db.session.commit()
+        arr_sk.append(shaker1)
+		# -----
+        shaker2 = Shaker(
+					shaker_id=66,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake1.id,
+					from_address='0x123',
+					chain_id=4,
+					status=HandshakeStatus['STATUS_REFUND_PENDING']
+				)
+        db.session.add(shaker2)
+        db.session.commit()
+        arr_sk.append(shaker2)
         # -----
         shaker = Shaker(
 					shaker_id=66,
@@ -583,13 +672,15 @@ class TestEventBluePrint(BaseTestCase):
 					currency='ETH',
 					odds=6,
 					side=1,
-					handshake_id=handshake.id,
+					handshake_id=handshake3.id,
 					from_address='0x123',
 					chain_id=4,
                     status=-1
 				)
         db.session.add(shaker)
         db.session.commit()
+        shaker_id = shaker.id
+        arr_sk.append(shaker)
 
         shaker_uninited = Shaker(
                 shaker_id=66,
@@ -605,6 +696,7 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(shaker_uninited)
         db.session.commit()
         shaker_uninited_id = shaker_uninited.id
+        arr_sk.append(shaker_uninited)
 
         shaker_uninit_failed = Shaker(
                 shaker_id=66,
@@ -618,10 +710,9 @@ class TestEventBluePrint(BaseTestCase):
                 status=HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
         )
         db.session.add(shaker_uninit_failed)
-
         db.session.commit()
-        shaker_id = shaker.id
         shaker_uninit_failed_id = shaker_uninit_failed.id
+        arr_sk.append(shaker_uninit_failed)
 
         with self.client:
             Uid = 1
@@ -632,7 +723,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_s{}".format(shaker_id),
+                    "offchain": "cryptosign_s{}".format(shaker2.id),
                     "hid": 88
                 }   
             }
@@ -649,12 +740,23 @@ class TestEventBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
-            db.session.close()
+
+            hs1 = Handshake.find_handshake_by_id(handshake1.id)
+            self.assertEqual(hs1.status, HandshakeStatus['STATUS_REFUNDED'])
+            hs2 = Handshake.find_handshake_by_id(handshake2.id)
+            self.assertEqual(hs2.status, HandshakeStatus['STATUS_MAKER_UNINITED'])
+            hs3 = Handshake.find_handshake_by_id(handshake3.id)
+            self.assertEqual(hs3.status, HandshakeStatus['STATUS_INITED'])
+
+            sk1 = Shaker.find_shaker_by_id(shaker1.id)
+            self.assertEqual(sk1.status, HandshakeStatus['STATUS_REFUNDED'])
+            sk2 = Shaker.find_shaker_by_id(shaker2.id)
+            self.assertEqual(sk2.status, HandshakeStatus['STATUS_REFUNDED'])
 
             s = Shaker.find_shaker_by_id(shaker_id)
-            self.assertEqual(s.status, HandshakeStatus['STATUS_REFUNDED'])
-            h = Handshake.find_handshake_by_id(handshake_id)
-            self.assertEqual(h.status, HandshakeStatus['STATUS_REFUNDED'])
+            self.assertEqual(s.status, HandshakeStatus['STATUS_PENDING'])
+            h = Handshake.find_handshake_by_id(handshake3.id)
+            self.assertEqual(h.status, HandshakeStatus['STATUS_INITED'])
 
             shaker_uninit_failed_=Shaker.find_shaker_by_id(shaker_uninit_failed_id)
             self.assertEqual(shaker_uninit_failed_.status, HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'])
@@ -667,7 +769,14 @@ class TestEventBluePrint(BaseTestCase):
 
             handshake_uninited=Handshake.find_handshake_by_id(handshake_uninited_id)
             self.assertEqual(handshake_uninited.status, HandshakeStatus['STATUS_MAKER_UNINITED'])
-
+            
+            for item in arr_hs:
+                db.session.delete(item)
+                db.session.commit()
+            for item in arr_sk:
+                db.session.delete(item)
+                db.session.commit()
+            db.session.close()
 
     def test_reiceive_shake_event_with_status_0(self):
         self.clear_data_before_test()

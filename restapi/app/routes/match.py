@@ -22,17 +22,13 @@ match_routes = Blueprint('match', __name__)
 @login_required
 def matches():
 	try:
-		report = int(request.args.get('report', 0))
 		response = []
 		matches = []
 
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
-
-		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.reportTime > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
-		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+		
+		matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against
@@ -49,17 +45,9 @@ def matches():
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				outcome_json = outcome.to_json()
+				arr_outcomes.append(outcome_json)
 
-				if report == 1:
-					if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
-						arr_outcomes.append(outcome_json)
-				else:
-					arr_outcomes.append(outcome_json)
-
-			if len(arr_outcomes) > 0:
-				match_json["outcomes"] = arr_outcomes
-			else:
-				match_json["outcomes"] = []
+			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
 			response.append(match_json)
 
 		return response_ok(response)
@@ -208,7 +196,6 @@ def remove(id):
 
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
-@jwt_required
 def report(match_id):
 	try:
 		dispute = int(request.args.get('dispute', 0))
@@ -277,32 +264,18 @@ def report(match_id):
 @login_required
 def getMatchReport():
 	try:
-		is_admin = False
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
-
-		if 'Authorization' in request.headers:
-
-			auth_value = decode_token(request.headers["Authorization"].replace('Bearer ', ''))
-			if 'identity' in auth_value and auth_value['identity'] == g.EMAIL:
-				is_admin = True
-			if auth_value['exp'] < seconds:
-				return response_error(MESSAGE.USER_TOKE_EXPIRED, CODE.USER_INVALID)		
-
-		if is_admin == False and request.headers['Uid'] is None:
-			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
-		
 		uid = int(request.headers['Uid'])
+
+		if request.headers['Uid'] is None:
+			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		response = []
 		matches = []
 
-		if is_admin:
-			# Get all matchs are DISPUTED or PENDING (-3 or -1)
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(or_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.result == CONST.RESULT_TYPE['DISPUTED']), Outcome.hid != None)).group_by(Outcome.match_id))).all()
-		else:
-			# Get all matchs are PENDING (-1)
-			matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
+		# Get all matchs are PENDING (-1)
+		matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.reportTime <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
 
 		for match in matches:	
 			match_json = match.to_json()
@@ -311,13 +284,7 @@ def getMatchReport():
 			for outcome in match.outcomes:
 				outcome_json = outcome.to_json()
 
-				if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
-					arr_outcomes.append(outcome_json)
-
-			if len(arr_outcomes) > 0:
-				match_json["outcomes"] = arr_outcomes
-			else:
-				match_json["outcomes"] = []
+			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
 			response.append(match_json)
 
 		return response_ok(response)

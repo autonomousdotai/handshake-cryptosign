@@ -88,30 +88,22 @@ def save_collect_state_for_shaker(shaker):
 
 	return None, None
 
+def save_refund_state_for_all(user_id, outcome_id):
+	outcome = Outcome.find_outcome_by_id(outcome_id)
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.status==HandshakeStatus['STATUS_REFUND_PENDING'], Handshake.user_id==user_id, Handshake.outcome_id==outcome_id)).all()
+	shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_REFUND_PENDING'], Shaker.shaker_id==user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome_id)))).all()
+	
+	for hs in handshakes:
+		hs.bk_status = hs.status
+		hs.status = HandshakeStatus['STATUS_REFUNDED']
+		db.session.merge(hs)
 
-def save_refund_state_for_shaker(shaker):
-	if shaker is not None:
-		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+	for sk in shakers:
+		sk.bk_status = sk.status
+		sk.status = HandshakeStatus['STATUS_REFUNDED']
+		db.session.merge(sk)
 
-		if outcome is not None:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==shaker.shaker_id, Handshake.outcome_id==handshake.outcome_id, not_( Handshake.status.in_([HandshakeStatus['STATUS_MAKER_UNINITED'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'], HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']])))).all()
-			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==shaker.shaker_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)), not_( Shaker.status.in_([HandshakeStatus['STATUS_MAKER_UNINITED'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'], HandshakeStatus['STATUS_MAKER_UNINIT_PENDING']])))).all()
-
-			for hs in handshakes:
-				hs.bk_status = hs.status
-				hs.status = HandshakeStatus['STATUS_REFUNDED']
-				db.session.merge(hs)
-
-			for sk in shakers:
-				sk.bk_status = sk.status
-				sk.status = HandshakeStatus['STATUS_REFUNDED']
-				db.session.merge(sk)
-				
-			db.session.flush()
-			return handshakes, shakers
-
-	return None, None
+	return handshakes, shakers
 
 def save_dispute_state_all(outcome_id, state):
 	handshakes = []
@@ -566,16 +558,25 @@ def save_handshake_for_event(event_name, inputs):
 
 	elif event_name == '__refund':
 		print '__refund'
+		handshake = None
+		user_id = None
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
-			return save_refund_state_for_shaker(shaker)
+			if shaker is None:
+				return None, None
+			user_id = shaker.shaker_id
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			return save_refund_state_for_maker(handshake)
-
+			user_id = handshake.user_id
+		
+		if handshake is None:
+			return None, None
+		
+		save_refund_state_for_all(user_id, handshake.outcome_id)
 		return None, None
 
 	elif event_name == '__dispute':

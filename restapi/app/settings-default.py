@@ -6,9 +6,7 @@ class BaseConfig(object):
 	ENV = 'DEV'
 	BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 	UPLOAD_DIR = os.path.join(BASE_DIR, 'files', 'temp')
-	# Mobile
-	MOBILE_CURRENT_VERSION = '2.0.1'
-	MOBILE_MIN_VERSION = '2.0.1'
+
 	# SQLALCHEMY
 	SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
@@ -29,8 +27,7 @@ class BaseConfig(object):
 
 	# Autonomous server: user sso
 	DISPATCHER_SERVICE_ENDPOINT = os.getenv('DISPATCHER_SERVICE_ENDPOINT', '')
-	# Blockchain server: community blockchain eth
-	BLOCKCHAIN_SERVER_ENDPOINT = os.getenv('BLOCKCHAIN_SERVER_ENDPOINT', 'http://localhost:3000')
+	
 	# IPFS
 	IPFS_REST_HOST = os.environ.get('IPFS_REST_HOST', 'localhost')
 	IPFS_REST_PORT = os.environ.get('IPFS_REST_PORT', '5001')
@@ -41,10 +38,20 @@ class BaseConfig(object):
 	ENV = os.getenv('ENV', '')
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'
+
+
 	REDIS_HOST = 'localhost'
 	REDIS_PORT = 6379
 	CELERY_BROKER_URL = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	CELERY_RESULT_BACKEND = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
+
+	# SmartContract
+	PREDICTION_SMART_CONTRACT = '0x123'
+	PREDICTION_JSON = 'PredictionHandshake101'
+
+	ERC20_PREDICTION_SMART_CONTRACT = '0x123'
+	ERC20_PREDICTION_JSON = 'PredictionHandshakeWithToken'
+
 	FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY', '')
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')

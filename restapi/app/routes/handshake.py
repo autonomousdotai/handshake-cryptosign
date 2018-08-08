@@ -159,7 +159,9 @@ def init():
 				side=side,
 				remaining_amount=amount,
 				from_address=from_address,
-				free_bet=free_bet
+				free_bet=free_bet,
+				contract_address=g.PREDICTION_SMART_CONTRACT,
+				contract_json=g.PREDICTION_JSON
 			)
 			db.session.add(handshake)
 			db.session.commit()
@@ -222,7 +224,9 @@ def init():
 					handshake_id=handshake.id,
 					from_address=from_address,
 					chain_id=chain_id,
-					free_bet=free_bet
+					free_bet=free_bet,
+					contract_address=g.PREDICTION_SMART_CONTRACT,
+					contract_json=g.PREDICTION_JSON
 				)
 
 				db.session.add(shaker)
@@ -252,7 +256,9 @@ def init():
 					side=side,
 					remaining_amount=shaker_amount,
 					from_address=from_address,
-					free_bet=free_bet
+					free_bet=free_bet,
+					contract_address=g.PREDICTION_SMART_CONTRACT,
+					contract_json=g.PREDICTION_JSON
 				)
 				db.session.add(handshake)
 				db.session.flush()

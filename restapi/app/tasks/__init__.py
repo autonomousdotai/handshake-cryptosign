@@ -323,8 +323,8 @@ def update_contract_feed(arr_id):
 		for _id in arr_id:
 			hs = {
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"contract_address_s": app.config['PREDICTION_SMART_CONTRACT'],
-				"contract_json_s": app.config['PREDICTION_JSON']
+				"contract_address_s": {"set": app.config['PREDICTION_SMART_CONTRACT']},
+				"contract_json": {"set": app.config['PREDICTION_JSON']}
 			}
 			arr_handshakes.append(hs)
 

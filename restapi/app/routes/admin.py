@@ -301,8 +301,6 @@ def change_contract():
 					sk.contract_json = g.PREDICTION_JSON
 					db.session.flush()
 				db.session.commit()
-		print "AAAAAAAAAAA"
-		print arr_id
 		if len(arr_id) > 0:
 			update_contract_feed.delay(arr_id)
 		return response_ok()

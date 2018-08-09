@@ -283,7 +283,7 @@ def change_contract():
 		from_id = int(data.get('from', 0))
 		to_id = int(data.get('to', 0))
 
-		if from_id >= to_id:
+		if from_id > to_id:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		handshakes = db.session.query(Handshake).filter(Handshake.id >= from_id, Handshake.id <= to_id).all()

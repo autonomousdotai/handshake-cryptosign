@@ -247,14 +247,11 @@ const asyncScanTask = () => {
 							.then( resultUpdate => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
-								let contract_json = '';
-								let contract_address = '';
+								let contract_json = task.contract_json;
+								let contract_address = task.contract_address;
 
 								switch (task.task_type) {
 									case 'NORMAL': // ETHER
-										contract_json = 'PredictionHandshake';
-										contract_address = configs.network[network_id].bettingHandshakeAddress;
-
 										switch (task.action) {
 											case 'ADD_FEED':
 												processTaskFunc = addFeed(params, task);
@@ -263,9 +260,6 @@ const asyncScanTask = () => {
 									break;
 
 									case 'REAL_BET': // ETHER
-										contract_json = 'PredictionHandshake';
-										contract_address = configs.network[network_id].bettingHandshakeAddress;
-
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, false);
@@ -283,9 +277,6 @@ const asyncScanTask = () => {
 									break;
 
 									case 'FREE_BET': // ETHER
-										contract_json = 'PredictionHandshake';
-										contract_address = configs.network[network_id].bettingHandshakeAddress;
-
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, true);

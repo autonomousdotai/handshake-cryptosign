@@ -36,7 +36,7 @@ const asyncScanOnchainTask = () => {
 									let smartContractFunc = null;
 									const item = JSON.parse(task.data);
 									const onchainData = item.onchainData;
-									const arr_tmp = task.contract_json.split('_');
+									let arr_tmp = task.contract_json.split('_');
 									arr_tmp = arr_tmp.length > 0 ? arr_tmp : [""]
 
 									// switch (task.contract_json) {

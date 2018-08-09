@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -16,6 +15,8 @@ import (
 )
 
 var txDAO = &daos.TxDAO{}
+var matchDAO = &daos.MatchDAO{}
+var outcomeDAO = &daos.OutcomeDAO{}
 var hookService = &services.HookService{}
 var etherscanService = &services.EtherscanService{}
 
@@ -23,13 +24,25 @@ var etherscanService = &services.EtherscanService{}
 type Cron struct {
 	ScanRunning     bool
 	SyncRunning     bool
-	ContractName    string
+	ContractJSON    string
 	ContractAddress string
 }
 
 // NewCron : creates a new Cron instance
-func NewCron(contractName string, contractAddress string) (cr Cron) {
-	cr = Cron{false, false, contractName, contractAddress}
+func NewCron(contractJSON string, contractAddress string) (cr Cron) {
+	cr = Cron{false, false, contractJSON, contractAddress}
+	return
+}
+
+// Remind : struct to handle remind user
+type Remind struct {
+	Email     string
+	IsRunning bool
+}
+
+// NewRemind : creates a new Remind instance
+func NewRemind(email string) (r Remind) {
+	r = Remind{email, false}
 	return
 }
 
@@ -43,7 +56,7 @@ func (cr *Cron) ScanTx() {
 		return
 	}
 	if len(transactions) == 0 {
-		log.Printf("Scan Tx: don't have any pending tx for contract %s\n", cr.ContractName)
+		log.Printf("Scan Tx: don't have any pending tx for contract %s\n", cr.ContractAddress)
 		return
 	}
 
@@ -90,7 +103,6 @@ func (cr *Cron) SyncTx() {
 	// todo call etherscan.io to get all transactions
 	conf := config.GetConfig()
 	chainID := conf.GetInt("blockchainId")
-	fileJSON := cr.contractJSON()
 
 	page := 1
 	recordPerPage := 100
@@ -113,7 +125,7 @@ func (cr *Cron) SyncTx() {
 
 			_, err := txDAO.GetByHash(hash)
 			if err != nil {
-				status, inputJSON := utils.DecodeTransactionInput(fileJSON, input)
+				status, inputJSON := utils.DecodeTransactionInput(cr.ContractJSON, input)
 				if status {
 					var jsonData map[string]interface{}
 					json.Unmarshal([]byte(inputJSON), &jsonData)
@@ -141,7 +153,6 @@ func (cr *Cron) SyncTx() {
 }
 
 func (cr *Cron) scanWorker(id int, etherClient *ethclient.Client, jobs <-chan models.Tx, results chan<- bool) {
-	fileJSON := cr.contractJSON()
 	for transaction := range jobs {
 		log.Printf("start scan %s\n", transaction.Hash)
 		txHash := common.HexToHash(transaction.Hash)
@@ -154,7 +165,7 @@ func (cr *Cron) scanWorker(id int, etherClient *ethclient.Client, jobs <-chan mo
 				log.Printf("Tx %s has receipt, status %d\n", transaction.Hash, receipt.Status)
 				if receipt.Status == 0 {
 					// case fail
-					decodeStatus, methodJSON := utils.DecodeTransactionInput(fileJSON, common.ToHex(tx.Data()))
+					decodeStatus, methodJSON := utils.DecodeTransactionInput(cr.ContractJSON, common.ToHex(tx.Data()))
 					// call REST fail
 					var jsonData map[string]interface{}
 					json.Unmarshal([]byte(methodJSON), &jsonData)
@@ -174,7 +185,7 @@ func (cr *Cron) scanWorker(id int, etherClient *ethclient.Client, jobs <-chan mo
 					log.Printf("Tx %s has receipt, logs %d\n", transaction.Hash, len(receipt.Logs))
 					if len(receipt.Logs) > 0 {
 						for _, l := range receipt.Logs {
-							decodeStatus, eventJSON := utils.DecodeTransactionLog(fileJSON, l)
+							decodeStatus, eventJSON := utils.DecodeTransactionLog(cr.ContractJSON, l)
 							var jsonData map[string]interface{}
 							json.Unmarshal([]byte(eventJSON), &jsonData)
 							jsonData["id"] = transaction.TxID
@@ -199,19 +210,4 @@ func (cr *Cron) scanWorker(id int, etherClient *ethclient.Client, jobs <-chan mo
 		}
 		results <- true
 	}
-}
-
-func (cr *Cron) contractJSON() (name string) {
-	if strings.ToLower(cr.ContractName) == "predictionhandshakeaddress" {
-		name = "PredictionHandshake"
-
-	} else if strings.ToLower(cr.ContractName) == "tokenregistryaddress" {
-		name = "TokenRegistry"
-
-	} else if strings.ToLower(cr.ContractName) == "predictionhandshakewithtokenaddress" {
-		name = "PredictionHandshakeWithToken"
-
-	}
-
-	return
 }

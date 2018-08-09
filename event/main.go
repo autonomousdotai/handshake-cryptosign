@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-    "os"
-    "time"
+	"os"
+	"time"
 
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
 	cp "github.com/ninjadotorg/handshake-cryptosign/event/cron"
@@ -30,7 +30,7 @@ func main() {
 	for key, value := range mapContracts {
 		fmt.Printf("Start cron %s: %s \n", key, value)
 
-		cr := cp.NewCron(key, value)
+		cr := cp.NewCron(value, key)
 		appCron := cron.New()
 		appCron.AddFunc("@every 15s", func() {
 			fmt.Println("scan tx every 15s")
@@ -53,10 +53,23 @@ func main() {
 			}
 		})
 
-		// TODO: add cron remind report outcome
-        appCron.Start()
-        time.Sleep(time.Second * 1)
+		appCron.Start()
+		time.Sleep(time.Second * 1)
 	}
+
+	appCron := cron.New()
+	remind := cp.NewRemind(c.GetString("email"))
+	appCron.AddFunc("@every 5s", func() {
+		fmt.Println("remind user every 5s")
+		if !remind.IsRunning {
+			remind.IsRunning = true
+			remind.RemindUser()
+			remind.IsRunning = false
+		} else {
+			fmt.Println("remind is running")
+		}
+	})
+	appCron.Start()
 
 	// loop forever
 	select {}

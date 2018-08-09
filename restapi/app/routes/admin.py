@@ -282,8 +282,10 @@ def change_contract():
 		data = request.json
 		from_id = int(data.get('from', 0))
 		to_id = int(data.get('to', 0))
+		contract_address = data.get('contract_address', None)
+		contract_json = data.get('contract_json', None)
 
-		if from_id > to_id:
+		if from_id > to_id or contract_address is None or contract_json is None or len(contract_address) == 0 or len(contract_json) == 0:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		handshakes = db.session.query(Handshake).filter(Handshake.id >= from_id, Handshake.id <= to_id).all()
@@ -291,18 +293,22 @@ def change_contract():
 		for hs in handshakes:
 			if hs.contract_address is None and hs.contract_json is None:
 				arr_id.append(hs.id)
-				hs.contract_address = g.PREDICTION_SMART_CONTRACT
-				hs.contract_json = g.PREDICTION_JSON
+				# hs.contract_address = g.PREDICTION_SMART_CONTRACT
+				# hs.contract_json = g.PREDICTION_JSON
+				hs.contract_address = contract_address
+				hs.contract_json = contract_json
 				db.session.flush()
 				
 				shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
 				for sk in shakers:
-					sk.contract_address = g.PREDICTION_SMART_CONTRACT
-					sk.contract_json = g.PREDICTION_JSON
+					# sk.contract_address = g.PREDICTION_SMART_CONTRACT
+					# sk.contract_json = g.PREDICTION_JSON
+					sk.contract_address = contract_address
+					sk.contract_json = contract_json
 					db.session.flush()
 				db.session.commit()
 		if len(arr_id) > 0:
-			update_contract_feed.delay(arr_id)
+			update_contract_feed.delay(arr_id, contract_address, contract_json)
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()

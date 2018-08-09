@@ -317,14 +317,16 @@ def send_mail(outcome_id, outcome_name):
 
 
 @celery.task()
-def update_contract_feed(arr_id):
+def update_contract_feed(arr_id, contract_address, contract_json):
 	try:
 		arr_handshakes = []
 		for _id in arr_id:
 			hs = {
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"contract_address_s": {"set": app.config['PREDICTION_SMART_CONTRACT']},
-				"contract_json_s": {"set": app.config['PREDICTION_JSON']}
+				"contract_address_s": {"set": contract_address},
+				"contract_json_s": {"set": contract_json}
+				# "contract_address_s": {"set": app.config['PREDICTION_SMART_CONTRACT']},
+				# "contract_json_s": {"set": app.config['PREDICTION_JSON']}
 			}
 			arr_handshakes.append(hs)
 

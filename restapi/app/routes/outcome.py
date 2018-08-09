@@ -4,7 +4,7 @@ from app.helpers.decorators import login_required, admin_required
 from app import db
 from app.models import User, Outcome, Match, Task
 from app.helpers.message import MESSAGE, CODE
-from sqlalchemy import or_, and_, text, func
+from sqlalchemy import or_, and_, text, func, desc
 
 import re
 import json
@@ -18,7 +18,7 @@ outcome_routes = Blueprint('outcome', __name__)
 @login_required
 def outcomes():
 	try:
-		outcomes = Outcome.query.all()
+		outcomes = Outcome.query.order_by(desc(Outcome.index)).all()
 		data = []
 		for outcome in outcomes:
 			data.append(outcome.to_json())
@@ -100,7 +100,8 @@ def generate_link():
 		if outcome is not None:
 			slug = re.sub('[^\w]+', '-', outcome.name.lower())
 			response = {
-				'slug': 'discover/{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid)
+				'slug': 'discover/{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid),
+				'slug_short': 'exchange?match={}&out_come={}&ref={}&is_private=1'.format(outcome.match_id, outcome.id, uid)
 			}
 			return response_ok(response)
 			

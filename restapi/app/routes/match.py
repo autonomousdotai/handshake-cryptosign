@@ -4,7 +4,7 @@ import requests
 import app.constants as CONST
 import app.bl.match as match_bl
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
 from datetime import datetime
@@ -13,7 +13,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task
+from app.models import User, Match, Outcome, Task, Source
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -30,26 +30,25 @@ def matches():
 		seconds = local_to_utc(t)
 
 		if report == 1:
-			matches = db.session.query(Match).filter(Match.date <= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date <= seconds, Match.reportTime > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
 		else:
-			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc()).all()
+			matches = db.session.query(Match).filter(Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches:	
 			#  find best odds which match against
 			match_json = match.to_json()
 
-			total_users = db.engine.execute('SELECT ( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)).first()
-			match_json["total_users"] = (total_users['total_users_s'] if total_users['total_users_s'] is not None else 0) + (total_users['total_users_m'] if total_users['total_users_m'] is not None else 0)
+			total_users_query = '( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)
+			total_bets_query = '( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)
 
-			total_bets = db.engine.execute('SELECT ( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)).first()
-			match_json["total_bets"] = (total_bets['total_amount_s'] if total_bets['total_amount_s'] is not None else 0)  + (total_bets['total_amount_m'] if total_bets['total_amount_m'] is not None else 0)
+			total = db.engine.execute('SELECT {}, {}'.format( total_users_query, total_bets_query)).first()
 
+			match_json["total_bets"] = (total['total_amount_s'] if total['total_amount_s'] is not None else 0)  + (total['total_amount_m'] if total['total_amount_m'] is not None else 0)
+			match_json["total_users"] = (total['total_users_s'] if total['total_users_s'] is not None else 0) + (total['total_users_m'] if total['total_users_m'] is not None else 0)
+			
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				outcome_json = outcome.to_json()
-				odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-				outcome_json["market_odds"] = odds
-				outcome_json["market_amount"] = amount
 
 				if report == 1:
 					if outcome.result != CONST.RESULT_TYPE['PROCESSING']:
@@ -114,10 +113,22 @@ def add():
 
 		matches = []
 		response_json = []
-		for item in data:
 
+		for item in data:
+			source = None
 			if match_bl.is_validate_match_time(item) == False:				
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
+
+			if "source_id" in item:
+				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
+			else:
+				if "source" in item and "name" in item["source"] and "url" in item["source"]:
+					source = Source(
+						name=item["source"]["name"],
+						url=item["source"]["url"]
+					)
+					db.session.add(source)
+					db.session.flush()					
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -130,7 +141,8 @@ def add():
 				market_fee=int(item['market_fee']),
 				date=item['date'],
 				reportTime=item['reportTime'],
-				disputeTime=item['disputeTime']
+				disputeTime=item['disputeTime'],
+				source_id=None if source is None else source.id
 			)
 			matches.append(match)
 			db.session.add(match)
@@ -147,8 +159,9 @@ def add():
 					)
 					db.session.add(outcome)
 					db.session.flush()
-
-			response_json.append(match.to_json())
+			match_json = match.to_json()
+			match_json["source_name"]=None if source is None else source.name
+			response_json.append(match_json)
 
 		db.session.commit()
 

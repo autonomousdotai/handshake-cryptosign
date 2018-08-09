@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.STRING,
     is_erc20: DataTypes.INTEGER, //ETH, ERC20
     contract_address: DataTypes.STRING,
-    contract_name: DataTypes.STRING,
+    contract_json: DataTypes.STRING,
     contract_method: DataTypes.STRING,
     from_address: DataTypes.STRING,
     data: DataTypes.TEXT,

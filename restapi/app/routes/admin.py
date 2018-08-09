@@ -63,7 +63,9 @@ def create_market():
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(match.to_json()),
 					action=CONST.TASK_ACTION['CREATE_MARKET'],
-					status=-1
+					status=-1,
+					contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
 				)
 				db.session.add(task)
 				db.session.flush()
@@ -105,7 +107,9 @@ def init_default_outcomes():
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(o),
 					action=CONST.TASK_ACTION['INIT'],
-					status=-1
+					status=-1,
+					contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
 				)
 				db.session.add(task)
 				db.session.flush()
@@ -210,7 +214,9 @@ def report(match_id):
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
 					action=CONST.TASK_ACTION['REPORT' if disputed else 'RESOLVE'],
-					status=-1
+					status=-1,
+					contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
 				)
 
 				db.session.add(task)
@@ -260,7 +266,9 @@ def test_market():
 				task_type=CONST.TASK_TYPE['REAL_BET'],
 				data=json.dumps(match.to_json()),
 				action=CONST.TASK_ACTION['CREATE_MARKET'],
-				status=-1
+				status=-1,
+				contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+				contract_json=app.config['PREDICTION_JSON']
 			)
 			db.session.add(task)
 			db.session.flush()

@@ -95,7 +95,9 @@ def approve(id):
 					task_type=CONST.TASK_TYPE['ERC_20'],
 					data=json.dumps(data),
 					action=CONST.TASK_ACTION['ADD_TOKEN'],
-					status=-1
+					status=-1,
+					contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
 				)
 		db.session.add(task)
 		db.session.commit()

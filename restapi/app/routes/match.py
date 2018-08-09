@@ -244,7 +244,9 @@ def report(match_id):
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
 					action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
-					status=-1
+					status=-1,
+					contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
 				)
 
 				db.session.add(task)

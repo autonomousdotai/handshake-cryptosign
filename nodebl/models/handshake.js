@@ -30,6 +30,8 @@ module.exports = (sequelize, DataTypes) => {
     side: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,
     outcome_id: DataTypes.INTEGER,
+    contract_address: DataTypes.STRING,
+    contract_json: DataTypes.STRING,
     modified_user_id: DataTypes.INTEGER,
     created_user_id: DataTypes.INTEGER,
   }, {

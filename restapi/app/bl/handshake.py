@@ -90,7 +90,7 @@ def save_collect_state_for_shaker(shaker):
 
 def save_refund_state_for_all(user_id, outcome_id):
 	outcome = Outcome.find_outcome_by_id(outcome_id)
-	handshakes = db.session.query(Handshake).filter(and_(Handshake.status==HandshakeStatus['STATUS_REFUND_PENDING'], Handshake.user_id==user_id, Handshake.outcome_id==outcome_id)).all()
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.status.in_([HandshakeStatus['STATUS_REFUND_PENDING'], HandshakeStatus['STATUS_INITED']]), Handshake.user_id==user_id, Handshake.outcome_id==outcome_id)).all()
 	shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_REFUND_PENDING'], Shaker.shaker_id==user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome_id)))).all()
 	
 	for hs in handshakes:

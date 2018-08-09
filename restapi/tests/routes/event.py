@@ -584,8 +584,8 @@ class TestEventBluePrint(BaseTestCase):
 						hs_type=3,
 						chain_id=4,
 						is_private=1,
-						user_id=99,
-						outcome_id=100,
+						user_id=66,
+						outcome_id=88,
 						odds=1.5,
 						amount=1,
 						currency='ETH',
@@ -746,7 +746,7 @@ class TestEventBluePrint(BaseTestCase):
             hs2 = Handshake.find_handshake_by_id(handshake2.id)
             self.assertEqual(hs2.status, HandshakeStatus['STATUS_MAKER_UNINITED'])
             hs3 = Handshake.find_handshake_by_id(handshake3.id)
-            self.assertEqual(hs3.status, HandshakeStatus['STATUS_INITED'])
+            self.assertEqual(hs3.status, HandshakeStatus['STATUS_REFUNDED'])
 
             sk1 = Shaker.find_shaker_by_id(shaker1.id)
             self.assertEqual(sk1.status, HandshakeStatus['STATUS_REFUNDED'])
@@ -755,8 +755,6 @@ class TestEventBluePrint(BaseTestCase):
 
             s = Shaker.find_shaker_by_id(shaker_id)
             self.assertEqual(s.status, HandshakeStatus['STATUS_PENDING'])
-            h = Handshake.find_handshake_by_id(handshake3.id)
-            self.assertEqual(h.status, HandshakeStatus['STATUS_INITED'])
 
             shaker_uninit_failed_=Shaker.find_shaker_by_id(shaker_uninit_failed_id)
             self.assertEqual(shaker_uninit_failed_.status, HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'])

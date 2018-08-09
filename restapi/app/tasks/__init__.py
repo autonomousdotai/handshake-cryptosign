@@ -332,7 +332,9 @@ def update_contract_feed(arr_id):
 		data = {
 			"add": arr_handshakes
 		}
+		print data
 		res = requests.post(endpoint, json=data)
+		print res
 		if res.status_code > 400 or \
 			res.content is None or \
 			(isinstance(res.content, str) and 'null' in res.content):

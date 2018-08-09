@@ -400,8 +400,8 @@ def create_bet():
 				data=json.dumps(data),
 				action=CONST.TASK_ACTION['INIT'],
 				status=-1,
-				contract_address=app.config['PREDICTION_SMART_CONTRACT'],
-				contract_json=app.config['PREDICTION_JSON']
+				contract_address=g.PREDICTION_SMART_CONTRACT,
+				contract_json=g.PREDICTION_JSON
 			)
 			db.session.add(task)
 			db.session.commit()
@@ -462,8 +462,8 @@ def uninit_free_bet(handshake_id):
 						data=json.dumps(data, use_decimal=True),
 						action=CONST.TASK_ACTION['UNINIT'],
 						status=-1,
-						contract_address=app.config['PREDICTION_SMART_CONTRACT'],
-						contract_json=app.config['PREDICTION_JSON']
+						contract_address=g.PREDICTION_SMART_CONTRACT,
+						contract_json=g.PREDICTION_JSON
 					)
 					db.session.add(task)
 					db.session.commit()
@@ -557,8 +557,8 @@ def collect_free_bet():
 			data=json.dumps(data),
 			action=CONST.TASK_ACTION['COLLECT'],
 			status=-1,
-			contract_address=app.config['PREDICTION_SMART_CONTRACT'],
-			contract_json=app.config['PREDICTION_JSON']
+			contract_address=g.PREDICTION_SMART_CONTRACT,
+			contract_json=g.PREDICTION_JSON
 		)
 		db.session.add(task)
 		db.session.commit()

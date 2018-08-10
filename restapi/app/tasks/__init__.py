@@ -315,3 +315,14 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("add_feed=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def log_responsed_time():
+	try:
+		pass
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_responsed_time=>",exc_type, fname, exc_tb.tb_lineno)

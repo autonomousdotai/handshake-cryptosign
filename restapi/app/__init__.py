@@ -1,9 +1,10 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
 from app.routes import init_routes
+from app.tasks import log_responsed_time
 
 import time
 import decimal
@@ -48,6 +49,8 @@ fcm.init_app(app)
 ipfs.init_app(app)
 # init firebase database
 firebase.init_app(app)
+# init dropbox
+dropbox.init_app(app)
 
 @app.before_request
 def before_request():
@@ -69,14 +72,18 @@ def before_request():
 	g.ERC20_PREDICTION_SMART_CONTRACT = app.config.get('ERC20_PREDICTION_SMART_CONTRACT')
 	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
 
-	g.start = '{}_{}'.format(time.time(), request.base_url)
+	g.start = '{}:{}'.format(time.time(), request.base_url)
 
 @app.after_request
 def after_request(response):
 	if 'start' in g:
-		start, url = g.start.split('_')
-		diff = time.time() - float(start)
+		start, url = g.start.split(':')
+		end = time.time()
+		diff = end - float(start)
 		logfile.debug("API -> {}, time -> {}".format(url, str(diff)))
+		if time.localtime().tm_hour == 1:
+			log_responsed_time.delay()
+
 	return response
 
 

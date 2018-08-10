@@ -58,6 +58,7 @@ class BaseConfig(object):
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
 
+	DROPBOX_ACCESS_TOKEN = ''
 
 class DevelopmentConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'

@@ -21,6 +21,7 @@ class MyJSONEncoder(flask.json.JSONEncoder):
 app = Flask(__name__)
 
 logging.config.dictConfig(yaml.load(open('logging.conf')))
+logfile = logging.getLogger('file')
 
 # add json encoder for decimal type
 app.json_encoder = MyJSONEncoder
@@ -68,13 +69,14 @@ def before_request():
 	g.ERC20_PREDICTION_SMART_CONTRACT = app.config.get('ERC20_PREDICTION_SMART_CONTRACT')
 	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
 
-	g.start = time.time()
+	g.start = '{}_{}'.format(time.time(), request.base_url)
 
 @app.after_request
 def after_request(response):
 	if 'start' in g:
-		diff = time.time() - g.start
-		print "Exec time: %s" % str(diff)
+		start, url = g.start.split('_')
+		diff = time.time() - float(start)
+		logfile.debug("API -> {}, time -> {}".format(url, str(diff)))
 	return response
 
 
@@ -112,14 +114,14 @@ jwt.revoked_token_loader(revoked_token_callback)
 def error_handler(err):
 	return response_error(err.message)
 
-	# @app.errorhandler(404)
-	# def error_handler400(err):
-	#   return response_error(err.message);
-	#
-	# @app.errorhandler(500)
-	# def error_handler500(err):
-	#   return response_error(err.message);
-	#
-	# @app.error_handler_all(Exception)
-	# def errorhandler(err):
-	#   return response_error(err.message);
+# @app.errorhandler(404)
+# def error_handler400(err):
+#   return response_error(err.message);
+#
+# @app.errorhandler(500)
+# def error_handler500(err):
+#   return response_error(err.message);
+#
+# @app.error_handler_all(Exception)
+# def errorhandler(err):
+#   return response_error(err.message);

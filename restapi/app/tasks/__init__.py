@@ -155,39 +155,6 @@ def add_shuriken(user_id, shuriken_type):
 
 
 @celery.task()
-def factory_reset():
-	try:
-		handshakes = db.session.query(Handshake).filter(Handshake.date_created < '2018-07-03').all()
-		shakers = db.session.query(Shaker).filter(Shaker.date_created < '2018-07-03').all()
-
-		arr = []
-		for h in handshakes:
-			hs = {
-				"id": "{}m{}".format(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, h.id),
-			}
-			arr.append(hs)
-
-		for s in shakers:
-			sk = {
-				"id": "{}s{}".format(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, s.id),
-			}
-			arr.append(sk)
-
-		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-		data = {
-			"delete": arr
-		}
-		res = requests.post(endpoint, json=data)
-		if res.status_code > 400:
-			print('SOLR service is failed.')
-
-	except Exception as e:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("factory_reset=>",exc_type, fname, exc_tb.tb_lineno)
-
-
-@celery.task()
 def run_bots(outcome_id):
 	try:
 		# find all handshakes of this outcome on both 2 sides: support and oppose
@@ -329,8 +296,6 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
 				"contract_address_s": {"set": contract_address},
 				"contract_json_s": {"set": contract_json}
-				# "contract_address_s": {"set": app.config['PREDICTION_SMART_CONTRACT']},
-				# "contract_json_s": {"set": app.config['PREDICTION_JSON']}
 			}
 			arr_handshakes.append(hs)
 

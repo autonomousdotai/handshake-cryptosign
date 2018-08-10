@@ -372,7 +372,7 @@ def save_handshake_method_for_event(method, inputs):
 		hid = int(hid)
 		outcome = Outcome.find_outcome_by_hid(hid)
 		if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-			outcome.result = CONST.RESULT_TYPE['PENDING']
+			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 			db.session.flush()
 
 	return None, None
@@ -430,7 +430,7 @@ def save_failed_handshake_method_for_event(method, tx):
 					hid = int(onchain['hid'])
 					outcome =Outcome.find_outcome_by_hid(hid)
 					if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						outcome.result = CONST.RESULT_TYPE['PENDING']
+						outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 						db.session.flush()
 
 		return None, None

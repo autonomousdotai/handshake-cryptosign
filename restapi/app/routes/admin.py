@@ -17,7 +17,7 @@ from app.models import Match, Outcome, Task, Handshake, Shaker, Setting
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
-from app.tasks import factory_reset, update_contract_feed
+from app.tasks import update_contract_feed
 from flask_jwt_extended import jwt_required
 
 admin_routes = Blueprint('admin', __name__)
@@ -117,16 +117,6 @@ def init_default_outcomes():
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
-		return response_error(ex.message)
-
-
-@admin_routes.route('/factory_reset', methods=['POST'])
-@jwt_required
-def reset_all():
-	try:
-		factory_reset.delay()
-		return response_ok()
-	except Exception, ex:
 		return response_error(ex.message)
 
 

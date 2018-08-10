@@ -402,10 +402,9 @@ class TestMatchBluePrint(BaseTestCase):
             data_json = data['data']
             tmp = None
             for m in data_json:
-                if m['id'] == match.id:
+                if m['id'] == match2.id:
                     tmp = m
                     break
-
             self.assertNotEqual(tmp, None)
 
 

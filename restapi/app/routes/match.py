@@ -48,6 +48,7 @@ def matches():
 				arr_outcomes.append(outcome_json)
 
 			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
+			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
 			response.append(match_json)
 
 		return response_ok(response)
@@ -165,8 +166,8 @@ def add():
 					db.session.add(outcome)
 					db.session.flush()
 			match_json = match.to_json()
-			match_json["source_name"]=None if source is None else source.name
-			match_json["category_name"]=None if category is None else category.name
+			match_json["source_name"] = None if source is None else source.name
+			match_json["category_name"] = None if category is None else category.name
 			response_json.append(match_json)
 
 		db.session.commit()

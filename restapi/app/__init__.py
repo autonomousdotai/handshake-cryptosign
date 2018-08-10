@@ -72,12 +72,12 @@ def before_request():
 	g.ERC20_PREDICTION_SMART_CONTRACT = app.config.get('ERC20_PREDICTION_SMART_CONTRACT')
 	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
 
-	g.start = '{}:{}'.format(time.time(), request.base_url)
+	g.start = [time.time(), request.base_url]
 
 @app.after_request
 def after_request(response):
 	if 'start' in g:
-		start, url = g.start.split(':')
+		start, url = g.start
 		end = time.time()
 		diff = end - float(start)
 		logfile.debug("API -> {}, time -> {}".format(url, str(diff)))

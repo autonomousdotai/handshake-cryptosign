@@ -511,10 +511,10 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 };
 
 
-const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
+const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
   return new Promise(async(resolve, reject) => {
     try {
-      const offchain = _offchain || ('cryptosign_report' + outcome_result);
+      const offchain = _offchain || ('cryptosign_report' + outcome_id + '_' + outcome_result);
       console.log('reportOutcomeTransaction');
       console.log(hid, outcome_result, nonce, _offchain, gasPrice, contract_address, contract_json);
 

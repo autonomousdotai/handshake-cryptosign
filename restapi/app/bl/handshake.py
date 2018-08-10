@@ -456,10 +456,13 @@ def save_handshake_for_event(event_name, inputs):
 		# report1: mean that support win
 		# report2: mean that against win
 		# report0: mean that no one win
-		result = offchain.replace('report', '')
-		print 'result {}'.format(result)
-		outcome = Outcome.find_outcome_by_hid(hid)
-		if len(result) > -1:
+		outcome_id, result = offchain.replace('report', '').split('_')
+		if outcome_id is None or side is None:
+			return None, None
+		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+    			
+		if len(result) > -1 and outcome is not None:
 			result = int(result)
 			outcome.result = result
 

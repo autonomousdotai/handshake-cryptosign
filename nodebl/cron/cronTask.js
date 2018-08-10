@@ -161,6 +161,7 @@ const report = (params) => {
 			contract_method: 'reportOutcomeTransaction',
 			hid: params.hid,
 			outcome_result: params.outcome_result,
+			outcome_id: params.outcome_id,
 			offchain: params.offchain
 		}])
 	});

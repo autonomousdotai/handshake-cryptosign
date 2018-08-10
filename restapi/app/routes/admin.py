@@ -201,8 +201,9 @@ def report(match_id):
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
 				report = {}
-				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(item['side'])
+				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(outcome.id) + '_' + str(item['side'])
 				report['hid'] = outcome.hid
+				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
 
 				task = Task(

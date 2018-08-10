@@ -882,7 +882,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 0,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_report1",
+                    "offchain": "cryptosign_report{}_1".format(88),
                     "hid": 88    
                 }   
             }
@@ -926,13 +926,14 @@ class TestEventBluePrint(BaseTestCase):
                             "contract_method": "reportOutcomeTransaction",
                             "hid": 88,
                             "outcome_result": 2,
-                            "offchain": "cryptosign_report2"
+                            "outcome_id": outcome.id,
+                            "offchain": "cryptosign_report{}_2".format(outcome.id)
                         },
                         "task": {
                             "id": 328,
                             "task_type": "REAL_BET",
                             "action": "REPORT",
-                            "data": "{\"offchain\": \"cryptosign_report2\", \"hid\": 88, \"outcome_result\": 2}",
+                            "data": "{\"offchain\": \"cryptosign_report{}_2\", \"hid\": 88, \"outcome_result\": 2}".format(outcome.id),
                             "status": -3
                         }
                     }
@@ -1020,7 +1021,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_report1",
+                    "offchain": "cryptosign_report{}_1".format(88),
                     "hid": 88    
                 }   
             }
@@ -1064,13 +1065,14 @@ class TestEventBluePrint(BaseTestCase):
                             "contract_method": "reportOutcomeTransaction",
                             "hid": 88,
                             "outcome_result": 2,
-                            "offchain": "cryptosign_report2"
+                            "outcome_id": outcome.id,
+                            "offchain": "cryptosign_report{}_2".format(outcome.id)
                         },
                         "task": {
                             "id": 328,
                             "task_type": "REAL_BET",
                             "action": "REPORT",
-                            "data": "{\"offchain\": \"cryptosign_report2\", \"hid\": 88, \"outcome_result\": 2}",
+                            "data": "{\"offchain\": \"cryptosign_report{}_2\", \"hid\": 88, \"outcome_result\": 2}".format(outcome.id),
                             "status": -3
                         }
                     }
@@ -1158,7 +1160,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_report1",
+                    "offchain": "cryptosign_report{}_1".format(88),
                     "hid": 88    
                 }   
             }
@@ -1744,7 +1746,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_report{}".format(result_report),
+                    "offchain": "cryptosign_report{}_{}".format(outcome.id, result_report),
                     "hid": 100
                 }   
             }

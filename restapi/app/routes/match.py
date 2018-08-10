@@ -164,6 +164,9 @@ def add():
 			match_json = match.to_json()
 			match_json["source_name"] = None if source is None else source.name
 			match_json["category_name"] = None if category is None else category.name
+
+			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
+			match_json["contract_json"] = g.PREDICTION_JSON
 			response_json.append(match_json)
 
 		db.session.commit()

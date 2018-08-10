@@ -277,10 +277,18 @@ def getMatchReport():
 		matches = []
 
 		# Get all matchs are PENDING (-1)
-		matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
+		matches = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id))).all()
 
-		for match in matches:	
-			response.append(match.to_json())
+		# Filter all outcome of user
+		for match in matches:
+			match_json = match.to_json()
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				if outcome.created_user_id == uid:
+					arr_outcomes.append(outcome.to_json())
+
+			match_json["outcomes"] = arr_outcomes
+			response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -293,12 +301,11 @@ def countMatchReport():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		uid = int(request.headers['Uid'])
-		print uid
 		if request.headers['Uid'] is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		# Get all matchs are PENDING (-1)
-		count = db.session.query(Match.id).filter(Match.created_user_id == uid, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).count()
+		count = db.session.query(Match.id).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id == uid, Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).count()
 		resonse_json = {
 			"count": count
 		}

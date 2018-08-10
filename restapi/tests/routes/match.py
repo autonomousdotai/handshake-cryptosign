@@ -7,6 +7,7 @@ from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)
+from sqlalchemy import or_
 import mock
 import json
 import time
@@ -91,10 +92,16 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-        matchs = db.session.query(Match).filter(Match.created_user_id==88).all()
+        matchs = db.session.query(Match).filter(or_(Match.created_user_id==88, Match.created_user_id==None)).all()
         for m in matchs:
             db.session.delete(m)
             db.session.commit()
+
+        outcomes = db.session.query(Outcome).filter(or_(Outcome.created_user_id==88, Outcome.created_user_id==None)).all()
+        for oc in outcomes:
+            db.session.delete(oc)
+            db.session.commit()
+
         Task.query.delete()
         db.session.commit()
 
@@ -296,7 +303,7 @@ class TestMatchBluePrint(BaseTestCase):
             date=seconds - 100,
             reportTime=seconds + 200,
             disputeTime=seconds + 300,
-            created_user_id=88
+            created_user_id=99
         )
         db.session.add(match)
         db.session.commit()
@@ -304,25 +311,39 @@ class TestMatchBluePrint(BaseTestCase):
             date=seconds - 200,
             reportTime=seconds - 100,
             disputeTime=seconds + 300,
-            created_user_id=88
+            created_user_id=99
         )
         db.session.add(match2)
         db.session.commit()
         # -----        
         outcome = Outcome(
+            created_user_id=88,
             match_id=match.id,
             public=1,
             hid=0,
+            name="88",
             result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome)
+        db.session.commit()
         outcome1 = Outcome(
+            created_user_id=99,
+            match_id=match.id,
+            public=1,
+            hid=0,
+            name="99",
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome1)
+        db.session.commit()
+        outcome2 = Outcome(
+            created_user_id=88,
             match_id=match2.id,
             public=1,
             hid=1,
             result=CONST.RESULT_TYPE['PROCESSING']
         )
-        db.session.add(outcome1)
+        db.session.add(outcome2)
         db.session.commit()
 
         with self.client:
@@ -336,11 +357,13 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
-            print data_json
+            
             tmp = None
             for m in data_json:
                 if m['id'] == match.id:
                     tmp = m
+                    self.assertEqual(len(tmp['outcomes']), 1)
+                    self.assertEqual(tmp['outcomes'][0]['id'], outcome.id)
                     break
 
             self.assertNotEqual(tmp, None)
@@ -378,13 +401,13 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.add(outcome)
         db.session.commit()
 
-        outcome = Outcome(
+        outcome1 = Outcome(
             match_id=match2.id,
             public=1,
             hid=1,
             result=CONST.RESULT_TYPE['DISPUTED']
         )
-        db.session.add(outcome)
+        db.session.add(outcome1)
         db.session.commit()        
 
         with self.client:
@@ -441,20 +464,25 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.commit()
         # -----        
         outcome1 = Outcome(
+            created_user_id=88,
             match_id=match1.id,
             public=1,
             hid=0,
             result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome1)
+        db.session.commit()
         outcome2 = Outcome(
+            created_user_id=88,
             match_id=match2.id,
             public=1,
             hid=1,
             result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome2)
+        db.session.commit()
         outcome3 = Outcome(
+            created_user_id=88,
             match_id=match3.id,
             public=1,
             hid=2,
@@ -474,6 +502,7 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
+            print data_json
             self.assertTrue(data_json['count'] == 2)
 
 

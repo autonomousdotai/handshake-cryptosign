@@ -85,7 +85,7 @@ def remove(outcome_id):
 		return response_error(ex.message)
 
 
-@outcome_routes.route('/generate_link', methods=['POST'])
+@outcome_routes.route('/generate-link', methods=['POST'])
 @login_required
 def generate_link():
 	try:

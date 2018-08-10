@@ -310,7 +310,7 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.commit()
         # -----        
         outcome = Outcome(
-            match_id=match2.id,
+            match_id=match.id,
             public=1,
             hid=0,
             result=CONST.RESULT_TYPE['PENDING']
@@ -336,11 +336,10 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-
+            print data_json
             tmp = None
             for m in data_json:
-                if m['id'] == match2.id:
+                if m['id'] == match.id:
                     tmp = m
                     break
 
@@ -401,15 +400,82 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
-            self.assertTrue(data['status'] == 1)
-            print data_json
             tmp = None
             for m in data_json:
-                if m['id'] == match.id:
+                if m['id'] == match2.id:
                     tmp = m
                     break
-
             self.assertNotEqual(tmp, None)
+
+
+    def test_count_match_report_with_user(self):
+        self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        # ----- 
+
+        match1 = Match(
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match1)
+        db.session.commit()
+        match2 = Match(
+            date=seconds - 200,
+            reportTime=seconds + 100,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match2)
+        db.session.commit()
+
+        match3 = Match(
+            date=seconds - 200,
+            reportTime=seconds - 100,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match3)
+        db.session.commit()
+        # -----        
+        outcome1 = Outcome(
+            match_id=match1.id,
+            public=1,
+            hid=0,
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome1)
+        outcome2 = Outcome(
+            match_id=match2.id,
+            public=1,
+            hid=1,
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome2)
+        outcome3 = Outcome(
+            match_id=match3.id,
+            public=1,
+            hid=2,
+            result=CONST.RESULT_TYPE['PROCESSING']
+        )
+        db.session.add(outcome3)
+        db.session.commit()
+
+        with self.client:
+            response = self.client.get(
+                                    '/match/report/count',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertTrue(data_json['count'] == 2)
+
 
 if __name__ == '__main__':
     unittest.main()

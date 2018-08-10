@@ -21,7 +21,6 @@ module.exports = (sequelize, DataTypes) => {
     bk_status: DataTypes.INTEGER,
     shake_count: DataTypes.INTEGER,
     view_count: DataTypes.INTEGER,
-    comment_count: DataTypes.INTEGER,
     from_address: DataTypes.STRING,
     odds: DataTypes.DECIMAL(20, 1),
     amount: DataTypes.DECIMAL(36, 18),

@@ -59,8 +59,8 @@ func main() {
 
 	appCron := cron.New()
 	remind := cp.NewRemind(c.GetString("email"))
-	appCron.AddFunc("@every 5s", func() {
-		fmt.Println("remind user every 5s")
+	appCron.AddFunc("@every 15m", func() {
+		fmt.Println("remind user every 15m")
 		if !remind.IsRunning {
 			remind.IsRunning = true
 			remind.RemindUser()

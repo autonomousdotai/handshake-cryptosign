@@ -41,14 +41,10 @@ def matches():
 
 			match_json["total_bets"] = (total['total_amount_s'] if total['total_amount_s'] is not None else 0)  + (total['total_amount_m'] if total['total_amount_m'] is not None else 0)
 			match_json["total_users"] = (total['total_users_s'] if total['total_users_s'] is not None else 0) + (total['total_users_m'] if total['total_users_m'] is not None else 0)
-			
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				outcome_json = outcome.to_json()
-				arr_outcomes.append(outcome_json)
 
-			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
 			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
+			match_json["contract_json"] = g.PREDICTION_JSON
+
 			response.append(match_json)
 
 		return response_ok(response)
@@ -278,11 +274,31 @@ def getMatchReport():
 		matches = []
 
 		# Get all matchs are PENDING (-1)
-		matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.reportTime <= seconds, Match.disputeTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
+		matches = db.session.query(Match).filter(Match.created_user_id == uid, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).all()
 
 		for match in matches:	
 			response.append(match.to_json())
 
 		return response_ok(response)
+	except Exception, ex:
+		return response_error(ex.message)
+
+@match_routes.route('/report/count', methods=['GET'])
+@login_required
+def countMatchReport():
+	try:
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+		uid = int(request.headers['Uid'])
+		print uid
+		if request.headers['Uid'] is None:
+			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
+
+		# Get all matchs are PENDING (-1)
+		count = db.session.query(Match.id).filter(Match.created_user_id == uid, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).count()
+		resonse_json = {
+			"count": count
+		}
+		return response_ok(resonse_json)
 	except Exception, ex:
 		return response_error(ex.message)

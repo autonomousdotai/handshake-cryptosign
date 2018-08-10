@@ -327,8 +327,8 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 		for _id in arr_id:
 			hs = {
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"contract_address_s": {"set": contract_address},
-				"contract_json_s": {"set": contract_json}
+				"contract_address_s": contract_address,
+				"contract_json_s": contract_json
 				# "contract_address_s": {"set": app.config['PREDICTION_SMART_CONTRACT']},
 				# "contract_json_s": {"set": app.config['PREDICTION_JSON']}
 			}
@@ -336,7 +336,8 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
-			"add": arr_handshakes
+			# "add": arr_handshakes
+			"update": arr_handshakes
 		}
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \

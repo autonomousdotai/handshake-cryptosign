@@ -134,7 +134,6 @@ def reset_all():
 @jwt_required
 def get_match():
 	try:
-		print 'sadfasfsfasf'
 		response = []
 		matches = []
 

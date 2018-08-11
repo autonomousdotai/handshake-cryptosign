@@ -630,8 +630,13 @@ def save_handshake_for_event(event_name, inputs):
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
-		result = offchain.replace('report', '')
-		outcome = Outcome.find_outcome_by_hid(hid)
+		print '__resolve'
+		outcome_id, result = offchain.replace('report', '').split('_')
+		if outcome_id is None or side is None:
+			return None, None
+		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
 		if outcome is None:
 			return None, None
 

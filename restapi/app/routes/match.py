@@ -200,6 +200,7 @@ def report(match_id):
 	try:
 		dispute = int(request.args.get('dispute', 0))
 		data = request.json
+		response = []
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
@@ -231,30 +232,35 @@ def report(match_id):
 						return response_error(MESSAGE.OUTCOME_DISPUTE_INVALID)
 
 					outcome.result = CONST.RESULT_TYPE['PROCESSING']
+					outcome_json = outcome.to_json()
 
+					# TODO: Find contract address and contract_json
+					outcome_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
+					outcome_json["contract_json"] = g.PREDICTION_JSON
+					response.append(outcome_json)
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
-				report = {}
-				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(outcome.id) + '_' + str(item['side'])
-				report['hid'] = outcome.hid
-				report['outcome_id'] = outcome.id
-				report['outcome_result'] = item['side']
+				# report = {}
+				# report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(outcome.id) + '_' + str(item['side'])
+				# report['hid'] = outcome.hid
+				# report['outcome_id'] = outcome.id
+				# report['outcome_result'] = item['side']
 
-				task = Task(
-					task_type=CONST.TASK_TYPE['REAL_BET'],
-					data=json.dumps(report),
-					action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
-					status=-1,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
-				)
+				# task = Task(
+				# 	task_type=CONST.TASK_TYPE['REAL_BET'],
+				# 	data=json.dumps(report),
+				# 	action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
+				# 	status=-1,
+				# 	contract_address=g.PREDICTION_SMART_CONTRACT,
+				# 	contract_json=g.PREDICTION_JSON
+				# )
 
-				db.session.add(task)
-				db.session.flush()
+				# db.session.add(task)
+				# db.session.flush()
 
 			db.session.commit()
-			return response_ok()
+			return response_ok(response)
 		else:
 			return response_error(MESSAGE.MATCH_NOT_FOUND)
 

@@ -289,6 +289,9 @@ def getMatchReport():
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
+			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
+			match_json["contract_json"] = g.PREDICTION_JSON
+
 			response.append(match_json)
 
 		return response_ok(response)

@@ -105,19 +105,17 @@ def save_refund_state_for_all(user_id, outcome_id):
 
 	return handshakes, shakers
 
-def save_dispute_state_all(outcome_id, state):
+def save_disputed_state(outcome_id):
 	handshakes = []
 	shakers = []
 	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id, Handshake.shake_count > 0).all()
 	for hs in handshakes:
-		# hs.bk_status = hs.status
-		hs.status = state
+		hs.status = HandshakeStatus['STATUS_DISPUTED']
 		db.session.merge(hs)
 
 		shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
 		for shaker in shakers:
-			# shaker.bk_status = shaker.status
-			shaker.status = state
+			shaker.status = HandshakeStatus['STATUS_DISPUTED']
 			db.session.merge(shaker)
 	db.session.flush()
 	return handshakes, shakers
@@ -139,20 +137,21 @@ def save_resolve_state_all(outcome_id, state):
 	db.session.flush()
 	return handshakes, shakers
 
-def save_dispute_state_all_by_user(handshake, state):
+def save_user_disputed_state(handshake):
+	"""Update STATUS_USER_DISPUTED
+	"" No need to update bk_status
+	"""
 	handshakes = []
 	shakers = []
 
 	handshakes = db.session.query(Handshake).filter(Handshake.side == handshake.side, Handshake.user_id == handshake.user_id, Handshake.outcome_id == handshake.outcome_id).all()
 	for hs in handshakes:
-		# hs.bk_status = hs.status
-		hs.status = state
+		hs.status = HandshakeStatus['STATUS_USER_DISPUTED']
 		db.session.merge(hs)
 
 	shakers = db.session.query(Shaker).filter(Shaker.side == handshake.side, Shaker.shaker_id == handshake.user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id).group_by(Handshake.id))).all()
 	for shaker in shakers:
-		# shaker.bk_status = shaker.status
-		shaker.status = state
+		shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
 		db.session.merge(shaker)
 
 	db.session.flush()
@@ -578,8 +577,7 @@ def save_handshake_for_event(event_name, inputs):
 		if handshake is None:
 			return None, None
 		
-		save_refund_state_for_all(user_id, handshake.outcome_id)
-		return None, None
+		return save_refund_state_for_all(user_id, handshake.outcome_id)
 
 	elif event_name == '__dispute':
 		print '__dispute'
@@ -621,11 +619,11 @@ def save_handshake_for_event(event_name, inputs):
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
 
-			handshake_dispute, shaker_dispute = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_DISPUTED'])
+			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
 		else:
-			handshake_dispute, shaker_dispute = save_dispute_state_all_by_user(handshake, HandshakeStatus['STATUS_USER_DISPUTED'])
+			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake)
 
 		return handshake_dispute, shaker_dispute
 
@@ -640,6 +638,7 @@ def save_handshake_for_event(event_name, inputs):
 		if outcome is None:
 			return None, None
 
+		# 1: SUPPORT, 2: OPPOSE, 3: DRAW: It's depended on smart contract definition.
 		if len(result) == 0 or int(result) not in [1, 2, 3]:
 			return None, None
 

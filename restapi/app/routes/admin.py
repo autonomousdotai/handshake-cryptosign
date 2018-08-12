@@ -231,6 +231,9 @@ def report(match_id):
 @admin_routes.route('/test_market', methods=['POST'])
 @dev_required
 def test_market():
+	""" Create market
+    This is used for testing purpose on staging.
+    """
 	try:
 		data = request.json
 		matches = []
@@ -276,13 +279,17 @@ def test_market():
 		return response_error(ex.message)
 
 @admin_routes.route('/change-contract', methods=['POST'])
-@jwt_required
+@admin_required
 def change_contract():
+	""" Change contract: 
+    This is used for change contract json and contract json.
+	Input: 
+		from_id
+		to_id
+		contract_address
+		contract_json
+    """
 	try:
-		setting = db.session.query(Setting).filter(Setting.name == "ChangeContract").first()
-		if setting is None or setting.status is None or setting.status == 0:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
 		data = request.json
 		from_id = int(data.get('from', 0))
 		to_id = int(data.get('to', 0))
@@ -297,20 +304,16 @@ def change_contract():
 		for hs in handshakes:
 			if hs.contract_address is None and hs.contract_json is None:
 				arr_id.append(hs.id)
-				# hs.contract_address = g.PREDICTION_SMART_CONTRACT
-				# hs.contract_json = g.PREDICTION_JSON
 				hs.contract_address = contract_address
 				hs.contract_json = contract_json
 				db.session.flush()
 				
 				shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
 				for sk in shakers:
-					# sk.contract_address = g.PREDICTION_SMART_CONTRACT
-					# sk.contract_json = g.PREDICTION_JSON
 					sk.contract_address = contract_address
 					sk.contract_json = contract_json
 					db.session.flush()
-				db.session.commit()
+		db.session.commit~()
 		if len(arr_id) > 0:
 			update_contract_feed.delay(arr_id, contract_address, contract_json)
 		return response_ok()

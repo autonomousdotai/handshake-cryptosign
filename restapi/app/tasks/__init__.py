@@ -301,7 +301,6 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
-			# "add": arr_handshakes
 			"update": arr_handshakes
 		}
 		res = requests.post(endpoint, json=data)

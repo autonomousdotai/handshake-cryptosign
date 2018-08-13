@@ -1761,6 +1761,8 @@ class TestEventBluePrint(BaseTestCase):
                                         "Payload": "{}".format(123),
                                     })
             data = json.loads(response.data.decode()) 
+            print data
+            
             self.assertTrue(data['status'] == 1)
 
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==100).all()

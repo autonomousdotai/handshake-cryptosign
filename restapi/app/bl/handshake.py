@@ -45,7 +45,7 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		shaker.bk_status = shaker.status
 		shaker.status = HandshakeStatus['STATUS_DONE']
 		db.session.merge(shaker)
-		
+
 	db.session.flush()
 	return handshakes, shakers
 

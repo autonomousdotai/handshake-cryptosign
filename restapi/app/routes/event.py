@@ -38,10 +38,8 @@ def event():
 		elif status == 2:
 			method = data.get('methodName', '')
 			handshakes, shakers = handshake_bl.save_failed_handshake_method_for_event(method, tx)
-		print "zzzzz"
-		print tx
+
 		if tx is not None:
-			print "============="
 			tx.status = status
 			db.session.flush()
 		db.session.commit()

@@ -53,8 +53,12 @@ def save_collect_state_for_maker(handshake):
 	if handshake is not None:
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 		if outcome is not None:
+			print "111111111"
 			if handshake.side == outcome.result:
+				print "22222"
 				shaker = Shaker.find_shaker_by_handshake_id(handshake.id)
+				print "333333333"
+				print shaker
 				if shaker is not None:
 					shaker.bk_status = shaker.status
 					shaker.status = HandshakeStatus['STATUS_DONE']
@@ -496,6 +500,8 @@ def save_handshake_for_event(event_name, inputs):
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
+			print "00000000"
+			print handshake
 			if handshake is not None:
 				# update status of shaker and handshake to done
 				# find all bets belongs to this outcome which user join

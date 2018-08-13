@@ -45,6 +45,9 @@ class BaseConfig(object):
 	CELERY_BROKER_URL = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	CELERY_RESULT_BACKEND = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 
+	# Dropbox
+	DROPBOX_ACCESS_TOKEN = os.environ.get('DROPBOX_ACCESS_TOKEN', '')
+
 	# SmartContract
 	PREDICTION_SMART_CONTRACT = '0x123'
 	PREDICTION_JSON = 'PredictionHandshake101'
@@ -57,8 +60,6 @@ class BaseConfig(object):
 	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
-
-	DROPBOX_ACCESS_TOKEN = ''
 
 class DevelopmentConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'

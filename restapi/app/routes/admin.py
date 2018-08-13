@@ -313,7 +313,7 @@ def change_contract():
 					sk.contract_address = contract_address
 					sk.contract_json = contract_json
 					db.session.flush()
-		db.session.commit~()
+		db.session.commit()
 		if len(arr_id) > 0:
 			update_contract_feed.delay(arr_id, contract_address, contract_json)
 		return response_ok()

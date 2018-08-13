@@ -7,11 +7,11 @@ class Dropbox(object):
 		super(dropbox.Dropbox, self).__init__()
 		if app:
 			self.app = app
-			self.dropbox = dropbox.Dropbox(app.config['DROPBOX_ACCESS_TOKEN'])
+			# self.dropbox = dropbox.Dropbox(app.config['DROPBOX_ACCESS_TOKEN'])
 
 	def init_app(self, app):
 		self.app = app
-		self.dropbox = dropbox.Dropbox(app.config['DROPBOX_ACCESS_TOKEN'])
+		# self.dropbox = dropbox.Dropbox(app.config['DROPBOX_ACCESS_TOKEN'])
 
 	def upload(self, from_file_path, to_file_path):
 		with open(from_file_path, 'rb') as f:

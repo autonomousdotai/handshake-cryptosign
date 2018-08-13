@@ -108,7 +108,7 @@ def save_refund_state_for_all(user_id, outcome_id):
 def save_disputed_state(outcome_id):
 	handshakes = []
 	shakers = []
-	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id, Handshake.shake_count > 0).all()
+	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id, Handshake.remaining_amount < Handshake.amount).all()
 	for hs in handshakes:
 		hs.status = HandshakeStatus['STATUS_DISPUTED']
 		db.session.merge(hs)
@@ -120,19 +120,19 @@ def save_disputed_state(outcome_id):
 	db.session.flush()
 	return handshakes, shakers
 
-def save_resolve_state_all(outcome_id, state):
+def save_resolve_state_for_outcome(outcome_id):
 	handshakes = []
 	shakers = []
 	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id).all()
 	for hs in handshakes:
 		hs.bk_status = hs.status
-		hs.status = state
+		hs.status = HandshakeStatus['STATUS_RESOLVED']
 		db.session.merge(hs)
 
 		shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
 		for shaker in shakers:
 			shaker.bk_status = shaker.status
-			shaker.status = state
+			shaker.status = HandshakeStatus['STATUS_RESOLVED']
 			db.session.merge(shaker)
 	db.session.flush()
 	return handshakes, shakers
@@ -427,7 +427,7 @@ def save_failed_handshake_method_for_event(method, tx):
 				onchain = options['onchainData']
 				if 'hid' in onchain:
 					hid = int(onchain['hid'])
-					outcome =Outcome.find_outcome_by_hid(hid)
+					outcome = Outcome.find_outcome_by_hid(hid)
 					if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
 						outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 						db.session.flush()
@@ -645,7 +645,7 @@ def save_handshake_for_event(event_name, inputs):
 		outcome.total_dispute_amount = 0
 		outcome.result = int(result)
 		db.session.flush()
-		handshakes, shakers = save_resolve_state_all(outcome.id, HandshakeStatus['STATUS_RESOLVED'])
+		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
 		return handshakes, shakers
 		
 

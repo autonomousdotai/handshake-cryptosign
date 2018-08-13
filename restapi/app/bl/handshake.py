@@ -71,6 +71,7 @@ def save_collect_state_for_maker(handshake):
 						shakers = []	
 					shakers.append(shaker)
 					return handshakes, shakers
+	return None, None
 
 def save_collect_state_for_shaker(shaker):
 	if shaker is not None:

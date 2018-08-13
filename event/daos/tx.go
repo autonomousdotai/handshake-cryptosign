@@ -15,6 +15,15 @@ func (t TxDAO) GetAllPending() ([]models.Tx, error) {
 	return txs, nil
 }
 
+func (t TxDAO) GetTxPending(query string) ([]models.Tx, error) {
+	txs := []models.Tx{}
+	err := models.Database().Where(query).Find(&txs).Error
+	if err != nil {
+		return nil, err
+	}
+	return txs, nil
+}
+
 func (t TxDAO) GetByHash(hash string) (models.Tx, error) {
 	tx := models.Tx{}
 	err := models.Database().Where("hash = ?", hash).First(&tx).Error

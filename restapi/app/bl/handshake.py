@@ -429,9 +429,8 @@ def save_handshake_for_event(event_name, inputs):
 
 	elif event_name == '__report':
 		print '__report'
-		# report1: mean that support win
-		# report2: mean that against win
-		# report0: mean that no one win
+		# report{outcome_id}_{side}
+		# side 1: SUPPORT, 2: OPPOSE, 3: DRAW
 		outcome_id, result = offchain.replace('report', '').split('_')
 		if outcome_id is None or result is None:
 			return None, None

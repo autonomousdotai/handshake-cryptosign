@@ -546,6 +546,7 @@ def save_handshake_for_event(event_name, inputs):
 			arr = []
 			arr.append(handshake)
 			return arr, None
+		return None, None
 
 	elif event_name == '__refund':
 		print '__refund'

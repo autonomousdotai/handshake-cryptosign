@@ -16,7 +16,7 @@ func main() {
         panic("invalid hash")
     }
     
-    etherClient, err := ethclient.Dial("https://mainnet.infura.io/")
+    etherClient, err := ethclient.Dial("https://rinkeby.infura.io/")
     if err != nil {
         panic(err)
     }

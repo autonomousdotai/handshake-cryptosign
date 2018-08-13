@@ -9,7 +9,6 @@ import (
 func main() {
 	config.Init()
 
-	//
 	var db *gorm.DB = models.Database()
 	defer db.Close()
 

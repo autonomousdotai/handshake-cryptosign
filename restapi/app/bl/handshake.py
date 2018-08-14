@@ -146,9 +146,9 @@ def save_resolve_state_for_outcome(outcome_id):
 	return handshakes, shakers
 
 def save_user_disputed_state(handshake, user_id, side):
-	"""Update STATUS_USER_DISPUTED
-	"" No need to update bk_status
-	"""
+	# Update STATUS_USER_DISPUTED
+	# No need to update bk_status
+
 	handshakes = []
 	shakers = []
 	print "======"

@@ -625,8 +625,7 @@ def save_handshake_for_event(event_name, inputs):
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
 		else:
-			print '666666666'
-			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, sidle)
+			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, side)
 		print 'ENDDDDDDDDDDD'
 		print handshake_dispute
 		print shaker_dispute

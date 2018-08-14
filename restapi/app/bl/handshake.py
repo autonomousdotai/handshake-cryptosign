@@ -146,6 +146,7 @@ def save_resolve_state_for_outcome(outcome_id):
 	return handshakes, shakers
 
 def save_user_disputed_state(handshake, user_id, side):
+    print "@@@@@@@@@@@@"
 	# Update STATUS_USER_DISPUTED
 	# No need to update bk_status
 	handshakes = []
@@ -605,7 +606,7 @@ def save_handshake_for_event(event_name, inputs):
 			side = shaker.side
 		print '11111111111'
 		print handshake
-		if handshake is None or handshake.shake_count <= 0:
+		if handshake is None:
 			return None, None
 		print '2222222222'
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)

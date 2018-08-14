@@ -313,7 +313,7 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("add_feed=>",exc_type, fname, exc_tb.tb_lineno)
+		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

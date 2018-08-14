@@ -148,7 +148,6 @@ def save_resolve_state_for_outcome(outcome_id):
 def save_user_disputed_state(handshake, user_id, side):
 	# Update STATUS_USER_DISPUTED
 	# No need to update bk_status
-
 	handshakes = []
 	shakers = []
 	print "======"
@@ -179,7 +178,7 @@ def has_valid_shaker(handshake):
 
 
 def data_need_set_result_for_outcome(outcome):
-    	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
+	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
 
 	if outcome.result == -1:
 		return None, None

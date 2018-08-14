@@ -151,17 +151,19 @@ def save_user_disputed_state(handshake, user_id, side):
 	"""
 	handshakes = []
 	shakers = []
-
+	print "======"
 	handshakes = db.session.query(Handshake).filter(Handshake.side == side, Handshake.user_id == user_id, Handshake.outcome_id == handshake.outcome_id).all()
+	print handshakes
 	for hs in handshakes:
 		hs.status = HandshakeStatus['STATUS_USER_DISPUTED']
 		db.session.merge(hs)
-
+	print '@@@@@@@1'
 	shakers = db.session.query(Shaker).filter(Shaker.side == side, Shaker.shaker_id == user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id).group_by(Handshake.id))).all()
+	print shakers
 	for shaker in shakers:
 		shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
 		db.session.merge(shaker)
-
+	print '@@@@@@@'
 	db.session.flush()
 	return handshakes, shakers
 

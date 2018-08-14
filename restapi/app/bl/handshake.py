@@ -592,7 +592,7 @@ def save_handshake_for_event(event_name, inputs):
 			print 'mmmmm'
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			user_id = shaker.user_id
+			user_id = handshake.user_id
 		print '11111111111'
 		print handshake
 		if handshake is None or handshake.shake_count <= 0:

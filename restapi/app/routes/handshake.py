@@ -817,7 +817,6 @@ def update_dispute_status():
 	try:
 		handshakes = []
 		shakers = []
-		handshake = None
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 		data = request.json
@@ -839,6 +838,11 @@ def update_dispute_status():
 			if handshake.shake_count <= 0:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_DISPUTE, CODE.HANDSHAKE_CANNOT_DISPUTE)
 
+			handshake.bk_status = handshake.status
+			handshake.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
+			db.session.flush()
+			handshakes.append(handshake)
+
 		elif 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
@@ -849,12 +853,7 @@ def update_dispute_status():
 			shaker.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
 			db.session.flush()
 			shakers.append(shaker)
-			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-		
-		handshake.bk_status = handshake.status
-		handshake.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
-		db.session.flush()
-		handshakes.append(handshake)
+
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 		if outcome is None:

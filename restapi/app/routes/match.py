@@ -291,7 +291,7 @@ def getMatchReport():
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.created_user_id == uid:
+				if outcome.created_user_id == uid and outcome.hid >= 0:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes

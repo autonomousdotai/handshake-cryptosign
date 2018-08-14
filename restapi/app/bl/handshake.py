@@ -240,10 +240,10 @@ def update_amount_outcome_report(outcome_id, user_id, side):
 	amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.side = {}) AS tmp) AS total_amount_m'.format(outcome.id, side)
 	amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.side= {}) AS tmp) AS total_amount_s'.format(outcome.id, side)
 
-	total_matched_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_matched_amount_query_m, dispute_matched_amount_query_s, matched_amount_query_m, matched_amount_query_s)).first()
+	total_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_amount_query_m, dispute_amount_query_s, amount_query_m, amount_query_s)).first()
 
-	outcome.total_dispute_amount = (total_matched_amount['total_dispute_amount_m'] if total_matched_amount['total_dispute_amount_m'] is not None else 0) + (total_matched_amount['total_dispute_amount_s'] if total_matched_amount['total_dispute_amount_s'] is not None else 0)
-	outcome.total_amount = (total_matched_amount['total_amount_m'] if total_matched_amount['total_amount_m'] is not None else 0) + (total_matched_amount['total_amount_s'] if total_matched_amount['total_amount_s'] is not None else 0)
+	outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
+	outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
 	db.session.flush()
 
 def save_handshake_method_for_event(method, inputs):

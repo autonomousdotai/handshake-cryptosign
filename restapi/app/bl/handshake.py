@@ -577,36 +577,45 @@ def save_handshake_for_event(event_name, inputs):
 		handshake = None
 		if state < 2:
 			return None, None
-
+		print '000000000'
 		if 's' in offchain:
+			print 'ssssssss'
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
-
+			print shaker
 			if shaker is not None:
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		elif 'm' in offchain:
+			print 'mmmmm'
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-
+		print '11111111111'
+		print handshake
 		if handshake is None or handshake.shake_count <= 0:
 			return None, None
-
+		print '2222222222'
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-
+		print outcome
 		if outcome is None:
 			return None, None
-
+		print '2222222222222'
 		update_amount_outcome_report(outcome.id)
-
+		print '33333333333'
 		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
+			print '4444444444444'
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
+			print '55555555'
 			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
 		else:
+			print '666666666'
 			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake)
+		print 'ENDDDDDDDDDDD'
+		print handshake_dispute
+		print shaker_dispute
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':

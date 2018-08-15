@@ -31,7 +31,6 @@ def matches():
 		matches = db.session.query(Match).filter(Match.deleted == 0, Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches:	
-			#  find best odds which match against
 			match_json = match.to_json()
 
 			total_users_query = '( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)
@@ -194,9 +193,13 @@ def remove(id):
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
 def report(match_id):
+	"""
+	"" TODO: fix here
+	"""
 	try:
 		dispute = int(request.args.get('dispute', 0))
 		data = request.json
@@ -281,7 +284,6 @@ def getMatchReport():
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		response = []
-		matches = []
 
 		# Get all matchs are PENDING (-1)
 		matches = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id))).all()
@@ -303,6 +305,7 @@ def getMatchReport():
 		return response_ok(response)
 	except Exception, ex:
 		return response_error(ex.message)
+
 
 @match_routes.route('/report/count', methods=['GET'])
 @login_required

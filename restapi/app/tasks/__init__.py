@@ -156,6 +156,9 @@ def add_shuriken(user_id, shuriken_type):
 
 @celery.task()
 def run_bots(outcome_id):
+	"""
+	"" TODO: fix hid
+	"""
 	try:
 		# find all handshakes of this outcome on both 2 sides: support and oppose
 		# if there is a handshake which is not bot and amount < 0.1 then match it

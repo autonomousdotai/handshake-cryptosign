@@ -92,12 +92,12 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-        matchs = db.session.query(Match).filter(or_(Match.created_user_id==88, Match.created_user_id==None)).all()
-        for m in matchs:
+        matches = db.session.query(Match).filter(or_(Match.created_user_id==88, Match.created_user_id==99, Match.created_user_id==None)).all()
+        for m in matches:
             db.session.delete(m)
             db.session.commit()
 
-        outcomes = db.session.query(Outcome).filter(or_(Outcome.created_user_id==88, Outcome.created_user_id==None)).all()
+        outcomes = db.session.query(Outcome).filter(or_(Outcome.created_user_id==88, Outcome.created_user_id==99, Outcome.created_user_id==None)).all()
         for oc in outcomes:
             db.session.delete(oc)
             db.session.commit()
@@ -431,13 +431,14 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertNotEqual(tmp, None)
 
 
-    def test_count_match_report_with_user(self):
+    def test_match_need_user_report(self):
         self.clear_data_before_test()
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
-        # ----- 
 
+        # ----- Add matches
         match1 = Match(
+            name='match1',
             date=seconds - 100,
             reportTime=seconds + 200,
             disputeTime=seconds + 300,
@@ -445,7 +446,9 @@ class TestMatchBluePrint(BaseTestCase):
         )
         db.session.add(match1)
         db.session.commit()
+
         match2 = Match(
+            name='match2',
             date=seconds - 200,
             reportTime=seconds + 100,
             disputeTime=seconds + 300,
@@ -455,6 +458,7 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.commit()
 
         match3 = Match(
+            name='match3',
             date=seconds - 200,
             reportTime=seconds - 100,
             disputeTime=seconds + 300,
@@ -462,9 +466,11 @@ class TestMatchBluePrint(BaseTestCase):
         )
         db.session.add(match3)
         db.session.commit()
-        # -----        
+
+        # ----- Add outcomes   
         outcome1 = Outcome(
-            created_user_id=88,
+            name='outcome1',
+            created_user_id=99,
             match_id=match1.id,
             public=1,
             hid=0,
@@ -472,7 +478,9 @@ class TestMatchBluePrint(BaseTestCase):
         )
         db.session.add(outcome1)
         db.session.commit()
+
         outcome2 = Outcome(
+            name='outcome2',
             created_user_id=88,
             match_id=match2.id,
             public=1,
@@ -481,29 +489,49 @@ class TestMatchBluePrint(BaseTestCase):
         )
         db.session.add(outcome2)
         db.session.commit()
+
         outcome3 = Outcome(
+            name='outcome3',
             created_user_id=88,
-            match_id=match3.id,
+            match_id=match1.id,
             public=1,
-            hid=2,
-            result=CONST.RESULT_TYPE['PROCESSING']
+            hid=0,
+            result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome3)
         db.session.commit()
 
         with self.client:
+            # Get match for uid = 88
+            # Expected: 
+            #   match 1: 1 outcome
+            #   match 2: 1 outcome
             response = self.client.get(
-                                    '/match/report/count',
+                                    '/match/report',
                                     headers={
                                         "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
+            data = json.loads(response.data.decode())  
+            print data           
             data_json = data['data']
-            print data_json
-            self.assertTrue(data_json['count'] == 2)
+            self.assertTrue(data['status'] == 1)
+
+            # Get match for uid = 99
+            # Expected: 
+            #   match 1: 1 outcome
+            response = self.client.get(
+                                    '/match/report',
+                                    headers={
+                                        "Uid": "{}".format(99),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())             
+            data_json = data['data']
+            print '------> {}'.format(data_json)
+            self.assertTrue(data['status'] == 0)
 
 
 if __name__ == '__main__':

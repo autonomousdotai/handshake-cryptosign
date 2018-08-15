@@ -3,6 +3,7 @@ import json
 import requests
 import app.constants as CONST
 import app.bl.match as match_bl
+import app.bl.contract as contract_bl
 
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import jwt_required, decode_token
@@ -13,7 +14,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task, Source, Category
+from app.models import User, Match, Outcome, Task, Source, Category, Contract
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -274,54 +275,35 @@ def report(match_id):
 
 @match_routes.route('/report', methods=['GET'])
 @login_required
-def getMatchReport():
+def match_need_user_report():
 	try:
-		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
 		uid = int(request.headers['Uid'])
 
 		if request.headers['Uid'] is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
-		response = []
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
 
+		response = []
 		# Get all matchs are PENDING (-1)
-		matches = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id))).all()
+		matches = db.session.query(Match).filter(and_(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
 
 		# Filter all outcome of user
+		contracts = contract_bl.all_contracts()
+		
 		for match in matches:
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				if outcome.created_user_id == uid and outcome.hid >= 0:
-					arr_outcomes.append(outcome.to_json())
-
+					outcome_json = outcome.to_json()
+					arr_outcomes.append(outcome_json)
+			
 			match_json["outcomes"] = arr_outcomes
-			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
-			match_json["contract_json"] = g.PREDICTION_JSON
-
+			match_json["contracts"] = contracts
 			response.append(match_json)
 
 		return response_ok(response)
-	except Exception, ex:
-		return response_error(ex.message)
-
-
-@match_routes.route('/report/count', methods=['GET'])
-@login_required
-def countMatchReport():
-	try:
-		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
-		uid = int(request.headers['Uid'])
-		if request.headers['Uid'] is None:
-			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
-
-		# Get all matchs are PENDING (-1)
-		count = db.session.query(Match.id).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id == uid, Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).count()
-		resonse_json = {
-			"count": count
-		}
-		return response_ok(resonse_json)
 	except Exception, ex:
 		return response_error(ex.message)

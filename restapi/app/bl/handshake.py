@@ -146,24 +146,20 @@ def save_resolve_state_for_outcome(outcome_id):
 	return handshakes, shakers
 
 def save_user_disputed_state(handshake, user_id, side):
-	print "@@@@@@@@@@@@"
 	# Update STATUS_USER_DISPUTED
 	# No need to update bk_status
 	handshakes = []
 	shakers = []
-	print "======"
 	handshakes = db.session.query(Handshake).filter(Handshake.side == side, Handshake.user_id == user_id, Handshake.outcome_id == handshake.outcome_id).all()
-	print handshakes
 	for hs in handshakes:
 		hs.status = HandshakeStatus['STATUS_USER_DISPUTED']
 		db.session.merge(hs)
-	print '@@@@@@@1'
+
 	shakers = db.session.query(Shaker).filter(Shaker.side == side, Shaker.shaker_id == user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id).group_by(Handshake.id))).all()
-	print shakers
 	for shaker in shakers:
 		shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
 		db.session.merge(shaker)
-	print '@@@@@@@'
+
 	db.session.flush()
 	return handshakes, shakers
 
@@ -237,17 +233,17 @@ def parse_inputs(inputs):
 
 	return offchain, hid, state
 
-def update_amount_outcome_report(outcome_id):
+def update_amount_outcome_report(outcome_id, user_id, side):
 	outcome = Outcome.find_outcome_by_id(outcome_id)
-	dispute_matched_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.status IN ({},{},{})) AS tmp) AS total_dispute_amount_m".format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
-	dispute_matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.status IN ({},{},{})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
-	matched_amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_m'.format(outcome.id)
-	matched_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_s'.format(outcome.id)
+	dispute_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.side = {} AND handshake.user_id = {} AND handshake.status IN ({},{},{})) AS tmp) AS total_dispute_amount_m".format(outcome.id, side, user_id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
+	dispute_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.side = {} AND shaker.shaker_id = {} AND shaker.status IN ({},{},{})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, side, user_id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
+	amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.side = {}) AS tmp) AS total_amount_m'.format(outcome.id, side)
+	amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.side= {}) AS tmp) AS total_amount_s'.format(outcome.id, side)
 
-	total_matched_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_matched_amount_query_m, dispute_matched_amount_query_s, matched_amount_query_m, matched_amount_query_s)).first()
+	total_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_amount_query_m, dispute_amount_query_s, amount_query_m, amount_query_s)).first()
 
-	outcome.total_dispute_amount = (total_matched_amount['total_dispute_amount_m'] if total_matched_amount['total_dispute_amount_m'] is not None else 0) + (total_matched_amount['total_dispute_amount_s'] if total_matched_amount['total_dispute_amount_s'] is not None else 0)
-	outcome.total_amount = (total_matched_amount['total_amount_m'] if total_matched_amount['total_amount_m'] is not None else 0) + (total_matched_amount['total_amount_s'] if total_matched_amount['total_amount_s'] is not None else 0)
+	outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
+	outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
 	db.session.flush()
 
 def save_handshake_method_for_event(method, inputs):
@@ -587,48 +583,41 @@ def save_handshake_for_event(event_name, inputs):
 		side = None
 		if state < 2:
 			return None, None
-		print '000000000'
+
 		if 's' in offchain:
-			print 'ssssssss'
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
 			user_id = shaker.shaker_id
 			side = shaker.side
-			print shaker
+
 			if shaker is not None:
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		elif 'm' in offchain:
-			print 'mmmmm'
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			user_id = handshake.user_id
 			side = shaker.side
-		print '11111111111'
-		print handshake
+
 		if handshake is None:
 			return None, None
-		print '2222222222'
+
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-		print outcome
+
 		if outcome is None:
 			return None, None
-		print '2222222222222'
-		update_amount_outcome_report(outcome.id)
-		print '33333333333'
+
+		update_amount_outcome_report(outcome.id, user_id, side)
+
 		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
-			print '4444444444444'
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
-			print '55555555'
 			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
 			# Send mail to admin
 			send_mail.delay(outcome.id, outcome.name)
 		else:
 			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, side)
-		print 'ENDDDDDDDDDDD'
-		print handshake_dispute
-		print shaker_dispute
+
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':

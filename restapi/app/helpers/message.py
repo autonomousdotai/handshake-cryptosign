@@ -18,6 +18,7 @@ class MESSAGE(object):
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
 	OUTCOME_REPORTED = 'This outcome reported!'
 	OUTCOME_DISPUTE_INVALID = 'This outcome dispute invalid!'
+	OUTCOME_CONTRACT_INVALID = 'This outcome contract invalid!'
 
 	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'

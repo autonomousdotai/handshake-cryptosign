@@ -843,6 +843,8 @@ def update_dispute_status():
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		outcome = None
+		handshake = None
+
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
@@ -867,6 +869,9 @@ def update_dispute_status():
 			shaker.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
 			db.session.flush()
 			shakers.append(shaker)
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			if handshake is None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
 
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 

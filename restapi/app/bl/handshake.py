@@ -113,7 +113,7 @@ def save_disputed_state(outcome_id):
 	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id, Handshake.remaining_amount < Handshake.amount).all()
 	handshake_ids = list(map(lambda x: x.id, handshakes))
 	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(handshake_ids)).all()
-	
+
 	for hs in handshakes:
 		hs.status = HandshakeStatus['STATUS_DISPUTED']
 		db.session.merge(hs)
@@ -454,11 +454,10 @@ def save_handshake_for_event(event_name, inputs):
 			return None, None
 		print 'outcome_id {}, result {}'.format(outcome_id, result)
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-    			
+
 		if len(result) > -1 and outcome is not None:
 			result = int(result)
 			outcome.result = result
-
 			db.session.flush()
 			return data_need_set_result_for_outcome(outcome)
 
@@ -597,7 +596,7 @@ def save_handshake_for_event(event_name, inputs):
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			user_id = handshake.user_id
-			side = shaker.side
+			side = handshake.side
 
 		if handshake is None:
 			return None, None
@@ -621,18 +620,20 @@ def save_handshake_for_event(event_name, inputs):
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
+		# resolve{outcome_id}_{side}
 		print '__resolve'
-		outcome_id, result = offchain.replace('report', '').split('_')
+		outcome_id, result = offchain.replace('resolve', '').split('_')
 		if outcome_id is None or result is None:
-			return None, None
-		print 'outcome_id {}, result {}'.format(outcome_id, result)
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-
-		if outcome is None:
 			return None, None
 
 		# 1: SUPPORT, 2: OPPOSE, 3: DRAW: It's depended on smart contract definition.
 		if len(result) == 0 or int(result) not in [1, 2, 3]:
+			return None, None
+
+		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
+		if outcome is None:
 			return None, None
 
 		outcome.total_dispute_amount = 0

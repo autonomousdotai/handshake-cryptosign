@@ -1,6 +1,6 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
-from app.models import Shaker, Handshake, Outcome, Shaker, User, Match, Tx
+from app.models import Shaker, Handshake, Outcome, Shaker, User, Match, Tx, Contract
 from app import db, app
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
@@ -15,6 +15,17 @@ import app.constants as CONST
 class TestEventBluePrint(BaseTestCase):
 
     def setUp(self):
+        # create contract
+        contract = Contract.find_contract_by_id(1)
+        if contract is None:
+            contract = Contract(
+                id=1,
+                contract_name="contract1",
+                contract_address="0x123",
+                json_name="name1"
+            )
+            db.session.add(contract)
+            db.session.commit()
         # create match
 
         match = Match.find_match_by_id(1)
@@ -73,7 +84,8 @@ class TestEventBluePrint(BaseTestCase):
             outcome = Outcome(
                 id=88,
                 match_id=1,
-                hid=88
+                hid=88,
+                contract_id=contract.id
             )
             db.session.add(outcome)
             db.session.commit()
@@ -142,7 +154,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__init",
                 "status": 1,
                 "id": 1,
@@ -200,7 +212,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "methodName": "init",
                 "status": 2,
                 "id": tx.id,
@@ -250,7 +262,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__uninit",
                 'id': 1,
                 "inputs": {
@@ -296,7 +308,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__createMarket",
                 'id': 1,
                 "inputs": {
@@ -368,7 +380,7 @@ class TestEventBluePrint(BaseTestCase):
         with self.client:
             Uid = 66
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__collect",
                 "status": 1,
                 'id': 1,
@@ -442,7 +454,7 @@ class TestEventBluePrint(BaseTestCase):
         with self.client:
             Uid = 22
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__collect",
                 "status": 1,
                 'id': 1,
@@ -512,7 +524,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__shake",
                 "status": 1,
                 'id': 1,
@@ -718,7 +730,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__refund",
                 "status": 1,
                 'id': 1,
@@ -818,7 +830,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "methodName": "shake",
                 "status": 0,
                 'id': 1,
@@ -877,7 +889,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "methodName": "report",
                 "status": 0,
                 'id': 1,
@@ -904,7 +916,7 @@ class TestEventBluePrint(BaseTestCase):
         self.assertEqual(hs.status, 0)
 
         outcome = Outcome.find_outcome_by_hid(88)
-        self.assertEqual(outcome.result, -1)
+        self.assertEqual(outcome.result, CONST.RESULT_TYPE['REPORT_FAILED'])
 
     def test_reiceive_report_event_with_status_2(self):
         self.clear_data_before_test()
@@ -965,7 +977,7 @@ class TestEventBluePrint(BaseTestCase):
         with self.client:
             Uid = 1
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "methodName": "report",
                 "status": 2,
                 'id': tx.id,
@@ -1016,7 +1028,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__report",
                 "status": 1,
                 'id': 1,
@@ -1040,9 +1052,9 @@ class TestEventBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
-        self.assertEqual(hs.status, 0)
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'])
 
-        outcome = Outcome.find_outcome_by_hid(88)
+        outcome = Outcome.find_outcome_by_id(88)
         self.assertEqual(outcome.result, 1)
 
     def test_reiceive_report_event_with_status_2(self):
@@ -1072,7 +1084,7 @@ class TestEventBluePrint(BaseTestCase):
                             "id": 328,
                             "task_type": "REAL_BET",
                             "action": "REPORT",
-                            "data": "{\"offchain\": \"cryptosign_report{}_2\", \"hid\": 88, \"outcome_result\": 2}".format(outcome.id),
+                            "data": '{"offchain": "cryptosign_report' + str(outcome.id) + '_2", "hid": 88, "outcome_result": 2}',
                             "status": -3
                         }
                     }
@@ -1104,7 +1116,7 @@ class TestEventBluePrint(BaseTestCase):
         with self.client:
             Uid = 1
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "methodName": "report",
                 "status": 2,
                 'id': tx.id,
@@ -1123,15 +1135,16 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
         self.assertEqual(hs.status, 0)
 
         outcome = Outcome.find_outcome_by_hid(88)
-        self.assertEqual(outcome.result, -1)
+        self.assertEqual(outcome.result, CONST.RESULT_TYPE['REPORT_FAILED'])
 
-    def test_reiceive_report_event(self):
+    def test_reiceive_report_event_with_not_shaker(self):
         self.clear_data_before_test()
         # -----
         handshake = Handshake(
@@ -1155,7 +1168,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__report",
                 "status": 1,
                 'id': 1,
@@ -1179,11 +1192,82 @@ class TestEventBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
-        self.assertEqual(hs.status, 0)
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'])
 
-        outcome = Outcome.find_outcome_by_hid(88)
+        outcome = Outcome.find_outcome_by_id(88)
         self.assertEqual(outcome.result, 1)
     
+    def test_reiceive_report_event_with_shaker(self):
+        self.clear_data_before_test()
+        # -----
+        handshake = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='0x123',
+                status=2
+        )
+        db.session.add(handshake)
+        db.session.commit()
+
+        shaker = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=2,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker)
+        db.session.commit()
+
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "contract": app.config.get("PREDICTION_JSON"),
+                "eventName": "__report",
+                "status": 1,
+                'id': 1,
+                "inputs": {
+                    "offchain": "cryptosign_report{}_1".format(88),
+                    "hid": 88    
+                }   
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+        hs = Handshake.find_handshake_by_id(handshake.id)
+        self.assertEqual(hs.status, HandshakeStatus['STATUS_SHAKER_SHAKED'])
+
+        outcome = Outcome.find_outcome_by_id(88)
+        self.assertEqual(outcome.result, 1)
+
     def test_reiceive_dispute_event_with_state_0 (self):
         self.clear_data_before_test()
 
@@ -1191,7 +1275,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__dispute",
                 "status": 1,
                 'id': 1,
@@ -1222,7 +1306,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__dispute",
                 "status": 1,
                 'id': 1,
@@ -1246,7 +1330,8 @@ class TestEventBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
 
-    # Dispute all makers were same user_id and outcome_id and side
+    # Dispute all makers were same user_id, outcome_id, side
+    # This case: STATUS_USER_DISPUTED
     def test_reiceive_dispute_event_with_state_2 (self):
         self.clear_data_before_test()
         # -----
@@ -1272,7 +1357,7 @@ class TestEventBluePrint(BaseTestCase):
 				hs_type=3,
 				chain_id=4,
 				is_private=1,
-				user_id=88,
+				user_id=99,
 				outcome_id=88,
 				odds=1.2,
 				amount=1,
@@ -1284,6 +1369,24 @@ class TestEventBluePrint(BaseTestCase):
                 status=0
         )
         db.session.add(handshake1)
+        db.session.commit()
+
+        handshake2 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake2)
         db.session.commit()
 
         shaker = Shaker(
@@ -1322,11 +1425,29 @@ class TestEventBluePrint(BaseTestCase):
         db.session.add(shaker2)
         db.session.commit()
 
+        shaker3 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=1,
+				from_address='not change',
+                status=0,
+                handshake_id=handshake.id
+        )
+        db.session.add(shaker3)
+        db.session.commit()
+
         with self.client:
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__dispute",
                 "status": 1,
                 'id': 1,
@@ -1355,13 +1476,20 @@ class TestEventBluePrint(BaseTestCase):
         self.assertEqual(hs.status, HandshakeStatus['STATUS_INITED'])
 
         s1 = Shaker.find_shaker_by_id(shaker.id)
-        self.assertEqual(s1.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+        self.assertEqual(s1.status, HandshakeStatus['STATUS_INITED'])
 
         hs1 = Handshake.find_handshake_by_id(handshake1.id)
         self.assertEqual(hs1.status, HandshakeStatus['STATUS_USER_DISPUTED'])
 
         s2 = Shaker.find_shaker_by_id(shaker2.id)
         self.assertEqual(s2.status, HandshakeStatus['STATUS_INITED'])
+
+        s3 = Shaker.find_shaker_by_id(shaker3.id)
+        self.assertEqual(s3.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        hs4 = Handshake.find_handshake_by_id(handshake2.id)
+        self.assertEqual(hs4.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
 
     # Dispute all makers and shakers matched
     # Dont dispute all makers did not match
@@ -1375,7 +1503,7 @@ class TestEventBluePrint(BaseTestCase):
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
-				amount=1,
+				amount=2,
 				currency='ETH',
 				side=1,
                 shake_count=1,
@@ -1393,7 +1521,7 @@ class TestEventBluePrint(BaseTestCase):
 				user_id=99,
 				outcome_id=88,
 				odds=2.2,
-				amount=1,
+				amount=2,
 				currency='ETH',
 				side=1,
                 shake_count=1,
@@ -1480,7 +1608,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__dispute",
                 "status": 1,
                 'id': 1,
@@ -1511,7 +1639,8 @@ class TestEventBluePrint(BaseTestCase):
         self.assertEqual(hs1.status, HandshakeStatus['STATUS_DISPUTED'])
 
         hs2 = Handshake.find_handshake_by_id(handshake2.id)
-        self.assertEqual(hs2.status, HandshakeStatus['INDUSTRIES_NONE'])
+        print hs2.status
+        self.assertEqual(hs2.status, HandshakeStatus['STATUS_INITED'])
 
         s = Shaker.find_shaker_by_id(shaker.id)
         self.assertEqual(s.status, HandshakeStatus['STATUS_DISPUTED'])
@@ -1537,7 +1666,7 @@ class TestEventBluePrint(BaseTestCase):
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
-				amount=1,
+				amount=2,
 				currency='ETH',
 				side=1,
                 shake_count=1,
@@ -1555,7 +1684,7 @@ class TestEventBluePrint(BaseTestCase):
 				user_id=99,
 				outcome_id=88,
 				odds=2.2,
-				amount=1,
+				amount=2,
 				currency='ETH',
 				side=1,
                 shake_count=1,
@@ -1642,7 +1771,7 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__dispute",
                 "status": 1,
                 'id': 1,
@@ -1672,7 +1801,7 @@ class TestEventBluePrint(BaseTestCase):
         self.assertEqual(hs1.status, HandshakeStatus['STATUS_DISPUTED'])
 
         hs2 = Handshake.find_handshake_by_id(handshake2.id)
-        self.assertEqual(hs2.status, HandshakeStatus['INDUSTRIES_NONE'])
+        self.assertEqual(hs2.status, HandshakeStatus['STATUS_INITED'])
 
         s = Shaker.find_shaker_by_id(shaker.id)
         self.assertEqual(s.status, HandshakeStatus['STATUS_DISPUTED'])
@@ -1693,6 +1822,7 @@ class TestEventBluePrint(BaseTestCase):
         outcome = Outcome.find_outcome_by_id(100)
         if outcome is not None:
             outcome.result = -3
+            outcome.hid=100
             db.session.commit()
         else:
             outcome = Outcome(
@@ -1711,14 +1841,14 @@ class TestEventBluePrint(BaseTestCase):
 				chain_id=4,
 				is_private=1,
 				user_id=33,
-				outcome_id=100,
+				outcome_id=outcome.id,
 				odds=1.2,
 				amount=1,
 				currency='ETH',
 				side=2,
 				remaining_amount=1,
 				from_address='0x1233464576',
-                status=4
+                status=HandshakeStatus['STATUS_DISPUTED']
         )
         db.session.add(handshake)
         db.session.commit()
@@ -1732,7 +1862,7 @@ class TestEventBluePrint(BaseTestCase):
 					handshake_id=handshake.id,
 					from_address='0x1235678',
 					chain_id=4,
-                    status=4
+                    status=HandshakeStatus['STATUS_DISPUTED']
 				)
         db.session.add(shaker)
         db.session.commit()
@@ -1741,12 +1871,12 @@ class TestEventBluePrint(BaseTestCase):
             Uid = 1
             
             params = {
-                "contract": "predictionHandshake",
+                "contract": app.config.get("PREDICTION_JSON"),
                 "eventName": "__resolve",
                 "status": 1,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_report{}_{}".format(outcome.id, result_report),
+                    "offchain": "cryptosign_resolve{}_{}".format(outcome.id, result_report),
                     "hid": 100
                 }   
             }
@@ -1761,18 +1891,17 @@ class TestEventBluePrint(BaseTestCase):
                                         "Payload": "{}".format(123),
                                     })
             data = json.loads(response.data.decode()) 
-            print data
-            
             self.assertTrue(data['status'] == 1)
 
-        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==100).all()
+        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
         for hs in handshakes:
+            print hs.status
             self.assertEqual(hs.status, HandshakeStatus['STATUS_RESOLVED'])
             shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
             for shaker in shakers:
                 self.assertEqual(shaker.status, HandshakeStatus['STATUS_RESOLVED'])
 
-        outcome = Outcome.find_outcome_by_id(100)
+        outcome = Outcome.find_outcome_by_id(outcome.id)
         self.assertEqual(outcome.total_dispute_amount, 0)
         self.assertEqual(outcome.result, result_report)
 
@@ -1838,7 +1967,7 @@ class TestEventBluePrint(BaseTestCase):
     #         Uid = 1
             
     #         params = {
-    #             "contract": "predictionHandshake",
+    #             "contract": app.config.get("PREDICTION_JSON"),
     #             "eventName": "__resolve",
     #             "status": 1,
     #             'id': 1,

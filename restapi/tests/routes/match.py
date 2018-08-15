@@ -2,7 +2,7 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db
 from app.helpers.message import MESSAGE
-from app.models import Handshake, User, Outcome, Match, Shaker, Task, Source
+from app.models import Handshake, User, Outcome, Match, Shaker, Task, Source, Contract
 from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
@@ -16,6 +16,17 @@ import app.constants as CONST
 class TestMatchBluePrint(BaseTestCase):
 
     def setUp(self):
+        # create contract
+        contract = Contract.find_contract_by_id(1)
+        if contract is None:
+            contract = Contract(
+                id=1,
+                contract_name="contract1",
+                contract_address="0x123",
+                json_name="name1"
+            )
+            db.session.add(contract)
+            db.session.commit()
         # create match
 
         match = Match.find_match_by_id(1)
@@ -67,12 +78,14 @@ class TestMatchBluePrint(BaseTestCase):
             outcome = Outcome(
                 id=88,
                 match_id=1,
-                hid=88
+                hid=88,
+                contract_id=contract.id
             )
             db.session.add(outcome)
             db.session.commit()
         else:
             outcome.result = -1
+            outcome.contract_id=contract.id
             db.session.commit()
 
     def clear_data_before_test(self):
@@ -432,6 +445,7 @@ class TestMatchBluePrint(BaseTestCase):
 
 
     def test_count_match_report_with_user(self):
+        
         self.clear_data_before_test()
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
@@ -449,7 +463,7 @@ class TestMatchBluePrint(BaseTestCase):
             date=seconds - 200,
             reportTime=seconds + 100,
             disputeTime=seconds + 300,
-            created_user_id=88
+            created_user_id=99
         )
         db.session.add(match2)
         db.session.commit()
@@ -491,6 +505,16 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.add(outcome3)
         db.session.commit()
 
+        outcome4 = Outcome(
+            created_user_id=99,
+            match_id=match2.id,
+            public=1,
+            hid=2,
+            result=CONST.RESULT_TYPE['PROCESSING']
+        )
+        db.session.add(outcome4)
+        db.session.commit()
+
         with self.client:
             response = self.client.get(
                                     '/match/report/count',
@@ -505,6 +529,90 @@ class TestMatchBluePrint(BaseTestCase):
             print data_json
             self.assertTrue(data_json['count'] == 2)
 
+    def test_match_resolve_with_admin(self):
+        
+        self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        # ----- 
+
+        match1 = Match(
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match1)
+        db.session.commit()
+        match2 = Match(
+            date=seconds - 200,
+            reportTime=seconds + 100,
+            disputeTime=seconds + 300,
+            created_user_id=99
+        )
+        db.session.add(match2)
+        db.session.commit()
+
+        match3 = Match(
+            date=seconds - 200,
+            reportTime=seconds - 100,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match3)
+        db.session.commit()
+        # -----        
+        outcome1 = Outcome(
+            created_user_id=88,
+            match_id=match1.id,
+            public=1,
+            hid=0,
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome1)
+        db.session.commit()
+        outcome2 = Outcome(
+            created_user_id=88,
+            match_id=match2.id,
+            public=1,
+            hid=1,
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome2)
+        db.session.commit()
+        outcome3 = Outcome(
+            created_user_id=88,
+            match_id=match3.id,
+            public=1,
+            hid=2,
+            result=CONST.RESULT_TYPE['PROCESSING']
+        )
+        db.session.add(outcome3)
+        db.session.commit()
+
+        outcome4 = Outcome(
+            created_user_id=99,
+            match_id=match2.id,
+            public=1,
+            hid=2,
+            result=CONST.RESULT_TYPE['PROCESSING']
+        )
+        db.session.add(outcome4)
+        db.session.commit()
+
+        with self.client:
+            response = self.client.get(
+                                    '/match/report/count',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            print data_json
+            self.assertTrue(data_json['count'] == 2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -426,6 +426,9 @@ def create_bet():
 @handshake_routes.route('/uninit_free_bet/<int:handshake_id>', methods=['POST'])
 @login_required
 def uninit_free_bet(handshake_id):
+	"""
+	"" TODO: fix hid
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -482,6 +485,9 @@ def uninit_free_bet(handshake_id):
 @handshake_routes.route('/collect_free_bet', methods=['POST'])
 @login_required
 def collect_free_bet():
+	"""
+	"" TODO: fix hid 
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -574,6 +580,9 @@ def collect_free_bet():
 @handshake_routes.route('/refund_free_bet', methods=['POST'])
 @login_required
 def refund_free_bet():
+	"""
+	"" TODO: fix hid 
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -625,9 +634,10 @@ def refund_free_bet():
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
 
 		db.session.commit()
-		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
 		# update feed
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+		
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
@@ -652,6 +662,7 @@ def has_received_free_bet():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @handshake_routes.route('/uninit', methods=['POST'])
 @login_required
@@ -693,6 +704,7 @@ def uninit():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @handshake_routes.route('/collect', methods=['POST'])
 @login_required
@@ -752,6 +764,7 @@ def withdraw():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @handshake_routes.route('/refund', methods=['POST'])
 @login_required
 def refund():
@@ -810,6 +823,7 @@ def refund():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @handshake_routes.route('/dispute', methods=['POST'])
 @login_required

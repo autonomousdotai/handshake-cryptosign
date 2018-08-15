@@ -163,6 +163,9 @@ def get_match():
 @admin_routes.route('match/report/<int:match_id>', methods=['POST'])
 @jwt_required
 def report(match_id):
+	"""
+	""TODO: fix hid
+	"""
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)

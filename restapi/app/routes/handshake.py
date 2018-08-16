@@ -426,6 +426,9 @@ def create_bet():
 @handshake_routes.route('/uninit_free_bet/<int:handshake_id>', methods=['POST'])
 @login_required
 def uninit_free_bet(handshake_id):
+	"""
+	"" TODO: fix hid
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -482,6 +485,9 @@ def uninit_free_bet(handshake_id):
 @handshake_routes.route('/collect_free_bet', methods=['POST'])
 @login_required
 def collect_free_bet():
+	"""
+	"" TODO: fix hid 
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -574,6 +580,9 @@ def collect_free_bet():
 @handshake_routes.route('/refund_free_bet', methods=['POST'])
 @login_required
 def refund_free_bet():
+	"""
+	"" TODO: fix hid 
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -625,9 +634,10 @@ def refund_free_bet():
 			return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)	
 
 		db.session.commit()
-		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
 		# update feed
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
+		
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
@@ -652,6 +662,7 @@ def has_received_free_bet():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @handshake_routes.route('/uninit', methods=['POST'])
 @login_required
@@ -693,6 +704,7 @@ def uninit():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @handshake_routes.route('/collect', methods=['POST'])
 @login_required
@@ -751,6 +763,7 @@ def withdraw():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @handshake_routes.route('/refund', methods=['POST'])
 @login_required
@@ -811,13 +824,13 @@ def refund():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @handshake_routes.route('/dispute', methods=['POST'])
 @login_required
 def update_dispute_status():
 	try:
 		handshakes = []
 		shakers = []
-		handshake = None
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 		data = request.json
@@ -830,6 +843,8 @@ def update_dispute_status():
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		outcome = None
+		handshake = None
+
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
@@ -838,6 +853,11 @@ def update_dispute_status():
 			
 			if handshake.shake_count <= 0:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_DISPUTE, CODE.HANDSHAKE_CANNOT_DISPUTE)
+
+			handshake.bk_status = handshake.status
+			handshake.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
+			db.session.flush()
+			handshakes.append(handshake)
 
 		elif 's' in offchain:
 			offchain = int(offchain.replace('s', ''))
@@ -850,11 +870,9 @@ def update_dispute_status():
 			db.session.flush()
 			shakers.append(shaker)
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-		
-		handshake.bk_status = handshake.status
-		handshake.status = HandshakeStatus['STATUS_DISPUTE_PENDING']
-		db.session.flush()
-		handshakes.append(handshake)
+			if handshake is None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
+
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 		if outcome is None:

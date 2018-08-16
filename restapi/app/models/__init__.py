@@ -11,3 +11,4 @@ from category import *
 from source import *
 from notification import *
 from token import *
+from contract import *

@@ -3,6 +3,7 @@ import json
 import requests
 import app.constants as CONST
 import app.bl.match as match_bl
+import app.bl.contract as contract_bl
 
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import jwt_required, decode_token
@@ -13,7 +14,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task, Source, Category
+from app.models import User, Match, Outcome, Task, Source, Category, Contract
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -31,7 +32,6 @@ def matches():
 		matches = db.session.query(Match).filter(Match.deleted == 0, Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches:	
-			#  find best odds which match against
 			match_json = match.to_json()
 
 			total_users_query = '( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)
@@ -194,9 +194,13 @@ def remove(id):
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
 def report(match_id):
+	"""
+	"" TODO: fix here
+	"""
 	try:
 		dispute = int(request.args.get('dispute', 0))
 		data = request.json
@@ -271,20 +275,21 @@ def report(match_id):
 
 @match_routes.route('/report', methods=['GET'])
 @login_required
-def getMatchReport():
+def match_need_user_report():
 	try:
-		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
 		uid = int(request.headers['Uid'])
 
 		if request.headers['Uid'] is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
 		response = []
-		matches = []
+		contracts = contract_bl.all_contracts()
 
 		# Get all matchs are PENDING (-1)
-		matches = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id))).all()
+		matches = db.session.query(Match).filter(and_(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
 
 		# Filter all outcome of user
 		for match in matches:
@@ -292,33 +297,12 @@ def getMatchReport():
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				if outcome.created_user_id == uid and outcome.hid >= 0:
-					arr_outcomes.append(outcome.to_json())
-
+					outcome_json = contract_bl.filter_contract_id_in_contracts(outcome.to_json(), contracts)
+					arr_outcomes.append(outcome_json)
+			
 			match_json["outcomes"] = arr_outcomes
-			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
-			match_json["contract_json"] = g.PREDICTION_JSON
-
 			response.append(match_json)
 
 		return response_ok(response)
-	except Exception, ex:
-		return response_error(ex.message)
-
-@match_routes.route('/report/count', methods=['GET'])
-@login_required
-def countMatchReport():
-	try:
-		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
-		uid = int(request.headers['Uid'])
-		if request.headers['Uid'] is None:
-			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
-
-		# Get all matchs are PENDING (-1)
-		count = db.session.query(Match.id).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id == uid, Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None)).group_by(Outcome.match_id))).count()
-		resonse_json = {
-			"count": count
-		}
-		return response_ok(resonse_json)
 	except Exception, ex:
 		return response_error(ex.message)

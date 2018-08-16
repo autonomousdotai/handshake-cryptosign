@@ -8,7 +8,7 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from datetime import datetime
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker
+from app.models import Handshake, User, Outcome, Match, Shaker, Contract
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
 from app.helpers.utils import local_to_utc
@@ -23,8 +23,18 @@ import time
 class TestHandshakeBl(BaseTestCase):
 
 	def setUp(self):
+    	# create contract
+		contract = Contract.find_contract_by_id(1)
+		if contract is None:
+			contract = Contract(
+				id=1,
+				contract_name="contract1",
+				contract_address="0x123",
+				json_name="name1"
+			)
+			db.session.add(contract)
+			db.session.commit()
 		# create match
-
 		match = Match.find_match_by_id(1)
 		if match is None:
 			match = Match(
@@ -64,12 +74,14 @@ class TestHandshakeBl(BaseTestCase):
 			outcome = Outcome(
 				id=88,
 				match_id=1,
-				hid=88
+				hid=88,
+				contract_id=contract.id
 			)
 			db.session.add(outcome)
 			db.session.commit()
 		else:
 			outcome.result = -1
+			outcome.contract_id=contract.id
 			db.session.commit()
 
 	def clear_data_before_test(self):

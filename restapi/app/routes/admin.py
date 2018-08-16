@@ -13,7 +13,7 @@ from datetime import datetime
 from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
-from app.models import Match, Outcome, Task, Handshake, Shaker, Setting
+from app.models import Match, Outcome, Task, Handshake, Shaker, Setting, Contract
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
@@ -200,8 +200,12 @@ def report(match_id):
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
+				contract = Contract.find_contract_by_id(outcome.contract_id)
+				if contract is None:
+					return response_error(MESSAGE.OUTCOME_CONTRACT_INVALID)
+
 				report = {}
-				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(outcome.id) + '_' + str(item['side'])
+				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + ('resolve' if disputed else 'report') + str(outcome.id) + '_' + str(item['side'])
 				report['hid'] = outcome.hid
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
@@ -211,8 +215,8 @@ def report(match_id):
 					data=json.dumps(report),
 					action=CONST.TASK_ACTION['REPORT' if disputed else 'RESOLVE'],
 					status=-1,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
+					contract_address= contract.contract_address,
+					contract_json= contract.contract_json
 				)
 
 				db.session.add(task)

@@ -30,9 +30,25 @@ class TestContractBl(BaseTestCase):
 
         contracts = [
                         {
-                            '': ''
+                            'id': 1,
+                            'contract_address': '0x123',
+                            'contract_name': '1',
+                            'json_name': '123'
                         }
                     ]
+
+        j = {
+            'contract_id': None
+        }
+
+        actual = contract_bl.filter_contract_id_in_contracts(j, contracts)
+        self.assertEqual(actual['contract'], None)
+
+        j = {
+            'contract_id': 1
+        }
+        actual = contract_bl.filter_contract_id_in_contracts(j, contracts)
+        self.assertEqual(actual['contract']['contract_name'], '1')
 
 
 if __name__ == '__main__':

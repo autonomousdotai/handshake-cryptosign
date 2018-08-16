@@ -189,6 +189,7 @@ func (cr *Cron) scanWorker(id int, etherClient *ethclient.Client, jobs <-chan mo
 							var jsonData map[string]interface{}
 							json.Unmarshal([]byte(eventJSON), &jsonData)
 							jsonData["id"] = transaction.TxID
+							jsonData["contract_address"] = cr.ContractAddress
 							jsonData["status"] = 1
 							if decodeStatus {
 								// call REST API SUCCESS with event

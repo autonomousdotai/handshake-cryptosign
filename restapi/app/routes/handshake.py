@@ -22,7 +22,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
@@ -882,8 +882,6 @@ def update_dispute_status():
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-		outcome.result = CONST.RESULT_TYPE['DISPUTE_PENDING']
-		db.session.flush()
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 

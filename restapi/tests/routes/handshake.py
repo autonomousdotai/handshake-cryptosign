@@ -1695,6 +1695,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
@@ -1895,9 +1896,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(data['status'] == 1)
 
-            outcome = Outcome.find_outcome_by_id(88)
-            self.assertEqual(outcome.result, RESULT_TYPE['DISPUTE_PENDING'])
-
             sk = Shaker.find_shaker_by_id(shaker.id)
             self.assertEqual(sk.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
 
@@ -1921,9 +1919,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             print data
             self.assertEqual(response.status_code, 200)
             self.assertTrue(data['status'] == 1)
-
-            outcome = Outcome.find_outcome_by_id(88)
-            self.assertEqual(outcome.result, RESULT_TYPE['DISPUTE_PENDING'])
 
             hs = Handshake.find_handshake_by_id(handshake.id)
             self.assertEqual(hs.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])

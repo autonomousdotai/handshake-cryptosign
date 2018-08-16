@@ -22,7 +22,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
@@ -426,9 +426,6 @@ def create_bet():
 @handshake_routes.route('/uninit_free_bet/<int:handshake_id>', methods=['POST'])
 @login_required
 def uninit_free_bet(handshake_id):
-	"""
-	"" TODO: fix hid
-	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -460,13 +457,17 @@ def uninit_free_bet(handshake_id):
 						'payload': user.payload,
 						'free_bet': 1
 					}
+					contract = Contract.find_contract_by_id(outcome.contract_id)
+					if contract is None:
+						return response_error(MESSAGE.OUTCOME_CONTRACT_INVALID)
+
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
 						data=json.dumps(data, use_decimal=True),
 						action=CONST.TASK_ACTION['UNINIT'],
 						status=-1,
-						contract_address=g.PREDICTION_SMART_CONTRACT,
-						contract_json=g.PREDICTION_JSON
+						contract_address=contract.contract_address,
+						contract_json=contract.json_name
 					)
 					db.session.add(task)
 					db.session.commit()
@@ -487,6 +488,7 @@ def uninit_free_bet(handshake_id):
 def collect_free_bet():
 	"""
 	"" TODO: fix hid 
+	"" FIXED
 	"""
 	try:
 		uid = int(request.headers['Uid'])
@@ -557,14 +559,19 @@ def collect_free_bet():
 		data['uid'] = uid
 		data['payload'] = user.payload
 		data['free_bet'] = 1
+
+		contract = Contract.find_contract_by_id(outcome.contract_id)
+		if contract is None:
+			return response_error(MESSAGE.OUTCOME_CONTRACT_INVALID)
+
 		# add task
 		task = Task(
 			task_type=CONST.TASK_TYPE['FREE_BET'],
 			data=json.dumps(data),
 			action=CONST.TASK_ACTION['COLLECT'],
 			status=-1,
-			contract_address=g.PREDICTION_SMART_CONTRACT,
-			contract_json=g.PREDICTION_JSON
+			contract_address=contract.contract_address,
+			contract_json=contract.json_name
 		)
 		db.session.add(task)
 		db.session.commit()
@@ -580,9 +587,6 @@ def collect_free_bet():
 @handshake_routes.route('/refund_free_bet', methods=['POST'])
 @login_required
 def refund_free_bet():
-	"""
-	"" TODO: fix hid 
-	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -878,8 +882,6 @@ def update_dispute_status():
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-		outcome.result = CONST.RESULT_TYPE['DISPUTE_PENDING']
-		db.session.flush()
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 

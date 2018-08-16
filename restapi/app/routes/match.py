@@ -42,9 +42,6 @@ def matches():
 			match_json["total_bets"] = (total['total_amount_s'] if total['total_amount_s'] is not None else 0)  + (total['total_amount_m'] if total['total_amount_m'] is not None else 0)
 			match_json["total_users"] = (total['total_users_s'] if total['total_users_s'] is not None else 0) + (total['total_users_m'] if total['total_users_m'] is not None else 0)
 
-			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
-			match_json["contract_json"] = g.PREDICTION_JSON
-
 			response.append(match_json)
 
 		return response_ok(response)

@@ -26,6 +26,9 @@ admin_routes = Blueprint('admin', __name__)
 @admin_routes.route('/create_market', methods=['POST'])
 @admin_required
 def create_market():
+	""" 
+	"" TODO: miss contract_id
+	"""
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
 		data = {}

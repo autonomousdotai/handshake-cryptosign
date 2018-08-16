@@ -1,7 +1,7 @@
 from flask import Flask
 from app.factory import make_celery
 from app.core import db, configure_app, firebase
-from app.models import Handshake, Outcome, Shaker, Match, Task
+from app.models import Handshake, Outcome, Shaker, Match, Task, Contract
 from app.helpers.utils import utc_to_local
 from sqlalchemy import and_
 from decimal import *
@@ -166,7 +166,7 @@ def run_bots(outcome_id):
 		if outcome is None or outcome.result != -1 or outcome.hid is None:
 			return
 		
-
+		contract = Contract.find_contract_by_id(outcome.contract_id)
 		print '---------------------------------'
 		print '--------- run bots --------------'
 		arr_support_hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0)).all()
@@ -207,8 +207,8 @@ def run_bots(outcome_id):
 						data=json.dumps(o),
 						action=CONST.TASK_ACTION['INIT'],
 						status=-1,
-						contract_address=app.config['PREDICTION_SMART_CONTRACT'],
-						contract_json=app.config['PREDICTION_JSON']
+						contract_address=contract.contract_address,
+						contract_json=contract.json_name
 					)
 					db.session.add(task)
 					db.session.flush()
@@ -247,8 +247,8 @@ def run_bots(outcome_id):
 						data=json.dumps(o),
 						action=CONST.TASK_ACTION['INIT'],
 						status=-1,
-						contract_address=outcome.contract_address,
-						contract_json=outcome.json_name
+						contract_address=contract.contract_address,
+						contract_json=contract.json_name
 					)
 					db.session.add(task)
 					db.session.flush()

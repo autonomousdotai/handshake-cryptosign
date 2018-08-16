@@ -71,11 +71,6 @@ class MESSAGE(object):
 	TOKEN_NOT_FOUND = 'Token not found. Please try again.'
 	TOKEN_APPROVED_ALREADY = 'Token has been approved already.'
 
-
-	# NOTIFICATION
-	NOTIF_TIME_INVALID = 'Notification time is invalid.'
-	NOTIF_INVALID = 'Please check your notif id'
-
 	# CONTRACT
 	CONTRACT_EMPTY_VERSION = 'There is no active contract at the moment.'
 
@@ -142,9 +137,6 @@ class CODE(object):
 	WALLET_EXCEED_FREE_ETH = '1040' 										
 	WALLET_RECEIVE_ETH_ALREADY = '1041' 									
 	WALLET_REJECT_FREE_ETH = '1042' 										
-
-	# NOTIF
-	NOTIF_INVALID = '1100'
 
 	# TOKEN
 	TOKEN_NOT_FOUND = '1046'

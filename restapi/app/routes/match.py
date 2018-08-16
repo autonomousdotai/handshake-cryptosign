@@ -88,7 +88,7 @@ def matches_for_user(user_id):
 
 @match_routes.route('/add', methods=['POST'])
 @login_required
-def add():
+def add_match():
 	try:
 		uid = int(request.headers['Uid'])
 
@@ -200,9 +200,11 @@ def remove(id):
 
 @match_routes.route('/report/<int:match_id>', methods=['POST'])
 @login_required
-def report(match_id):
+def report_match(match_id):
 	"""
-	"" report: report match
+	"" report: report outcomes
+	"" input:
+	""		match_id
 	"""
 	try:
 		data = request.json
@@ -228,28 +230,22 @@ def report(match_id):
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
-					if outcome.result > CONST.RESULT_TYPE['PENDING']:
-						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
-
-					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						return  response_error(MESSAGE.OUTCOME_IS_REPORTING)
+					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
+					if message is not None and code is not None:
+						return message, code
 
 					outcome.result = CONST.RESULT_TYPE['PROCESSING']
 					outcome_json = outcome.to_json()
-
-					outcome_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
-					outcome_json["contract_json"] = g.PREDICTION_JSON
 					response.append(outcome_json)
+
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
-			db.session.commit()
 			return response_ok(response)
 		else:
 			return response_error(MESSAGE.MATCH_NOT_FOUND)
 
 	except Exception, ex:
-		db.session.rollback()
 		return response_error(ex.message)
 
 

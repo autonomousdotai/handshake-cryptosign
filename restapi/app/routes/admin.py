@@ -232,56 +232,6 @@ def report(match_id):
 		return response_error(ex.message)
 
 
-@admin_routes.route('/test_market', methods=['POST'])
-@dev_required
-def test_market():
-	""" Create market
-    This is used for testing purpose on staging.
-    """
-	try:
-		data = request.json
-		matches = []
-		for item in data:
-			match = Match(
-						homeTeamName=item['homeTeamName'],
-						awayTeamName=item['awayTeamName'],
-						name=item['name'],
-						market_fee=item['market_fee'],
-						date=item['date'],
-						reportTime=item['reportTime'],
-						disputeTime=item['disputeTime']
-					)
-			matches.append(match)
-			db.session.add(match)
-			db.session.flush()
-			
-			for o in item['outcomes']:
-				outcome = Outcome(
-					name=o.get('name', ''),
-					match_id=match.id,
-					public=1
-				)
-				db.session.add(outcome)
-				db.session.flush()
-
-			# add Task
-			task = Task(
-				task_type=CONST.TASK_TYPE['REAL_BET'],
-				data=json.dumps(match.to_json()),
-				action=CONST.TASK_ACTION['CREATE_MARKET'],
-				status=-1,
-				contract_address=g.PREDICTION_SMART_CONTRACT,
-				contract_json=g.PREDICTION_JSON
-			)
-			db.session.add(task)
-			db.session.flush()
-
-		db.session.commit()
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
 @admin_routes.route('/change-contract', methods=['POST'])
 @admin_required
 def change_contract():

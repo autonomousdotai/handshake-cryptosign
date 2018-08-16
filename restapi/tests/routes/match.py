@@ -318,7 +318,7 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-    def test_get_list_match_report_with_user(self):
+    def test_list_match_need_report_by_user(self):
         self.clear_data_before_test()
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
@@ -570,18 +570,55 @@ class TestMatchBluePrint(BaseTestCase):
             m = data_json[0]
             o = m['outcomes'][0]
             self.assertEqual(o['name'], 'outcome1')
-
-
-    def test_report_match(self):
-        self.clear_data_before_test()
         
             
     def test_add_match(self):
         self.clear_data_before_test()
 
+        with self.client:
+            params = [
+                        {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": 1539913910,
+                            "reportTime": 1539923910,
+                            "disputeTime": 1539933910,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "market_fee": 5,
+                            "public": 1,
+                            "source": {
+                                "name": "Worlcup Russia 2018",
+                                "url": "google.com"
+                            },
+                            "category": {
+                                "name": "Worlcup Russia 2018"
+                            },
+                            "outcomes": [
+                                {
+                                    "name": "Nigeria wins"
+                                },
+                                {
+                                    "name": "Iceland wins"
+                                }
+                            ]
+                        }
+                    ]
 
-    def test_match_for_user(self):
-        self.clear_data_before_test()
+            response = self.client.post(
+                                    '/match/add',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())          
+            self.assertTrue(data['status'] == 1)
 
 
 if __name__ == '__main__':

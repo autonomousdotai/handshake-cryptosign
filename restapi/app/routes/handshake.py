@@ -459,7 +459,7 @@ def uninit_free_bet(handshake_id):
 					}
 					contract = Contract.find_contract_by_id(outcome.contract_id)
 					if contract is None:
-						return response_error(MESSAGE.OUTCOME_CONTRACT_INVALID)
+						return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
@@ -558,7 +558,7 @@ def collect_free_bet():
 
 		contract = Contract.find_contract_by_id(outcome.contract_id)
 		if contract is None:
-			return response_error(MESSAGE.OUTCOME_CONTRACT_INVALID)
+			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
 		# add task
 		task = Task(

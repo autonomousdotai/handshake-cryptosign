@@ -17,8 +17,6 @@ class MESSAGE(object):
 	OUTCOME_INVALID_RESULT = 'Please check your outcome result'
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
 	OUTCOME_IS_REPORTING = 'This outcome is reporting!'
-	OUTCOME_DISPUTE_INVALID = 'This outcome dispute invalid!'
-	OUTCOME_CONTRACT_INVALID = 'This outcome contract invalid!'
 
 	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
@@ -73,6 +71,7 @@ class MESSAGE(object):
 
 	# CONTRACT
 	CONTRACT_EMPTY_VERSION = 'There is no active contract at the moment.'
+	CONTRACT_INVALID = 'Contract is invalid!'
 
 
 class CODE(object):
@@ -145,4 +144,5 @@ class CODE(object):
 
 	# CONTRACT
 	CONTRACT_EMPTY_VERSION = '1048'
+	CONTRACT_INVALID = '1049'
 	

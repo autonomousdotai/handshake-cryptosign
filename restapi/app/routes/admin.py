@@ -205,7 +205,7 @@ def report(match_id):
 
 				contract = Contract.find_contract_by_id(outcome.contract_id)
 				if contract is None:
-					return response_error(MESSAGE.OUTCOME_CONTRACT_INVALID)
+					return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
 				report = {}
 				report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + ('resolve' if disputed else 'report') + str(outcome.id) + '_' + str(item['side'])

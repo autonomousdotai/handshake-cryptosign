@@ -49,40 +49,6 @@ def matches():
 		return response_error(ex.message)
 
 
-@match_routes.route('/user/<int:user_id>', methods=['POST'])
-@login_required
-def matches_for_user(user_id):
-	try:
-		data = request.json
-		if data is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		public = int(data.get('public', 1))
-		response = []
-
-		matches = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id==user_id, Outcome.public==public)))).all()
-		for match in matches:
-			#  find best odds which match against
-			match_json = match.to_json()
-
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				if outcome.result == -1 and outcome.hid is not None:
-					outcome_json = outcome.to_json()
-					odds, amount = match_bl.find_best_odds_which_match_support_side(outcome.id)
-					outcome_json["market_odds"] = odds
-					outcome_json["market_amount"] = amount
-					arr_outcomes.append(outcome_json)
-			
-			if len(arr_outcomes) > 0:
-				match_json["outcomes"] = arr_outcomes
-				response.append(match_json)
-
-		return response_ok(response)
-	except Exception, ex:
-		return response_error(ex.message)
-
-
 @match_routes.route('/add', methods=['POST'])
 @login_required
 def add_match():
@@ -188,7 +154,7 @@ def remove(id):
 			db.session.commit()
 			return response_ok(message="{} has been deleted!".format(match.id))
 		else:
-			return response_error(MESSAGE.MATCH_NOT_FOUND)
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -213,17 +179,17 @@ def report_match(match_id):
 		if match is not None:
 			result = data['result']
 			if result is None:
-				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
+				return response_error(MESSAGE.MATCH_RESULT_EMPTY, CODE.MATCH_RESULT_EMPTY)
 			
 			if not match_bl.is_exceed_closing_time(match.id):
-				return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT)
+				return response_error(MESSAGE.MATCH_CANNOT_SET_RESULT, CODE.MATCH_CANNOT_SET_RESULT)
 
 			for item in result:
 				if 'side' not in item:
-					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
+					return response_error(MESSAGE.OUTCOME_INVALID_RESULT, CODE.OUTCOME_INVALID_RESULT)
 				
 				if 'outcome_id' not in item:
-					return response_error(MESSAGE.OUTCOME_INVALID)
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
@@ -236,11 +202,11 @@ def report_match(match_id):
 					response.append(outcome_json)
 
 				else:
-					return response_error(MESSAGE.OUTCOME_INVALID)
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 			return response_ok(response)
 		else:
-			return response_error(MESSAGE.MATCH_NOT_FOUND)
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 	except Exception, ex:
 		return response_error(ex.message)

@@ -10,6 +10,7 @@ import re
 import json
 import app.constants as CONST
 import app.bl.outcome as outcome_bl
+import app.bl.contract as contract_bl
 
 outcome_routes = Blueprint('outcome', __name__)
 
@@ -47,6 +48,10 @@ def add(match_id):
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
+		contract = contract_bl.get_active_smart_contract()
+		if contract is None:
+			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 		outcomes = []
 		response_json = []
 		for item in data:
@@ -56,15 +61,14 @@ def add(match_id):
 				match_id=match_id,
 				modified_user_id=uid,
 				created_user_id=uid,
-				contract_id=-1
+				contract_id=contract.id
 			)
 			db.session.add(outcome)
 			db.session.flush()
 			
 			outcomes.append(outcome)
 			outcome_json = outcome.to_json()
-			outcome_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
-			outcome_json["contract_json"] = g.PREDICTION_JSON
+			outcome_json["contract"] = contract.to_json()
 
 			response_json.append(outcome_json)
 

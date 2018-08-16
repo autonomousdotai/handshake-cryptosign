@@ -174,7 +174,7 @@ def report(match_id):
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		match = db.session.query(Match).filter(Match.date > seconds, Match.id == match_id).first()
+		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
 		if match is not None:
 			result = data['result']
 			if result is None:

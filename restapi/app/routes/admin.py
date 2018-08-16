@@ -219,7 +219,7 @@ def report(match_id):
 					action=CONST.TASK_ACTION['RESOLVE' if disputed else 'REPORT'],
 					status=-1,
 					contract_address= contract.contract_address,
-					contract_json= contract.contract_json
+					contract_json= contract.json_name
 				)
 
 				db.session.add(task)

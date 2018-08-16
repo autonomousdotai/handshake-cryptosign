@@ -286,22 +286,21 @@ def match_need_user_report():
 		seconds = local_to_utc(t)
 
 		response = []
+		contracts = contract_bl.all_contracts()
+
 		# Get all matchs are PENDING (-1)
 		matches = db.session.query(Match).filter(and_(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
 
 		# Filter all outcome of user
-		contracts = contract_bl.all_contracts()
-		
 		for match in matches:
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				if outcome.created_user_id == uid and outcome.hid >= 0:
-					outcome_json = outcome.to_json()
+					outcome_json = contract_bl.filter_contract_id_in_contracts(outcome.to_json(), contracts)
 					arr_outcomes.append(outcome_json)
 			
 			match_json["outcomes"] = arr_outcomes
-			match_json["contracts"] = contracts
 			response.append(match_json)
 
 		return response_ok(response)

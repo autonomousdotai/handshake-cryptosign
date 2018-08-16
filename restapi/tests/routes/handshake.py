@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker, Task
+from app.models import Handshake, User, Outcome, Match, Shaker, Task, Contract
 from app.helpers.message import MESSAGE
 from io import BytesIO
 from datetime import datetime
@@ -21,8 +21,19 @@ import app.bl.handshake as handshake_bl
 class TestHandshakeBluePrint(BaseTestCase):   
 
     def setUp(self):
-        # create match
+        # create contract
+        contract = Contract.find_contract_by_id(1)
+        if contract is None:
+            contract = Contract(
+                id=1,
+                contract_name="contract1",
+                contract_address="0x123",
+                json_name="name1"
+            )
+            db.session.add(contract)
+            db.session.commit()
 
+        # create match
         match = Match.find_match_by_id(1)
         if match is None:
             match = Match(
@@ -72,12 +83,14 @@ class TestHandshakeBluePrint(BaseTestCase):
             outcome = Outcome(
                 id=88,
                 match_id=1,
-                hid=88
+                hid=88,
+                contract_id=contract.id
             )
             db.session.add(outcome)
             db.session.commit()
         else:
             outcome.result = -1
+            outcome.contract_id=contract.id
             db.session.commit()
 
     def clear_data_before_test(self):
@@ -1878,6 +1891,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
+            print data
             self.assertEqual(response.status_code, 200)
             self.assertTrue(data['status'] == 1)
 

@@ -2,7 +2,7 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db
 from app.helpers.message import MESSAGE
-from app.models import Handshake, User, Outcome, Match, Shaker, Task, Source
+from app.models import Handshake, User, Outcome, Match, Shaker, Task, Source, Contract
 from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
@@ -16,6 +16,17 @@ import app.constants as CONST
 class TestMatchBluePrint(BaseTestCase):
 
     def setUp(self):
+        # create contract
+        contract = Contract.find_contract_by_id(1)
+        if contract is None:
+            contract = Contract(
+                id=1,
+                contract_name="contract1",
+                contract_address="0x123",
+                json_name="name1"
+            )
+            db.session.add(contract)
+            db.session.commit()
         # create match
 
         match = Match.find_match_by_id(1)
@@ -67,12 +78,26 @@ class TestMatchBluePrint(BaseTestCase):
             outcome = Outcome(
                 id=88,
                 match_id=1,
-                hid=88
+                hid=88,
+                contract_id=contract.id
             )
             db.session.add(outcome)
             db.session.commit()
         else:
             outcome.result = -1
+            outcome.contract_id=contract.id
+            db.session.commit()
+
+        # create contract
+        contract = Contract.find_contract_by_id(1)
+        if contract is None:
+            contract = Contract(
+                id=1,
+                contract_name='contract1',
+                contract_address='0x123',
+                json_name='1.json'
+            )
+            db.session.add(contract)
             db.session.commit()
 
     def clear_data_before_test(self):
@@ -452,7 +477,7 @@ class TestMatchBluePrint(BaseTestCase):
             date=seconds - 200,
             reportTime=seconds + 100,
             disputeTime=seconds + 300,
-            created_user_id=88
+            created_user_id=99
         )
         db.session.add(match2)
         db.session.commit()
@@ -474,6 +499,7 @@ class TestMatchBluePrint(BaseTestCase):
             match_id=match1.id,
             public=1,
             hid=0,
+            contract_id=1,
             result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome1)
@@ -495,7 +521,7 @@ class TestMatchBluePrint(BaseTestCase):
             created_user_id=88,
             match_id=match1.id,
             public=1,
-            hid=0,
+            hid=2,
             result=CONST.RESULT_TYPE['PENDING']
         )
         db.session.add(outcome3)
@@ -504,8 +530,8 @@ class TestMatchBluePrint(BaseTestCase):
         with self.client:
             # Get match for uid = 88
             # Expected: 
-            #   match 1: 1 outcome
-            #   match 2: 1 outcome
+            #   match 1: outcome 1
+            #   match 2: outcome 2
             response = self.client.get(
                                     '/match/report',
                                     headers={
@@ -513,10 +539,18 @@ class TestMatchBluePrint(BaseTestCase):
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
-            data = json.loads(response.data.decode())  
-            print data           
-            data_json = data['data']
+            data = json.loads(response.data.decode())          
             self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertEqual(len(data_json), 2)
+
+            m = data_json[0]
+            o = m['outcomes'][0]
+            self.assertEqual(o['name'], 'outcome3')
+
+            m1 = data_json[1]
+            o1 = m1['outcomes'][0]
+            self.assertEqual(o1['name'], 'outcome2')
 
             # Get match for uid = 99
             # Expected: 
@@ -529,10 +563,14 @@ class TestMatchBluePrint(BaseTestCase):
                                         "Payload": "{}".format(123),
                                     })
             data = json.loads(response.data.decode())             
+            self.assertTrue(data['status'] == 1)
             data_json = data['data']
-            print '------> {}'.format(data_json)
-            self.assertTrue(data['status'] == 0)
+            self.assertEqual(len(data_json), 1)
 
+            m = data_json[0]
+            o = m['outcomes'][0]
+            self.assertEqual(o['name'], 'outcome1')
+            
 
 if __name__ == '__main__':
     unittest.main()

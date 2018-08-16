@@ -15,6 +15,7 @@ class Contract(BaseModel):
 	json_name = db.Column(db.String(50))
 	outcomes = db.relationship('Outcome', backref='contract', primaryjoin="Contract.id == Outcome.contract_id", lazy='dynamic')
 
+	@classmethod
 	def find_contract_by_id(cls, contract_id):
 		return db.session.query(Contract).filter_by(id=contract_id).first()	
 

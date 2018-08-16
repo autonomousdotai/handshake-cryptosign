@@ -570,7 +570,14 @@ class TestMatchBluePrint(BaseTestCase):
             m = data_json[0]
             o = m['outcomes'][0]
             self.assertEqual(o['name'], 'outcome1')
+
+    def test_report_match(self):
+        self.clear_data_before_test()
+        
             
+    def test_add_match(self):
+        self.clear_data_before_test()
+
 
 if __name__ == '__main__':
     unittest.main()

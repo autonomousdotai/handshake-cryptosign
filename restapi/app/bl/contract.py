@@ -25,3 +25,6 @@ def filter_contract_id_in_contracts(j, contracts):
 				break
 	return j
 	
+
+def get_active_smart_contract():
+	return Contract.find_contract_by_address_and_json(g.PREDICTION_SMART_CONTRACT, g.PREDICTION_JSON)

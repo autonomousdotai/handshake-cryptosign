@@ -190,7 +190,7 @@ def report(match_id):
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
 					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						return  response_error(MESSAGE.OUTCOME_REPORTED)
+						return  response_error(MESSAGE.OUTCOME_IS_REPORTING)
 
 					if outcome.result == CONST.RESULT_TYPE['DISPUTED']:
 						disputed = True

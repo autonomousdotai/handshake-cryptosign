@@ -16,7 +16,7 @@ class MESSAGE(object):
 	OUTCOME_INVALID = 'Please check your outcome id'
 	OUTCOME_INVALID_RESULT = 'Please check your outcome result'
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
-	OUTCOME_REPORTED = 'This outcome reported!'
+	OUTCOME_IS_REPORTING = 'This outcome is reporting!'
 	OUTCOME_DISPUTE_INVALID = 'This outcome dispute invalid!'
 	OUTCOME_CONTRACT_INVALID = 'This outcome contract invalid!'
 
@@ -76,6 +76,9 @@ class MESSAGE(object):
 	NOTIF_TIME_INVALID = 'Notification time is invalid.'
 	NOTIF_INVALID = 'Please check your notif id'
 
+	# CONTRACT
+	CONTRACT_EMPTY_VERSION = 'There is no active contract at the moment.'
+
 
 class CODE(object):
 	# ERROR
@@ -91,7 +94,8 @@ class CODE(object):
 	# OUTCOME
 	OUTCOME_INVALID = '1008'												
 	OUTCOME_INVALID_RESULT = '1009'											
-	OUTCOME_HAS_RESULT = '1010' 											
+	OUTCOME_HAS_RESULT = '1010' 	
+	OUTCOME_IS_REPORTING = '1048'										
 
 	# MATCH
 	MATCH_NOT_FOUND = '1011'												
@@ -143,6 +147,10 @@ class CODE(object):
 	NOTIF_INVALID = '1100'
 
 	# TOKEN
-	TOKEN_NOT_FOUND = '1045'
-	TOKEN_APPROVED_ALREADY = '1046'
+	TOKEN_NOT_FOUND = '1046'
+	TOKEN_APPROVED_ALREADY = '1047'
+
+
+	# CONTRACT
+	CONTRACT_EMPTY_VERSION = '1048'
 	

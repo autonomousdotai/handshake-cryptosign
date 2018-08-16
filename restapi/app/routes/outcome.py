@@ -31,6 +31,11 @@ def outcomes():
 @outcome_routes.route('/add/<int:match_id>', methods=['POST'])
 @login_required
 def add(match_id):
+	"""
+	"" Add outcome to match
+	"" Input
+	""		match_id
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 

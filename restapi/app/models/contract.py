@@ -19,5 +19,9 @@ class Contract(BaseModel):
 	def find_contract_by_id(cls, contract_id):
 		return db.session.query(Contract).filter_by(id=contract_id).first()	
 
+	@classmethod
+	def find_contract_by_address_and_json(cls, contract_address, contract_json_name):
+		return db.session.query(Contract).filter_by(contract_address=contract_address, json_name=contract_json_name).first()
+
 	def __repr__(self):
 		return '<contract {}, {}>'.format(self.id, self.address)

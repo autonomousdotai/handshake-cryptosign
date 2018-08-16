@@ -99,6 +99,10 @@ def add():
 		matches = []
 		response_json = []
 
+		contract = contract_bl.get_active_smart_contract()
+		if contract is None:
+			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 		for item in data:
 			source = None
 			category = None
@@ -156,17 +160,16 @@ def add():
 						name=outcome_data['name'],
 						match_id=match.id,
 						public=item.get('public', 0),
+						contract_id=contract.id,
 						modified_user_id=uid,
 						created_user_id=uid
 					)
 					db.session.add(outcome)
 					db.session.flush()
 			match_json = match.to_json()
-			match_json["source_name"] = None if source is None else source.name
-			match_json["category_name"] = None if category is None else category.name
-
-			match_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
-			match_json["contract_json"] = g.PREDICTION_JSON
+			match_json['contract'] = contract.to_json()
+			match_json['source_name'] = None if source is None else source.name
+			match_json['category_name'] = None if category is None else category.name
 			response_json.append(match_json)
 
 		db.session.commit()
@@ -199,10 +202,9 @@ def remove(id):
 @login_required
 def report(match_id):
 	"""
-	"" TODO: fix here
+	"" report: report match
 	"""
 	try:
-		dispute = int(request.args.get('dispute', 0))
 		data = request.json
 		response = []
 		if data is None:
@@ -230,38 +232,16 @@ def report(match_id):
 						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
 
 					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						return  response_error(MESSAGE.OUTCOME_REPORTED)
-
-					if dispute == 1 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
-						return response_error(MESSAGE.OUTCOME_DISPUTE_INVALID)
+						return  response_error(MESSAGE.OUTCOME_IS_REPORTING)
 
 					outcome.result = CONST.RESULT_TYPE['PROCESSING']
 					outcome_json = outcome.to_json()
 
-					# TODO: Find contract address and contract_json
 					outcome_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
 					outcome_json["contract_json"] = g.PREDICTION_JSON
 					response.append(outcome_json)
 				else:
 					return response_error(MESSAGE.OUTCOME_INVALID)
-
-				# report = {}
-				# report['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'report' + str(outcome.id) + '_' + str(item['side'])
-				# report['hid'] = outcome.hid
-				# report['outcome_id'] = outcome.id
-				# report['outcome_result'] = item['side']
-
-				# task = Task(
-				# 	task_type=CONST.TASK_TYPE['REAL_BET'],
-				# 	data=json.dumps(report),
-				# 	action=CONST.TASK_ACTION['REPORT' if dispute != 1 else 'RESOLVE'],
-				# 	status=-1,
-				# 	contract_address=g.PREDICTION_SMART_CONTRACT,
-				# 	contract_json=g.PREDICTION_JSON
-				# )
-
-				# db.session.add(task)
-				# db.session.flush()
 
 			db.session.commit()
 			return response_ok(response)

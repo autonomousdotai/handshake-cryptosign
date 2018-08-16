@@ -486,10 +486,6 @@ def uninit_free_bet(handshake_id):
 @handshake_routes.route('/collect_free_bet', methods=['POST'])
 @login_required
 def collect_free_bet():
-	"""
-	"" TODO: fix hid 
-	"" FIXED
-	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

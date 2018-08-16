@@ -156,9 +156,6 @@ def add_shuriken(user_id, shuriken_type):
 
 @celery.task()
 def run_bots(outcome_id):
-	"""
-	"" TODO: fix hid
-	"""
 	try:
 		# find all handshakes of this outcome on both 2 sides: support and oppose
 		# if there is a handshake which is not bot and amount < 0.1 then match it
@@ -250,8 +247,8 @@ def run_bots(outcome_id):
 						data=json.dumps(o),
 						action=CONST.TASK_ACTION['INIT'],
 						status=-1,
-						contract_address=app.config['PREDICTION_SMART_CONTRACT'],
-						contract_json=app.config['PREDICTION_JSON']
+						contract_address=outcome.contract_address,
+						contract_json=outcome.json_name
 					)
 					db.session.add(task)
 					db.session.flush()

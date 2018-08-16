@@ -33,9 +33,11 @@ def outcomes():
 @login_required
 def add(match_id):
 	"""
-	"" Add outcome to match
-	"" Input
+	""	Add outcome to match
+	"" 	Inputs:
 	""		match_id
+	""	Outputs:
+	""		match json with contract address for frontend
 	"""
 	try:
 		uid = int(request.headers['Uid'])
@@ -86,7 +88,8 @@ def add(match_id):
 @login_required
 def remove(outcome_id):
 	try:
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		uid = int(request.headers['Uid'])
+		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
 		if outcome is not None:
 			db.session.delete(outcome)
 			db.session.commit()
@@ -104,7 +107,6 @@ def remove(outcome_id):
 def generate_link():
 	try:
 		uid = int(request.headers['Uid'])
-		print uid
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)

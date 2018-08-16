@@ -6,6 +6,7 @@ import json
 import app.bl.user as user_bl
 import app.constants as CONST
 import app.bl.match as match_bl
+import app.bl.contract as contract_bl
 
 from flask import Blueprint, request, g
 from app import db, sg, s3
@@ -13,7 +14,7 @@ from datetime import datetime
 from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
-from app.models import Match, Outcome, Task, Handshake, Shaker, Setting, Contract
+from app.models import Match, Outcome, Task, Handshake, Shaker, Contract
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
@@ -26,15 +27,13 @@ admin_routes = Blueprint('admin', __name__)
 @admin_routes.route('/create_market', methods=['POST'])
 @admin_required
 def create_market():
-	""" 
-	"" TODO: miss contract_id
-	"""
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
 		data = {}
 		with open(fixtures_path, 'r') as f:
 			data = json.load(f)
 
+		
 		matches = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
@@ -44,6 +43,7 @@ def create_market():
 							awayTeamName=item['awayTeamName'],
 							name=item['name'],
 							market_fee=item['market_fee'],
+							source_id=int(item['source_id']),
 							date=item['date'],
 							reportTime=item['reportTime'],
 							disputeTime=item['disputeTime']
@@ -125,7 +125,7 @@ def init_default_outcomes():
 
 @admin_routes.route('/match/report', methods=['GET'])
 @jwt_required
-def get_match():
+def matches_need_report_by_admin():
 	try:
 		response = []
 		matches = []

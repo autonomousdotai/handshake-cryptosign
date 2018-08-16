@@ -3,6 +3,7 @@ import json
 import app.constants as CONST
 
 from flask import Blueprint, request, current_app as app
+from sqlalchemy import and_
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required
 from app import db
@@ -59,7 +60,8 @@ def add():
 @login_required
 def remove(id):
 	try:
-		cate = db.session.query(Category).filter(Category.id==id).first()
+		uid = int(request.headers['Uid'])
+		cate = db.session.query(Category).filter(and_(Category.id==id, Category.created_user_id==uid)).first()
 		if cate is not None:
 			db.session.delete(cate)
 			db.session.commit()
@@ -80,7 +82,8 @@ def update(id):
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		cate = db.session.query(Category).filter(Category.id==id).first()
+		uid = int(request.headers['Uid'])
+		cate = db.session.query(Category).filter(and_(Category.id==id, Category.created_user_id==uid)).first()
 		if cate is not None:
 			cate.name = data['name']
 			db.session.commit()

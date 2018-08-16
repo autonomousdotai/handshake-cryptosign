@@ -18,7 +18,6 @@ class Outcome(BaseModel):
 	                   	default=CONST.RESULT_TYPE['PENDING'])
 	total_amount = db.Column(db.Numeric(36, 18))
 	total_dispute_amount = db.Column(db.Numeric(36, 18))
-	tx = db.Column(db.String(255))
 	public = db.Column(db.Integer,
 						server_default=str(1),
 	                   	default=0)

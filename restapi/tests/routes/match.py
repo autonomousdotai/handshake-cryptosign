@@ -1,8 +1,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db
-from app.helpers.message import MESSAGE
-from app.models import Handshake, User, Outcome, Match, Shaker, Task, Source, Contract
+from app.models import Handshake, User, Outcome, Match, Task, Contract
 from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
@@ -391,68 +390,6 @@ class TestMatchBluePrint(BaseTestCase):
                     self.assertEqual(tmp['outcomes'][0]['id'], outcome.id)
                     break
 
-            self.assertNotEqual(tmp, None)
-
-    def test_get_list_match_report_with_admin(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        t = datetime.now().timetuple()
-        seconds = local_to_utc(t)
-        # ----- 
-        match = Match(
-            date=seconds - 200,
-            reportTime=seconds - 100,
-            disputeTime=seconds + 300
-        )
-        db.session.add(match)
-        db.session.commit()
-
-        match2 = Match(
-            date=seconds - 200,
-            reportTime=seconds - 100,
-            disputeTime=seconds + 300,
-            created_user_id=88
-        )
-        db.session.add(match2)
-        db.session.commit()
-
-        # -----        
-        outcome = Outcome(
-            match_id=match.id,
-            public=1,
-            hid=0,
-            result=CONST.RESULT_TYPE['PENDING']
-        )
-        db.session.add(outcome)
-        db.session.commit()
-
-        outcome1 = Outcome(
-            match_id=match2.id,
-            public=1,
-            hid=1,
-            result=CONST.RESULT_TYPE['DISPUTED']
-        )
-        db.session.add(outcome1)
-        db.session.commit()        
-
-        with self.client:
-            response = self.client.get(
-                                    'admin/match/report',
-                                    headers={
-                                        "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
-                                        "Uid": "{}".format(88),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            data_json = data['data']
-            tmp = None
-            for m in data_json:
-                if m['id'] == match2.id:
-                    tmp = m
-                    break
             self.assertNotEqual(tmp, None)
 
 

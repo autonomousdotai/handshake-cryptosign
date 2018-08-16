@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app as app
+from flask import Blueprint, request, g, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app import db
@@ -55,13 +55,18 @@ def add(match_id):
 				public=item['public'],
 				match_id=match_id,
 				modified_user_id=uid,
-				created_user_id=uid
+				created_user_id=uid,
+				contract_id=-1
 			)
 			db.session.add(outcome)
 			db.session.flush()
 			
 			outcomes.append(outcome)
-			response_json.append(outcome.to_json())
+			outcome_json = outcome.to_json()
+			outcome_json["contract_address"] = g.PREDICTION_SMART_CONTRACT
+			outcome_json["contract_json"] = g.PREDICTION_JSON
+
+			response_json.append(outcome_json)
 
 		db.session.add_all(outcomes)
 		db.session.commit()

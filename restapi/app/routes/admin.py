@@ -33,11 +33,15 @@ def create_market():
 		with open(fixtures_path, 'r') as f:
 			data = json.load(f)
 
-		
+		contract = contract_bl.get_active_smart_contract()
+		if contract is None:
+			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 		matches = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
+				print item
 				match = Match(
 							homeTeamName=item['homeTeamName'],
 							awayTeamName=item['awayTeamName'],
@@ -51,11 +55,11 @@ def create_market():
 				matches.append(match)
 				db.session.add(match)
 				db.session.flush()
-				
 				for o in item['outcomes']:
 					outcome = Outcome(
 						name=o.get('name', ''),
 						match_id=match.id,
+						contract_id=contract.id,
 						public=1
 					)
 					db.session.add(outcome)
@@ -165,7 +169,7 @@ def matches_need_report_by_admin():
 
 @admin_routes.route('match/report/<int:match_id>', methods=['POST'])
 @jwt_required
-def report(match_id):
+def report_match(match_id):
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -189,12 +193,10 @@ def report(match_id):
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
-					if outcome.result > CONST.RESULT_TYPE['PENDING']:
-						return response_error(MESSAGE.OUTCOME_HAS_RESULT)
-
-					if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						return  response_error(MESSAGE.OUTCOME_IS_REPORTING)
-
+					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
+					if message is not None and code is not None:
+						return message, code
+					
 					if outcome.result == CONST.RESULT_TYPE['DISPUTED']:
 						disputed = True
 
@@ -226,9 +228,9 @@ def report(match_id):
 				db.session.flush()
 
 			db.session.commit()
-			return response_ok()
+			return response_ok(match.to_json())
 		else:
-			return response_error(MESSAGE.MATCH_NOT_FOUND)
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -273,6 +275,17 @@ def change_contract():
 		db.session.commit()
 		if len(arr_id) > 0:
 			update_contract_feed.delay(arr_id, contract_address, contract_json)
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@admin_routes.route('/source/approve/<int:source_id>', methods=['POST'])
+@jwt_required
+def approve_source(source_id):
+	try:
+		
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()

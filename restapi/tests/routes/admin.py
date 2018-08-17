@@ -106,7 +106,7 @@ class TestAdminBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
-        matches = db.session.query(Match).filter(or_(Match.created_user_id==88, Match.created_user_id==99, Match.created_user_id==None)).all()
+        matches = db.session.query(Match).filter(or_(Match.created_user_id==88, Match.created_user_id==99)).all()
         for m in matches:
             db.session.delete(m)
             db.session.commit()
@@ -185,6 +185,45 @@ class TestAdminBluePrint(BaseTestCase):
 
     def test_create_market(self):
         self.clear_data_before_test()
+        with self.client:
+            response = self.client.post(
+                                    'admin/create_market',
+                                    headers={
+                                        "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
+                                        "Uid": "{}".format(1000),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+
+    def test_all_matches_need_report_by_admin(self):
+        self.clear_data_before_test()
+
+    
+    def test_report_match(self):
+        self.clear_data_before_test()
+
+        match = Match.find_match_by_id(1)
+        if match is not None:
+            match.date = 
+
+         with self.client:
+            response = self.client.post(
+                                    'admin/match/report/1',
+                                    headers={
+                                        "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
+                                        "Uid": "{}".format(1000),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            print data
+            self.assertTrue(data['status'] == 0)
+
 
 if __name__ == '__main__':
     unittest.main()

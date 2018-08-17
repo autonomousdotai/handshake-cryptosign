@@ -9,7 +9,7 @@ import (
 // OutcomeDAO : DAO
 type OutcomeDAO struct{}
 
-// GetAllOutcomesWithNoResult :
+// GetAllOutcomesWithNoResult : matchID
 func (m OutcomeDAO) GetAllOutcomesWithNoResult(matchID int) ([]models.Outcome, error) {
 	outcomes := []models.Outcome{}
 	err := models.Database().Where("outcome.hid >= 0 and outcome.result = -1 and outcome.match_id = ?", matchID).Find(&outcomes).Error

@@ -5,6 +5,8 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/ninjadotorg/handshake-cryptosign/event/daos"
+
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
 	"github.com/ninjadotorg/handshake-cryptosign/event/models"
 	"github.com/ninjadotorg/handshake-cryptosign/event/services"
@@ -24,32 +26,43 @@ func (r *Remind) RemindUser() {
 	for index := 0; index < len(matches); index++ {
 		outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
 		if err == nil {
-			if len(outcomes) > 0 {
-				r.fireNotification(outcomes)
+			for i := 0; index < len(outcomes); i++ {
+				o := outcomes[i]
+				go r.fireNotification(o)
 			}
 		}
 	}
 }
 
-func (r *Remind) fireNotification(outcomes []models.Outcome) {
-	var ids []int
-	for index := 0; index < len(outcomes); index++ {
-		o := outcomes[index]
-		fmt.Println(o)
-		exist, _ := inArray(o.CreatedUserID, ids)
-		if !exist {
-			ids = append(ids, o.CreatedUserID)
-		}
-	}
-
+func (r *Remind) fireNotification(outcome models.Outcome) {
 	var m services.MailService
-	for index := 0; index < len(ids); index++ {
-		if ids[index] == 0 {
-			conf := config.GetConfig()
-			go m.SendReminderEmail(conf.GetString("email"))
+	conf := config.GetConfig()
+	var email string
+	if outcome.CreatedUserID == 0 {
+		email = conf.GetString("email")
+	} else {
+		var d services.DispatcherService
+		var u daos.UserDAO
+		user, err := u.FindUserByID(outcome.CreatedUserID)
+		if err != nil {
+			fmt.Println("cannot find user")
+			return
 		}
-
+		result, data := d.UserInfo(user.Payload)
+		if result {
+			email = data["email"].(string)
+		} else {
+			fmt.Println("cannot get user info")
+			return
+		}
 	}
+
+	if outcome.Result == -3 {
+		m.SendEmailForDisputeOutcome(email, outcome.Name)
+	} else {
+		m.SendEmailForReportingOutcome(email, outcome.Name)
+	}
+
 }
 
 func inArray(val interface{}, array interface{}) (exists bool, index int) {

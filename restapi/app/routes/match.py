@@ -105,7 +105,7 @@ def add_match():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
-				market_fee=int(item['market_fee']),
+				market_fee=int(item.get('market_fee', 0)),
 				date=item['date'],
 				reportTime=item['reportTime'],
 				disputeTime=item['disputeTime'],

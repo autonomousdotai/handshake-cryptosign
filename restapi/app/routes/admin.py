@@ -46,7 +46,7 @@ def create_market():
 							homeTeamName=item['homeTeamName'],
 							awayTeamName=item['awayTeamName'],
 							name=item['name'],
-							market_fee=item['market_fee'],
+							market_fee=int(item.get('market_fee', 0)),
 							source_id=int(item['source_id']),
 							date=item['date'],
 							reportTime=item['reportTime'],

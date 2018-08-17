@@ -3,10 +3,11 @@ from app.models.base import BaseModel
 
 class User(BaseModel):
 	__tablename__ = 'user'
-	__json_public__ = ['id', 'fcm_token']
+	__json_public__ = ['id', 'fcm_token', 'email']
 
 	fcm_token = db.Column(db.Text)
 	payload = db.Column(db.Text)
+	email = db.Column(db.String(255))
 	free_bet = db.Column(db.Integer,
 						server_default=str(0),
 						default=0)

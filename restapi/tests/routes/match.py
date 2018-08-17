@@ -507,7 +507,65 @@ class TestMatchBluePrint(BaseTestCase):
             m = data_json[0]
             o = m['outcomes'][0]
             self.assertEqual(o['name'], 'outcome1')
-        
+
+
+    def test_issue_54(self):
+        self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+
+        # ----- Add matches
+        match1 = Match(
+            name='match1',
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            created_user_id=88
+        )
+        db.session.add(match1)
+        db.session.commit()
+
+        # ----- Add outcomes   
+        outcome1 = Outcome(
+            name='outcome1',
+            created_user_id=88,
+            match_id=match1.id,
+            public=1,
+            hid=0,
+            contract_id=1,
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome1)
+        db.session.commit()
+
+        outcome2 = Outcome(
+            name='outcome2',
+            created_user_id=88,
+            match_id=match1.id,
+            public=1,
+            hid=1,
+            result=CONST.RESULT_TYPE['PENDING']
+        )
+        db.session.add(outcome2)
+        db.session.commit()
+
+        with self.client:
+            # Get match for uid = 88
+            # Expected: 
+            #   match 1: outcome 1, outcome 2
+            response = self.client.get(
+                                    '/match/report',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())          
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertEqual(len(data_json), 1)
+            self.assertEqual(len(data_json[0]['outcomes']), 2)
+     
             
     def test_add_match(self):
         self.clear_data_before_test()

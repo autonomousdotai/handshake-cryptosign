@@ -615,6 +615,56 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())          
             self.assertTrue(data['status'] == 1)
 
+    def test_add_match_without_market_fee(self):
+        self.clear_data_before_test()
+
+        with self.client:
+            params = [
+                        {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": 1539913910,
+                            "reportTime": 1539923910,
+                            "disputeTime": 1539933910,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "public": 1,
+                            "source": {
+                                "name": "Worlcup Russia 2018",
+                                "url": "google.com"
+                            },
+                            "category": {
+                                "name": "Worlcup Russia 2018"
+                            },
+                            "outcomes": [
+                                {
+                                    "name": "Nigeria wins"
+                                },
+                                {
+                                    "name": "Iceland wins"
+                                }
+                            ]
+                        }
+                    ]
+
+            response = self.client.post(
+                                    '/match/add',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())          
+            self.assertTrue(data['status'] == 1)
+            for match in data['data']:
+                if 'market_fee' not in match or match['market_fee'] is None:
+                    self.assertTrue(match['market_fee'] == 0)
+
 
 if __name__ == '__main__':
     unittest.main()

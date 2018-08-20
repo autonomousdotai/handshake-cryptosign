@@ -206,9 +206,15 @@ class TestAdminBluePrint(BaseTestCase):
     def test_report_match(self):
         self.clear_data_before_test()
 
+        t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
         match = Match.find_match_by_id(1)
+        
         if match is not None:
-            match.date = 
+            match.date = seconds - 1000
+            match.reportTime = seconds + 1000
+            match.disputeTime = seconds + 2000
 
          with self.client:
             response = self.client.post(

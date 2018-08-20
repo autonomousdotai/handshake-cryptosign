@@ -41,7 +41,6 @@ def create_market():
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
-				print item
 				match = Match(
 							homeTeamName=item['homeTeamName'],
 							awayTeamName=item['awayTeamName'],

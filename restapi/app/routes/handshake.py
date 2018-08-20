@@ -850,8 +850,9 @@ def update_dispute_status():
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake is None:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
-			
-			if handshake.shake_count <= 0:
+
+			# check: handshake didn't match with any shaker
+			if handshake.remaining_amount >= handshake.amount:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_DISPUTE, CODE.HANDSHAKE_CANNOT_DISPUTE)
 
 			handshake.bk_status = handshake.status

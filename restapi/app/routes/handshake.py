@@ -842,16 +842,15 @@ def dispute():
 			return response_error(MESSAGE.MISSING_OFFCHAIN, CODE.MISSING_OFFCHAIN)
 
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
-		outcome = None
-		handshake = None
 
 		if 'm' in offchain:
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake is None:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
-			
-			if handshake.shake_count <= 0:
+
+			# check: handshake didn't match with any shaker
+			if handshake.remaining_amount >= handshake.amount:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_DISPUTE, CODE.HANDSHAKE_CANNOT_DISPUTE)
 
 			handshake.bk_status = handshake.status
@@ -872,11 +871,6 @@ def dispute():
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 			if handshake is None:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_REFUND, CODE.HANDSHAKE_CANNOT_REFUND)
-
-		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-
-		if outcome is None:
-			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)

@@ -827,7 +827,7 @@ def refund():
 
 @handshake_routes.route('/dispute', methods=['POST'])
 @login_required
-def update_dispute_status():
+def dispute():
 	try:
 		handshakes = []
 		shakers = []

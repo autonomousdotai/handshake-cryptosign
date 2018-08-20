@@ -1839,7 +1839,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                             user_id=88,
                             outcome_id=88,
                             odds=6,
-                            amount=0.7,
+                            amount=1,
                             currency='ETH',
                             side=2,
                             shake_count=1,

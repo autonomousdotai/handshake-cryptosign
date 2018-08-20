@@ -14,7 +14,7 @@ from datetime import datetime
 from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
-from app.models import Match, Outcome, Task, Handshake, Shaker, Contract
+from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
@@ -41,12 +41,11 @@ def create_market():
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
-				print item
 				match = Match(
 							homeTeamName=item['homeTeamName'],
 							awayTeamName=item['awayTeamName'],
 							name=item['name'],
-							market_fee=item['market_fee'],
+							market_fee=int(item.get('market_fee', 0)),
 							source_id=int(item['source_id']),
 							date=item['date'],
 							reportTime=item['reportTime'],
@@ -285,8 +284,19 @@ def change_contract():
 @jwt_required
 def approve_source(source_id):
 	try:
-		
-		return response_ok()
+		source = Source.find_source_by_id(source_id)
+		if source is not None:
+			if source.approved == -1:
+				source.approved = 1
+				db.session.flush()
+			else:
+				return response_error(MESSAGE.SOURCE_APPOVED_ALREADY, CODE.SOURCE_APPOVED_ALREADY)
+				
+		else:
+			return response_error(MESSAGE.SOURCE_INVALID, CODE.SOURCE_INVALID)
+
+		db.session.commit()
+		return response_ok(source.to_json())
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

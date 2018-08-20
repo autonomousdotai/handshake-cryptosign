@@ -1454,7 +1454,8 @@ class TestEventBluePrint(BaseTestCase):
                 "inputs": {
                     "offchain": "cryptosign_m{}".format(handshake1.id),
                     "hid": 88,
-                    "state": 2
+                    "state": 2,
+                    "outcome": 2
                 }   
             }
 
@@ -1615,7 +1616,8 @@ class TestEventBluePrint(BaseTestCase):
                 "inputs": {
                     "offchain": "cryptosign_s{}".format(shaker1.id),
                     "hid": 88,
-                    "state": 3
+                    "state": 3,
+                    "outcome": 2
                 }   
             }
 
@@ -1778,7 +1780,8 @@ class TestEventBluePrint(BaseTestCase):
                 "inputs": {
                     "offchain": "cryptosign_s{}".format(shaker.id),
                     "hid": 88,
-                    "state": 3
+                    "state": 3,
+                    "outcome": 2
                 }   
             }
 
@@ -1904,6 +1907,154 @@ class TestEventBluePrint(BaseTestCase):
         outcome = Outcome.find_outcome_by_id(outcome.id)
         self.assertEqual(outcome.total_dispute_amount, 0)
         self.assertEqual(outcome.result, result_report)
+
+    def test_reiceive_dispute_event_with_state_2_draw (self):
+        self.clear_data_before_test()
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.total_amount = 0
+        outcome.total_dispute_amount = 0
+        db.session.commit()
+        # -----
+        handshake_user88_side1 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake_user88_side1)
+        db.session.commit()
+
+        handshake_user88_side2 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake_user88_side2)
+        db.session.commit()
+
+        handshake_user99 = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=99,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+                shake_count=1,
+				remaining_amount=1,
+				from_address='0x12345',
+                status=0
+        )
+        db.session.add(handshake_user99)
+        db.session.commit()
+
+        shaker_user88_side2 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=2,
+				remaining_amount=1,
+				from_address='0x1234',
+                status=0,
+                handshake_id=handshake_user88_side1.id
+        )
+        db.session.add(shaker_user88_side2)
+        db.session.commit()
+
+        shaker_user88_shaked_user99_side1 = Shaker(
+				hs_type=3,
+				chain_id=4,
+				is_private=0,
+				shaker_id=88,
+				outcome_id=88,
+				odds=1.2,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=1,
+				from_address='not change',
+                status=0,
+                handshake_id=handshake_user99.id
+        )
+        db.session.add(shaker_user88_shaked_user99_side1)
+        db.session.commit()
+
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "contract": app.config.get("PREDICTION_JSON"),
+                "eventName": "__dispute",
+                "status": 1,
+                'id': 1,
+                "inputs": {
+                    "offchain": "cryptosign_m{}".format(handshake_user88_side1.id),
+                    "hid": 88,
+                    "state": 2,
+                    "outcome": 3
+                }   
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            print data
+            self.assertTrue(data['status'] == 1)
+
+        hs_user88_side1 = Handshake.find_handshake_by_id(handshake_user88_side1.id)
+        self.assertEqual(hs_user88_side1.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        hs_user88_side2 = Handshake.find_handshake_by_id(handshake_user88_side2.id)
+        self.assertEqual(hs_user88_side2.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        hs_user99 = Handshake.find_handshake_by_id(handshake_user99.id)
+        print hs_user99.status
+        self.assertEqual(hs_user99.status, HandshakeStatus['STATUS_INITED'])
+
+        s_user88_side2 = Shaker.find_shaker_by_id(shaker_user88_side2.id)
+        self.assertEqual(s_user88_side2.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        s_user88_shaked_user99_side1 = Shaker.find_shaker_by_id(shaker_user88_shaked_user99_side1.id)
+        self.assertEqual(s_user88_shaked_user99_side1.status, HandshakeStatus['STATUS_USER_DISPUTED'])
+
+        # outcome = Outcome.find_outcome_by_id(88)
+        # self.assertGreater(float(outcome.total_amount), 0)
+        # self.assertGreater(float(outcome.total_dispute_amount), 0)
+
 
     # def test_reiceive_resolve_event_result_invalid (self):
     #     self.clear_data_before_test()

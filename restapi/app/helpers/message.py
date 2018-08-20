@@ -73,6 +73,10 @@ class MESSAGE(object):
 	CONTRACT_EMPTY_VERSION = 'There is no active contract at the moment.'
 	CONTRACT_INVALID = 'Contract is invalid!'
 
+	# SOURCE
+	SOURCE_INVALID = 'Source is invalid!'
+	SOURCE_APPOVED_ALREADY = 'Source has been approved already!'
+
 
 class CODE(object):
 	# ERROR
@@ -146,3 +150,6 @@ class CODE(object):
 	CONTRACT_EMPTY_VERSION = '1048'
 	CONTRACT_INVALID = '1049'
 	
+	# SOURCE
+	SOURCE_INVALID = '1050'
+	SOURCE_APPOVED_ALREADY = '1051'

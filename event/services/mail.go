@@ -54,7 +54,7 @@ func (s MailService) send(from string, to string, subject string, content string
 
 // SendEmailForReportingOutcome : email, outcome
 func (s MailService) SendEmailForReportingOutcome(email string, outcome string) {
-	subject := `There is an outcome need your reporting!`
+	subject := fmt.Sprintf(`The outcome: %s need your reporting!`, outcome)
 	body := `Go to this link <a href="www.ninja.org/prediction">www.ninja.org/prediction</a> on mobile to report your outcome.`
 	status, err := s.send("dojo@ninja.org", email, subject, body)
 
@@ -71,8 +71,8 @@ func (s MailService) SendEmailForReportingOutcome(email string, outcome string) 
 
 // SendEmailForDisputeOutcome : email, outcome
 func (s MailService) SendEmailForDisputeOutcome(email string, outcome string) {
-	subject := `There is an outcome need your resolving!`
-	body := `Go to this link <a href="www.ninja.org/prediction">www.ninja.org/prediction</a> on mobile to report your outcome.`
+	subject := fmt.Sprintf(`The outcome: %s need your resolving!`, outcome)
+	body := `Go to this link <a href="www.ninja.org/prediction">www.ninja.org/prediction</a> on mobile to resolve that outcome.`
 	status, err := s.send("dojo@ninja.org", email, subject, body)
 
 	if err != nil {

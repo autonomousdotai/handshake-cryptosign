@@ -94,3 +94,25 @@ def update(id):
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
+
+@source_routes.route('/validate', methods=['POST'])
+@login_required
+def validate():
+	try:
+		uid = int(request.headers['Uid'])
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		name = data.get('name', '').strip()
+		url = data.get('url', '').strip()
+		source = db.session.query(Source).filter(and_(Source.name==name, Source.url==url)).first()
+		if source is not None:
+			return response_ok()
+		else:
+			return response_error(MESSAGE.SOURCE_INVALID, CODE.SOURCE_INVALID)
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)

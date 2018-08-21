@@ -42,6 +42,7 @@ def event():
 		if tx is not None:
 			tx.status = status
 			db.session.flush()
+			
 		db.session.commit()
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
 

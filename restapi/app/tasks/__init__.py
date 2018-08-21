@@ -264,7 +264,7 @@ def run_bots(outcome_id):
 		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
-def send_mail(outcome_id, outcome_name):
+def send_dispute_email(outcome_id, outcome_name):
 	try:
 		# Send mail to admin
 		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
@@ -272,8 +272,8 @@ def send_mail(outcome_id, outcome_name):
     		fields= {
 				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
 				'subject': 'Dispute',
-				'to[]': app.config['EMAIL'],
-				'from': app.config['EMAIL']
+				'to[]': app.config['RESOLVER_EMAIL'],
+				'from': app.config['RESOLVER_EMAIL']
 			}
     	)
 		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})

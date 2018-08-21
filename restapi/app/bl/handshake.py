@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_mail
+from app.tasks import update_feed, add_shuriken, send_dispute_email
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local
 from datetime import datetime
@@ -240,7 +240,7 @@ def parse_inputs(inputs):
 
 	return offchain, hid, state, outcome_result
 
-def update_amount_outcome_report(outcome_id, user_id, side, outcome_result):
+def update_amount_for_outcome(outcome_id, user_id, side, outcome_result):
 	side_arr = ', '.join([str(x) for x in ([side] if outcome_result != 3 else [1, 2])])
 
 	outcome = Outcome.find_outcome_by_id(outcome_id)
@@ -619,14 +619,16 @@ def save_handshake_for_event(event_name, inputs):
 		if outcome is None:
 			return None, None
 
-		update_amount_outcome_report(outcome.id, user_id, side, outcome_result)
+		update_amount_for_outcome(outcome.id, user_id, side, outcome_result)
 
 		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
 			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
+
 			# Send mail to admin
-			send_mail.delay(outcome.id, outcome.name)
+			send_dispute_email.delay(outcome.id, outcome.name)
+
 		else:
 			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, side, outcome_result)
 
@@ -652,6 +654,7 @@ def save_handshake_for_event(event_name, inputs):
 		outcome.total_dispute_amount = 0
 		outcome.result = int(result)
 		db.session.flush()
+		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
 		return handshakes, shakers
 		

@@ -78,6 +78,10 @@ def add_match():
 				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
+					source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
+					if source is not None:
+						return response_error(MESSAGE.SOURCE_EXISTED_ALREADY, CODE.SOURCE_EXISTED_ALREADY)
+
 					source = Source(
 						name=item["source"]["name"],
 						url=item["source"]["url"],

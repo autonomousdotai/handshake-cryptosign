@@ -76,6 +76,7 @@ class MESSAGE(object):
 	# SOURCE
 	SOURCE_INVALID = 'Source is invalid!'
 	SOURCE_APPOVED_ALREADY = 'Source has been approved already!'
+	SOURCE_EXISTED_ALREADY = 'Source has been existed already!'
 
 
 class CODE(object):
@@ -153,3 +154,4 @@ class CODE(object):
 	# SOURCE
 	SOURCE_INVALID = '1050'
 	SOURCE_APPOVED_ALREADY = '1051'
+	SOURCE_EXISTED_ALREADY = '1052'

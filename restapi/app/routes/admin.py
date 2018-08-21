@@ -169,6 +169,13 @@ def matches_need_report_by_admin():
 @admin_routes.route('match/report/<int:match_id>', methods=['POST'])
 @jwt_required
 def report_match(match_id):
+	""" Report match by match_id: 
+	If report is 'PROCESSING' status, tnx's action is 'REPORT'
+	If report is 'DISPUTED' status, tnx's action is 'RESOLVE'
+
+	Input: 
+		match_id
+    """
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)

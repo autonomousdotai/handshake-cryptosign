@@ -372,9 +372,24 @@ def save_handshake_method_for_event(method, inputs):
 				return None, arr
 
 	elif method == 'report':
-		hid = int(hid)
-		outcome = Outcome.find_outcome_by_hid(hid)
+		outcome_id, result = offchain.replace('cryptosign_report', '').split('_')
+		if outcome_id is None:
+			return None, None
+		print 'report fail with outcome_id {}'.format(outcome_id)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
 		if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
+    			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
+			db.session.flush()
+
+	elif method == 'resolve':
+		outcome_id, result = offchain.replace('cryptosign_resolve', '').split('_')
+		if outcome_id is None:
+			return None, None
+		print 'resolve fail with outcome_id {}'.format(outcome_id)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
+		if outcome is not None and outcome.result == CONST.RESULT_TYPE['DISPUTED']:
 			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 			db.session.flush()
 

@@ -894,7 +894,7 @@ class TestEventBluePrint(BaseTestCase):
                 "status": 0,
                 'id': 1,
                 "inputs": {
-                    "offchain": "cryptosign_report{}_1".format(88),
+                    "offchain": "cryptosign_report{}_1".format(outcome.id),
                     "hid": 88    
                 }   
             }
@@ -915,7 +915,7 @@ class TestEventBluePrint(BaseTestCase):
         hs = Handshake.find_handshake_by_id(handshake.id)
         self.assertEqual(hs.status, 0)
 
-        outcome = Outcome.find_outcome_by_hid(88)
+        outcome = Outcome.find_outcome_by_id(outcome.id)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['REPORT_FAILED'])
 
     def test_reiceive_report_event_with_status_2(self):
@@ -2051,10 +2051,42 @@ class TestEventBluePrint(BaseTestCase):
         s_user88_shaked_user99_side1 = Shaker.find_shaker_by_id(shaker_user88_shaked_user99_side1.id)
         self.assertEqual(s_user88_shaked_user99_side1.status, HandshakeStatus['STATUS_USER_DISPUTED'])
 
-        # outcome = Outcome.find_outcome_by_id(88)
-        # self.assertGreater(float(outcome.total_amount), 0)
-        # self.assertGreater(float(outcome.total_dispute_amount), 0)
+    def test_reiceive_resolve_event_with_status_0(self):
+        self.clear_data_before_test()
+        outcome = Outcome.find_outcome_by_hid(88)
+        outcome.result = -3
+        db.session.commit()
 
+        with self.client:
+            Uid = 1
+            
+            params = {
+                "contract": app.config.get("PREDICTION_JSON"),
+                "methodName": "resolve",
+                "status": 0,
+                'id': 1,
+                "inputs": {
+                    "offchain": "cryptosign_resolve{}_1".format(outcome.id),
+                    "hid": 88    
+                }   
+            }
+
+            response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            print data
+            self.assertTrue(data['status'] == 1)
+
+        outcome = Outcome.find_outcome_by_id(outcome.id)
+        self.assertEqual(outcome.result, CONST.RESULT_TYPE['REPORT_FAILED'])
 
     # def test_reiceive_resolve_event_result_invalid (self):
     #     self.clear_data_before_test()

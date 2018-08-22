@@ -19,8 +19,6 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     status: DataTypes.INTEGER,
     bk_status: DataTypes.INTEGER,
-    shake_count: DataTypes.INTEGER,
-    view_count: DataTypes.INTEGER,
     from_address: DataTypes.STRING,
     odds: DataTypes.DECIMAL(20, 1),
     amount: DataTypes.DECIMAL(36, 18),
@@ -32,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
     contract_address: DataTypes.STRING,
     contract_json: DataTypes.STRING,
     modified_user_id: DataTypes.INTEGER,
-    created_user_id: DataTypes.INTEGER,
+    created_user_id: DataTypes.INTEGER
   }, {
     tableName: 'handshake',
     timestamps: false,

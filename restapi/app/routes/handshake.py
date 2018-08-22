@@ -583,6 +583,9 @@ def collect_free_bet():
 @handshake_routes.route('/refund_free_bet', methods=['POST'])
 @login_required
 def refund_free_bet():
+	"""
+	" TODO: refund all free_bet and real_bet
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -743,8 +746,8 @@ def withdraw():
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
-		shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.status.in_([HandshakeStatus['STATUS_INITED'], HandshakeStatus['STATUS_RESOLVED']]), Handshake.user_id==user.id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result)).all()
+		shakers = db.session.query(Shaker).filter(and_(Shaker.status.in_([HandshakeStatus['STATUS_SHAKER_SHAKED'], HandshakeStatus['STATUS_RESOLVED']]), Shaker.shaker_id==user.id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
 		for h in handshakes:
 			h.bk_status = h.status
@@ -803,8 +806,8 @@ def refund():
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-		handshakes = db.session.query(Handshake).filter(and_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.user_id==user.id, Handshake.outcome_id==outcome.id)).all()
-		shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.shaker_id==user.id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+		handshakes = db.session.query(Handshake).filter(and_(Handshake.status.in_([HandshakeStatus['STATUS_INITED'], HandshakeStatus['STATUS_RESOLVED']]), Handshake.user_id==user.id, Handshake.outcome_id==outcome.id)).all()
+		shakers = db.session.query(Shaker).filter(and_(Shaker.status.in_([HandshakeStatus['STATUS_SHAKER_SHAKED'], HandshakeStatus['STATUS_RESOLVED']]), Shaker.shaker_id==user.id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
 
 		for h in handshakes:
 			h.bk_status = h.status

@@ -26,8 +26,8 @@ class TestMatchBluePrint(BaseTestCase):
             )
             db.session.add(contract)
             db.session.commit()
-        # create match
 
+        # create match
         match = Match.find_match_by_id(1)
         if match is None:
             match = Match(

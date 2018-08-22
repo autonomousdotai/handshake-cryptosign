@@ -109,9 +109,9 @@ def validate():
 		url = data.get('url', '').strip()
 		source = db.session.query(Source).filter(and_(Source.name==name, Source.url==url)).first()
 		if source is not None:
-			return response_ok()
+			return response_error(MESSAGE.SOURCE_EXISTED_ALREADY, CODE.SOURCE_EXISTED_ALREADY)
 		else:
-			return response_error(MESSAGE.SOURCE_INVALID, CODE.SOURCE_INVALID)
+			return response_ok()
 
 	except Exception, ex:
 		db.session.rollback()

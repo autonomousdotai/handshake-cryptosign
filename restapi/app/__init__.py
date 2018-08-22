@@ -1,5 +1,5 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
@@ -50,7 +50,7 @@ ipfs.init_app(app)
 # init firebase database
 firebase.init_app(app)
 # init dropbox
-dropbox.init_app(app)
+dropbox_services.init_app(app)
 
 @app.before_request
 def before_request():

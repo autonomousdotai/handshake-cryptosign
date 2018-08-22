@@ -1,6 +1,6 @@
 from flask import Flask
 from app.factory import make_celery
-from app.core import db, configure_app, firebase
+from app.core import db, configure_app, firebase, dropbox_services
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract
 from app.helpers.utils import utc_to_local
 from sqlalchemy import and_
@@ -284,7 +284,7 @@ def send_dispute_email(outcome_id, outcome_name):
 
 	except Exception as e:
 		print("Send mail notification fail!")
-		print e
+		print(str(e))
 
 
 @celery.task()
@@ -319,7 +319,9 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 @celery.task()
 def log_responsed_time():
 	try:
-		pass
+		path = app.config['BASE_DIR']
+		path = os.path.dirname(path) + '/logs/debug.log'
+		dropbox_services.upload(path, "/responsed_time.csv")
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()

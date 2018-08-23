@@ -8,9 +8,10 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from datetime import datetime
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker
+from app.models import Handshake, User, Outcome, Match, Shaker, Contract
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
+from app.helpers.utils import local_to_utc
 
 import app.bl.handshake as handshake_bl
 import app.constants as CONST
@@ -22,8 +23,18 @@ import time
 class TestHandshakeBl(BaseTestCase):
 
 	def setUp(self):
+    	# create contract
+		contract = Contract.find_contract_by_id(1)
+		if contract is None:
+			contract = Contract(
+				id=1,
+				contract_name="contract1",
+				contract_address="0x123",
+				json_name="name1"
+			)
+			db.session.add(contract)
+			db.session.commit()
 		# create match
-
 		match = Match.find_match_by_id(1)
 		if match is None:
 			match = Match(
@@ -63,12 +74,14 @@ class TestHandshakeBl(BaseTestCase):
 			outcome = Outcome(
 				id=88,
 				match_id=1,
-				hid=88
+				hid=88,
+				contract_id=contract.id
 			)
 			db.session.add(outcome)
 			db.session.commit()
 		else:
 			outcome.result = -1
+			outcome.contract_id=contract.id
 			db.session.commit()
 
 	def clear_data_before_test(self):
@@ -964,12 +977,13 @@ class TestHandshakeBl(BaseTestCase):
 			db.session.delete(item)
 			db.session.commit()
 
-	def test_test_save_refund_state_for_maker(self):
+	def test_test_save_refund_state_for_all(self):
 		self.clear_data_before_test()
 		arr_hs = []
+		arr_sk = []
 
 		# -----
-		handshake = Handshake(
+		handshake1 = Handshake(
 						hs_type=3,
 						chain_id=4,
 						is_private=1,
@@ -981,34 +995,13 @@ class TestHandshakeBl(BaseTestCase):
 						side=2,
 						remaining_amount=0,
 						from_address='0x123',
-						status=0
+						status=HandshakeStatus['STATUS_REFUND_PENDING']
 					)
-		db.session.add(handshake)
+		db.session.add(handshake1)
 		db.session.commit()
-		arr_hs.append(handshake)
+		arr_hs.append(handshake1)
 
-		hs1_id = handshake.id
-
-		handshakes, shakers = handshake_bl.save_refund_state_for_maker(handshake)
-		actual = None
-		for hs in handshakes:
-			if hs.id == hs1_id:
-				actual = hs
-				break
-		
-		self.assertNotEqual(actual, None)
-		self.assertEqual(actual.status, 3)
-
-		for item in arr_hs:
-			db.session.delete(item)
-			db.session.commit()
-
-	def test_save_refund_state_for_shaker(self):
-		self.clear_data_before_test()
-		arr_hs = []
-
-		# -----
-		handshake = Handshake(
+		handshake2 = Handshake(
 						hs_type=3,
 						chain_id=4,
 						is_private=1,
@@ -1020,57 +1013,93 @@ class TestHandshakeBl(BaseTestCase):
 						side=2,
 						remaining_amount=0,
 						from_address='0x123',
-						status=0
+						status=HandshakeStatus['STATUS_MAKER_UNINITED']
 					)
-		db.session.add(handshake)
+		db.session.add(handshake2)
 		db.session.commit()
-		arr_hs.append(handshake)
+		arr_hs.append(handshake2)
 
-		hs1_id = handshake.id
+		handshake3 = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=99,
+						outcome_id=88,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=2,
+						remaining_amount=0,
+						from_address='0x123',
+						status=HandshakeStatus['STATUS_INITED']
+					)
+		db.session.add(handshake3)
+		db.session.commit()
+		arr_hs.append(handshake3)
 
 		# -----
-		shaker = Shaker(
-					shaker_id=66,
+		shaker1 = Shaker(
+					shaker_id=88,
 					amount=0.2,
 					currency='ETH',
 					odds=6,
 					side=1,
-					handshake_id=handshake.id,
+					handshake_id=handshake1.id,
 					from_address='0x123',
 					chain_id=4,
-					status=2
+					status=HandshakeStatus['STATUS_REFUND_PENDING']
 				)
-		db.session.add(shaker)
+		db.session.add(shaker1)
 		db.session.commit()
-		arr_hs.append(shaker)
+		arr_sk.append(shaker1)
 
-		sk1_id = shaker.id
+		# -----
+		shaker2 = Shaker(
+					shaker_id=88,
+					amount=0.2,
+					currency='ETH',
+					odds=6,
+					side=1,
+					handshake_id=handshake3.id,
+					from_address='0x123',
+					chain_id=4,
+					status=HandshakeStatus['STATUS_REFUND_PENDING']
+				)
+		db.session.add(shaker2)
+		db.session.commit()
+		arr_sk.append(shaker2)
 
-		handshakes, shakers = handshake_bl.save_refund_state_for_shaker(shaker)
+		handshakes, shakers = handshake_bl.save_refund_state_for_all(88, 88)
 		actual = None
-		for sk in shakers:
-			if sk.id == sk1_id:
-				actual = sk
-				break
-		
-		self.assertNotEqual(actual, None)
-		self.assertEqual(actual.status, 3)
 
+		hs1 = Handshake.find_handshake_by_id(handshake1.id)
+		self.assertEqual(hs1.status, HandshakeStatus['STATUS_REFUNDED'])
+		hs2 = Handshake.find_handshake_by_id(handshake2.id)
+		self.assertEqual(hs2.status, HandshakeStatus['STATUS_MAKER_UNINITED'])
+		hs3 = Handshake.find_handshake_by_id(handshake3.id)
+		self.assertEqual(hs3.status, HandshakeStatus['STATUS_INITED'])
 
-		h = Handshake.find_handshake_by_id(hs1_id)
-		self.assertNotEqual(h.status, 3)
-		self.assertEqual(h.status, 0)
+		sk1 = Shaker.find_shaker_by_id(shaker1.id)
+		self.assertEqual(sk1.status, HandshakeStatus['STATUS_REFUNDED'])
+		sk2 = Shaker.find_shaker_by_id(shaker2.id)
+		self.assertEqual(sk2.status, HandshakeStatus['STATUS_REFUNDED'])
 
 		for item in arr_hs:
+			db.session.delete(item)
+			db.session.commit()
+		for item in arr_sk:
 			db.session.delete(item)
 			db.session.commit()
 
 	def test_can_refund_for_maker(self):
 		self.clear_data_before_test()
 
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
 		match = Match.find_match_by_id(1)
-		match.disputeTime = time.time() + 1000
-		match.reportTime = time.time() + 1000
+		match.disputeTime = seconds + 1100
+		match.reportTime = seconds + 1000
 		db.session.merge(match)
 		db.session.commit()
 
@@ -1110,7 +1139,11 @@ class TestHandshakeBl(BaseTestCase):
 		self.assertEqual(actual, expected)
 
 		# test refund if time exceed report time
-		match.reportTime = time.time() - 1000
+		outcome.result = -1
+		db.session.merge(outcome)
+		db.session.flush()
+
+		match.reportTime = seconds - 2000
 		db.session.merge(match)
 		db.session.commit()
 

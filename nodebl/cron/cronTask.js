@@ -32,7 +32,7 @@ const saveTnxs = (arr) => {
 		(arr || []).forEach(item => {
 			if (item.onchainData) {
 				tnxs.push({
-					contract_name: (item.contract_name.length > 0) ? item.contract_name: item.onchainData.contract_name,
+					contract_json: (item.contract_json.length > 0) ? item.contract_json: item.onchainData.contract_json,
 					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
 					contract_method: item.onchainData.contract_method,
 					is_erc20: item.is_erc20 || 0,
@@ -161,6 +161,7 @@ const report = (params) => {
 			contract_method: 'reportOutcomeTransaction',
 			hid: params.hid,
 			outcome_result: params.outcome_result,
+			outcome_id: params.outcome_id,
 			offchain: params.offchain
 		}])
 	});
@@ -247,14 +248,11 @@ const asyncScanTask = () => {
 							.then( resultUpdate => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
-								let contract_name = '';
-								let contract_address = '';
+								let contract_json = task.contract_json;
+								let contract_address = task.contract_address;
 
 								switch (task.task_type) {
 									case 'NORMAL': // ETHER
-										contract_name = 'PredictionHandshake';
-										contract_address = configs.network[network_id].bettingHandshakeAddress;
-
 										switch (task.action) {
 											case 'ADD_FEED':
 												processTaskFunc = addFeed(params, task);
@@ -263,9 +261,6 @@ const asyncScanTask = () => {
 									break;
 
 									case 'REAL_BET': // ETHER
-										contract_name = 'PredictionHandshake';
-										contract_address = configs.network[network_id].bettingHandshakeAddress;
-
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, false);
@@ -283,9 +278,6 @@ const asyncScanTask = () => {
 									break;
 
 									case 'FREE_BET': // ETHER
-										contract_name = 'PredictionHandshake';
-										contract_address = configs.network[network_id].bettingHandshakeAddress;
-
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, true);
@@ -322,7 +314,7 @@ const asyncScanTask = () => {
 								processTaskFunc
 								.then(result => {
 									return resolve({
-										contract_name: contract_name,
+										contract_json: contract_json,
 										contract_address: contract_address,
 										onchainData: result,
 										task: task.toJSON()
@@ -358,7 +350,7 @@ const asyncScanTask = () => {
 						i.onchainData.forEach(tnxData => {
 							if (tnxData.contract_method) {
 								tnxs.push({
-									contract_name: i.contract_name,
+									contract_json: i.contract_json,
 									contract_address: i.contract_address,
 									onchainData: tnxData,
 									task: i.task

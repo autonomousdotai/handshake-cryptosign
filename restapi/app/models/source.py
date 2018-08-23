@@ -18,5 +18,9 @@ class Source(BaseModel):
 	matches = db.relationship('Match', backref='source', primaryjoin="Source.id == Match.source_id",
 	                             lazy='dynamic')
 
+	@classmethod
+	def find_source_by_id(cls, sid):
+		return db.session.query(Source).filter_by(id=sid).first()
+
 	def __repr__(self):
 		return '<source {}, {}>'.format(self.id, self.name)

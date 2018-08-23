@@ -69,7 +69,9 @@ class TestTask(BaseTestCase):
                     data=json.dumps({"odds": "2.7", "match_date": 1530767741, "match_name": "1 vs 2", "outcome_name": "Belgium wins (Handicap 0:2)", "hid": 17, "outcome_id": outcome.id, "side": 2}),
                     action='INIT',
                     date_created=datetime.now(),
-                    date_modified=datetime.now()
+                    date_modified=datetime.now(),
+                    contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
                 )
         db.session.add(task)
         db.session.commit()
@@ -95,7 +97,9 @@ class TestTask(BaseTestCase):
                     data=json.dumps({"odds": "2.7", "match_date": 1530767741, "match_name": "1 vs 2", "outcome_name": "Belgium wins (Handicap 0:2)", "hid": 17, "outcome_id": 122, "side": 2}),
                     action='INIT',
                     date_created=datetime.now(),
-                    date_modified=datetime.now()
+                    date_modified=datetime.now(),
+                    contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
                 )
         db.session.add(task)
         db.session.commit()
@@ -121,7 +125,9 @@ class TestTask(BaseTestCase):
                     data=json.dumps({"odds": "2.7", "match_date": 1530767741, "match_name": "1 vs 2", "outcome_name": "Belgium wins (Handicap 0:2)", "hid": 17, "outcome_id": outcome.id, "side": 2}),
                     action='INIT',
                     date_created=datetime(2018, 6, 18),
-                    date_modified=datetime(2018, 6, 18)
+                    date_modified=datetime(2018, 6, 18),
+                    contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+					contract_json=app.config['PREDICTION_JSON']
                 )
         db.session.add(task)
         db.session.commit()

@@ -11,7 +11,7 @@
       "awayTeamCode": "",
       "awayTeamFlag": "",
       "name": "After the 2018 summer transfer window, Gareth Bale will",
-      "source": "football-data.org",
+      "source_id": 1,
       "market_fee": 2,
       "outcomes": [
         {
@@ -37,7 +37,7 @@
       "awayTeamCode": "",
       "awayTeamFlag": "",
       "name": "After the 2018 summer transfer window, Eden Hazard will",
-      "source": "football-data.org",
+      "source_id": 1,
       "market_fee": 2,
       "outcomes": [
         {

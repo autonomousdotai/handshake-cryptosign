@@ -12,11 +12,11 @@ import app.bl.match as match_bl
 from decimal import *
 from flask import g
 from app import db, fcm, sg, firebase
-from sqlalchemy import and_, or_, func, text
+from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_mail
+from app.tasks import update_feed, add_shuriken, send_dispute_email
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local
 from datetime import datetime
@@ -45,7 +45,7 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 		shaker.bk_status = shaker.status
 		shaker.status = HandshakeStatus['STATUS_DONE']
 		db.session.merge(shaker)
-		
+
 	db.session.flush()
 	return handshakes, shakers
 
@@ -55,17 +55,19 @@ def save_collect_state_for_maker(handshake):
 		if outcome is not None:
 			if handshake.side == outcome.result:
 				shaker = Shaker.find_shaker_by_handshake_id(handshake.id)
-				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_DONE']
+				if shaker is not None:
+					shaker.bk_status = shaker.status
+					shaker.status = HandshakeStatus['STATUS_DONE']
 
-				db.session.merge(shaker)
-				db.session.flush()
-				handshakes, shakers = save_status_all_bet_which_user_win(handshake.user_id, outcome)
-				
-				if shakers is None:
-					shakers = []	
-				shakers.append(shaker)
-				return handshakes, shakers
+					db.session.merge(shaker)
+					db.session.flush()
+					handshakes, shakers = save_status_all_bet_which_user_win(handshake.user_id, outcome)
+					
+					if shakers is None:
+						shakers = []	
+					shakers.append(shaker)
+					return handshakes, shakers
+	return None, None
 
 def save_collect_state_for_shaker(shaker):
 	if shaker is not None:
@@ -88,70 +90,81 @@ def save_collect_state_for_shaker(shaker):
 
 	return None, None
 
-
-def save_refund_state_for_shaker(shaker):
-	if shaker is not None:
-		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-
-		if outcome is not None:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==shaker.shaker_id, Handshake.outcome_id==handshake.outcome_id)).all()
-			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==shaker.shaker_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
-
-			for hs in handshakes:
-				hs.bk_status = hs.status
-				hs.status = HandshakeStatus['STATUS_REFUNDED']
-				db.session.merge(hs)
-
-			for sk in shakers:
-				sk.bk_status = sk.status
-				sk.status = HandshakeStatus['STATUS_REFUNDED']
-				db.session.merge(sk)
-				
-			db.session.flush()
-			return handshakes, shakers
-
-	return None, None
-
-def save_dispute_state_all(outcome_id, state):
-	handshakes = []
-	shakers = []
-	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id).all()
+def save_refund_state_for_all(user_id, outcome_id):
+	outcome = Outcome.find_outcome_by_id(outcome_id)
+	handshakes = db.session.query(Handshake).filter(and_(Handshake.status.in_([HandshakeStatus['STATUS_REFUND_PENDING'], HandshakeStatus['STATUS_INITED']]), Handshake.user_id==user_id, Handshake.outcome_id==outcome_id)).all()
+	shakers = db.session.query(Shaker).filter(and_(Shaker.status==HandshakeStatus['STATUS_REFUND_PENDING'], Shaker.shaker_id==user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome_id)))).all()
+	
 	for hs in handshakes:
 		hs.bk_status = hs.status
-		hs.status = state
+		hs.status = HandshakeStatus['STATUS_REFUNDED']
 		db.session.merge(hs)
 
-		shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
-		for shaker in shakers:
-			shaker.bk_status = shaker.status
-			shaker.status = state
-			db.session.merge(shaker)
+	for sk in shakers:
+		sk.bk_status = sk.status
+		sk.status = HandshakeStatus['STATUS_REFUNDED']
+		db.session.merge(sk)
+
+	return handshakes, shakers
+
+def save_disputed_state(outcome_id):
+	handshakes = []
+	shakers = []
+	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id, Handshake.remaining_amount < Handshake.amount).all()
+	handshake_ids = list(map(lambda x: x.id, handshakes))
+	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(handshake_ids)).all()
+
+	for hs in handshakes:
+		hs.status = HandshakeStatus['STATUS_DISPUTED']
+		db.session.merge(hs)
+
+	for shaker in shakers:
+		shaker.status = HandshakeStatus['STATUS_DISPUTED']
+		db.session.merge(shaker)
+
 	db.session.flush()
 	return handshakes, shakers
 
-def save_refund_state_for_maker(handshake):
-	if handshake is not None:
-		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+def save_resolve_state_for_outcome(outcome_id):
+	handshakes = []
+	shakers = []
+	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id == outcome_id).all()
+	handshake_ids = list(map(lambda x: x.id, handshakes))
+	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(handshake_ids)).all()
 
-		if outcome is not None:
-			handshakes = db.session.query(Handshake).filter(and_(Handshake.user_id==handshake.user_id, Handshake.outcome_id==handshake.outcome_id)).all()
-			shakers = db.session.query(Shaker).filter(and_(Shaker.shaker_id==handshake.user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id)))).all()
+	for hs in handshakes:
+		hs.bk_status = hs.status
+		hs.status = HandshakeStatus['STATUS_RESOLVED']
+		db.session.merge(hs)
 
-			for hs in handshakes:
-				hs.bk_status = hs.status
-				hs.status = HandshakeStatus['STATUS_REFUNDED']
-				db.session.merge(hs)
+	for shaker in shakers:
+		shaker.bk_status = shaker.status
+		shaker.status = HandshakeStatus['STATUS_RESOLVED']
+		db.session.merge(shaker)
 
-			for sk in shakers:
-				sk.bk_status = sk.status
-				shaker.sk = HandshakeStatus['STATUS_REFUNDED']
-				db.session.merge(sk)
-				
-			db.session.flush()
-			return handshakes, shakers
+	db.session.flush()
+	return handshakes, shakers
 
-	return None, None
+def save_user_disputed_state(handshake, user_id, side, outcome_result):
+	# Update STATUS_USER_DISPUTED
+	# No need to update bk_status
+
+	handshakes = []
+	shakers = []
+	side_arr = [side] if outcome_result != 3 else [1, 2]
+
+	handshakes = db.session.query(Handshake).filter(Handshake.side.in_(side_arr), Handshake.user_id == user_id, Handshake.outcome_id == handshake.outcome_id).all()
+	for hs in handshakes:
+		hs.status = HandshakeStatus['STATUS_USER_DISPUTED']
+		db.session.merge(hs)
+
+	shakers = db.session.query(Shaker).filter(Shaker.side.in_(side_arr), Shaker.shaker_id == user_id, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id).group_by(Handshake.id))).all()
+	for shaker in shakers:
+		shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
+		db.session.merge(shaker)
+
+	db.session.flush()
+	return handshakes, shakers
 
 
 def has_valid_shaker(handshake):
@@ -165,7 +178,7 @@ def has_valid_shaker(handshake):
 
 
 def data_need_set_result_for_outcome(outcome):
-    	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
+	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
 
 	if outcome.result == -1:
 		return None, None
@@ -184,7 +197,7 @@ def data_need_set_result_for_outcome(outcome):
 
 # when time exceed report time and there is no result or outcome result is draw
 def can_refund(handshake, shaker=None):
-    	if handshake is None and shaker is None:
+	if handshake is None and shaker is None:
 		return False
 
 	outcome = None
@@ -202,18 +215,16 @@ def can_refund(handshake, shaker=None):
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 
 
-	if outcome is not None and \
-		outcome.hid is not None:
-
+	if outcome is not None and outcome.hid is not None:
 		if outcome.result == CONST.RESULT_TYPE['DRAW'] or (match_bl.is_exceed_report_time(outcome.match_id) and outcome.result == -1):
 			return True
-
 	return False
 
 def parse_inputs(inputs):
 	offchain = ''
 	hid = ''
 	state = -1
+	outcome_result = None
 
 	if 'offchain' in inputs:
 		offchain = inputs['offchain']
@@ -224,11 +235,28 @@ def parse_inputs(inputs):
 	if 'state' in inputs:
 		state = inputs['state']
 
-	return offchain, hid, state
+	if 'outcome' in inputs:
+		outcome_result = inputs['outcome']
 
+	return offchain, hid, state, outcome_result
+
+def update_amount_for_outcome(outcome_id, user_id, side, outcome_result):
+	side_arr = ', '.join([str(x) for x in ([side] if outcome_result != 3 else [1, 2])])
+
+	outcome = Outcome.find_outcome_by_id(outcome_id)
+	dispute_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.side IN ({}) AND handshake.user_id = {} AND handshake.status IN ({},{},{})) AS tmp) AS total_dispute_amount_m".format(outcome.id, side_arr, user_id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
+	dispute_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.side IN ({}) AND shaker.shaker_id = {} AND shaker.status IN ({},{},{})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, side_arr, user_id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'], HandshakeStatus['STATUS_DISPUTE_PENDING'])
+	amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND handshake.side IN ({})) AS tmp) AS total_amount_m'.format(outcome.id, side_arr)
+	amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND shaker.side IN ({})) AS tmp) AS total_amount_s'.format(outcome.id, side_arr)
+
+	total_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_amount_query_m, dispute_amount_query_s, amount_query_m, amount_query_s)).first()
+
+	outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
+	outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
+	db.session.flush()
 
 def save_handshake_method_for_event(method, inputs):
-	offchain, hid, state = parse_inputs(inputs)
+	offchain, hid, state, outcome_result = parse_inputs(inputs)
 	if method == 'init' or method == 'initTestDrive':
 		offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 		offchain = int(offchain.replace('m', ''))
@@ -344,10 +372,25 @@ def save_handshake_method_for_event(method, inputs):
 				return None, arr
 
 	elif method == 'report':
-		hid = int(hid)
-		outcome = Outcome.find_outcome_by_hid(hid)
+		outcome_id, result = offchain.replace('cryptosign_report', '').split('_')
+		if outcome_id is None:
+			return None, None
+		print 'report fail with outcome_id {}'.format(outcome_id)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
 		if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-			outcome.result = CONST.RESULT_TYPE['PENDING']
+    			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
+			db.session.flush()
+
+	elif method == 'resolve':
+		outcome_id, result = offchain.replace('cryptosign_resolve', '').split('_')
+		if outcome_id is None:
+			return None, None
+		print 'resolve fail with outcome_id {}'.format(outcome_id)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
+		if outcome is not None and outcome.result == CONST.RESULT_TYPE['DISPUTED']:
+			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 			db.session.flush()
 
 	return None, None
@@ -403,9 +446,9 @@ def save_failed_handshake_method_for_event(method, tx):
 				onchain = options['onchainData']
 				if 'hid' in onchain:
 					hid = int(onchain['hid'])
-					outcome =Outcome.find_outcome_by_hid(hid)
+					outcome = Outcome.find_outcome_by_hid(hid)
 					if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-						outcome.result = CONST.RESULT_TYPE['PENDING']
+						outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 						db.session.flush()
 
 		return None, None
@@ -414,7 +457,7 @@ def save_failed_handshake_method_for_event(method, tx):
 
 
 def save_handshake_for_event(event_name, inputs):
-	offchain, hid, state = parse_inputs(inputs)
+	offchain, hid, state, outcome_result = parse_inputs(inputs)
 	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 
 	if event_name == '__createMarket':
@@ -428,16 +471,17 @@ def save_handshake_for_event(event_name, inputs):
 
 	elif event_name == '__report':
 		print '__report'
-		# report1: mean that support win
-		# report2: mean that against win
-		# report0: mean that no one win
-		result = offchain.replace('report', '')
-		print 'result {}'.format(result)
-		outcome = Outcome.find_outcome_by_hid(hid)
-		if len(result) > -1:
+		# report{outcome_id}_{side}
+		# side 1: SUPPORT, 2: OPPOSE, 3: DRAW
+		outcome_id, result = offchain.replace('report', '').split('_')
+		if outcome_id is None or result is None:
+			return None, None
+		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
+		if len(result) > -1 and outcome is not None:
 			result = int(result)
 			outcome.result = result
-
 			db.session.flush()
 			return data_need_set_result_for_outcome(outcome)
 
@@ -519,98 +563,114 @@ def save_handshake_for_event(event_name, inputs):
 			handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
 			handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
 
+			if handshake.free_bet != 0:
+				user = User.find_user_with_id(handshake.user_id)
+				if user is not None and user.free_bet == 1:
+					user.free_bet = 0
+    				
 			db.session.flush()
 
 			arr = []
 			arr.append(handshake)
 			return arr, None
+		return None, None
 
 	elif event_name == '__refund':
 		print '__refund'
+		handshake = None
+		user_id = None
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
-			return save_refund_state_for_shaker(shaker)
+			if shaker is None:
+				return None, None
+			user_id = shaker.shaker_id
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			return save_refund_state_for_maker(handshake)
-
-		return None, None
+			user_id = handshake.user_id
+		
+		if handshake is None:
+			return None, None
+		
+		return save_refund_state_for_all(user_id, handshake.outcome_id)
 
 	elif event_name == '__dispute':
 		print '__dispute'
 		shaker_dispute = []
 		handshake_dispute = []
+		handshake = None
+		user_id = None
+		side = None
+
+		if outcome_result is None:
+			return None, None
+
 		if state < 2:
 			return None, None
 
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
+			user_id = shaker.shaker_id
+			side = shaker.side
+
 			if shaker is not None:
-				shaker.bk_status = shaker.status
-				shaker.status = HandshakeStatus['STATUS_USER_DISPUTED']
-				db.session.flush()
-				shaker_dispute.append(shaker)
-				
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
-			if handshake is not None:
-				handshake.bk_status = handshake.status
-				handshake.status = HandshakeStatus['STATUS_USER_DISPUTED']
-				db.session.flush()
-				handshake_dispute.append(handshake)
+			user_id = handshake.user_id
+			side = handshake.side
 
-		outcome_id = -1
-		if len(handshake_dispute) != 0:
-			outcome_id = handshake_dispute[0].outcome_id
-		else:
-			handshake = Handshake.find_handshake_by_id(shaker_dispute[0].handshake_id)
-			if handshake is None:
-				return None, None
-			outcome_id = handshake.outcome_id
+		if handshake is None:
+			return None, None
 
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
 		if outcome is None:
 			return None, None
 
-		dispute_amount_query_m = "(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {} AND (handshake.status = {} OR handshake.status = {})) AS tmp) AS total_dispute_amount_m".format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
-		dispute_amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {} AND (shaker.status = {} OR shaker.status = {})) AS tmp) AS total_dispute_amount_s'.format(outcome.id, HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED'])
-		amount_query_m = '(SELECT SUM(amount) AS total FROM (SELECT amount FROM handshake WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_m'.format(outcome.id)
-		amount_query_s = '(SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount as total_amount FROM handshake JOIN shaker ON handshake.id = shaker.handshake_id WHERE handshake.outcome_id = {}) AS tmp) AS total_amount_s'.format(outcome.id)
+		update_amount_for_outcome(outcome.id, user_id, side, outcome_result)
 
-		total_amount = db.engine.execute('SELECT {}, {}, {}, {}'.format(dispute_amount_query_m, dispute_amount_query_s, amount_query_m, amount_query_s)).first()
-
-		outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
-		outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
-		db.session.flush()
-
-		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:    
+		if state == 3 and outcome.result != CONST.RESULT_TYPE['DISPUTED']:
 			outcome.result = CONST.RESULT_TYPE['DISPUTED']
 			db.session.flush()
-
-			handshake_dispute, shaker_dispute = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_DISPUTED'])
+			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
 
 			# Send mail to admin
-			send_mail.delay(outcome.id, outcome.name)
+			send_dispute_email.delay(outcome.id, outcome.name)
+
+		else:
+			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, side, outcome_result)
+
 		return handshake_dispute, shaker_dispute
 
 	elif event_name == '__resolve':
-		result = offchain.replace('report', '')
-		outcome = Outcome.find_outcome_by_hid(hid)
-		if outcome is None:
+		# resolve{outcome_id}_{side}
+		print '__resolve'
+		outcome_id, result = offchain.replace('resolve', '').split('_')
+		if outcome_id is None or result is None:
 			return None, None
 
+		# 1: SUPPORT, 2: OPPOSE, 3: DRAW: It's depended on smart contract definition.
 		if len(result) == 0 or int(result) not in [1, 2, 3]:
+			return None, None
+
+		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+
+		if outcome is None:
 			return None, None
 
 		outcome.total_dispute_amount = 0
 		outcome.result = int(result)
 		db.session.flush()
-		handshakes, shakers = save_dispute_state_all(outcome.id, HandshakeStatus['STATUS_RESOLVED'])
+		
+		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
 		return handshakes, shakers
 		
 

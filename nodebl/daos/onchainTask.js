@@ -4,7 +4,7 @@ const moment = require('moment');
 const Op = models.Sequelize.Op;
 
 module.exports = {
-  create: (isErc20, contract_address, contract_name, contract_method, from_address, data, status, task_id, description) => {
+  create: (isErc20, contract_address, contract_json, contract_method, from_address, data, status, task_id, description) => {
     return new Promise((resolve, reject ) => {
       models.sequelize.transaction({}, (tx) => {
         return models.OnchainTask
@@ -13,7 +13,7 @@ module.exports = {
             description: description,
             is_erc20: isErc20,
             contract_address: contract_address,
-            contract_name: contract_name,
+            contract_json: contract_json,
             contract_method: contract_method,
             from_address: from_address,
             data: data,

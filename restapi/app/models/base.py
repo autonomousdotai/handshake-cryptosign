@@ -38,7 +38,7 @@ class BaseModel(db.Model, JsonSerializer):
 #     target.created_user_id = g.user.id
 #   except Exception, ex:
 #     app.logger.exception(ex)
-#
+
 # @db.event.listens_for(BaseModel, "before_update", propagate=True)
 # def on_before_update(mapper, connection, target):
 #   try:

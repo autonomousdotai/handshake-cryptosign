@@ -16,8 +16,7 @@ class MESSAGE(object):
 	OUTCOME_INVALID = 'Please check your outcome id'
 	OUTCOME_INVALID_RESULT = 'Please check your outcome result'
 	OUTCOME_HAS_RESULT = 'This outcome has had result already!'
-	OUTCOME_REPORTED = 'This outcome reported!'
-	OUTCOME_DISPUTE_INVALID = 'This outcome dispute invalid!'
+	OUTCOME_IS_REPORTING = 'This outcome is reporting!'
 
 	# MATCH
 	MATCH_NOT_FOUND = 'Match not found. Please try again.'
@@ -55,6 +54,7 @@ class MESSAGE(object):
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 	HANDSHAKE_CANNOT_REFUND = 'Cannot refund this handshake!'
+	HANDSHAKE_CANNOT_DISPUTE = 'Cannot dispute this handshake!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
@@ -69,10 +69,14 @@ class MESSAGE(object):
 	TOKEN_NOT_FOUND = 'Token not found. Please try again.'
 	TOKEN_APPROVED_ALREADY = 'Token has been approved already.'
 
+	# CONTRACT
+	CONTRACT_EMPTY_VERSION = 'There is no active contract at the moment.'
+	CONTRACT_INVALID = 'Contract is invalid!'
 
-	# NOTIFICATION
-	NOTIF_TIME_INVALID = 'Notification time is invalid.'
-	NOTIF_INVALID = 'Please check your notif id'
+	# SOURCE
+	SOURCE_INVALID = 'Source is invalid!'
+	SOURCE_APPOVED_ALREADY = 'Source has been approved already!'
+	SOURCE_EXISTED_ALREADY = 'Source has been existed already!'
 
 
 class CODE(object):
@@ -89,7 +93,8 @@ class CODE(object):
 	# OUTCOME
 	OUTCOME_INVALID = '1008'												
 	OUTCOME_INVALID_RESULT = '1009'											
-	OUTCOME_HAS_RESULT = '1010' 											
+	OUTCOME_HAS_RESULT = '1010' 	
+	OUTCOME_IS_REPORTING = '1048'										
 
 	# MATCH
 	MATCH_NOT_FOUND = '1011'												
@@ -126,6 +131,7 @@ class CODE(object):
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
 	HANDSHAKE_CANNOT_REFUND = '1044'
+	HANDSHAKE_CANNOT_DISPUTE = '1045'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												
@@ -136,10 +142,16 @@ class CODE(object):
 	WALLET_RECEIVE_ETH_ALREADY = '1041' 									
 	WALLET_REJECT_FREE_ETH = '1042' 										
 
-	# NOTIF
-	NOTIF_INVALID = '1100'
-
 	# TOKEN
-	TOKEN_NOT_FOUND = '1045'
-	TOKEN_APPROVED_ALREADY = '1046'
+	TOKEN_NOT_FOUND = '1046'
+	TOKEN_APPROVED_ALREADY = '1047'
+
+
+	# CONTRACT
+	CONTRACT_EMPTY_VERSION = '1048'
+	CONTRACT_INVALID = '1049'
 	
+	# SOURCE
+	SOURCE_INVALID = '1050'
+	SOURCE_APPOVED_ALREADY = '1051'
+	SOURCE_EXISTED_ALREADY = '1052'

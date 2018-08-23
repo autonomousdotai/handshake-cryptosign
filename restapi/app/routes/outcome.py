@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app as app
+from flask import Blueprint, request, g, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app import db
@@ -10,6 +10,7 @@ import re
 import json
 import app.constants as CONST
 import app.bl.outcome as outcome_bl
+import app.bl.contract as contract_bl
 
 outcome_routes = Blueprint('outcome', __name__)
 
@@ -31,6 +32,13 @@ def outcomes():
 @outcome_routes.route('/add/<int:match_id>', methods=['POST'])
 @login_required
 def add(match_id):
+	"""
+	""	Add outcome to match
+	"" 	Inputs:
+	""		match_id
+	""	Outputs:
+	""		match json with contract address for frontend
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 
@@ -42,6 +50,10 @@ def add(match_id):
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
+		contract = contract_bl.get_active_smart_contract()
+		if contract is None:
+			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 		outcomes = []
 		response_json = []
 		for item in data:
@@ -50,13 +62,17 @@ def add(match_id):
 				public=item['public'],
 				match_id=match_id,
 				modified_user_id=uid,
-				created_user_id=uid
+				created_user_id=uid,
+				contract_id=contract.id
 			)
 			db.session.add(outcome)
 			db.session.flush()
 			
 			outcomes.append(outcome)
-			response_json.append(outcome.to_json())
+			outcome_json = outcome.to_json()
+			outcome_json["contract"] = contract.to_json()
+
+			response_json.append(outcome_json)
 
 		db.session.add_all(outcomes)
 		db.session.commit()
@@ -72,7 +88,8 @@ def add(match_id):
 @login_required
 def remove(outcome_id):
 	try:
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		uid = int(request.headers['Uid'])
+		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
 		if outcome is not None:
 			db.session.delete(outcome)
 			db.session.commit()
@@ -85,12 +102,11 @@ def remove(outcome_id):
 		return response_error(ex.message)
 
 
-@outcome_routes.route('/generate_link', methods=['POST'])
+@outcome_routes.route('/generate-link', methods=['POST'])
 @login_required
 def generate_link():
 	try:
 		uid = int(request.headers['Uid'])
-		print uid
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -101,7 +117,7 @@ def generate_link():
 			slug = re.sub('[^\w]+', '-', outcome.name.lower())
 			response = {
 				'slug': 'discover/{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid),
-				'slug_short': 'exchange?match={}&out_come={}&ref={}&is_private=1'.format(outcome.match_id, outcome.id, uid)
+				'slug_short': '?match={}&out_come={}&ref={}&is_private=1'.format(outcome.match_id, outcome.id, uid)
 			}
 			return response_ok(response)
 			

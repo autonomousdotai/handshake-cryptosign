@@ -1,7 +1,7 @@
 from flask import Flask
 from app.factory import make_celery
-from app.core import db, configure_app, firebase
-from app.models import Handshake, Outcome, Shaker, Match, Task
+from app.core import db, configure_app, firebase, dropbox_services
+from app.models import Handshake, Outcome, Shaker, Match, Task, Contract
 from app.helpers.utils import utc_to_local
 from sqlalchemy import and_
 from decimal import *
@@ -79,7 +79,6 @@ def update_feed(handshake_id):
 			"text_search_ss": [handshake.description],
 			"shake_count_i": handshake.shake_count,
 			"view_count_i": handshake.view_count,
-			"comment_count_i": 0,
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
@@ -97,8 +96,10 @@ def update_feed(handshake_id):
 			"closing_time_i": match.date,
 			"reporting_time_i": match.reportTime,
 			"disputing_time_i": match.disputeTime,
-			"outcome_total_amount_f": outcome.total_amount if outcome.total_amount is not None else 0,
-			"outcome_total_dispute_amount_f": outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0
+			"outcome_total_amount_s": '{0:f}'.format(outcome.total_amount if outcome.total_amount is not None else 0),
+			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0),
+			"contract_address_s": handshake.contract_address,
+			"contract_json_s": handshake.contract_json
 		}
 		print 'create maker {}'.format(hs)
 
@@ -154,39 +155,6 @@ def add_shuriken(user_id, shuriken_type):
 
 
 @celery.task()
-def factory_reset():
-	try:
-		handshakes = db.session.query(Handshake).filter(Handshake.date_created < '2018-07-03').all()
-		shakers = db.session.query(Shaker).filter(Shaker.date_created < '2018-07-03').all()
-
-		arr = []
-		for h in handshakes:
-			hs = {
-				"id": "{}m{}".format(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, h.id),
-			}
-			arr.append(hs)
-
-		for s in shakers:
-			sk = {
-				"id": "{}s{}".format(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, s.id),
-			}
-			arr.append(sk)
-
-		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-		data = {
-			"delete": arr
-		}
-		res = requests.post(endpoint, json=data)
-		if res.status_code > 400:
-			print('SOLR service is failed.')
-
-	except Exception as e:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("factory_reset=>",exc_type, fname, exc_tb.tb_lineno)
-
-
-@celery.task()
 def run_bots(outcome_id):
 	try:
 		# find all handshakes of this outcome on both 2 sides: support and oppose
@@ -198,7 +166,7 @@ def run_bots(outcome_id):
 		if outcome is None or outcome.result != -1 or outcome.hid is None:
 			return
 		
-
+		contract = Contract.find_contract_by_id(outcome.contract_id)
 		print '---------------------------------'
 		print '--------- run bots --------------'
 		arr_support_hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0)).all()
@@ -238,7 +206,9 @@ def run_bots(outcome_id):
 						task_type=CONST.TASK_TYPE['REAL_BET'],
 						data=json.dumps(o),
 						action=CONST.TASK_ACTION['INIT'],
-						status=-1
+						status=-1,
+						contract_address=contract.contract_address,
+						contract_json=contract.json_name
 					)
 					db.session.add(task)
 					db.session.flush()
@@ -276,7 +246,9 @@ def run_bots(outcome_id):
 						task_type=CONST.TASK_TYPE['REAL_BET'],
 						data=json.dumps(o),
 						action=CONST.TASK_ACTION['INIT'],
-						status=-1
+						status=-1,
+						contract_address=contract.contract_address,
+						contract_json=contract.json_name
 					)
 					db.session.add(task)
 					db.session.flush()
@@ -292,7 +264,7 @@ def run_bots(outcome_id):
 		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
-def send_mail(outcome_id, outcome_name):
+def send_dispute_email(outcome_id, outcome_name):
 	try:
 		# Send mail to admin
 		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
@@ -300,8 +272,8 @@ def send_mail(outcome_id, outcome_name):
     		fields= {
 				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
 				'subject': 'Dispute',
-				'to[]': app.config['EMAIL'],
-				'from': app.config['EMAIL']
+				'to[]': app.config['RESOLVER_EMAIL'],
+				'from': app.config['RESOLVER_EMAIL']
 			}
     	)
 		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})
@@ -312,4 +284,46 @@ def send_mail(outcome_id, outcome_name):
 
 	except Exception as e:
 		print("Send mail notification fail!")
-		print e
+		print(str(e))
+
+
+@celery.task()
+def update_contract_feed(arr_id, contract_address, contract_json):
+	try:
+		arr_handshakes = []
+		for _id in arr_id:
+			hs = {
+				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+				"contract_address_s": {"set": contract_address},
+				"contract_json_s": {"set": contract_json}
+			}
+			arr_handshakes.append(hs)
+
+		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+		data = {
+			"update": arr_handshakes
+		}
+		res = requests.post(endpoint, json=data)
+		if res.status_code > 400 or \
+			res.content is None or \
+			(isinstance(res.content, str) and 'null' in res.content):
+			print "Update contract feeds fail"
+			print res
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def log_responsed_time():
+	try:
+		path = app.config['BASE_DIR']
+		path = os.path.dirname(path) + '/logs/debug.log'
+		dropbox_services.upload(path, "/responsed_time.csv")
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_responsed_time=>",exc_type, fname, exc_tb.tb_lineno)

@@ -2,7 +2,7 @@ import os
 import json
 import app.constants as CONST
 
-from flask import Blueprint, request, current_app as app
+from flask import Blueprint, request, g, current_app as app
 from flask_jwt_extended import jwt_required
 from sqlalchemy import and_
 from app.helpers.response import response_ok, response_error
@@ -95,7 +95,9 @@ def approve(id):
 					task_type=CONST.TASK_TYPE['ERC_20'],
 					data=json.dumps(data),
 					action=CONST.TASK_ACTION['ADD_TOKEN'],
-					status=-1
+					status=-1,
+					contract_address=g.PREDICTION_SMART_CONTRACT,
+					contract_json=g.PREDICTION_JSON
 				)
 		db.session.add(task)
 		db.session.commit()

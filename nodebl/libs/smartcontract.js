@@ -7,32 +7,35 @@ const web3 = require('../configs/web3').getWeb3();
 const web3Config = require('../configs/web3');
 
 const network_id = configs.network_id;
-const bettingHandshakeAddress = configs.network[network_id].bettingHandshakeAddress;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const privateKey = configs.network[network_id].privateKey;
 const gasLimit = configs.network[network_id].gasLimit;
 
 const ethTx = require('ethereumjs-tx');
-const PredictionABI = require('../contracts/PredictionHandshake.json').abi;
 
 const getNonce = async (address, status) => {
   status = status ? status : 'latest'; //pending
   return web3.eth.getTransactionCount(address, status);
 }
 
+const loadABI = (contract_json) => {
+  const PredictionABI = require(`../contracts/${contract_json}.json`).abi;
+  return PredictionABI;
+}
+
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options) => {
+const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options, contract_address, contract_json) => {
   console.log('submitInitTransaction');
-  console.log(_nonce, _hid, _side, _odds, _offchain, _value);
+  console.log(_nonce, _hid, _side, _odds, _offchain, _value, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
 
@@ -54,7 +57,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -71,7 +74,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -102,16 +105,16 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
 // /*
 //     submit init test drive transaction
 // */
-const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce, gasPrice, _options) => {
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json) => {
   console.log('submitInitTestDriveTransaction');
-  console.log(_hid, _side, _odds, _maker, _offchain, amount, _nonce);
+  console.log(_hid, _side, _odds, _maker, _offchain, amount, _nonce, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
       const rawTransaction = {
@@ -132,7 +135,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -149,7 +152,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -182,16 +185,16 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
 // /*
 //     submit shake transaction
 // */
-const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options) => {
+const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json) => {
   console.log('submitShakeTransaction');
-  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
+  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
       const rawTransaction = {
@@ -212,7 +215,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -230,7 +233,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -263,16 +266,16 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 // /*
 //     submit shake test drive transaction
 // */
-const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options) => {
+const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json) => {
   console.log('submitShakeTestDriveTransaction');
-  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce);
+  console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
       const rawTransaction = {
@@ -294,7 +297,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -311,7 +314,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -345,16 +348,16 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
  * @param {string} params.winner
  * @param {string} params.offchain
  */
-const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gasPrice, _options) => {
+const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gasPrice, _options, contract_address, contract_json) => {
   console.log('submitCollectTestDriveTransaction');
-  console.log(_hid, _winner, _offchain);
+  console.log(_hid, _winner, _offchain, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const nonce           = _nonce;
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
       const rawTransaction = {
@@ -374,7 +377,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -391,7 +394,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -429,16 +432,16 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
  * @param {bytes32} offchain
  */
 
-const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, _options) => {
+const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, _options, contract_address, contract_json) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('createMarketTransaction');
-      console.log(_nonce, fee, source, closingTime, reportTime, dispute, offchain);
-      const contractAddress = bettingHandshakeAddress;
+      console.log(_nonce, fee, source, closingTime, reportTime, dispute, offchain, contract_address, contract_json);
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
       const nonce           = _nonce;
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
 
@@ -461,7 +464,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'createMarket', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'createMarket', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -479,7 +482,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -508,17 +511,17 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 };
 
 
-const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options) => {
+const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
   return new Promise(async(resolve, reject) => {
     try {
-      const offchain = _offchain || ('cryptosign_report' + outcome_result);
+      const offchain = _offchain || ('cryptosign_report' + outcome_id + '_' + outcome_result);
       console.log('reportOutcomeTransaction');
-      console.log(hid, outcome_result, nonce, _offchain, gasPrice);
+      console.log(hid, outcome_result, nonce, _offchain, gasPrice, contract_address, contract_json);
 
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
 
@@ -542,7 +545,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -559,7 +562,7 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -587,17 +590,17 @@ const reportOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPric
   });
 };
 
-const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options) => {
+const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
   return new Promise(async(resolve, reject) => {
     try {
       const offchain = _offchain || ('cryptosign_resolve' + outcome_result);
       console.log('resolveOutcomeTransaction');
-      console.log(hid, outcome_result, nonce, _offchain, gasPrice);
+      console.log(hid, outcome_result, nonce, _offchain, gasPrice, contract_address, contract_json);
 
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
 
@@ -621,7 +624,7 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'resolve', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'resolve', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -638,7 +641,7 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'resolve', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'resolve', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -666,17 +669,17 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
   });
 };
 
-const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, gasPrice, _options) => {
+const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, gasPrice, _options, contract_address, contract_json) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('uninitForTrial');
-      console.log(_hid, _side, _odds, _maker, _value, _nonce, _offchain, _options);
+      console.log(_hid, _side, _odds, _maker, _value, _nonce, _offchain, _options, contract_address, contract_json);
 
-      const contractAddress = bettingHandshakeAddress;
+      const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
       const value           = web3.utils.toHex(web3.utils.toWei(_value));
-      const contract        = new web3.eth.Contract(PredictionABI, contractAddress, {
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });
 
@@ -700,7 +703,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, bettingHandshakeAddress, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
         .catch(console.error);
 
         return resolve({
@@ -717,7 +720,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, bettingHandshakeAddress, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {

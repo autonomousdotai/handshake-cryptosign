@@ -244,7 +244,7 @@ def report_match(match_id):
 
 
 @admin_routes.route('/change-contract', methods=['POST'])
-@admin_required
+@jwt_required
 def change_contract():
 	""" Change contract: 
     This is used for change contract json and contract json.

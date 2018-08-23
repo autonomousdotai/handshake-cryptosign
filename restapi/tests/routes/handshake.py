@@ -1009,6 +1009,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             data_json = data['data']
 
             hs = Handshake.find_handshake_by_id(handshake.id)
@@ -1896,7 +1897,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 

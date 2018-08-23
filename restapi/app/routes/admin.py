@@ -70,8 +70,8 @@ def create_market():
 					data=json.dumps(match.to_json()),
 					action=CONST.TASK_ACTION['CREATE_MARKET'],
 					status=-1,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
+					contract_address=contract.contract_address,
+					contract_json=contract.json_name
 				)
 				db.session.add(task)
 				db.session.flush()

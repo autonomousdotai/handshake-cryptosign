@@ -24,4 +24,4 @@ class Contract(BaseModel):
 		return db.session.query(Contract).filter_by(contract_address=contract_address, json_name=contract_json_name).first()
 
 	def __repr__(self):
-		return '<contract {}, {}>'.format(self.id, self.address)
+		return '<contract {}, {}>'.format(self.id, self.contract_address)

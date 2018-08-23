@@ -142,8 +142,14 @@ def init():
 		if odds <= 1:
 			return response_error(MESSAGE.INVALID_ODDS, CODE.INVALID_ODDS)
 
+		contract = Contract.find_contract_by_id(outcome.contract_id)
+		if contract is None:
+			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
+
+
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -160,9 +166,10 @@ def init():
 				remaining_amount=amount,
 				from_address=from_address,
 				free_bet=free_bet,
-				contract_address=g.PREDICTION_SMART_CONTRACT,
-				contract_json=g.PREDICTION_JSON
+				contract_address=contract.contract_address,
+				contract_json=contract.json_name
 			)
+
 			db.session.add(handshake)
 			db.session.commit()
 
@@ -214,6 +221,15 @@ def init():
 				shaker_amount -= subtracted_amount_for_shaker
 				db.session.merge(handshake)
 
+				o = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+				if o is None:
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+				c = Contract.find_contract_by_id(o.contract_id)
+				if c is None:
+					return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
+
 				# create shaker
 				shaker = Shaker(
 					shaker_id=user.id,
@@ -225,8 +241,8 @@ def init():
 					from_address=from_address,
 					chain_id=chain_id,
 					free_bet=free_bet,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
+					contract_address=c.contract_address,
+					contract_json=c.json_name
 				)
 
 				db.session.add(shaker)
@@ -384,6 +400,10 @@ def create_bet():
 		elif outcome.result != -1:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
+		contract = Contract.find_contract_by_id(outcome.contract_id)
+		if contract is None:
+			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
+
 		match = Match.find_match_by_id(outcome.match_id)
 		data['hid'] = outcome.hid
 		data['outcome_name'] = outcome.name
@@ -400,8 +420,8 @@ def create_bet():
 				data=json.dumps(data),
 				action=CONST.TASK_ACTION['INIT'],
 				status=-1,
-				contract_address=g.PREDICTION_SMART_CONTRACT,
-				contract_json=g.PREDICTION_JSON
+				contract_address=contract.contract_address,
+				contract_json=contract.json_name
 			)
 			db.session.add(task)
 			db.session.commit()

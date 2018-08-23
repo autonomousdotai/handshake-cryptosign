@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/ninjadotorg/handshake-cryptosign/event/daos"
-
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
 	"github.com/ninjadotorg/handshake-cryptosign/event/models"
 	"github.com/ninjadotorg/handshake-cryptosign/event/services"
@@ -62,7 +61,6 @@ func (r *Remind) fireNotification(outcome models.Outcome) {
 	} else {
 		m.SendEmailForReportingOutcome(email, outcome.Name)
 	}
-
 }
 
 func inArray(val interface{}, array interface{}) (exists bool, index int) {

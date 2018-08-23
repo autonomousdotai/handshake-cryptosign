@@ -5,5 +5,4 @@ import (
 )
 
 func Test_GetAllIncomingMatches(t *testing.T) {
-
 }

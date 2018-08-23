@@ -78,7 +78,6 @@ def update_feed(handshake_id):
 			"shake_user_ids_is": shake_user_ids,
 			"text_search_ss": [handshake.description],
 			"shake_count_i": handshake.shake_count,
-			"view_count_i": handshake.view_count,
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,

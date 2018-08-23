@@ -34,9 +34,6 @@ class Handshake(BaseModel):
 	shake_count = db.Column(db.Integer,
 							server_default=str(0),
 	                      	default=0)
-	view_count = db.Column(db.Integer,
-							server_default=str(0),
-	                      	default=0)
 	free_bet = db.Column(db.Integer,
 							server_default=str(0),
 	                      	default=0)

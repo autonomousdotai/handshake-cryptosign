@@ -705,7 +705,6 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 					remaining_amount=row['remaining_amount'],
 					from_address=row['from_address'],
 					shake_count=row['shake_count'],
-					view_count=row['view_count'],
 					date_created=row['date_created'],
 					date_modified=row['date_modified']
 				)

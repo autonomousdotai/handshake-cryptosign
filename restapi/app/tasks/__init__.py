@@ -300,7 +300,7 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
-			"update": arr_handshakes
+			"add": arr_handshakes
 		}
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \
@@ -308,6 +308,7 @@ def update_contract_feed(arr_id, contract_address, contract_json):
 			(isinstance(res.content, str) and 'null' in res.content):
 			print "Update contract feeds fail"
 			print res
+			print res.content
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()

@@ -112,12 +112,12 @@ def generate_link():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		outcome_id = data['outcome_id']
-		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.public==0, Outcome.created_user_id==uid)).first()
+		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
 		if outcome is not None:
 			slug = re.sub('[^\w]+', '-', outcome.name.lower())
 			response = {
-				'slug': 'discover/{}?match={}&out_come={}&ref={}&is_private=1'.format(slug, outcome.match_id, outcome.id, uid),
-				'slug_short': '?match={}&out_come={}&ref={}&is_private=1'.format(outcome.match_id, outcome.id, uid)
+				'slug': 'discover/{}?match={}&outcome={}&ref={}&is_private={}'.format(slug, outcome.match_id, outcome.id, uid, 0 if outcome.public else 1),
+				'slug_short': '?match={}&outcome={}&ref={}&is_private={}'.format(outcome.match_id, outcome.id, uid, 0 if outcome.public else 1)
 			}
 			return response_ok(response)
 			

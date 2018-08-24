@@ -304,7 +304,6 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
-            print data_json
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 2)
 

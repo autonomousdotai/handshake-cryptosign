@@ -18,7 +18,7 @@ from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
-from app.tasks import update_contract_feed
+from app.tasks import update_status_feed
 from flask_jwt_extended import jwt_required
 
 admin_routes = Blueprint('admin', __name__)
@@ -100,7 +100,7 @@ def init_default_outcomes():
 
 			if outcome.result != CONST.RESULT_TYPE['PENDING']:
 				return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
-			
+
 			match = Match.find_match_by_id(outcome.match_id)
 			for o in outcome_data:
 				o['outcome_id'] = outcome_id
@@ -135,7 +135,7 @@ def matches_need_report_by_admin():
 
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
-		
+
 		matches_by_admin = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id.is_(None), Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 		matches_disputed = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['DISPUTED'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
@@ -242,51 +242,6 @@ def report_match(match_id):
 		db.session.rollback()
 		return response_error(ex.message)
 
-
-@admin_routes.route('/change-contract', methods=['POST'])
-@jwt_required
-def change_contract():
-	""" Change contract: 
-    This is used for change contract json and contract json.
-	Input: 
-		from_id
-		to_id
-		contract_address
-		contract_json
-    """
-	try:
-		data = request.json
-		from_id = int(data.get('from', 0))
-		to_id = int(data.get('to', 0))
-		contract_address = data.get('contract_address', None)
-		contract_json = data.get('contract_json', None)
-
-		if from_id > to_id or contract_address is None or contract_json is None or len(contract_address) == 0 or len(contract_json) == 0:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		handshakes = db.session.query(Handshake).filter(Handshake.id >= from_id, Handshake.id <= to_id).all()
-		arr_id = []
-		for hs in handshakes:
-			if hs.contract_address is None and hs.contract_json is None:
-				arr_id.append(hs.id)
-				hs.contract_address = contract_address
-				hs.contract_json = contract_json
-				db.session.flush()
-				
-				shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
-				for sk in shakers:
-					sk.contract_address = contract_address
-					sk.contract_json = contract_json
-					db.session.flush()
-		db.session.commit()
-		if len(arr_id) > 0:
-			update_contract_feed.delay(arr_id, contract_address, contract_json)
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
 @admin_routes.route('/source/approve/<int:source_id>', methods=['POST'])
 @jwt_required
 def approve_source(source_id):
@@ -304,6 +259,92 @@ def approve_source(source_id):
 
 		db.session.commit()
 		return response_ok(source.to_json())
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+# @admin_routes.route('/change-contract', methods=['POST'])
+# @jwt_required
+# def change_contract():
+# 	""" Change contract: 
+#     This is used for change contract json and contract json.
+# 	Input: 
+# 		from_id
+# 		to_id
+# 		contract_address
+# 		contract_json
+#     """
+# 	try:
+# 		data = request.json
+# 		from_id = int(data.get('from', 0))
+# 		to_id = int(data.get('to', 0))
+# 		contract_address = data.get('contract_address', None)
+# 		contract_json = data.get('contract_json', None)
+
+# 		if from_id > to_id or contract_address is None or contract_json is None or len(contract_address) == 0 or len(contract_json) == 0:
+# 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+# 		handshakes = db.session.query(Handshake).filter(Handshake.id >= from_id, Handshake.id <= to_id).all()
+# 		arr_id = []
+# 		for hs in handshakes:
+# 			if hs.contract_address is None and hs.contract_json is None:
+# 				arr_id.append(hs.id)
+# 				hs.contract_address = contract_address
+# 				hs.contract_json = contract_json
+# 				db.session.flush()
+				
+# 				shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
+# 				for sk in shakers:
+# 					sk.contract_address = contract_address
+# 					sk.contract_json = contract_json
+# 					db.session.flush()
+# 		db.session.commit()
+# 		if len(arr_id) > 0:
+# 			update_contract_feed.delay(arr_id, contract_address, contract_json)
+# 		return response_ok()
+# 	except Exception, ex:
+# 		db.session.rollback()
+# 		return response_error(ex.message)
+
+@admin_routes.route('/update-feed-status', methods=['POST'])
+@jwt_required
+def update_feed_status():
+	""" Update all feed status:
+	Input: 
+		user_id: int
+		is_maker: 1 or 0
+		status: int
+    """
+	try:
+		data = request.json
+		is_maker = int(data.get('is_maker', None))
+		item_id = int(data.get('id', None))
+		status = int(data.get('status', None))
+
+		if is_maker is None or status is None or item_id is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		arr_id = []
+		handshake = None
+		shaker = None
+
+		if is_maker == 1:
+			handshake = Handshake.find_handshake_by_id(item_id)
+			if handshake is None:
+				return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
+			shaker = db.session.query(Shaker).filter(Shaker.handshake_id == handshake.id).first()
+		else:
+			shaker = Shaker.find_shaker_by_id(item_id)
+			if shaker is None:
+				return response_error(MESSAGE.SHAKER_NOT_FOUND, CODE.SHAKER_NOT_FOUND)
+			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+
+		if handshake is None or shaker is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		if len(arr_id) > 0:
+			update_status_feed.delay(handshake.id, status)
+		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

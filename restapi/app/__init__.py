@@ -5,6 +5,7 @@ from models import User
 from app.helpers.response import response_error
 from app.routes import init_routes
 from app.tasks import log_responsed_time
+from datetime import datetime
 
 import time
 import decimal
@@ -73,6 +74,7 @@ def before_request():
 	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
 
 	g.start = [time.time(), request.base_url]
+	g.reported_time = app.config.get('REPORTED_TIME')
 
 @app.after_request
 def after_request(response):
@@ -81,8 +83,10 @@ def after_request(response):
 		end = time.time()
 		diff = end - float(start)
 		logfile.debug("API -> {}, time -> {}".format(url, str(diff)))
-		if time.localtime().tm_hour == 1:
+		day = datetime.now().day
+		if g.reported_time is None or g.reported_time != day:
 			log_responsed_time.delay()
+			app.config['REPORTED_TIME'] = day
 
 	return response
 

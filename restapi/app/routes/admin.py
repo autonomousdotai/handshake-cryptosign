@@ -132,6 +132,8 @@ def init_default_outcomes():
 @jwt_required
 def matches_need_report_by_admin():
 	try:
+		print '1'
+		logfile.debug("DEBUG --> 1")
 		response = []
 		matches = []
 

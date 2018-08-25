@@ -174,6 +174,7 @@ def report_match(match_id):
 	""		match_id
 	"""
 	try:
+		print 'HELLO WORLD'
 		data = request.json
 		response = []
 		if data is None:

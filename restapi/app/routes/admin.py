@@ -132,7 +132,6 @@ def init_default_outcomes():
 @jwt_required
 def matches_need_report_by_admin():
 	try:
-		print '1'
 		logfile.debug("DEBUG --> 1")
 		response = []
 		matches = []
@@ -182,6 +181,7 @@ def report_match(match_id):
 	"""
 	try:
 		print '1'
+		logfile.debug("DEBUG --> 1")
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		disputed = False

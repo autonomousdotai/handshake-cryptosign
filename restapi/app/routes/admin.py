@@ -180,8 +180,6 @@ def report_match(match_id):
 	""		match_id
 	"""
 	try:
-		print '1'
-		logfile.debug("DEBUG --> 1")
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		disputed = False
@@ -189,7 +187,6 @@ def report_match(match_id):
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		print '2'
 		logfile.debug("DEBUG --> {}".format(data))
 		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
 		if match is not None:
@@ -197,7 +194,6 @@ def report_match(match_id):
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 
-			print '3'
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
@@ -205,7 +201,6 @@ def report_match(match_id):
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
-				logfile.debug("DEBUG --> 1")
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
 					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
@@ -230,7 +225,6 @@ def report_match(match_id):
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
 
-				logfile.debug("DEBUG --> 2")
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
@@ -239,7 +233,6 @@ def report_match(match_id):
 					contract_address=contract.contract_address,
 					contract_json=contract.json_name
 				)
-				logfile.debug("DEBUG --> 3")
 				db.session.add(task)
 				db.session.flush()
 

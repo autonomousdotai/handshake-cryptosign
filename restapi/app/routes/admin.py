@@ -172,13 +172,14 @@ def matches_need_report_by_admin():
 @jwt_required
 def report_match(match_id):
 	""" Report match by match_id: 
-	If report is 'PROCESSING' status, tnx's action is 'REPORT'
-	If report is 'DISPUTED' status, tnx's action is 'RESOLVE'
-
-	Input: 
-		match_id
+	"" If report is 'PROCESSING' status, tnx's action is 'REPORT'
+	"" If report is 'DISPUTED' status, tnx's action is 'RESOLVE'
+	""
+	""	Input: 
+	""		match_id
 	"""
 	try:
+		print '1'
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		disputed = False
@@ -186,6 +187,7 @@ def report_match(match_id):
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
+		print '2'
 		logfile.debug("DEBUG --> {}".format(data))
 		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
 		if match is not None:
@@ -193,6 +195,7 @@ def report_match(match_id):
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 
+			print '3'
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)

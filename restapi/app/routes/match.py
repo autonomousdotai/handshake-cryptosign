@@ -174,7 +174,7 @@ def report_match(match_id):
 	""		match_id
 	"""
 	try:
-		print 'HELLO WORLD'
+		uid = int(request.headers['Uid'])
 		data = request.json
 		response = []
 		if data is None:
@@ -197,7 +197,7 @@ def report_match(match_id):
 					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
-				if outcome is not None:
+				if outcome is not None and outcome.created_user_id == uid:
 					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
 					if message is not None and code is not None:
 						return message, code

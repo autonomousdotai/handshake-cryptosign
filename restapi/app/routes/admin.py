@@ -7,6 +7,7 @@ import app.bl.user as user_bl
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
+import logging
 
 from flask import Blueprint, request, g
 from app import db, sg, s3
@@ -22,6 +23,7 @@ from app.tasks import update_status_feed
 from flask_jwt_extended import jwt_required
 
 admin_routes = Blueprint('admin', __name__)
+logfile = logging.getLogger('file')
 
 
 @admin_routes.route('/create_market', methods=['POST'])
@@ -221,7 +223,7 @@ def report_match(match_id):
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
 
-				print 'DEBUG 1'
+				logfile.debug("DEBUG 1")
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
@@ -230,7 +232,7 @@ def report_match(match_id):
 					contract_address=contract.contract_address,
 					contract_json=contract.json_name
 				)
-				print 'DEBUG 2'
+				logfile.debug("DEBUG 2")
 				db.session.add(task)
 				db.session.flush()
 
@@ -264,48 +266,6 @@ def approve_source(source_id):
 		db.session.rollback()
 		return response_error(ex.message)
 
-# @admin_routes.route('/change-contract', methods=['POST'])
-# @jwt_required
-# def change_contract():
-# 	""" Change contract: 
-#     This is used for change contract json and contract json.
-# 	Input: 
-# 		from_id
-# 		to_id
-# 		contract_address
-# 		contract_json
-#     """
-# 	try:
-# 		data = request.json
-# 		from_id = int(data.get('from', 0))
-# 		to_id = int(data.get('to', 0))
-# 		contract_address = data.get('contract_address', None)
-# 		contract_json = data.get('contract_json', None)
-
-# 		if from_id > to_id or contract_address is None or contract_json is None or len(contract_address) == 0 or len(contract_json) == 0:
-# 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-# 		handshakes = db.session.query(Handshake).filter(Handshake.id >= from_id, Handshake.id <= to_id).all()
-# 		arr_id = []
-# 		for hs in handshakes:
-# 			if hs.contract_address is None and hs.contract_json is None:
-# 				arr_id.append(hs.id)
-# 				hs.contract_address = contract_address
-# 				hs.contract_json = contract_json
-# 				db.session.flush()
-				
-# 				shakers = db.session.query(Shaker).filter(Shaker.handshake_id == hs.id).all()
-# 				for sk in shakers:
-# 					sk.contract_address = contract_address
-# 					sk.contract_json = contract_json
-# 					db.session.flush()
-# 		db.session.commit()
-# 		if len(arr_id) > 0:
-# 			update_contract_feed.delay(arr_id, contract_address, contract_json)
-# 		return response_ok()
-# 	except Exception, ex:
-# 		db.session.rollback()
-# 		return response_error(ex.message)
 
 @admin_routes.route('/update-feed-status', methods=['POST'])
 @jwt_required

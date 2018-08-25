@@ -286,35 +286,55 @@ def send_dispute_email(outcome_id, outcome_name):
 		print(str(e))
 
 
-@celery.task()
-def update_contract_feed(arr_id, contract_address, contract_json):
-	try:
-		arr_handshakes = []
-		for _id in arr_id:
-			hs = {
-				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"contract_address_s": {"set": contract_address},
-				"contract_json_s": {"set": contract_json}
-			}
-			arr_handshakes.append(hs)
+# @celery.task()
+# def update_contract_feed(arr_id, contract_address, contract_json):
+# 	try:
+# 		arr_handshakes = []
+# 		for _id in arr_id:
+# 			hs = {
+# 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+# 				"contract_address_s": {"set": contract_address},
+# 				"contract_json_s": {"set": contract_json}
+# 			}
+# 			arr_handshakes.append(hs)
 
+# 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+# 		data = {
+# 			"add": arr_handshakes
+# 		}
+# 		res = requests.post(endpoint, json=data)
+# 		if res.status_code > 400 or \
+# 			res.content is None or \
+# 			(isinstance(res.content, str) and 'null' in res.content):
+# 			print "Update contract feeds fail"
+# 			print res
+# 			print res.content
+
+# 	except Exception as e:
+# 		exc_type, exc_obj, exc_tb = sys.exc_info()
+# 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+# 		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def update_status_feed(_id, status):
+	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
-			"add": arr_handshakes
+			"add": [{
+				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+				"status_i": status
+			}]
 		}
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \
 			res.content is None or \
 			(isinstance(res.content, str) and 'null' in res.content):
-			print "Update contract feeds fail"
-			print res
-			print res.content
+			print "Update status feed fail id: {}".format(_id)
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
-
+		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
 def log_responsed_time():

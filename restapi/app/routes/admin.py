@@ -177,7 +177,7 @@ def report_match(match_id):
 
 	Input: 
 		match_id
-    """
+	"""
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -186,7 +186,7 @@ def report_match(match_id):
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		log.debug("DEBUG --> {}".format(data))
+		logfile.debug("DEBUG --> {}".format(data))
 		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
 		if match is not None:
 			result = data['result']
@@ -200,6 +200,7 @@ def report_match(match_id):
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
+				logfile.debug("DEBUG --> 1")
 				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
 				if outcome is not None:
 					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
@@ -224,7 +225,7 @@ def report_match(match_id):
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
 
-				logfile.debug("DEBUG 1")
+				logfile.debug("DEBUG --> 2")
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
@@ -233,7 +234,7 @@ def report_match(match_id):
 					contract_address=contract.contract_address,
 					contract_json=contract.json_name
 				)
-				logfile.debug("DEBUG 2")
+				logfile.debug("DEBUG --> 3")
 				db.session.add(task)
 				db.session.flush()
 
@@ -276,7 +277,7 @@ def update_feed_status():
 		user_id: int
 		is_maker: 1 or 0
 		status: int
-    """
+	"""
 	try:
 		data = request.json
 		is_maker = int(data.get('is_maker', None))

@@ -177,7 +177,7 @@ def report_match(match_id):
 
 	Input: 
 		match_id
-    """
+	"""
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -277,7 +277,7 @@ def update_feed_status():
 		user_id: int
 		is_maker: 1 or 0
 		status: int
-    """
+	"""
 	try:
 		data = request.json
 		is_maker = int(data.get('is_maker', None))

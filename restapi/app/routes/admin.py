@@ -221,15 +221,16 @@ def report_match(match_id):
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
 
+				print 'DEBUG 1'
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(report),
 					action=CONST.TASK_ACTION['RESOLVE' if disputed else 'REPORT'],
 					status=-1,
-					contract_address= contract.contract_address,
-					contract_json= contract.json_name
+					contract_address=contract.contract_address,
+					contract_json=contract.json_name
 				)
-
+				print 'DEBUG 2'
 				db.session.add(task)
 				db.session.flush()
 

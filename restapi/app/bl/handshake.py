@@ -672,7 +672,13 @@ def save_handshake_for_event(event_name, inputs):
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
 		return handshakes, shakers
-		
+
+
+def verify_taker_odds(taker_odds, maker_odds):
+	if (float(taker_odds) * 10000) >= (float(maker_odds) * 100) * (float(taker_odds) * 100 - 100):
+		return True
+
+	return False
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -685,30 +691,30 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 
 			print 'matched odds --> {}'.format(v)
 			query = text('''SELECT * FROM handshake where outcome_id = {} and odds <= {} and remaining_amount > 0 and status = {} and side != {} ORDER BY odds ASC;'''.format(outcome_id, v, CONST.Handshake['STATUS_INITED'], side))
-			print query
 			handshakes = []
 			result_db = db.engine.execute(query)
 			for row in result_db:
-				handshake = Handshake(
-					id=row['id'],
-					hs_type=row['hs_type'],
-					extra_data=row['extra_data'],
-					description=row['description'],
-					chain_id=row['chain_id'],
-					is_private=row['is_private'],
-					user_id=row['user_id'],
-					outcome_id=row['outcome_id'],
-					odds=row['odds'],
-					amount=row['amount'],
-					currency=row['currency'],
-					side=row['side'],
-					remaining_amount=row['remaining_amount'],
-					from_address=row['from_address'],
-					shake_count=row['shake_count'],
-					date_created=row['date_created'],
-					date_modified=row['date_modified']
-				)
-				handshakes.append(handshake)
+				if(verify_taker_odds(row['odds'], odds)):
+					handshake = Handshake(
+						id=row['id'],
+						hs_type=row['hs_type'],
+						extra_data=row['extra_data'],
+						description=row['description'],
+						chain_id=row['chain_id'],
+						is_private=row['is_private'],
+						user_id=row['user_id'],
+						outcome_id=row['outcome_id'],
+						odds=row['odds'],
+						amount=row['amount'],
+						currency=row['currency'],
+						side=row['side'],
+						remaining_amount=row['remaining_amount'],
+						from_address=row['from_address'],
+						shake_count=row['shake_count'],
+						date_created=row['date_created'],
+						date_modified=row['date_modified']
+					)
+					handshakes.append(handshake)
 			return handshakes
 	return []
 

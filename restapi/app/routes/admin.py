@@ -307,7 +307,8 @@ def update_feed_status():
 		db.session.flush()
 		db.session.commit()
 
-		update_status_feed.delay(handshake.id, status)
+		if handshake is not None:
+			update_status_feed.delay(handshake.id, HandshakeStatus['STATUS_INITED'])
 		return response_ok()
 
 	except Exception, ex:

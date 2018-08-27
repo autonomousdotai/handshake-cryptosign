@@ -281,7 +281,7 @@ def update_feed_status():
 		is_maker = int(data.get('is_maker', None))
 		item_id = int(data.get('id', None))
 
-		if is_maker is None or status is None or item_id is None:
+		if is_maker is None or item_id is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		handshake = None

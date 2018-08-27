@@ -301,10 +301,10 @@ def update_feed_status():
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		if shaker is not None:
-    		shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
+			shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 
 		if handshake is not None:
-    		handshake.status = HandshakeStatus['STATUS_INITED']
+			handshake.status = HandshakeStatus['STATUS_INITED']
 
 		db.session.flush()
 		db.session.commit()

@@ -280,34 +280,27 @@ def update_feed_status():
 		data = request.json
 		is_maker = int(data.get('is_maker', None))
 		item_id = int(data.get('id', None))
+		status = int(data.get('status', None))
 
 		if is_maker is None or item_id is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		handshake = None
-		shaker = None
 
 		if is_maker == 1:
 			handshake = Handshake.find_handshake_by_id(item_id)
-			if handshake is None:
-				return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
-			shaker = db.session.query(Shaker).filter(Shaker.handshake_id == handshake.id).first()
+			if handshake is not None:
+				handshake.status = status
 		else:
 			shaker = Shaker.find_shaker_by_id(item_id)
-			if shaker is None:
-				return response_error(MESSAGE.SHAKER_NOT_FOUND, CODE.SHAKER_NOT_FOUND)
-			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-
-		if shaker is not None:
-			shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
-
-		if handshake is not None:
-			handshake.status = HandshakeStatus['STATUS_INITED']
+			if shaker is not None:
+				shaker.status = status
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		db.session.flush()
 		db.session.commit()
 
-		update_status_feed.delay(handshake.id, HandshakeStatus['STATUS_SHAKER_SHAKED'])
+		update_status_feed.delay(handshake.id, status)
 		return response_ok()
 
 	except Exception, ex:

@@ -1219,6 +1219,21 @@ class TestHandshakeBl(BaseTestCase):
 		for item in arr_hs:
 			db.session.delete(item)
 			db.session.commit()
+
+	def test_verify_taker_odds(self):
+		taker_odds = 1.6
+		maker_odds = 2.7
+
+		actual = handshake_bl.verify_taker_odds(taker_odds, maker_odds)
+		expected = False
+		self.assertEqual(actual, expected)
+
+		taker_odds = 1.6
+		maker_odds = 2.5
+		
+		actual = handshake_bl.verify_taker_odds(taker_odds, maker_odds)
+		expected = True
+		self.assertEqual(actual, expected)
 		
 if __name__ == '__main__':
 	unittest.main()

@@ -485,7 +485,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         #   0.7               6           1.2
         #   0.007             1.5         3
         #   0.003             1.25        5
-        # Shake with 0.001 ETH, odds: 1.20, side 1
+        # Shake with 0.001 ETH, odds: 1.2, side 1
         # Expected:
         #   Response:
         #       Amount: 0.001
@@ -509,6 +509,8 @@ class TestHandshakeBluePrint(BaseTestCase):
         arr_hs.append(handshake)
         db.session.add(handshake)
         db.session.commit()
+
+        maker = handshake.id
 
         # -----
         handshake = Handshake(
@@ -586,6 +588,10 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             self.assertEqual(hs['type'], 'shake')
             self.assertEqual(hs['amount'], 0.001)
+
+            handshake = Handshake.find_handshake_by_id(maker)
+            self.assertEqual(float(handshake.amount), 0.7)
+            self.assertEqual(float(handshake.remaining_amount), 0.7)
 
 
         for handshake in arr_hs:
@@ -1649,10 +1655,11 @@ class TestHandshakeBluePrint(BaseTestCase):
         db.session.commit()
 
         outcome = Outcome.find_outcome_by_id(88)
+        outcome.match_id = 1
         outcome.result = 2
         db.session.commit()
 
-        match = Match.find_match_by_id(outcome.match_id)
+        match = Match.find_match_by_id(1)
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
         match.date = seconds = 100

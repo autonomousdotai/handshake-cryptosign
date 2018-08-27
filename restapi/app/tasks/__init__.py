@@ -320,7 +320,7 @@ def update_status_feed(_id, status):
 	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
-			"update": [{
+			"add": [{
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
 				"status_i": {"set":status}
 			}]

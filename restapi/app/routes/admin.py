@@ -275,13 +275,11 @@ def update_feed_status():
 	Input: 
 		user_id: int
 		is_maker: 1 or 0
-		status: int
 	"""
 	try:
 		data = request.json
 		is_maker = int(data.get('is_maker', None))
 		item_id = int(data.get('id', None))
-		status = int(data.get('status', None))
 
 		if is_maker is None or status is None or item_id is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)

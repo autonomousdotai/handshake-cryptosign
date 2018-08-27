@@ -300,7 +300,7 @@ def update_feed_status():
 				return response_error(MESSAGE.SHAKER_NOT_FOUND, CODE.SHAKER_NOT_FOUND)
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
-		if handshake is None or shaker is None:
+		if handshake is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		if len(arr_id) > 0:

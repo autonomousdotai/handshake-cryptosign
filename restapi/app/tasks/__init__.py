@@ -322,7 +322,7 @@ def update_status_feed(_id, status):
 		data = {
 			"update": [{
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"status_i": status
+				"status_i": {"set":status}
 			}]
 		}
 		res = requests.post(endpoint, json=data)

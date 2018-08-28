@@ -316,15 +316,29 @@ def send_dispute_email(outcome_id, outcome_name):
 # 		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
-def update_status_feed(_id, status):
+def update_status_feed(_id, status, shakers):
 	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-		data = {
-			"add": [{
-				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"status_i": {"set":status}
-			}]
+
+		shake_user_infos = []
+		if shakers is not None:
+			for s in shakers:
+				shake_user_infos.append(s.to_json())
+
+		item_update = {
+			"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+			"status_i": {"set":status}
 		}
+
+		if len(shake_user_infos) > 0:
+    		item_update["shakers_s"] = {"set":json.dumps(shake_user_infos, use_decimal=True)}
+
+		data = {
+			"add": [item_update]
+		}
+
+		print data
+
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \
 			res.content is None or \

@@ -20,6 +20,7 @@ from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
 from app.tasks import update_status_feed
+from app.constants import Handshake as HandshakeStatus
 from flask_jwt_extended import jwt_required
 
 admin_routes = Blueprint('admin', __name__)
@@ -274,7 +275,6 @@ def update_feed_status():
 	Input: 
 		user_id: int
 		is_maker: 1 or 0
-		status: int
 	"""
 	try:
 		data = request.json
@@ -282,30 +282,27 @@ def update_feed_status():
 		item_id = int(data.get('id', None))
 		status = int(data.get('status', None))
 
-		if is_maker is None or status is None or item_id is None:
+		if is_maker is None or item_id is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		arr_id = []
 		handshake = None
-		shaker = None
 
 		if is_maker == 1:
 			handshake = Handshake.find_handshake_by_id(item_id)
-			if handshake is None:
-				return response_error(MESSAGE.HANDSHAKE_NOT_FOUND, CODE.HANDSHAKE_NOT_FOUND)
-			shaker = db.session.query(Shaker).filter(Shaker.handshake_id == handshake.id).first()
+			if handshake is not None:
+				handshake.status = status
 		else:
 			shaker = Shaker.find_shaker_by_id(item_id)
-			if shaker is None:
-				return response_error(MESSAGE.SHAKER_NOT_FOUND, CODE.SHAKER_NOT_FOUND)
-			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+			if shaker is not None:
+				shaker.status = status
+				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
-		if handshake is None or shaker is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+		db.session.flush()
+		db.session.commit()
 
-		if len(arr_id) > 0:
-			update_status_feed.delay(handshake.id, status)
+		update_status_feed.delay(handshake.id, status)
 		return response_ok()
+
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

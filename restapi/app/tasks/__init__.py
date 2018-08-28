@@ -322,7 +322,7 @@ def update_status_feed(_id, status):
 
 		shake_user_infos = []
 		handshake = Handshake.find_handshake_by_id(_id)
-		print handshake.shakers
+
 		if handshake.shakers is not None:
 			for s in handshake.shakers:
 				shake_user_infos.append(s.to_json())
@@ -334,8 +334,6 @@ def update_status_feed(_id, status):
 				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
 			}]
 		}
-
-		print data
 
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \

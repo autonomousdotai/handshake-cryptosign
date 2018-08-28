@@ -112,13 +112,17 @@ def init_default_outcomes():
 				o['match_name'] = match.name
 				o['outcome_name'] = outcome.name
 
+				contract = Contract.find_contract_by_id(outcome.contract_id)
+				if contract is None:
+					return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
+
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
 					data=json.dumps(o),
 					action=CONST.TASK_ACTION['INIT'],
 					status=-1,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
+					contract_address=contract.contract_address,
+					contract_json=contract.json_name
 				)
 				db.session.add(task)
 				db.session.flush()

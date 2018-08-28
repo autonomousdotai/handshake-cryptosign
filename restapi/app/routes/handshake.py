@@ -668,13 +668,14 @@ def refund_free_bet():
 
 
 @handshake_routes.route('/check_free_bet', methods=['GET'])
-@login_required
+# @login_required
 def has_received_free_bet():
 	try:
-		uid = int(request.headers['Uid'])
+		# uid = int(request.headers['Uid'])
+		uid = 2269
 		user = User.find_user_with_id(uid)
 
-		if data is None:
+		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		last_hs = db.session.query(Handshake).filter(and_(Handshake.user_id==uid, Handshake.free_bet==1)).order_by(Handshake.date_created.desc()).first()
@@ -682,22 +683,22 @@ def has_received_free_bet():
 
 		total_hs_win_query = '(SELECT count(id) AS total FROM (SELECT handshake.id FROM handshake JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result = handshake.side AND handshake.free_bet = 1 AND handshake.user_id = {}) AS tmp) AS total_hs_win'.format(uid)
 		total_hs_lose_query = '(SELECT count(id) AS total FROM (SELECT handshake.id FROM handshake JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result != handshake.side AND handshake.free_bet = 1 AND handshake.user_id = {}) AS tmp) AS total_hs_lose'.format(uid)
-		total_s_win_query = '(SELECT count(id) AS total FROM (SELECT shaker.id FROM shaker JOIN handshake ON shaker.handshake_id = handshake.id JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result = handshake.side AND handshake.free_bet = 1 AND handshake.user_id = {}) AS tmp) AS total_s_win'.format(uid)
-		total_s_lose_query = '(SELECT count(id) AS total FROM (SELECT shaker.id FROM shaker JOIN handshake ON shaker.handshake_id = handshake.id JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result != handshake.side AND handshake.free_bet = 1 AND handshake.user_id = {}) AS tmp) AS total_s_lose'.format(uid)
+		total_s_win_query = '(SELECT count(id) AS total FROM (SELECT shaker.id FROM shaker JOIN handshake ON shaker.handshake_id = handshake.id JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result = handshake.side AND shaker.free_bet = 1 AND shaker.shaker_id = {}) AS tmp) AS total_s_win'.format(uid)
+		total_s_lose_query = '(SELECT count(id) AS total FROM (SELECT shaker.id FROM shaker JOIN handshake ON shaker.handshake_id = handshake.id JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result != handshake.side AND shaker.free_bet = 1 AND shaker.shaker_id = {}) AS tmp) AS total_s_lose'.format(uid)
 
 		result = db.engine.execute('SELECT {}, {} , {}, {}'.format( total_hs_win_query, total_hs_lose_query, total_s_win_query, total_s_lose_query)).first()
 
-		total_hs_win = total['total_hs_win'] if total['total_hs_win'] is not None else 0
-		total_hs_lose = total['total_hs_lose'] if total['total_hs_lose'] is not None else 0
-		total_s_win = total['total_s_win'] if total['total_s_win'] is not None else 0
-		total_s_lose = total['total_s_lose'] if total['total_s_lose'] is not None else 0
+		total_hs_win = result['total_hs_win'] if result['total_hs_win'] is not None else 0
+		total_hs_lose = result['total_hs_lose'] if result['total_hs_lose'] is not None else 0
+		total_s_win = result['total_s_win'] if result['total_s_win'] is not None else 0
+		total_s_lose = result['total_s_lose'] if result['total_s_lose'] is not None else 0
 
 		response = {
 			"win": total_hs_win + total_s_win,
 			"lose": total_hs_lose + total_s_lose,
 			"total": total_hs_win + total_s_win + total_hs_lose + total_s_lose,
-			"last_hs": last_hs.to_json(),
-			"last_s": last_s.to_json()
+			"last_hs": last_hs.to_json() if last_hs is not None else None,
+			"last_s": last_s.to_json() if last_s is not None else None
 		}
 		return response_ok(response)
 	except Exception, ex:

@@ -331,7 +331,7 @@ def rollback():
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
 					handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
 					if handshake.free_bet == 1:
-						user.free_bet = 0
+						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 					
 					db.session.flush()
 					handshakes.append(handshake)
@@ -352,7 +352,7 @@ def rollback():
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
 					if shaker.free_bet == 1:
-						user.free_bet = 0
+						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 
 					shakers.append(shaker)
 
@@ -413,8 +413,8 @@ def create_bet():
 		data['payload'] = user.payload
 		data['free_bet'] = 1
 
-		if user_bl.check_user_is_able_to_create_new_free_bet():
-			user.free_bet = 1
+		if user_bl.count_user_free_bet(user.id):
+			user.free_bet += 1
 			task = Task(
 				task_type=CONST.TASK_TYPE['FREE_BET'],
 				data=json.dumps(data),
@@ -627,7 +627,7 @@ def refund_free_bet():
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if handshake_bl.can_refund(None, shaker=shaker):
-				user.free_bet = 0
+				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 
 				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
@@ -642,7 +642,7 @@ def refund_free_bet():
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_refund(handshake):
-				user.free_bet = 0
+				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 
 				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
@@ -671,37 +671,57 @@ def refund_free_bet():
 @login_required
 def has_received_free_bet():
 	try:
-		# uid = 2269
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 
 		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
-		last_hs = db.session.query(Handshake).filter(and_(Handshake.user_id==uid, Handshake.free_bet==1)).order_by(Handshake.date_created.desc()).first()
-		last_s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==uid, Shaker.free_bet==1)).order_by(Shaker.date_created.desc()).first()
+		last_hs = db.session.query(Handshake, Outcome)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Handshake.user_id == uid, Handshake.free_bet == 1)\
+		.order_by(Handshake.date_created.desc())\
+		.first()
 
-		total_hs_win_query = '(SELECT count(id) AS total FROM (SELECT handshake.id FROM handshake JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result = handshake.side AND handshake.free_bet = 1 AND handshake.user_id = {}) AS tmp) AS total_hs_win'.format(uid)
-		total_hs_lose_query = '(SELECT count(id) AS total FROM (SELECT handshake.id FROM handshake JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result != handshake.side AND handshake.free_bet = 1 AND handshake.user_id = {}) AS tmp) AS total_hs_lose'.format(uid)
-		total_s_win_query = '(SELECT count(id) AS total FROM (SELECT shaker.id FROM shaker JOIN handshake ON shaker.handshake_id = handshake.id JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result = handshake.side AND shaker.free_bet = 1 AND shaker.shaker_id = {}) AS tmp) AS total_s_win'.format(uid)
-		total_s_lose_query = '(SELECT count(id) AS total FROM (SELECT shaker.id FROM shaker JOIN handshake ON shaker.handshake_id = handshake.id JOIN outcome ON handshake.outcome_id = outcome.id WHERE outcome.result > 0 AND outcome.result != handshake.side AND shaker.free_bet = 1 AND shaker.shaker_id = {}) AS tmp) AS total_s_lose'.format(uid)
+		last_s = db.session.query(Handshake, Shaker, Outcome)\
+		.filter(Shaker.handshake_id == Handshake.id)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Shaker.shaker_id == uid, Shaker.free_bet == 1)\
+		.order_by(Shaker.date_created.desc())\
+		.first()
 
-		result = db.engine.execute('SELECT {}, {} , {}, {}'.format( total_hs_win_query, total_hs_lose_query, total_s_win_query, total_s_lose_query)).first()
-
-		total_hs_win = result['total_hs_win'] if result['total_hs_win'] is not None else 0
-		total_hs_lose = result['total_hs_lose'] if result['total_hs_lose'] is not None else 0
-		total_s_win = result['total_s_win'] if result['total_s_win'] is not None else 0
-		total_s_lose = result['total_s_lose'] if result['total_s_lose'] is not None else 0
+		outcome = None
+		is_hs = False
+		item = None
+		total_count_free_bet = user_bl.count_user_free_bet(uid)
 
 		response = {
-			"waiting": 0,
-			"win": total_hs_win + total_s_win,
-			"lose": total_hs_lose + total_s_lose,
-			"total": total_hs_win + total_s_win + total_hs_lose + total_s_lose,
-			"last_hs": last_hs.to_json() if last_hs is not None else None,
-			"last_s": last_s.to_json() if last_s is not None else None
+			"total": total_count_free_bet
 		}
+
+		if last_s is not None and last_hs is not None:
+			if last_s[0].date_created > last_hs[0].date_created:
+				outcome = last_s[2]
+				item = last_s[1]
+			else:
+				outcome = last_hs[1]
+				item = last_hs[0]
+				is_hs = True
+		elif last_hs is None and last_s is not None:
+			outcome = last_s[2]
+			item = last_s[1]
+		elif last_hs is not None and last_s is None:
+			outcome = last_hs[1]
+			item = last_hs[0]
+			is_hs = True
+
+		if item is not None and outcome is not None:
+			response["is_win"] = outcome.result != item.side
+			response["is_hs"] = is_hs
+			response["last_item"] = item.to_json()
+
 		return response_ok(response)
+
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

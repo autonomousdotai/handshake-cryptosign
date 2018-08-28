@@ -282,7 +282,7 @@ def update_feed_status():
 		item_id = int(data.get('id', None))
 		status = int(data.get('status', None))
 
-		if is_maker is None or item_id is None:
+		if is_maker is None or status is None or  item_id is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		handshake = None
@@ -296,6 +296,7 @@ def update_feed_status():
 			if shaker is not None:
 				shaker.status = status
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+				status = handshake.status
 
 		db.session.flush()
 		db.session.commit()

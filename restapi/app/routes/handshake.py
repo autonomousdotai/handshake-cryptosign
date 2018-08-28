@@ -671,6 +671,7 @@ def refund_free_bet():
 @login_required
 def has_received_free_bet():
 	try:
+		# uid = 2269
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 
@@ -693,6 +694,7 @@ def has_received_free_bet():
 		total_s_lose = result['total_s_lose'] if result['total_s_lose'] is not None else 0
 
 		response = {
+			"waiting": 0
 			"win": total_hs_win + total_s_win,
 			"lose": total_hs_lose + total_s_lose,
 			"total": total_hs_win + total_s_win + total_hs_lose + total_s_lose,

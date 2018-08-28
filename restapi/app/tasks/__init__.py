@@ -316,14 +316,15 @@ def send_dispute_email(outcome_id, outcome_name):
 # 		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
-def update_status_feed(_id, status, shakers):
+def update_status_feed(_id, status):
 	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 
 		shake_user_infos = []
-		print shakers
-		if shakers is not None:
-			for s in shakers:
+		handshake = Handshake.find_handshake_by_id(_id)
+		print handshake.shakers
+		if handshake.shakers is not None:
+			for s in handshake.shakers:
 				shake_user_infos.append(s.to_json())
 
 		data = {

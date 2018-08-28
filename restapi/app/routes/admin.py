@@ -300,10 +300,7 @@ def update_feed_status():
 
 		db.session.flush()
 		db.session.commit()
-		print "======="
-		print status
-		print handshake.shakers
-		update_status_feed.delay(handshake.id, status, handshake.shakers)
+		update_status_feed.delay(handshake.id, status)
 		return response_ok()
 
 	except Exception, ex:

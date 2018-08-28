@@ -326,16 +326,12 @@ def update_status_feed(_id, status, shakers):
 			for s in shakers:
 				shake_user_infos.append(s.to_json())
 
-		item_update = {
-			"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-			"status_i": {"set":status}
-		}
-
-		if len(shake_user_infos) > 0:
-			item_update["shakers_s"] = {"set":json.dumps(shake_user_infos, use_decimal=True)}
-
 		data = {
-			"add": [item_update]
+			"add": [{
+				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+				"status_i": {"set":status},
+				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
+			}]
 		}
 
 		print data

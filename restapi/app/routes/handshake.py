@@ -668,11 +668,10 @@ def refund_free_bet():
 
 
 @handshake_routes.route('/check_free_bet', methods=['GET'])
-# @login_required
+@login_required
 def has_received_free_bet():
 	try:
-		# uid = int(request.headers['Uid'])
-		uid = 2269
+		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 
 		if user is None:

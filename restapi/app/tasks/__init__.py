@@ -331,7 +331,7 @@ def update_status_feed(_id, status, shakers):
 		}
 
 		if len(shake_user_infos) > 0:
-    		item_update["shakers_s"] = {"set":json.dumps(shake_user_infos, use_decimal=True)}
+			item_update["shakers_s"] = {"set":json.dumps(shake_user_infos, use_decimal=True)}
 
 		data = {
 			"add": [item_update]

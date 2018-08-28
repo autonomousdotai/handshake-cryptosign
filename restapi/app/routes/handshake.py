@@ -273,8 +273,8 @@ def init():
 					remaining_amount=shaker_amount,
 					from_address=from_address,
 					free_bet=free_bet,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
+					contract_address=contract.contract_address,
+					contract_json=contract.json_name
 				)
 				db.session.add(handshake)
 				db.session.flush()
@@ -668,8 +668,29 @@ def refund_free_bet():
 
 
 @handshake_routes.route('/check_free_bet', methods=['GET'])
+# TODO
 @login_required
 def has_received_free_bet():
+	try:
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
+
+		if user.free_bet > 0:
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
+
+		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
+			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+
+		return response_ok()
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@handshake_routes.route('/count_free_bet', methods=['GET'])
+@login_required
+def count_free_bet():
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))

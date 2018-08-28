@@ -319,12 +319,24 @@ def send_dispute_email(outcome_id, outcome_name):
 def update_status_feed(_id, status):
 	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+
+		shake_user_infos = []
+		handshake = Handshake.find_handshake_by_id(_id)
+		print handshake.shakers
+		if handshake.shakers is not None:
+			for s in handshake.shakers:
+				shake_user_infos.append(s.to_json())
+
 		data = {
 			"add": [{
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"status_i": {"set":status}
+				"status_i": {"set":status},
+				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
 			}]
 		}
+
+		print data
+
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \
 			res.content is None or \

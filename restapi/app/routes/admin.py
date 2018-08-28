@@ -300,7 +300,6 @@ def update_feed_status():
 
 		db.session.flush()
 		db.session.commit()
-
 		update_status_feed.delay(handshake.id, status)
 		return response_ok()
 

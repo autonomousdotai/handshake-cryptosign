@@ -321,6 +321,7 @@ def update_status_feed(_id, status, shakers):
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 
 		shake_user_infos = []
+		print shakers
 		if shakers is not None:
 			for s in shakers:
 				shake_user_infos.append(s.to_json())

@@ -696,7 +696,7 @@ def has_received_free_bet():
 
 		response = {
 			"total": total_count_free_bet,
-			"is_free_bet": total_count_free_bet < g.MAX_FREE_BET
+			"free_bet_available": g.MAX_FREE_BET - total_count_free_bet
 		}
 
 		if last_s is not None and last_hs is not None:

@@ -691,12 +691,12 @@ def has_received_free_bet():
 		.first()
 
 		outcome = None
-		is_hs = False
 		item = None
 		total_count_free_bet = user_bl.count_user_free_bet(uid)
 
 		response = {
-			"total": total_count_free_bet
+			"total": total_count_free_bet,
+			"is_free_bet": total_count_free_bet < g.MAX_FREE_BET
 		}
 
 		if last_s is not None and last_hs is not None:
@@ -706,18 +706,15 @@ def has_received_free_bet():
 			else:
 				outcome = last_hs[1]
 				item = last_hs[0]
-				is_hs = True
 		elif last_hs is None and last_s is not None:
 			outcome = last_s[2]
 			item = last_s[1]
 		elif last_hs is not None and last_s is None:
 			outcome = last_hs[1]
 			item = last_hs[0]
-			is_hs = True
 
 		if item is not None and outcome is not None:
 			response["is_win"] = outcome.result != item.side
-			response["is_hs"] = is_hs
 			response["last_item"] = item.to_json()
 
 		return response_ok(response)

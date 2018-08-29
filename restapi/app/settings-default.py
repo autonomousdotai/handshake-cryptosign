@@ -36,6 +36,7 @@ class BaseConfig(object):
 	EMAIL = ''
 	AUTONOMOUS_WEB_PASSPHASE = ''
 	ENV = os.getenv('ENV', '')
+	MAX_FREE_BET = 0
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'
 

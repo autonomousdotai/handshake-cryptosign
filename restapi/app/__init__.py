@@ -66,6 +66,7 @@ def before_request():
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
+	g.MAX_FREE_BET = app.config.get('MAX_FREE_BET')
 
 	# SmartContract
 	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')

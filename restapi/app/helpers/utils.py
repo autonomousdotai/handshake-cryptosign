@@ -36,14 +36,14 @@ def parse_date_to_int(input):
 
 def isnumber(s):
    try:
-     float(s)
-     return True
+	 float(s)
+	 return True
    except ValueError:
-     try: 
-       Fraction(s)
-       return True
-     except ValueError: 
-       return False
+	 try: 
+	   Fraction(s)
+	   return True
+	 except ValueError: 
+	   return False
 
 def formalize_description(desc):
 	if desc is None or len(desc.strip()) == 0:
@@ -84,12 +84,12 @@ def parse_date_string_to_timestamp(date_str):
 	return int(dt_obj)
 
 def local_to_utc(t):
-    secs = time.mktime(t)
-    return calendar.timegm(time.gmtime(secs))
+	secs = time.mktime(t)
+	return calendar.timegm(time.gmtime(secs))
 
 def utc_to_local(t):
-    secs = calendar.timegm(t)
-    return time.localtime(secs)
+	secs = calendar.timegm(t)
+	return time.localtime(secs)
 
 def is_equal(a, b):
 	if a is None or b is None:

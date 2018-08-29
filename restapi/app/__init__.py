@@ -1,9 +1,11 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
 from app.routes import init_routes
+from app.tasks import log_responsed_time
+from datetime import datetime
 
 import time
 import decimal
@@ -21,6 +23,7 @@ class MyJSONEncoder(flask.json.JSONEncoder):
 app = Flask(__name__)
 
 logging.config.dictConfig(yaml.load(open('logging.conf')))
+logfile = logging.getLogger('file')
 
 # add json encoder for decimal type
 app.json_encoder = MyJSONEncoder
@@ -47,6 +50,8 @@ fcm.init_app(app)
 ipfs.init_app(app)
 # init firebase database
 firebase.init_app(app)
+# init dropbox
+dropbox_services.init_app(app)
 
 @app.before_request
 def before_request():
@@ -54,22 +59,35 @@ def before_request():
 	if rp != '/' and rp.endswith('/'):
 		return redirect(rp[:-1])
 
-	g.BLOCKCHAIN_SERVER_ENDPOINT = app.config.get('BLOCKCHAIN_SERVER_ENDPOINT')
 	g.DISPATCHER_SERVICE_ENDPOINT = app.config.get('DISPATCHER_SERVICE_ENDPOINT')
 	g.SOLR_SERVICE = app.config.get('SOLR_SERVICE')
 	g.FCM_SERVICE = app.config.get('FCM_SERVICE')
+	g.MAIL_SERVICE = app.config.get('MAIL_SERVICE')
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
 
-	g.start = time.time()
+	# SmartContract
+	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')
+	g.PREDICTION_JSON = app.config.get('PREDICTION_JSON')
+	g.ERC20_PREDICTION_SMART_CONTRACT = app.config.get('ERC20_PREDICTION_SMART_CONTRACT')
+	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
 
+	g.start = [time.time(), request.base_url]
+	g.reported_time = app.config.get('REPORTED_TIME')
 
 @app.after_request
 def after_request(response):
 	if 'start' in g:
-		diff = time.time() - g.start
-		print "Exec time: %s" % str(diff)
+		start, url = g.start
+		end = time.time()
+		diff = end - float(start)
+		logfile.debug("API -> {}, time -> {}".format(url, str(diff)))
+		day = datetime.now().day
+		if g.reported_time is None or g.reported_time != day:
+			log_responsed_time.delay()
+			app.config['REPORTED_TIME'] = day
+
 	return response
 
 
@@ -107,14 +125,14 @@ jwt.revoked_token_loader(revoked_token_callback)
 def error_handler(err):
 	return response_error(err.message)
 
-	# @app.errorhandler(404)
-	# def error_handler400(err):
-	#   return response_error(err.message);
-	#
-	# @app.errorhandler(500)
-	# def error_handler500(err):
-	#   return response_error(err.message);
-	#
-	# @app.error_handler_all(Exception)
-	# def errorhandler(err):
-	#   return response_error(err.message);
+# @app.errorhandler(404)
+# def error_handler400(err):
+#   return response_error(err.message);
+#
+# @app.errorhandler(500)
+# def error_handler500(err):
+#   return response_error(err.message);
+#
+# @app.error_handler_all(Exception)
+# def errorhandler(err):
+#   return response_error(err.message);

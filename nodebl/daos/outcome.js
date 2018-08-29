@@ -1,4 +1,5 @@
 const models = require('../models');
+const moment = require('moment');
 
 // side: 0 (unknown), 1 (support), 2 (against)
 module.exports = {
@@ -32,7 +33,8 @@ module.exports = {
     updateOutcomeHID: function (outcome, hid) {
         return outcome
             .update({
-                hid: hid
+                hid: hid,
+                date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
             });
     }
 };

@@ -2,8 +2,9 @@ from flask import g
 from datetime import *
 
 from app import db
-from app.models import User, Handshake, Match
+from app.models import User, Handshake, Match, Outcome, Contract
 from app.helpers.utils import local_to_utc
+from app.helpers.message import MESSAGE, CODE
 
 import app.constants as CONST
 
@@ -60,3 +61,15 @@ def is_validate_match_time(data):
 		return True
 	
 	return False
+
+def is_able_to_set_result_for_outcome(outcome):
+	if outcome.result == CONST.RESULT_TYPE['SUPPORT_WIN'] or \
+		outcome.result == CONST.RESULT_TYPE['AGAINST_WIN'] or \
+		outcome.result == CONST.RESULT_TYPE['DRAW']:
+
+		return MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT
+
+	if outcome.result == CONST.RESULT_TYPE['PROCESSING']:
+		return MESSAGE.OUTCOME_IS_REPORTING, CODE.OUTCOME_IS_REPORTING
+
+	return None, None

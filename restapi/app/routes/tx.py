@@ -34,7 +34,6 @@ def add():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		txs = []
 		response_json = []
 		for item in data:
 			tx = Tx(
@@ -45,15 +44,14 @@ def add():
 				contract_method=item['contract_method'],
 				chain_id=item['chain_id']
 			)
-			txs.append(tx)
 			db.session.add(tx)
 			db.session.flush()
 
 			response_json.append(tx.to_json())
 
-		db.session.add_all(txs)
 		db.session.commit()
 
 		return response_ok(response_json)
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)

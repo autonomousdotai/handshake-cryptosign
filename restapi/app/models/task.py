@@ -16,6 +16,8 @@ class Task(BaseModel):
 	status = db.Column(db.Integer,
 						server_default=str(-1),
 	                   	default=-1)
+	contract_address = db.Column(db.String(255))
+	contract_json = db.Column(db.String(50))
 
 	@classmethod
 	def find_task_by_id(cls, _id):

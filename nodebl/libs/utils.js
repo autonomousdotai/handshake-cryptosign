@@ -2,13 +2,16 @@
 const axios = require('axios');
 const moment = require('moment');
 const web3 = require('../configs/web3').getWeb3();
+const web3Util = require('../configs/web3');
 const configs = require('../configs');
 const taskDAO = require('../daos/task');
 const settingDAO = require('../daos/setting');
 const constants = require('../constants');
 
 const network_id = configs.network_id;
+const predictionContract = require('../libs/smartcontract');
 const amountDefaultValue = configs.network[configs.network_id].amountValue;
+const ownerAddress = configs.network[network_id].ownerAddress;
 
 const gennerateExtraData = (match_date, match_name, outcome_name) => {
     return JSON.stringify({
@@ -31,24 +34,25 @@ const getGaspriceEtherscan = () => {
                 apikey: '2EW75CUFS1SM3HQ3CE4QVC73JZQMNU5WTD'
             }
         })
-        .then(result => {
-            console.log(result);
-            if (result.result && result.result != '') {
-                return resolve( parseInt(web3.fromWei(result.result, 'gwei')));
+        .then(response => {
+            if (response.data && response.data.result && response.data.result != '') {
+                return resolve( parseInt(web3.utils.fromWei(response.data.result, 'gwei')));
             }
-            return reject({
+            console.error({
                 err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
                 error: {},
                 options_data: {
-                    result: result
+                    result: response
                 }
             });
+            return resolve();
         })
         .catch((error) => {
-            return reject({
+            console.error({
                 err_type: constants.TASK_STATUS.GAS_PRICE_ETHERSCAN_FAIL,
                 error: error
             });
+            return resolve();
         });
     });
 }
@@ -159,18 +163,6 @@ const submitInitAPI = (options) => {
  */
 const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _source ) => {
     const markets = [];
-/*
-    const closingTime = _date - Math.floor(+moment.utc()/1000) + 90 * 60 + 15 * 60;
-    let reportTime = closingTime + (reportTimeConfig * 60 * 60);
-    if (_reportTime) {
-        reportTime = _reportTime - Math.floor(+moment.utc()/1000);
-    }
-
-    let dispute = reportTime + (reportTimeConfig * 60 * 60);
-    if (_disputeTime) {
-        dispute = _disputeTime - Math.floor(+moment.utc()/1000);
-    }
-*/
     _arr.forEach(outcome => {
         markets.push({
 			contract_method: 'createMarket',
@@ -193,14 +185,24 @@ const handleErrorTask = (task, err_type) => {
 const calculatorGasprice = () => {
     return new Promise( async (resolve, reject) => {
         try {
-            // const gasAPI        = await getGaspriceEtherscan();
-            const gasSetting    = await settingDAO.getByName('GasPrice');
-            let gasPrice        = configs.network[network_id].gasPrice;
+            const gasSetting = await settingDAO.getByName('GasPrice');
+            let gasPrice = parseInt(gasSetting.value);
 
-            if (gasSetting && gasSetting.value && !Number.isNaN(parseInt(gasSetting.value))) {
-                gasPrice = parseInt(gasSetting.value);
+            if (gasSetting.status == 0) {
+                getGaspriceEtherscan()
+                .then(gasAPI => {
+                    if (gasPrice > gasAPI) {
+                        return resolve(gasAPI);
+                    }
+                    return resolve(gasPrice);
+                })
+                .catch(ex => {
+                    console.error('Etherscan gasprice error: ', ex);
+                    return resolve(gasPrice);
+                });
+            } else {
+                return resolve(gasPrice);
             }
-            return resolve(gasPrice);
         } catch (e) {
             return reject({
                 err_type: constants.TASK_STATUS.GAS_PRICE_SETTING_FAIL,
@@ -210,10 +212,91 @@ const calculatorGasprice = () => {
     });
 }
 
+const getGasAndNonce = () => {
+	return new Promise((resolve, reject) => {
+		calculatorGasprice()
+		.then(gasPrice => {
+			predictionContract.getNonce(ownerAddress, 'pending')
+			.then(_nonce => {
+				console.log('Current nonce pending from onchain: ', _nonce);
+				let nonce = web3Util.getNonce();
+				if (!web3Util.getNonce() || web3Util.getNonce() <= _nonce) {
+					console.log('SET NONCE: ', web3Util.getNonce(), _nonce);
+					web3Util.setNonce(_nonce);
+					nonce = _nonce;
+				}
+				console.log('Current nonce pending: ', nonce);
+				resolve({
+					gasPriceStr: `${gasPrice}`,
+					nonce: nonce
+				});
+			})
+			.catch(err => {
+				return reject(err);
+			});	
+		})
+		.catch(err => {
+			return reject(err);
+		});
+	});
+};
+
+/**
+ * @param {JSON string} hs
+ */
+const addFeedAPI = (hs) => {
+    return new Promise((resolve, reject) => {
+        const arr = [];
+        arr.push(hs);
+        const dataRequest = {
+            add: arr
+        }
+
+        axios.post(`${configs.solrApiEndpoint}/handshake/update`, dataRequest, {
+            timeout: 1500,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.status >= 400) {
+                return reject({});
+            } else {
+                if (response.data.Success) {
+                    return resolve({});   
+                } else {
+                    return reject({});
+                }
+            }
+        })
+        .catch((error) => {
+            return reject(error);
+        });
+    });
+};
+
+const taskMarkId = (id) => {
+    return new Promise((resolve, reject) => {
+        if (id == 0) {
+            return resolve(taskDAO.getTasksByStatus(0));
+        } else {
+            taskDAO.getLastIdByStatus()
+            .then(result => {
+                return resolve(taskDAO.getTasksByStatus((result && id < result.id) ? id : 0));
+            })
+            .catch(reject);
+        }
+    });
+};
+
+
 module.exports = {
     submitInitAPI,
     generateMarkets,
     gennerateExtraData,
     handleErrorTask,
-    calculatorGasprice
+    calculatorGasprice,
+    getGasAndNonce,
+    addFeedAPI,
+    taskMarkId
 };

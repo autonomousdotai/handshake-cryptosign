@@ -13,7 +13,11 @@ from app.routes.match import match_routes
 from app.routes.outcome import outcome_routes
 from app.routes.setting import setting_routes
 from app.routes.admin import admin_routes
+from app.routes.category import category_routes
+from app.routes.source import source_routes
 from app.routes.tx import tx_routes
+from app.routes.token import token_routes
+from app.routes.contract import contract_routes
 from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
                                 get_jwt_identity, jwt_refresh_token_required)
 
@@ -30,4 +34,8 @@ def init_routes(app):
     app.register_blueprint(setting_routes, url_prefix='/setting')
     app.register_blueprint(tx_routes, url_prefix='/tx')
     app.register_blueprint(admin_routes, url_prefix='/admin')
+    app.register_blueprint(category_routes, url_prefix='/category')
+    app.register_blueprint(source_routes, url_prefix='/source')
+    app.register_blueprint(token_routes, url_prefix='/token')
+    app.register_blueprint(contract_routes, url_prefix='/contract')
     app.register_blueprint(user_routes)

@@ -6,7 +6,6 @@ from app import db
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, Outcome, Shaker, Match, Tx
 from app.helpers.message import MESSAGE, CODE
-from app.tasks import update_feed, add_shuriken
 
 event_routes = Blueprint('event', __name__)
 
@@ -31,32 +30,21 @@ def event():
 			inputs = data['inputs']
 			handshakes, shakers = handshake_bl.save_handshake_for_event(event_name, inputs)
 
-			if tx is not None:
-				tx.status = 1
-				db.session.flush()
-
-		else:
+		elif status == 0:
 			method = data.get('methodName', '')
 			inputs = data['inputs']
-
 			handshakes, shakers = handshake_bl.save_handshake_method_for_event(method, inputs)
-			if tx is not None:
-				tx.status = 0
-				db.session.flush()
+
+		elif status == 2:
+			method = data.get('methodName', '')
+			handshakes, shakers = handshake_bl.save_failed_handshake_method_for_event(method, tx)
+
+		if tx is not None:
+			tx.status = status
+			db.session.flush()
 
 		db.session.commit()
-		# update feed
-		if handshakes is not None:
-			for handshake in handshakes:
-				update_feed.delay(handshake.id)
-				if event_name == '__init':
-					add_shuriken(handshake.user_id)
-
-		if shakers is not None:
-			for shaker in shakers:
-				update_feed.delay(shaker.handshake_id)
-				if event_name == '__shake':
-					add_shuriken(shaker.shaker_id)
+		handshake_bl.update_handshakes_feed(handshakes, shakers)
 
 		return response_ok()
 	except Exception, ex:

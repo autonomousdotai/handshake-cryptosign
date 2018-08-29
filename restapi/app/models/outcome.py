@@ -5,21 +5,25 @@ import app.constants as CONST
 
 from app import db
 from app.models.base import BaseModel
-
+from app.models.contract import Contract
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
-	__json_public__ = ['id', 'name', 'hid', 'result', 'public']
-	
+	__json_public__ = ['id', 'name', 'hid', 'result', 'public', 'total_amount', 'total_dispute_amount', 'index', 'contract_id']
 	name = db.Column(db.String(255))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
+	contract_id = db.Column('contract_id', db.ForeignKey('contract.id'))
 	hid = db.Column(db.BigInteger)
 	result = db.Column(db.Integer,
 						server_default=str(CONST.RESULT_TYPE['PENDING']),
 	                   	default=CONST.RESULT_TYPE['PENDING'])
-	tx = db.Column(db.String(255))
+	total_amount = db.Column(db.Numeric(36, 18))
+	total_dispute_amount = db.Column(db.Numeric(36, 18))
 	public = db.Column(db.Integer,
 						server_default=str(1),
 	                   	default=0)
+	index = db.Column(db.Integer,
+							server_default=str(1),
+	                      	default=1)
 	handshakes = db.relationship('Handshake', backref='outcome', primaryjoin="Outcome.id == Handshake.outcome_id",
 	                             lazy='dynamic')
 

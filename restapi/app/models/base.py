@@ -7,8 +7,8 @@ from app.helpers import JsonSerializer
 class BaseModel(db.Model, JsonSerializer):
 	__abstract__ = True
 	id = db.Column(db.Integer, primary_key=True)
-	date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
-	date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+	date_created = db.Column(db.DateTime, default=db.func.utc_timestamp())
+	date_modified = db.Column(db.DateTime, default=db.func.utc_timestamp(), onupdate=db.func.utc_timestamp())
 	deleted = db.Column(db.Integer, default=0)
 
 	@declared_attr
@@ -38,7 +38,7 @@ class BaseModel(db.Model, JsonSerializer):
 #     target.created_user_id = g.user.id
 #   except Exception, ex:
 #     app.logger.exception(ex)
-#
+
 # @db.event.listens_for(BaseModel, "before_update", propagate=True)
 # def on_before_update(mapper, connection, target):
 #   try:

@@ -36,11 +36,15 @@ func (h HookService) Event(jsonData map[string]interface{}) (error) {
 	json.Unmarshal(b, &data)
 
 	status, ok := data["status"]
-    message, _ := data["message"]
+    message, hasMessage := data["message"]
     
     if ok && status.(float64) > 0 {
         return nil
     } else {
-        return errors.New(message.(string))
+        errStr := "Unknown"
+        if hasMessage {
+            errStr = message.(string)
+        }
+        return errors.New(errStr)
     }
 }

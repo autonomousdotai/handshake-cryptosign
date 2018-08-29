@@ -43,15 +43,13 @@ def add():
 				status=item.get('status', 0),
 				value=item.get('value', 0)
 			)
-			settings.append(setting)
 			db.session.add(setting)
 			db.session.flush()
+			settings.append(setting)
 
 			response_json.append(setting.to_json())
 
-		db.session.add_all(settings)
 		db.session.commit()
-
 		return response_ok(response_json)
 	except Exception, ex:
 		db.session.rollback()
@@ -69,7 +67,7 @@ def remove(id):
 			db.session.commit()
 			return response_ok(message="{} has been deleted!".format(setting.id))
 		else:
-			return response_error(message=MESSAGE.INVALID_DATA)
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 	except Exception, ex:
 		db.session.rollback()

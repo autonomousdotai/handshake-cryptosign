@@ -1,83 +1,55 @@
 
 const cron = require('node-cron');
 const configs = require('../configs');
-const web3 = require('../configs/web3');
+const moment = require('moment');
 
 // daos
 const taskDAO = require('../daos/task');
 const settingDAO = require('../daos/setting');
+const onchainDataDAO = require('../daos/onchainTask');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
-const predictionContract = require('../libs/smartcontract');
+const bl = require('../bl');
+
 const network_id = configs.network_id;
 const ownerAddress = configs.network[network_id].ownerAddress;
 const amountDefaultValue = configs.network[network_id].amountValue;
 
 let isRunningTask = false;
+let taskIdTracking = 0;
 
 
-const submitMultiTnx = (arr, _gasPrice) => {
+/**
+ * 
+ * @param {array} arr
+ * @param {object} onchainData
+ * @param {object} task
+ */
+const saveTnxs = (arr) => {
 	return new Promise((resolve, reject) => {
-		predictionContract.getNonce(ownerAddress, 'pending')
-		.then(_nonce => {
-			console.log('Current nonce pending from onchain: ', _nonce);
-			let nonce = web3.getNonce();
-			if (!web3.getNonce() || web3.getNonce() <= _nonce) {
-				console.log('SET NONCE: ', web3.getNonce(), _nonce);
-				web3.setNonce(_nonce);
-				nonce = _nonce;
+		const tnxs = [];
+		(arr || []).forEach(item => {
+			if (item.onchainData) {
+				tnxs.push({
+					contract_json: (item.contract_json.length > 0) ? item.contract_json: item.onchainData.contract_json,
+					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
+					contract_method: item.onchainData.contract_method,
+					is_erc20: item.is_erc20 || 0,
+					from_address: item.onchainData.from_address,
+					description: item.onchainData.description || 'cron tnx',
+					data: JSON.stringify(item),
+					status: -1,
+					task_id: item.task.id,
+					deleted: 0,
+					date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+					date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
+				});
 			}
-
-			console.log('Current nonce pending: ', nonce);
-			let tasks = [];
-			let index = 0;
-			const gasPrice = `${_gasPrice}`;
-			arr.forEach((item) => {
-				let smartContractFunc = null;
-				const onchainData = item.onchainData;
-				switch (onchainData.contract_method) {
-					case 'createMarket':
-						smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPrice, item);
-					break;
-					case 'init':
-						smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPrice, item);
-					break;
-					case 'shake':
-						smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
-					break;
-					case 'collectTestDrive':
-						smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPrice, item);
-					break;
-					case 'reportOutcomeTransaction':
-						smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPrice, item);
-					break;
-					case 'initTestDriveTransaction':
-						smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
-					break;
-					case 'shakeTestDriveTransaction':
-						smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPrice, item);
-					break;
-					case 'uninitForTrial':
-						smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPrice, item);
-					break;
-				}
-				index += 1;
-				tasks.push(smartContractFunc);
-			});
-			Promise.all(tasks)
-			.then(result => {
-				return resolve(result);
-			})
-			.catch(err => {
-				return reject(err);
-			})
-		})
-		.catch(err => {
-			return reject(err);
-		})
+		});
+		onchainDataDAO.multiInsert(tnxs).then(resolve).catch(reject);
 	});
-}
+};
 
 /**
  * 
@@ -165,12 +137,31 @@ const initBet = (params, task, isFreeBet) => {
  * @param {string} params.offchain
  */
 
+const resolveReport = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'resolveOutcomeTransaction',
+			hid: params.hid,
+			outcome_result: params.outcome_result,
+			offchain: params.offchain
+		}])
+	});
+};
+
+/**
+ * @param {string} params.offchain
+ * @param {number} params.hid
+ * @param {number} params.outcome_result
+ * @param {string} params.offchain
+ */
+
 const report = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
 			contract_method: 'reportOutcomeTransaction',
 			hid: params.hid,
 			outcome_result: params.outcome_result,
+			outcome_id: params.outcome_id,
 			offchain: params.offchain
 		}])
 	});
@@ -200,10 +191,10 @@ const collect = (params) => {
  * @param {number} params.market_fee
  * @param {number} params.id
  * @param {array} params.outcomes
- * * @param {number} outcomes.result
- * * @param {number} outcomes.public
- * * @param {number} outcomes.hid
- * * @param {string} outcomes.name
+ * @param {number} outcomes.result
+ * @param {number} outcomes.public
+ * @param {number} outcomes.hid
+ * @param {string} outcomes.name
  * 
  */
 const createMarket = (params) => {
@@ -218,11 +209,37 @@ const createMarket = (params) => {
 	});
 }
 
+/**
+ * @param {JSON} hs
+ * @param {Object} task
+ */
+const addFeed = (hs, task) => {
+	return new Promise((resolve, reject) => {
+		try {
+			utils.addFeedAPI(hs)
+			.then((result) => {
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_SUCCESS);
+				resolve({});
+			})
+			.catch(err => {
+				console.error(err);
+				taskDAO.updateStatusById(task, constants.TASK_STATUS.CALL_SOLR_FAIL);
+				resolve({});
+			});
+		} catch (error) {
+			console.log('addFeed error: ', error);
+			resolve({});
+		}
+	});
+};
+
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
-		taskDAO.getTasksByStatus()
+		// taskDAO.getTasksByStatus()
+		utils.taskMarkId(taskIdTracking)
 		.then(_tasks => {
+			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0;
 			_tasks.forEach(task => {
 				if (task && task.task_type && task.data) {
 					tasks.push(
@@ -231,8 +248,19 @@ const asyncScanTask = () => {
 							.then( resultUpdate => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
+								let contract_json = task.contract_json;
+								let contract_address = task.contract_address;
+
 								switch (task.task_type) {
-									case 'REAL_BET':
+									case 'NORMAL': // ETHER
+										switch (task.action) {
+											case 'ADD_FEED':
+												processTaskFunc = addFeed(params, task);
+											break;
+										}
+									break;
+
+									case 'REAL_BET': // ETHER
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, false);
@@ -243,10 +271,13 @@ const asyncScanTask = () => {
 											case 'CREATE_MARKET':
 												processTaskFunc = createMarket(params);
 											break;
+											case 'RESOLVE':
+												processTaskFunc = resolveReport(params);
+											break;
 										}
 									break;
 
-									case 'FREE_BET':
+									case 'FREE_BET': // ETHER
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, true);
@@ -258,6 +289,16 @@ const asyncScanTask = () => {
 												processTaskFunc = collect(params);
 											break;
 										}
+									break;
+
+									case 'ERC_20':
+										switch (task.action) {
+											case 'ADD_TOKEN': {
+												processTaskFunc = bl.tokenRegistry.addToken(params);
+											}
+											break;
+										}
+										
 									break;
 								}
 
@@ -273,6 +314,8 @@ const asyncScanTask = () => {
 								processTaskFunc
 								.then(result => {
 									return resolve({
+										contract_json: contract_json,
+										contract_address: contract_address,
 										onchainData: result,
 										task: task.toJSON()
 									});
@@ -301,52 +344,46 @@ const asyncScanTask = () => {
 			Promise.all(tasks)
 			.then(results => {
 				console.log('START SUBMIT MULTI TRANSACTION!');
-
 				let tnxs = [];
 				(results || []).forEach(i => {
 					if (Array.isArray(i.onchainData)) {
 						i.onchainData.forEach(tnxData => {
-							tnxs.push({
-								onchainData: tnxData,
-								task: i.task
-							});
+							if (tnxData.contract_method) {
+								tnxs.push({
+									contract_json: i.contract_json,
+									contract_address: i.contract_address,
+									onchainData: tnxData,
+									task: i.task
+								});
+							}
 						});
-					}
+					} 
 				});
-				utils.calculatorGasprice()
-				.then(gasPrice => {
-					console.log("GAS PRICE: ", gasPrice)
-					submitMultiTnx(tnxs, gasPrice)
-					.then(tnxResults => {
-						console.log('SUBMIT MULTI TNX DONE WITH RESULT: ');
-						console.log(tnxResults);
 
-						if (Array.isArray(tnxResults) && tnxResults.length > 0) {
-							web3.setNonce( web3.getNonce() + tnxResults.length);
-							const taskIds = tnxResults.map(i => { return i.task.id; })
-							
-							console.log('UPDATE TASK STATUS ', taskIds);
-							taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
-							.then(updateResults => {
-								return resolve(tnxResults);
-							})
-							.catch(err => {
-								console.error('Error update task status: ', err);
-								return reject(err);
-							})
-						} else {
-							resolve([]);
-						}
-					})
-					.catch(err => {
-						console.error('Error', err);
-						return reject(err);
-					});
+				saveTnxs(tnxs)
+				.then(tnxResults => {
+					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ', tnxResults.length);
+
+					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
+						const taskIds = tnxResults.map(i => { return i.task_id; })
+						
+						console.log('UPDATE TASK STATUS ', taskIds);
+						taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
+						.then(updateResults => {
+							return resolve(tnxResults);
+						})
+						.catch(err => {
+							console.error('Error update task status: ', err);
+							return reject(err);
+						})
+					} else {
+						resolve([]);
+					}
 				})
 				.catch(err => {
 					console.error('Error', err);
 					return reject(err);
-				})
+				});
 			})
 			.catch(err => {
 				console.error('Error', err);

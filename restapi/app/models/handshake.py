@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Handshake(BaseModel):
 	__tablename__ = 'handshake'
-	__json_public__ = ['id', 'extra_data', 'chain_id', 'is_private', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'currency', 'side', 'shakers', 'outcome_id', 'from_address', 'free_bet']
+	__json_public__ = ['id', 'extra_data', 'chain_id', 'is_private', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'contract_address', 'contract_json', 'side', 'shakers', 'outcome_id', 'from_address', 'free_bet']
 	__json_modifiers__ = {
         'shakers': lambda shakers, _: [shaker.to_json() for shaker in shakers]
     }
@@ -34,25 +34,22 @@ class Handshake(BaseModel):
 	shake_count = db.Column(db.Integer,
 							server_default=str(0),
 	                      	default=0)
-	view_count = db.Column(db.Integer,
-							server_default=str(0),
-	                      	default=0)
-	comment_count = db.Column(db.Integer,
-							server_default=str(0),
-	                      	default=0)
 	free_bet = db.Column(db.Integer,
 							server_default=str(0),
 	                      	default=0)
 	from_address = db.Column(db.String(255))
+	contract_address = db.Column(db.String(255))
+	contract_json = db.Column(db.String(50))
 	odds = db.Column(db.Numeric(20, 1))
-	amount = db.Column(db.Numeric(20, 18))
-	remaining_amount = db.Column(db.Numeric(20, 18))
+	amount = db.Column(db.Numeric(36, 18))
+	remaining_amount = db.Column(db.Numeric(36, 18))
 	currency = db.Column(db.String(10))
 	side = db.Column(db.Integer,
 						server_default=str(CONST.SIDE_TYPE['SUPPORT']),
 	                   	default=CONST.SIDE_TYPE['SUPPORT'])
 	user_id = db.Column('user_id', db.ForeignKey('user.id'))
 	outcome_id = db.Column('outcome_id', db.ForeignKey('outcome.id'))
+	token_id = db.Column('token_id', db.ForeignKey('token.id'))
 	shakers = db.relationship('Shaker', backref='handshake', primaryjoin="Handshake.id == Shaker.handshake_id",
 	                             lazy='dynamic')
 

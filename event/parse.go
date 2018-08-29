@@ -1,8 +1,8 @@
-package parse
+package main
 
 import (
     "context"
-    _ "os"
+    "os"
     "fmt"
     "github.com/ninjadotorg/handshake-cryptosign/event/utils"
     "github.com/ethereum/go-ethereum/ethclient"
@@ -16,7 +16,7 @@ func main() {
         panic("invalid hash")
     }
     
-    etherClient, err := ethclient.Dial("https://mainnet.infura.io/")
+    etherClient, err := ethclient.Dial("https://rinkeby.infura.io/")
     if err != nil {
         panic(err)
     }
@@ -25,6 +25,7 @@ func main() {
     txHash := common.HexToHash(hash)
 
     tx, pending, err := etherClient.TransactionByHash(context.Background(), txHash)
+    fmt.Println("tx", tx)
     if err == nil && !pending {
         _, inputJson := utils.DecodeTransactionInput("PredictionHandshake", common.ToHex(tx.Data()))
         fmt.Println("input", inputJson)

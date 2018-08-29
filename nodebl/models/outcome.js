@@ -15,9 +15,14 @@ module.exports = (sequelize, DataTypes) => {
     match_id: DataTypes.INTEGER,
     hid: DataTypes.STRING,
     result: DataTypes.INTEGER,
+    public: DataTypes.INTEGER,
+    index: DataTypes.INTEGER,
     tx: DataTypes.STRING,
+    contract_id: DataTypes.INTEGER,
+    total_amount: DataTypes.DECIMAL(36, 18),
+    total_dispute_amount: DataTypes.DECIMAL(36, 18),
     modified_user_id: DataTypes.INTEGER,
-    created_user_id: DataTypes.INTEGER,
+    created_user_id: DataTypes.INTEGER
   }, {
     tableName: 'outcome',
     timestamps: false,

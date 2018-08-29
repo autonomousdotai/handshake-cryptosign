@@ -3,13 +3,14 @@ package models
 import (
 	"log"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
-    _ "github.com/go-sql-driver/mysql"
 )
 
 var dbInst *gorm.DB
 
+// Database : gorm.DB
 func Database() *gorm.DB {
 	if dbInst == nil {
 		conf := config.GetConfig()

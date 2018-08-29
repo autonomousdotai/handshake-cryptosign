@@ -413,7 +413,7 @@ def create_bet():
 		data['payload'] = user.payload
 		data['free_bet'] = 1
 
-		if user_bl.count_user_free_bet(user.id):
+		if CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(user.id) > 0:
 			user.free_bet += 1
 			task = Task(
 				task_type=CONST.TASK_TYPE['FREE_BET'],

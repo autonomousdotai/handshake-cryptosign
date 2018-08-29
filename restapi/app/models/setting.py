@@ -17,5 +17,9 @@ class Setting(BaseModel):
 	def find_setting_by_id(cls, setting_id):
 		return Setting.query.filter_by(id=setting_id).first()
 
+	@classmethod
+	def find_setting_by_name(cls, setting_name):
+		return Setting.query.filter_by(name=setting_name).first()
+
 	def __repr__(self):
 		return '<Setting {}>'.format(self.id)

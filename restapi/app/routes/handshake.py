@@ -22,7 +22,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
@@ -671,11 +671,18 @@ def refund_free_bet():
 @login_required
 def has_received_free_bet():
 	try:
+
+		# curl -X POST --data 'token=xoxp-6601957238-6604508934-426598737382-e3eafd29e8159b9e622e4729b21839ab&channel=prediction_bots&text=Hello%2C%20world!' hteps://slack.com/api/chat.postMessage
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 
 		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
+
+		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
+		if setting is not None:
+			if setting.status == 0:
+				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 		last_hs = db.session.query(Handshake, Outcome)\
 		.filter(Handshake.outcome_id == Outcome.id)\
@@ -707,6 +714,7 @@ def has_received_free_bet():
 				outcome = last_hs[1]
 				item = last_hs[0]
 				is_hs = True
+
 		elif last_hs is None and last_s is not None:
 			outcome = last_s[2]
 			item = last_s[1]
@@ -719,6 +727,11 @@ def has_received_free_bet():
 			response["is_win"] = outcome.result != item.side
 			response["is_hs"] = is_hs
 			response["last_item"] = item.to_json()
+
+		else:
+			response["is_win"] = False
+			response["is_hs"] = None
+			response["last_item"] = None
 
 		return response_ok(response)
 

@@ -672,18 +672,17 @@ def refund_free_bet():
 @login_required
 def has_received_free_bet():
 	try:
-		return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
-		# uid = int(request.headers['Uid'])
-		# chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		# user = User.find_user_with_id(uid)
+		uid = int(request.headers['Uid'])
+		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+		user = User.find_user_with_id(uid)
 
-		# if user.free_bet > 0:
-		# 	return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
+		if user.free_bet > 0:
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
-		# elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
-		# 	return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
+			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
-		# return response_ok()
+		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

@@ -721,11 +721,14 @@ def has_received_free_bet():
 			item = last_hs[0]
 
 		if item is not None and outcome is not None:
-			response["last_item_result"] = outcome.result
 			response["last_item"] = item.to_json()
+			if outcome.result <= 0:
+				response["is_win"] = -1
+			else:
+				response["is_win"] = 0 if outcome.result != item.side else 1
 
 		else:
-			response["last_item_result"] = -1
+			response["is_win"] = -1
 			response["last_item"] = None
 
 		return response_ok(response)

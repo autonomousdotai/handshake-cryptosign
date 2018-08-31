@@ -386,7 +386,7 @@ def create_bet():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		odds = Decimal(data.get('odds'))
-		amount = Decimal('0.01')
+		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
 		if user_bl.count_user_free_bet(user.id) >= g.MAX_FREE_BET:

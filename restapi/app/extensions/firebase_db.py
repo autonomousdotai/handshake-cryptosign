@@ -32,7 +32,7 @@ class FirebaseDatabase(object):
 			return results
 		except Exception as err:
 			print("push_data error: %s" % (err))
-		
+
 # if __name__ == '__main__':
 # 	firebase = FirebaseDatabase()
 # 	firebase.push_data({"data": "12"})

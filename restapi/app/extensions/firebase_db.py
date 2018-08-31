@@ -25,7 +25,7 @@ class FirebaseDatabase(object):
 		self.firebase = pyrebase.initialize_app(config)
 
 	def push_data(self, data, user_id):
-    	print "1111111"
+		print "1111111"
 		auth = self.firebase.auth()
 		print "2222222"
 		db = self.firebase.database()

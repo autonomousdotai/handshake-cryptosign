@@ -26,16 +26,12 @@ class FirebaseDatabase(object):
 
 	def push_data(self, data, user_id):
 		try:
-			print "1111111"
 			auth = self.firebase.auth()
-			print "2222222"
 			db = self.firebase.database()
-			print "3333333"
 			results = db.child("users").child(user_id).child('betting').push(data)
-			print "44444444"
 			return results
 		except Exception as err:
-			print("push_data: %s" % (err))
+			print("push_data error: %s" % (err))
 		
 # if __name__ == '__main__':
 # 	firebase = FirebaseDatabase()

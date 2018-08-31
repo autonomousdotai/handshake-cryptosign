@@ -389,7 +389,7 @@ def create_bet():
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
-		if user_bl.count_user_free_bet(user.id) >= g.MAX_FREE_BET:
+		if user_bl.count_user_free_bet(user.id) >= CONST.MAXIMUM_FREE_BET:
 			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		outcome_id = data.get('outcome_id')

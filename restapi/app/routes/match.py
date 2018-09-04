@@ -47,24 +47,20 @@ def matches():
 
 			user_union = hs_count_user.union(s_count_user)
 			total_user = db.session.query(func.count(user_union.subquery().columns.user_id).label("total")).scalar()
-			match_json["total_users"] = total_user if total_user is not None else 0
 
 			# Total Amount
 			hs_amount = db.session.query(func.sum((Handshake.amount * Handshake.odds)).label("total_amount_hs"))\
 			.filter(Outcome.match_id == match.id)\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.scalar()
+			.filter(Handshake.outcome_id == Outcome.id)
 
 			s_amount = db.session.query(func.sum((Shaker.amount * Shaker.odds)).label("total_amount_s"))\
 			.filter(Outcome.match_id == match.id)\
 			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Handshake.id == Shaker.handshake_id)\
-			.scalar()
-
-			total_amount = hs_amount + s_amount
+			.filter(Handshake.id == Shaker.handshake_id)
+			total_amount = db.session.query(hs_amount.label("total_amount_hs"), s_amount.label("total_amount_s")).first()
+			
 			match_json["total_users"] = total_user if total_user is not None else 0			
-			match_json["total_bets"] = (hs_amount if hs_amount is not None else 0)  + (s_amount if s_amount is not None else 0)
-
+			match_json["total_bets"] = (total_amount.total_amount_hs if total_amount.total_amount_hs is not None else 0)  + (total_amount.total_amount_s if total_amount.total_amount_s is not None else 0)
 			response.append(match_json)
 
 		return response_ok(response)

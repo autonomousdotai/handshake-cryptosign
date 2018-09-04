@@ -5,7 +5,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
 
-from sqlalchemy import and_, or_, desc
+from sqlalchemy import and_, or_, desc, func
 from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
 from datetime import datetime
@@ -14,7 +14,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task, Source, Category, Contract
+from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -30,17 +30,40 @@ def matches():
 		seconds = local_to_utc(t)
 		
 		matches = db.session.query(Match).filter(Match.deleted == 0, Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
-
-		for match in matches:	
+		for match in matches:
 			match_json = match.to_json()
 
-			total_users_query = '( SELECT count(user_id) AS total FROM (SELECT user_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {} GROUP BY user_id) AS tmp) AS total_users_m, (SELECT count(shaker_id) AS total FROM (SELECT shaker.shaker_id FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {} GROUP BY shaker_id) AS tmp) AS total_users_s'.format(match.id, match.id)
-			total_bets_query = '( SELECT SUM(total_amount) AS total FROM (SELECT handshake.amount * handshake.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_m, (SELECT SUM(total_amount) AS total FROM (SELECT shaker.amount * shaker.odds as total_amount FROM outcome JOIN handshake ON outcome.id = handshake.outcome_id JOIN shaker ON handshake.id = shaker.handshake_id WHERE outcome.match_id = {}) AS tmp) AS total_amount_s'.format(match.id, match.id)
+			# Total User
+			hs_count_user = db.session.query(Handshake.user_id.label("user_id"))\
+			.filter(Outcome.match_id == match.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.group_by(Handshake.user_id)
 
-			total = db.engine.execute('SELECT {}, {}'.format( total_users_query, total_bets_query)).first()
+			s_count_user = db.session.query(Shaker.shaker_id.label("user_id"))\
+			.filter(Outcome.match_id == match.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.filter(Handshake.id == Shaker.handshake_id)\
+			.group_by(Shaker.shaker_id)
 
-			match_json["total_bets"] = (total['total_amount_s'] if total['total_amount_s'] is not None else 0)  + (total['total_amount_m'] if total['total_amount_m'] is not None else 0)
-			match_json["total_users"] = (total['total_users_s'] if total['total_users_s'] is not None else 0) + (total['total_users_m'] if total['total_users_m'] is not None else 0)
+			user_union = hs_count_user.union(s_count_user)
+			total_user = db.session.query(func.count(user_union.subquery().columns.user_id).label("total")).scalar()
+			match_json["total_users"] = total_user if total_user is not None else 0
+
+			# Total Amount
+			hs_amount = db.session.query(func.sum((Handshake.amount * Handshake.odds)).label("total_amount_hs"))\
+			.filter(Outcome.match_id == match.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.scalar()
+
+			s_amount = db.session.query(func.sum((Shaker.amount * Shaker.odds)).label("total_amount_s"))\
+			.filter(Outcome.match_id == match.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.filter(Handshake.id == Shaker.handshake_id)\
+			.scalar()
+
+			total_amount = hs_amount + s_amount
+			match_json["total_users"] = total_user if total_user is not None else 0			
+			match_json["total_bets"] = (hs_amount if hs_amount is not None else 0)  + (s_amount if s_amount is not None else 0)
 
 			response.append(match_json)
 

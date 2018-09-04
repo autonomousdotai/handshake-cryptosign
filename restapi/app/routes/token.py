@@ -31,6 +31,7 @@ def tokens():
 @login_required
 def add():
 	try:
+		uid = int(request.headers['Uid'])
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -41,7 +42,8 @@ def add():
 				symbol=item['symbol'],
 				name=item['name'],
 				decimal=int(item['decimal']),
-                contract_address=item['contract_address']
+                contract_address=item['contract_address'],
+				created_user_id = uid
 			)
 			db.session.add(token)
 			db.session.flush()

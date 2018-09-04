@@ -50,6 +50,7 @@ def create_market():
 							name=item['name'],
 							market_fee=int(item.get('market_fee', 0)),
 							source_id=int(item['source_id']),
+							category_id=int(item['category_id']),
 							date=item['date'],
 							reportTime=item['reportTime'],
 							disputeTime=item['disputeTime']

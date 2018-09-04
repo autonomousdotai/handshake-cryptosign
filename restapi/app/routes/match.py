@@ -57,6 +57,7 @@ def matches():
 			.filter(Outcome.match_id == match.id)\
 			.filter(Handshake.outcome_id == Outcome.id)\
 			.filter(Handshake.id == Shaker.handshake_id)
+
 			total_amount = db.session.query(hs_amount.label("total_amount_hs"), s_amount.label("total_amount_s")).first()
 			
 			match_json["total_users"] = total_user if total_user is not None else 0			

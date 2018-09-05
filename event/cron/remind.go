@@ -20,21 +20,30 @@ func (r *Remind) RemindUser() {
 	}
 	if len(matches) == 0 {
 		log.Println("Remind user: don't have any matches")
-		return
-	}
-
-	log.Println("matches: ", len(matches))
-	for index := 0; index < len(matches); index++ {
-		log.Println("-- Match: ", matches[index].MatchID)
-		outcomes, _ := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
-		fmt.Println(outcomes)
-		if err == nil {
-			for i := 0; i < len(outcomes); i++ {
-				o := outcomes[i]
-				go r.fireNotification(o)
+	} else {
+		log.Println("matches: ", len(matches))
+		for index := 0; index < len(matches); index++ {
+			log.Println("-- Match: ", matches[index].MatchID)
+			outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
+			fmt.Println(outcomes)
+			if err == nil {
+				for i := 0; i < len(outcomes); i++ {
+					o := outcomes[i]
+					go r.fireNotification(o)
+				}
 			}
 		}
 	}
+
+	disputedOutcomes, err := outcomeDAO.GetAllOutcomesWithDisputeResult()
+	log.Println("disputedOutcomes: ", len(disputedOutcomes))
+	if err == nil {
+		for i := 0; i < len(disputedOutcomes); i++ {
+			o := disputedOutcomes[i]
+			go r.fireNotification(o)
+		}
+	}
+
 }
 
 func (r *Remind) fireNotification(outcome models.Outcome) {
@@ -43,7 +52,7 @@ func (r *Remind) fireNotification(outcome models.Outcome) {
 
 	conf := config.GetConfig()
 	var email string
-	if outcome.CreatedUserID == 0 {
+	if outcome.CreatedUserID == 0 || outcome.Result == -3 {
 		email = conf.GetString("email")
 	} else {
 		var d services.DispatcherService

@@ -130,8 +130,14 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.commit()
 
 		handshakes = handshake_bl.find_all_matched_handshakes(
-			side=2, odds=5.0, outcome_id=88, amount=0.25)
+			side=2, odds=5.0, outcome_id=88, amount=0.25, maker=88)
 
+		# cannot shake to myself
+		self.assertEqual(len(handshakes), 0)
+
+		# shake with another user
+		handshakes = handshake_bl.find_all_matched_handshakes(
+			side=2, odds=5.0, outcome_id=88, amount=0.25, maker=99)
 		self.assertEqual(len(handshakes), 2)
 		self.assertEqual(float(handshakes[0].odds), 1.1)
 		self.assertEqual(float(handshakes[1].odds), 1.2)
@@ -175,8 +181,15 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.commit()
 
 		handshakes = handshake_bl.find_all_matched_handshakes(
-			side=1, odds=5.0, outcome_id=88, amount=0.25)
-		self.assertEqual(len(handshakes), 1)
+			side=1, odds=5.0, outcome_id=88, amount=0.25, maker=88)
+
+		# cannot shake to myself
+		self.assertEqual(len(handshakes), 0)
+
+		# shake again
+		# -----
+		handshakes = handshake_bl.find_all_matched_handshakes(
+			side=1, odds=5.0, outcome_id=88, amount=0.25, maker=99)
 		self.assertEqual(float(handshakes[0].odds), 1.2)
 
 	def test_find_all_joined_handshakes_with_side_support(self):

@@ -1235,8 +1235,12 @@ class TestHandshakeBluePrint(BaseTestCase):
 
     def test_create_free_bet(self):
         self.clear_data_before_test()
+
+        user = User.find_user_with_id(99)
+        old_free_bet = user.free_bet
+
         with self.client:
-            Uid = 88
+            Uid = 99
 
             params = {
                 "type": 3,
@@ -1266,8 +1270,8 @@ class TestHandshakeBluePrint(BaseTestCase):
             data = data['data']
             self.assertTrue('match' in data)
 
-            user = User.find_user_with_id(88)
-            self.assertEqual(user.free_bet, 1)
+            user = User.find_user_with_id(99)
+            self.assertEqual(old_free_bet + 1, user.free_bet)
 
     def test_collect_real_bet(self):
         self.clear_data_before_test()
@@ -1913,12 +1917,22 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.commit()
 
     def test_check_free_bet(self):
-        user = User.find_user_with_id(88)
-        user.free_bet = 0
-        db.session.commit()
+        self.clear_data_before_test()
+        arr_hs = []
+
+        user = User.find_user_with_id(100)
+        if user is not None:
+            db.session.delete(user)
+            db.session.commit()
+
+        user = User(
+            id=100
+        )
+        db.session.add(user)
+        db.session.commit() 
 
         with self.client:
-            Uid = 88
+            Uid = 100
 
             response = self.client.get(
                                     '/handshake/check_free_bet',
@@ -1932,10 +1946,77 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
+            d = data['data']
+            self.assertEqual(d['free_bet_available'], 3)
 
-            # update free_bet
-            user = User.find_user_with_id(88)
-            user.free_bet = 1
+            # create handshake            
+            # -----
+            handshake = Handshake(
+                                hs_type=3,
+                                chain_id=4,
+                                is_private=1,
+                                user_id=100,
+                                outcome_id=88,
+                                odds=6,
+                                amount=0.7,
+                                currency='ETH',
+                                side=2,
+                                remaining_amount=0.7,
+                                from_address='0x123',
+                                status=0,
+                                bk_status=0,
+                                free_bet=1,
+                                date_created=datetime.now(),
+                                date_modified=datetime.now()
+                            )
+            arr_hs.append(handshake)
+            db.session.add(handshake)
+            db.session.commit()
+
+            # -----
+            handshake = Handshake(
+                                hs_type=3,
+                                chain_id=4,
+                                is_private=1,
+                                user_id=100,
+                                outcome_id=88,
+                                odds=6,
+                                amount=0.7,
+                                currency='ETH',
+                                side=2,
+                                remaining_amount=0.7,
+                                from_address='0x123',
+                                status=0,
+                                bk_status=0,
+                                free_bet=1,
+                                date_created=datetime.now(),
+                                date_modified=datetime.now()
+                            )
+            arr_hs.append(handshake)
+            db.session.add(handshake)
+            db.session.commit()
+
+            # -----
+            handshake = Handshake(
+                                hs_type=3,
+                                chain_id=4,
+                                is_private=1,
+                                user_id=100,
+                                outcome_id=88,
+                                odds=6,
+                                amount=0.7,
+                                currency='ETH',
+                                side=2,
+                                remaining_amount=0.7,
+                                from_address='0x123',
+                                status=0,
+                                bk_status=0,
+                                free_bet=1,
+                                date_created=datetime.now(),
+                                date_modified=datetime.now()
+                            )
+            arr_hs.append(handshake)
+            db.session.add(handshake)
             db.session.commit()
 
             # call check free bet again
@@ -1948,8 +2029,16 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
+            self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
+
+            d = data['data']
+            self.assertEqual(d['free_bet_available'], 0)
+
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
 
     def test_refund_free_bet(self):
         self.clear_data_before_test()
@@ -2107,7 +2196,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             sk = Shaker.find_shaker_by_id(shaker.id)
             self.assertEqual(sk.status, HandshakeStatus['STATUS_DISPUTE_PENDING'])
 
-            outcome.result = 1;
+            outcome.result = 1
             db.session.commit()
             params = {
                 "offchain": 'cryptosign_m{}'.format(handshake.id)
@@ -2124,7 +2213,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
-            print data
             self.assertEqual(response.status_code, 200)
             self.assertTrue(data['status'] == 1)
 

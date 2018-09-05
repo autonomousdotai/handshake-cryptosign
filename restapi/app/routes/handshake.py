@@ -22,10 +22,13 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
+from datetime import *
+from app.helpers.utils import local_to_utc
+
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -148,7 +151,7 @@ def init():
 
 
 		# filter all handshakes which able be to match first
-		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
 
 		if len(handshakes) == 0:
 			handshake = Handshake(
@@ -331,7 +334,7 @@ def rollback():
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
 					handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
 					if handshake.free_bet == 1:
-						user.free_bet = 0
+						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 					
 					db.session.flush()
 					handshakes.append(handshake)
@@ -352,7 +355,7 @@ def rollback():
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
 					if shaker.free_bet == 1:
-						user.free_bet = 0
+						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 
 					shakers.append(shaker)
 
@@ -386,10 +389,10 @@ def create_bet():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		odds = Decimal(data.get('odds'))
-		amount = Decimal('0.01')
+		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
-		if user.free_bet > 0:
+		if user_bl.count_user_free_bet(user.id) >= CONST.MAXIMUM_FREE_BET:
 			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		outcome_id = data.get('outcome_id')
@@ -413,30 +416,26 @@ def create_bet():
 		data['payload'] = user.payload
 		data['free_bet'] = 1
 
-		if user_bl.check_user_is_able_to_create_new_free_bet():
-			user.free_bet = 1
-			task = Task(
-				task_type=CONST.TASK_TYPE['FREE_BET'],
-				data=json.dumps(data),
-				action=CONST.TASK_ACTION['INIT'],
-				status=-1,
-				contract_address=contract.contract_address,
-				contract_json=contract.json_name
-			)
-			db.session.add(task)
-			db.session.commit()
+		user.free_bet += 1
+		task = Task(
+			task_type=CONST.TASK_TYPE['FREE_BET'],
+			data=json.dumps(data),
+			action=CONST.TASK_ACTION['INIT'],
+			status=-1,
+			contract_address=contract.contract_address,
+			contract_json=contract.json_name
+		)
+		db.session.add(task)
+		db.session.commit()
 
-			# this is for frontend
-			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-			response = {}
-			if len(handshakes) == 0:
-				response['match'] = 0
-			else:
-				response['match'] = 1
-			return response_ok(response)
-
+		# this is for frontend
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
+		response = {}
+		if len(handshakes) == 0:
+			response['match'] = 0
 		else:
-			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+			response['match'] = 1
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -627,7 +626,7 @@ def refund_free_bet():
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if handshake_bl.can_refund(None, shaker=shaker):
-				user.free_bet = 0
+				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 
 				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
@@ -642,7 +641,7 @@ def refund_free_bet():
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_refund(handshake):
-				user.free_bet = 0
+				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
 
 				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
@@ -668,41 +667,30 @@ def refund_free_bet():
 
 
 @handshake_routes.route('/check_free_bet', methods=['GET'])
-# TODO
 @login_required
 def has_received_free_bet():
 	try:
 		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)
 
-		if user.free_bet > 0:
-			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
+		if user is None:
+			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
-		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
-			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
+		if setting is not None:
+			if setting.status == 0:
+				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
-		return response_ok()
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
+		total_count_free_bet = user_bl.count_user_free_bet(uid)
 
+		response = {
+			"free_bet_used": total_count_free_bet,
+			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
+			"last_item": handshake_bl.get_last_betting(uid)
+		}
 
-@handshake_routes.route('/count_free_bet', methods=['GET'])
-@login_required
-def count_free_bet():
-	try:
-		uid = int(request.headers['Uid'])
-		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
-		user = User.find_user_with_id(uid)
+		return response_ok(response)
 
-		if user.free_bet > 0:
-			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
-
-		elif user_bl.check_user_is_able_to_create_new_free_bet() is False:
-			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
-
-		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

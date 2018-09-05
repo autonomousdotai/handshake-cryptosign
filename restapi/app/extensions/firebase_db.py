@@ -25,12 +25,14 @@ class FirebaseDatabase(object):
 		self.firebase = pyrebase.initialize_app(config)
 
 	def push_data(self, data, user_id):
-		auth = self.firebase.auth()
-		db = self.firebase.database()
-		results = db.child("users").child(user_id).child('betting').push(data)
-		return results
+		try:
+			auth = self.firebase.auth()
+			db = self.firebase.database()
+			results = db.child("users").child(user_id).child('betting').push(data)
+			return results
+		except Exception as err:
+			print("push_data error: %s" % (err))
 
-		
 # if __name__ == '__main__':
 # 	firebase = FirebaseDatabase()
 # 	firebase.push_data({"data": "12"})

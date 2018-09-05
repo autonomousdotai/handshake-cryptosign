@@ -3,53 +3,20 @@
     {
       "homeTeamName": "",
       "awayTeamName": "",
-      "date": 1533056399,
-      "reportTime": 1533063599,
-      "disputeTime": 1533070799,
+      "date": 1535788800,
+      "reportTime": 1535875200,
+      "disputeTime": 1535877000,
       "homeTeamCode": "",
       "homeTeamFlag": "",
       "awayTeamCode": "",
       "awayTeamFlag": "",
-      "name": "After the 2018 summer transfer window, Gareth Bale will",
+      "name": "[Asiad 2018] Viet Nam vs UAE",
       "source_id": 1,
+      "category_id": 4,
       "market_fee": 2,
       "outcomes": [
         {
-          "name": "Stay at Real Madrid"
-        },{
-          "name": "Move to Manchester United"
-        },{
-          "name": "Move to Chelsea"
-        },{
-          "name": "Move to AC Milan"
-        },{
-          "name": "Move to Tottenham"
-        }
-      ]
-    }, {
-      "homeTeamName": "",
-      "awayTeamName": "",
-      "date": 1533056399,
-      "reportTime": 1533063599,
-      "disputeTime": 1533070799,
-      "homeTeamCode": "",
-      "homeTeamFlag": "",
-      "awayTeamCode": "",
-      "awayTeamFlag": "",
-      "name": "After the 2018 summer transfer window, Eden Hazard will",
-      "source_id": 1,
-      "market_fee": 2,
-      "outcomes": [
-        {
-          "name": "Stay at Chelsea"
-        },{
-          "name": "Move to Real Madrid"
-        },{
-          "name": "Move to Paris Saint-Germain"
-        },{
-          "name": "Move to Barcelona"
-        },{
-          "name": "Move to Shandong Luneng"
+          "name": "Viet Nam wins"
         }
       ]
     }

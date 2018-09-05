@@ -7,6 +7,7 @@ from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
 from requests_toolbelt.multipart.encoder import MultipartEncoder
+from app.constants import Handshake as HandshakeStatus
 
 import sys
 import time
@@ -16,6 +17,7 @@ import os, hashlib
 import requests
 import random
 import app.bl.task as task_bl
+import app.bl.user as user_bl
 
 app = Flask(__name__)
 # config app
@@ -82,8 +84,8 @@ def update_feed(handshake_id):
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
 			"is_private_i": handshake.is_private,
 			"extra_data_s": handshake.extra_data,
-			"remaining_amount_f": float(handshake.remaining_amount),
-			"amount_f": float(amount),
+			"remaining_amount_s": str(handshake.remaining_amount),
+			"amount_s": str(amount),
 			"outcome_id_i": handshake.outcome_id,
 			"odds_f": float(handshake.odds),
 			"currency_s": handshake.currency,
@@ -322,7 +324,7 @@ def update_status_feed(_id, status):
 
 		shake_user_infos = []
 		handshake = Handshake.find_handshake_by_id(_id)
-		print handshake.shakers
+
 		if handshake.shakers is not None:
 			for s in handshake.shakers:
 				shake_user_infos.append(s.to_json())
@@ -334,8 +336,6 @@ def update_status_feed(_id, status):
 				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
 			}]
 		}
-
-		print data
 
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \
@@ -359,3 +359,90 @@ def log_responsed_time():
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_responsed_time=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def data_send_email_result_notifcation(_outcome, _handshakes, _shakers):
+
+	outcome = Outcome.find_outcome_by_id(outcome.id)
+	if outcome is None or outcome.result < 1:
+		print("data_send_email_result_notifcation => Invalid outcome: ", outcome)
+		return False
+
+	match = Match.find_match_by_id(outcome.match_id)
+	if match is None:
+		print("data_send_email_result_notifcation => Invalid match: ", outcome)
+		return False
+
+	for s in _shakers:
+		shaker = Shaker.find_shaker_by_id(s.id)
+		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
+		if shaker is None or handshake is None:
+			print("data_send_email_result_notifcation => Invalid shaker or handshake: ", shaker, handshake)
+			return False
+
+		free_bet_available = None
+		if shaker.free_bet == 1:
+			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(shaker.shaker_id)
+
+		send_mail_result_notification.delay(shaker.shaker_id, outcome.name, match.name, outcome.result, shaker.side, shaker.status, is_free_bet, free_bet_available)
+
+	for hs in _handshakes:
+		handshake = Handshake.find_handshake_by_id(hs.id)
+		if handshake is None:
+			print("data_send_email_result_notifcation => Invalid handshake: ", shaker, handshake)
+			return False
+
+		free_bet_available = None
+		if handshake.free_bet == 1:
+			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(handshake.user_id)
+
+		send_mail_result_notification.delay(handshake.user_id, outcome.name, match.name, outcome.result, handshake.side, handshake.status, is_free_bet, free_bet_available)
+
+
+@celery.task()
+def send_mail_result_notification(user_id, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
+	try:
+		data = {
+			"uninit": False,
+			"is_win": bet_side == result,
+			"is_outcome_draw": outcome_result == CONST.RESULT_TYPE["DRAW"],
+			"outcome_result": outcome_result,
+			"is_free_bet": is_free_bet,
+			"free_bet_available": free_bet_available,
+			"user_id": user_id,
+			"outcome_name": outcome_name,
+			"match_name": match_name
+		}
+		if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+			data["uninit"] = False
+		if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+			data["uninit"] = True
+
+		
+		if user_id is not None:
+    			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
+			params = {
+				"type": str(shuriken_type)
+			}
+			res = requests.post(endpoint, params=params)
+			print 'add_shuriken {}'.format(res)
+			if res.status_code > 400:
+				print('Add shuriken is failed.')
+		
+		
+		
+		
+		
+		
+		endpoint = "{}/api/user/prediction-notification".format(app.config['DISPATCHER_SERVICE_ENDPOINT'])
+		print("log_send_mail_notification => ", data)
+		res = requests.post(endpoint, json=data)
+		print 'send mail report notification {}'.format(res)
+		if res.status_code > 400:
+			print('send mail report notification is failed.')
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_mail_notification => ", exc_type, fname, exc_tb.tb_lineno)

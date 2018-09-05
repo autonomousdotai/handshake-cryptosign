@@ -26,6 +26,9 @@ from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, 
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
+from datetime import *
+from app.helpers.utils import local_to_utc
+
 
 handshake_routes = Blueprint('handshake', __name__)
 getcontext().prec = 18
@@ -678,54 +681,13 @@ def has_received_free_bet():
 			if setting.status == 0:
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
-		last_hs = db.session.query(Handshake, Outcome)\
-		.filter(Handshake.outcome_id == Outcome.id)\
-		.filter(Handshake.user_id == uid, Handshake.free_bet == 1)\
-		.order_by(Handshake.date_created.desc())\
-		.first()
-
-		last_s = db.session.query(Handshake, Shaker, Outcome)\
-		.filter(Shaker.handshake_id == Handshake.id)\
-		.filter(Handshake.outcome_id == Outcome.id)\
-		.filter(Shaker.shaker_id == uid, Shaker.free_bet == 1)\
-		.order_by(Shaker.date_created.desc())\
-		.first()
-
-		outcome = None
-		item = None
 		total_count_free_bet = user_bl.count_user_free_bet(uid)
 
 		response = {
 			"free_bet_used": total_count_free_bet,
-			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet
+			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
+			"last_item": handshake_bl.get_last_betting(uid)
 		}
-
-		
-		if last_s is not None and last_hs is not None:
-			if last_s[0].date_created > last_hs[0].date_created:
-				outcome = last_s[2]
-				item = last_s[1]
-			else:
-				outcome = last_hs[1]
-				item = last_hs[0]
-
-		elif last_hs is None and last_s is not None:
-			outcome = last_s[2]
-			item = last_s[1]
-		elif last_hs is not None and last_s is None:
-			outcome = last_hs[1]
-			item = last_hs[0]
-
-		if item is not None and outcome is not None:
-			response["last_item"] = item.to_json()
-			if outcome.result <= 0:
-				response["is_win"] = -1
-			else:
-				response["is_win"] = 0 if outcome.result != item.side else 1
-
-		else:
-			response["is_win"] = -1
-			response["last_item"] = None
 
 		return response_ok(response)
 

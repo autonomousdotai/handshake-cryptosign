@@ -14,12 +14,13 @@ from flask import g
 from app import db, fcm, sg, firebase
 from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
-from app.models import Handshake, User, Shaker, Outcome
+from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_dispute_email
+from app.tasks import update_feed, add_shuriken, send_dispute_email, data_send_email_result_notifcation
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local
 from datetime import datetime
+from app.helpers.utils import local_to_utc
 
 getcontext().prec = 18
 
@@ -483,7 +484,9 @@ def save_handshake_for_event(event_name, inputs):
 			result = int(result)
 			outcome.result = result
 			db.session.flush()
-			return data_need_set_result_for_outcome(outcome)
+			handshakes, shakers = data_need_set_result_for_outcome(outcome)
+			data_send_email_result_notifcation.delay(outcome, handshakes, shakers)
+			return handshakes, shakers
 
 		return None, None
 
@@ -829,3 +832,50 @@ def can_uninit(handshake):
 					return False
 
 	return True
+
+def get_last_betting(user_id):
+	last_hs = db.session.query(Handshake, Outcome)\
+	.filter(Handshake.outcome_id == Outcome.id)\
+	.filter(Handshake.user_id == user_id)\
+	.order_by(Handshake.date_created.desc())\
+	.first()
+
+	last_s = db.session.query(Shaker, Outcome)\
+	.filter(Shaker.handshake_id == Handshake.id)\
+	.filter(Handshake.outcome_id == Outcome.id)\
+	.filter(Shaker.shaker_id == user_id)\
+	.order_by(Shaker.date_created.desc())\
+	.first()
+
+	outcome = None
+	last_item = None
+	result = {}
+
+	if last_s is not None and last_hs is not None:
+		if last_s[0].date_created > last_hs[0].date_created:
+			outcome = last_s[1]
+			last_item = last_s[0]
+		else:
+			outcome = last_hs[1]
+			last_item = last_hs[0]
+	elif last_hs is None and last_s is not None:
+		outcome = last_s[1]
+		last_item = last_s[0]
+	elif last_s is None and last_hs is not None:
+		outcome = last_hs[1]
+		last_item = last_hs[0]
+
+	if last_item is not None and outcome is not None:
+		match = Match.find_match_by_id(outcome.match_id)
+		result["is_free_bet"] = last_item.free_bet == 1
+		if outcome.result <= 0:
+			now = local_to_utc(datetime.now().timetuple())
+			if now >= match.disputeTime:
+				result["status"] = "out_of_time"
+			else:
+				result["status"] = "waiting"
+			result["is_win"] = None
+		else:
+			result["status"] = "reported"
+			result["is_win"] = outcome.result != last_item.side
+	return result

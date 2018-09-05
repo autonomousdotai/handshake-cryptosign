@@ -148,7 +148,7 @@ def init():
 
 
 		# filter all handshakes which able be to match first
-		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
 
 		if len(handshakes) == 0:
 			handshake = Handshake(
@@ -413,30 +413,26 @@ def create_bet():
 		data['payload'] = user.payload
 		data['free_bet'] = 1
 
-		if CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(user.id) > 0:
-			user.free_bet += 1
-			task = Task(
-				task_type=CONST.TASK_TYPE['FREE_BET'],
-				data=json.dumps(data),
-				action=CONST.TASK_ACTION['INIT'],
-				status=-1,
-				contract_address=contract.contract_address,
-				contract_json=contract.json_name
-			)
-			db.session.add(task)
-			db.session.commit()
+		user.free_bet += 1
+		task = Task(
+			task_type=CONST.TASK_TYPE['FREE_BET'],
+			data=json.dumps(data),
+			action=CONST.TASK_ACTION['INIT'],
+			status=-1,
+			contract_address=contract.contract_address,
+			contract_json=contract.json_name
+		)
+		db.session.add(task)
+		db.session.commit()
 
-			# this is for frontend
-			handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount)
-			response = {}
-			if len(handshakes) == 0:
-				response['match'] = 0
-			else:
-				response['match'] = 1
-			return response_ok(response)
-
+		# this is for frontend
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
+		response = {}
+		if len(handshakes) == 0:
+			response['match'] = 0
 		else:
-			return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+			response['match'] = 1
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()

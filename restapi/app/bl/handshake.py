@@ -680,7 +680,7 @@ def verify_taker_odds(taker_odds, maker_odds):
 
 	return False
 
-def find_all_matched_handshakes(side, odds, outcome_id, amount):
+def find_all_matched_handshakes(side, odds, outcome_id, amount, maker):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		win_value = amount*odds
@@ -695,26 +695,27 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount):
 			result_db = db.engine.execute(query)
 			for row in result_db:
 				if(verify_taker_odds(row['odds'], odds)):
-					handshake = Handshake(
-						id=row['id'],
-						hs_type=row['hs_type'],
-						extra_data=row['extra_data'],
-						description=row['description'],
-						chain_id=row['chain_id'],
-						is_private=row['is_private'],
-						user_id=row['user_id'],
-						outcome_id=row['outcome_id'],
-						odds=row['odds'],
-						amount=row['amount'],
-						currency=row['currency'],
-						side=row['side'],
-						remaining_amount=row['remaining_amount'],
-						from_address=row['from_address'],
-						shake_count=row['shake_count'],
-						date_created=row['date_created'],
-						date_modified=row['date_modified']
-					)
-					handshakes.append(handshake)
+					if maker != row['user_id']:
+						handshake = Handshake(
+							id=row['id'],
+							hs_type=row['hs_type'],
+							extra_data=row['extra_data'],
+							description=row['description'],
+							chain_id=row['chain_id'],
+							is_private=row['is_private'],
+							user_id=row['user_id'],
+							outcome_id=row['outcome_id'],
+							odds=row['odds'],
+							amount=row['amount'],
+							currency=row['currency'],
+							side=row['side'],
+							remaining_amount=row['remaining_amount'],
+							from_address=row['from_address'],
+							shake_count=row['shake_count'],
+							date_created=row['date_created'],
+							date_modified=row['date_modified']
+						)
+						handshakes.append(handshake)
 			return handshakes
 	return []
 

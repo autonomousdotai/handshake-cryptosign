@@ -3,22 +3,20 @@
     {
       "homeTeamName": "",
       "awayTeamName": "",
-      "date": 1537040727,
-      "reportTime": 1537158627,
-      "disputeTime": 1537162227,
+      "date": 1535788800,
+      "reportTime": 1535875200,
+      "disputeTime": 1535877000,
       "homeTeamCode": "",
       "homeTeamFlag": "",
       "awayTeamCode": "",
       "awayTeamFlag": "",
-      "name": "[La Liga] Athletic Bilbao vs Real Madrid",
+      "name": "[Asiad 2018] Viet Nam vs UAE",
       "source_id": 1,
       "category_id": 4,
       "market_fee": 2,
       "outcomes": [
         {
-          "name": "Real Madrid Wins"
-        }, {
-          "name": "Draw"
+          "name": "Viet Nam wins"
         }
       ]
     }

@@ -868,6 +868,7 @@ def get_last_betting(user_id):
 	if last_item is not None and outcome is not None:
 		match = Match.find_match_by_id(outcome.match_id)
 		result["is_free_bet"] = last_item.free_bet == 1
+		result["id"] = last_item.id
 		if outcome.result <= 0:
 			now = local_to_utc(datetime.now().timetuple())
 			if now >= match.disputeTime:
@@ -877,5 +878,5 @@ def get_last_betting(user_id):
 			result["is_win"] = None
 		else:
 			result["status"] = "reported"
-			result["is_win"] = outcome.result != last_item.side
+			result["is_win"] = outcome.result == last_item.side
 	return result

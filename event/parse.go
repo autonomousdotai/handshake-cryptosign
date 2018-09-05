@@ -16,7 +16,7 @@ func main() {
         panic("invalid hash")
     }
     
-    etherClient, err := ethclient.Dial("https://rinkeby.infura.io/")
+    etherClient, err := ethclient.Dial("https://mainnet.infura.io/")
     if err != nil {
         panic(err)
     }
@@ -33,7 +33,7 @@ func main() {
         receipt, _ := etherClient.TransactionReceipt(context.Background(), txHash)
         if len(receipt.Logs) > 0 {
             for _, log := range receipt.Logs {
-                _, eventJson := utils.DecodeTransactionLog("PredictionHandshake", log)
+                _, eventJson := utils.DecodeTransactionLog("PredictionHandshake_v1_1", log)
                 fmt.Println("event", eventJson)
             }
         }

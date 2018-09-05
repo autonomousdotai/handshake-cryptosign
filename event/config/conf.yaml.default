@@ -10,3 +10,5 @@ etherScanEndpoint: https://api.etherscan.io/api
 etherScanKey: ETHERSCAN_KEY 
 hookEndpoint: http://localhost:5000
 email: abc@ninja.org
+slack_channel: xxx
+slack_token: xxx

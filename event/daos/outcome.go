@@ -18,6 +18,5 @@ func (m OutcomeDAO) GetAllOutcomesWithNoResult(matchID int) ([]models.Outcome, e
 		return nil, err
 	}
 
-	fmt.Println("Outcomes = ", outcomes)
 	return outcomes, nil
 }

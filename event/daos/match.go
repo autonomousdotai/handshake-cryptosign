@@ -20,6 +20,5 @@ func (m MatchDAO) GetAllIncomingMatches() ([]models.Match, error) {
 		return nil, err
 	}
 
-	fmt.Println("Matches -> ", matches)
 	return matches, nil
 }

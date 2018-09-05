@@ -5,8 +5,8 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/ninjadotorg/handshake-cryptosign/event/daos"
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
+	"github.com/ninjadotorg/handshake-cryptosign/event/daos"
 	"github.com/ninjadotorg/handshake-cryptosign/event/models"
 	"github.com/ninjadotorg/handshake-cryptosign/event/services"
 )
@@ -22,10 +22,14 @@ func (r *Remind) RemindUser() {
 		log.Println("Remind user: don't have any matches")
 		return
 	}
+
+	log.Println("matches: ", len(matches))
 	for index := 0; index < len(matches); index++ {
-		outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
+		log.Println("-- Match: ", matches[index].MatchID)
+		outcomes, _ := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
+		fmt.Println(outcomes)
 		if err == nil {
-			for i := 0; index < len(outcomes); i++ {
+			for i := 0; i < len(outcomes); i++ {
 				o := outcomes[i]
 				go r.fireNotification(o)
 			}
@@ -35,6 +39,8 @@ func (r *Remind) RemindUser() {
 
 func (r *Remind) fireNotification(outcome models.Outcome) {
 	var m services.MailService
+	var h services.HookService
+
 	conf := config.GetConfig()
 	var email string
 	if outcome.CreatedUserID == 0 {
@@ -61,6 +67,14 @@ func (r *Remind) fireNotification(outcome models.Outcome) {
 	} else {
 		m.SendEmailForReportingOutcome(email, outcome.Name)
 	}
+
+	chain := conf.GetInt("blockchainId")
+	if chain == 4 {
+		h.PostSlack("[Stag] Outcome: \"" + outcome.Name + "\" need your attention!")
+	} else {
+		h.PostSlack("[Production] Outcome: \"" + outcome.Name + "\" need your attention!")
+	}
+
 }
 
 func inArray(val interface{}, array interface{}) (exists bool, index int) {

@@ -83,6 +83,7 @@ const unInitFreeBet = (params) => {
  * @param {string} params.match_name
  * @param {string} params.outcome_name
  * @param {number} params.type
+ * @param {string} params.amount 
  * @param {address} params.from_address
  * @param {Object} task
  * @param {boolean} isFreeBet
@@ -97,12 +98,17 @@ const initBet = (params, task, isFreeBet) => {
 				return resolve(undefined);
 			}
 
+			let betAmount = amountDefaultValue + ''
+			if (params.amount != null) {
+				betAmount = params.amount + ''
+			}
+
 			const dataRequest = {
 				type: params.type || 3,
 				extra_data: utils.gennerateExtraData(params.match_date, params.match_name, params.outcome_name),
 				outcome_id: params.outcome_id,
 				odds: params.odds, // TODO: check value 
-				amount: amountDefaultValue + '',
+				amount: betAmount,
 				currency: 'ETH',
 				side: params.side,
 				from_address: params.from_address || ownerAddress, // TODO: check this address

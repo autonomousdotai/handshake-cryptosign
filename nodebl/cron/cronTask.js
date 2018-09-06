@@ -98,7 +98,7 @@ const initBet = (params, task, isFreeBet) => {
 				return resolve(undefined);
 			}
 
-			const betAmount = amountDefaultValue + ''
+			let betAmount = amountDefaultValue + ''
 			if (params.amount != null) {
 				betAmount = params.amount + ''
 			}

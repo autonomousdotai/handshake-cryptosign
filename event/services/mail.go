@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
+	"github.com/ninjadotorg/handshake-cryptosign/event/models"
 )
 
 // MailService : struct
@@ -53,9 +54,9 @@ func (s MailService) send(from string, to string, subject string, content string
 }
 
 // SendEmailForReportingOutcome : email, outcome
-func (s MailService) SendEmailForReportingOutcome(email string, outcome string) {
-	subject := fmt.Sprintf(`The outcome: %s need your reporting!`, outcome)
-	body := `Go to this link <a href="www.ninja.org/prediction">www.ninja.org/prediction</a> on mobile to report your outcome.`
+func (s MailService) SendEmailForReportingOutcome(email string, match models.Match, outcome string) {
+	subject := fmt.Sprintf(`The event: %s need your reporting!`, match.Name)
+	body := fmt.Sprintf(`It’s 15 min until the report window/time begins. Please report outcome: %s by using this link: <a href="www.ninja.org/report">www.ninja.org/report</a> on mobile.`, outcome)
 	status, err := s.send("dojo@ninja.org", email, subject, body)
 
 	if err != nil {
@@ -70,9 +71,9 @@ func (s MailService) SendEmailForReportingOutcome(email string, outcome string) 
 }
 
 // SendEmailForDisputeOutcome : email, outcome
-func (s MailService) SendEmailForDisputeOutcome(email string, outcome string) {
-	subject := fmt.Sprintf(`The outcome: %s need your resolving!`, outcome)
-	body := `Go to this link <a href="www.ninja.org/prediction">www.ninja.org/prediction</a> on mobile to resolve that outcome.`
+func (s MailService) SendEmailForDisputeOutcome(email string, match models.Match, outcome string) {
+	subject := fmt.Sprintf(`The event: %s need your resolving!`, match.Name)
+	body := fmt.Sprintf(`Please report outcome: %s by using this link: <a href="www.ninja.org/resolve">www.ninja.org/resolve</a> on mobile.`, outcome)
 	status, err := s.send("dojo@ninja.org", email, subject, body)
 
 	if err != nil {

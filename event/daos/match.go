@@ -22,3 +22,15 @@ func (m MatchDAO) GetAllIncomingMatches() ([]models.Match, error) {
 
 	return matches, nil
 }
+
+// GetMatchByOutcomeID : outcomeID
+func (m MatchDAO) GetMatchByOutcomeID(outcomeID int) (models.Match, error) {
+	match := models.Match{}
+	err := models.Database().Where("match.outcome_id = ?", outcomeID).Find(&match).Error
+	if err != nil {
+		fmt.Println(err)
+		return match, err
+	}
+
+	return match, nil
+}

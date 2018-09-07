@@ -17,6 +17,7 @@ from app.routes.category import category_routes
 from app.routes.source import source_routes
 from app.routes.tx import tx_routes
 from app.routes.token import token_routes
+from app.routes.user import user_routes
 from app.routes.contract import contract_routes
 from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
                                 get_jwt_identity, jwt_refresh_token_required)
@@ -38,4 +39,5 @@ def init_routes(app):
     app.register_blueprint(source_routes, url_prefix='/source')
     app.register_blueprint(token_routes, url_prefix='/token')
     app.register_blueprint(contract_routes, url_prefix='/contract')
-    app.register_blueprint(user_routes)
+    app.register_blueprint(user_routes, url_prefix='/user')
+    # app.register_blueprint(user_routes)

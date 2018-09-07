@@ -8,6 +8,9 @@ class User(BaseModel):
 	fcm_token = db.Column(db.Text)
 	payload = db.Column(db.Text)
 	email = db.Column(db.String(255))
+	status = db.Column(db.Integer,
+						server_default=str(1),
+						default=1)
 	free_bet = db.Column(db.Integer,
 						server_default=str(0),
 						default=0)

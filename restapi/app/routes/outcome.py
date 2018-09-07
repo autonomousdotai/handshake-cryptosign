@@ -127,5 +127,29 @@ def generate_link():
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 	except Exception, ex:
+		return response_error(ex.message)
+
+
+@outcome_routes.route('/ninja-predict', methods=['POST'])
+@login_required
+def ninja_predict():
+	try:
+		uid = int(request.headers['Uid'])
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		outcome_id = data['outcome_id']
+		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id)).first()
+		if outcome is not None:
+			response = {}
+			response['support'] = outcome_bl.count_support_users_play_on_outcome(outcome_id)
+			response['oppose'] = outcome_bl.count_against_users_play_on_outcome(outcome_id)
+			return response_ok(response)
+			
+		else:
+			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

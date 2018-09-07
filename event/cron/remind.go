@@ -29,7 +29,7 @@ func (r *Remind) RemindUser() {
 			if err == nil {
 				for i := 0; i < len(outcomes); i++ {
 					o := outcomes[i]
-					go r.fireNotification(o)
+					go r.fireNotification(o, matches[index])
 				}
 			}
 		}
@@ -40,13 +40,16 @@ func (r *Remind) RemindUser() {
 	if err == nil {
 		for i := 0; i < len(disputedOutcomes); i++ {
 			o := disputedOutcomes[i]
-			go r.fireNotification(o)
+			match, err := matchDAO.GetMatchByOutcomeID(o.OutcomeID)
+			if err == nil {
+				go r.fireNotification(o, match)
+			}
 		}
 	}
 
 }
 
-func (r *Remind) fireNotification(outcome models.Outcome) {
+func (r *Remind) fireNotification(outcome models.Outcome, match models.Match) {
 	var m services.MailService
 	var h services.HookService
 
@@ -72,16 +75,16 @@ func (r *Remind) fireNotification(outcome models.Outcome) {
 	}
 
 	if outcome.Result == -3 {
-		m.SendEmailForDisputeOutcome(email, outcome.Name)
+		m.SendEmailForDisputeOutcome(email, match, outcome.Name)
 	} else {
-		m.SendEmailForReportingOutcome(email, outcome.Name)
+		m.SendEmailForReportingOutcome(email, match, outcome.Name)
 	}
 
 	chain := conf.GetInt("blockchainId")
 	if chain == 4 {
-		h.PostSlack("[Stag] Outcome: \"" + outcome.Name + "\" need your attention!")
+		h.PostSlack("[Stag] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your attention!")
 	} else {
-		h.PostSlack("[Production] Outcome: \"" + outcome.Name + "\" need your attention!")
+		h.PostSlack("[Production] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your attention!")
 	}
 
 }

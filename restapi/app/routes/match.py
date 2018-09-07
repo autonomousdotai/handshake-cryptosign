@@ -33,6 +33,7 @@ def matches():
 		for match in matches:
 			match_json = match.to_json()
 
+
 			# Total User
 			hs_count_user = db.session.query(Handshake.user_id.label("user_id"))\
 			.filter(Outcome.match_id == match.id)\
@@ -62,6 +63,14 @@ def matches():
 			
 			match_json["total_users"] = total_user if total_user is not None else 0			
 			match_json["total_bets"] = (total_amount.total_amount_hs if total_amount.total_amount_hs is not None else 0)  + (total_amount.total_amount_s if total_amount.total_amount_s is not None else 0)
+			
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				if outcome.hid is not None:
+					arr_outcomes.append(outcome.to_json())
+
+			match_json["outcomes"] = arr_outcomes
+			
 			response.append(match_json)
 
 		return response_ok(response)

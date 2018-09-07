@@ -113,6 +113,22 @@ class TestHandshakeBluePrint(BaseTestCase):
         Task.query.delete()
         db.session.commit()
 
+    def clear_all_betting_of_user(self, user_id):
+        shakers = db.session.query(Shaker).filter(Shaker.shaker_id==user_id).all()
+        for shaker in shakers:
+            db.session.delete(shaker)
+            db.session.commit()
+
+        handshakes = db.session.query(Handshake).filter(Handshake.user_id==user_id).all()
+        for handshake in handshakes:
+            shakers_ = db.session.query(Shaker).filter(Shaker.handshake_id==handshake.id).all()
+            for shaker in shakers_:
+                db.session.delete(shaker)
+                db.session.commit()
+
+            db.session.delete(handshake)
+            db.session.commit()
+
     def test_list_of_handshakes(self):
         self.clear_data_before_test()
         arr_hs = []
@@ -1931,6 +1947,8 @@ class TestHandshakeBluePrint(BaseTestCase):
         db.session.add(user)
         db.session.commit() 
 
+        self.clear_all_betting_of_user(100)
+    
         with self.client:
             Uid = 100
 
@@ -1945,7 +1963,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
-
             d = data['data']
             self.assertEqual(d['free_bet_available'], 3)
 
@@ -2029,15 +2046,9 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
+            self.assertTrue(data['message'] == MESSAGE.WATTING_TIME_FREE_BET)
 
-            d = data['data']
-            self.assertEqual(d['free_bet_available'], 0)
-
-        for handshake in arr_hs:
-            db.session.delete(handshake)
-            db.session.commit()
+        self.clear_all_betting_of_user(100)
 
 
     def test_refund_free_bet(self):

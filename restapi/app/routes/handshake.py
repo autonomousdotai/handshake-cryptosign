@@ -415,6 +415,7 @@ def create_bet():
 		data['uid'] = uid
 		data['payload'] = user.payload
 		data['free_bet'] = 1
+		data['amount'] = CONST.CRYPTOSIGN_FREE_BET_AMOUNT
 
 		user.free_bet += 1
 		task = Task(

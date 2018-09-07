@@ -2046,10 +2046,120 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['message'] == MESSAGE.WATTING_TIME_FREE_BET)
 
         self.clear_all_betting_of_user(100)
 
+
+    def test_check_free_bet_less_than_time_config_and_outcome_has_result(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        uid = 100
+        user = User.find_user_with_id(100)
+        if user is not None:
+            db.session.delete(user)
+            db.session.commit()
+
+        user = User(
+            id=uid
+        )
+        db.session.add(user)
+        db.session.commit() 
+
+        self.clear_all_betting_of_user(uid)
+        # create handshake            
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=100,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1,
+                            date_created=datetime.now(),
+                            date_modified=datetime.now()
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=100,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1,
+                            date_created=datetime.now(),
+                            date_modified=datetime.now()
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=100,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=1,
+                            date_created=datetime.now(),
+                            date_modified=datetime.now()
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = 3
+        db.session.merge(outcome)
+        db.session.commit()
+
+        # call check free bet again
+        response = self.client.get(
+                                '/handshake/check_free_bet',
+                                headers={
+                                    "Uid": "{}".format(uid),
+                                    "Fcm-Token": "{}".format(123),
+                                    "Payload": "{}".format(123),
+                                })
+
+        data = json.loads(response.data.decode()) 
+        self.assertTrue(data['status'] == 1)
+        self.assertEqual(response.status_code, 200)
+        d = data['data']
+        self.assertEqual(d['free_bet_available'], 0)
+        self.assertEqual(d['free_bet_used'], 3)
+
+        self.clear_all_betting_of_user(100)
 
     def test_refund_free_bet(self):
         self.clear_data_before_test()

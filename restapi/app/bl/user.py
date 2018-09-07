@@ -2,7 +2,7 @@ from flask import g
 from sqlalchemy import and_, func, Date, cast, asc, desc, bindparam
 from datetime import date
 from app import db
-from app.models import User, Handshake, Shaker
+from app.models import User, Handshake, Shaker, Outcome
 from app.constants import Handshake as HandshakeStatus
 from app.helpers.utils import utc_to_local
 from datetime import datetime
@@ -45,9 +45,16 @@ def get_first_betting(user_id):
 
 def get_last_free_bet(user_id):
 	# Lastest handshake query
-	hs_last = db.session.query(Handshake.date_created.label("created_at") , Handshake.id, bindparam("is_hs", 1)).filter(Handshake.user_id == user_id, Handshake.free_bet == 1)
+	hs_last = db.session.query(Handshake.date_created.label("created_at") , Handshake.id, bindparam("is_hs", 1))\
+	.filter(Handshake.outcome_id == Outcome.id)\
+	.filter(Outcome.result == CONST.RESULT_TYPE['PENDING'])\
+	.filter(Handshake.user_id == user_id, Handshake.free_bet == 1)
 	# Lastest shaker query
-	s_last = db.session.query(Shaker.date_created.label("created_at"), Shaker.id, bindparam("is_hs", 1)).filter(Shaker.shaker_id == user_id, Shaker.free_bet == 1)
+	s_last = db.session.query(Shaker.date_created.label("created_at"), Shaker.id, bindparam("is_hs", 1))\
+	.filter(Shaker.handshake_id == Handshake.id)\
+	.filter(Handshake.outcome_id == Outcome.id)\
+	.filter(Outcome.result == CONST.RESULT_TYPE['PENDING'])\
+	.filter(Shaker.shaker_id == user_id, Shaker.free_bet == 1)
 	# Execute query
 	last_item = hs_last.union_all(s_last).order_by(desc('created_at')).first()
 

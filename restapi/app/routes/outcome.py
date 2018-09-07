@@ -151,5 +151,4 @@ def ninja_predict():
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 	except Exception, ex:
-		db.session.rollback()
 		return response_error(ex.message)

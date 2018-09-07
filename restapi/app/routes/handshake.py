@@ -695,7 +695,7 @@ def has_received_free_bet():
 		response = {
 			"free_bet_used": total_count_free_bet,
 			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
-			"last_item": handshake_bl.get_last_betting(uid)
+			"last_item": handshake_bl.get_last_bet(uid)
 		}
 
 		return response_ok(response)

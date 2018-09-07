@@ -113,7 +113,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         Task.query.delete()
         db.session.commit()
 
-    def clear_all_betting_of_user(self, user_id):
+    def clear_all_bet_of_user(self, user_id):
         shakers = db.session.query(Shaker).filter(Shaker.shaker_id==user_id).all()
         for shaker in shakers:
             db.session.delete(shaker)
@@ -1947,7 +1947,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         db.session.add(user)
         db.session.commit() 
 
-        self.clear_all_betting_of_user(100)
+        self.clear_all_bet_of_user(100)
     
         with self.client:
             Uid = 100
@@ -2049,7 +2049,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             print data
             self.assertTrue(data['message'] == MESSAGE.WATTING_TIME_FREE_BET)
 
-        self.clear_all_betting_of_user(100)
+        self.clear_all_bet_of_user(100)
 
 
     def test_check_free_bet_less_than_time_config_and_outcome_has_result(self):
@@ -2067,7 +2067,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         db.session.add(user)
         db.session.commit() 
 
-        self.clear_all_betting_of_user(uid)
+        self.clear_all_bet_of_user(uid)
         # create handshake            
         # -----
         handshake = Handshake(
@@ -2159,7 +2159,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         self.assertEqual(d['free_bet_available'], 0)
         self.assertEqual(d['free_bet_used'], 3)
 
-        self.clear_all_betting_of_user(100)
+        self.clear_all_bet_of_user(100)
 
     def test_refund_free_bet(self):
         self.clear_data_before_test()

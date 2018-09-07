@@ -24,8 +24,8 @@ def count_user_free_bet(user_id):
 	return (hs_count if hs_count is not None else 0) + (s_count if s_count is not None else 0)
 
 
-def get_first_betting(user_id):
-	# check first betting is real-bet or free-bet
+def get_first_bet(user_id):
+	# check first bet is real-bet or free-bet
 	# Oldest handshake query
 	hs_first = db.session.query(Handshake.date_created.label("created_at"), Handshake.free_bet, bindparam("is_hs", 1)).filter(Handshake.user_id == user_id)
 	# Oldest shaker query

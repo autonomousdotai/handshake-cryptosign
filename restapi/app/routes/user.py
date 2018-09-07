@@ -46,27 +46,27 @@ def auth():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@user_routes.route('/hook/dispatcher', methods=['POST'])
-@admin_required
-def user_hook():
-	try:
-		data = request.json
-		print data
-		if data is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+# @user_routes.route('/hook/dispatcher', methods=['POST'])
+# @admin_required
+# def user_hook():
+# 	try:
+# 		data = request.json
+# 		print data
+# 		if data is None:
+# 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 		
-		type_change = data['type_change']
-		user_id = data['user_id']
-		email = data['email']
-		meta_data = data['meta_data']
+# 		type_change = data['type_change']
+# 		user_id = data['user_id']
+# 		email = data['email']
+# 		meta_data = data['meta_data']
 
-		print type_change
-		print user_id
-		print email
-		print meta_data
+# 		print type_change
+# 		print user_id
+# 		print email
+# 		print meta_data
 
-		return response_ok(response)
+# 		return response_ok(response)
 
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
+# 	except Exception, ex:
+# 		db.session.rollback()
+# 		return response_error(ex.message)

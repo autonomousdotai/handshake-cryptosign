@@ -17,6 +17,7 @@ from app.routes.category import category_routes
 from app.routes.source import source_routes
 from app.routes.tx import tx_routes
 from app.routes.token import token_routes
+from app.routes.user import user_routes
 from app.routes.contract import contract_routes
 from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
                                 get_jwt_identity, jwt_refresh_token_required)

@@ -9,6 +9,7 @@ class MESSAGE(object):
 	MISSING_OFFCHAIN = 'Missing offchain data!'
 	INVALID_ODDS = 'Odds shoule be large than 1'
 	MAXIMUM_FREE_BET = 'The maximum free bet is 100!'
+	WATTING_TIME_FREE_BET = 'Please watting to next free bet'
 	CANNOT_WITHDRAW = 'You cannot withdraw this handshake!'
 	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
 
@@ -88,7 +89,8 @@ class CODE(object):
 	INVALID_ODDS = '1004' 													
 	MAXIMUM_FREE_BET = '1005' 												
 	CANNOT_WITHDRAW = '1006' 												
-	CANNOT_ROLLBACK = '1007' 												
+	CANNOT_ROLLBACK = '1007' 
+	WATTING_TIME_FREE_BET = '1053'
 
 	# OUTCOME
 	OUTCOME_INVALID = '1008'												

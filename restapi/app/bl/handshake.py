@@ -833,7 +833,7 @@ def can_uninit(handshake):
 
 	return True
 
-def get_last_betting(user_id):
+def get_last_bet(user_id):
 	last_hs = db.session.query(Handshake, Outcome)\
 	.filter(Handshake.outcome_id == Outcome.id)\
 	.filter(Handshake.user_id == user_id)\

@@ -388,6 +388,10 @@ def create_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
+		can_free_bet, time_next_free_bet = user_bl.check_time_last_free_bet_by_user_id(uid)
+		if can_free_bet is False:
+			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
+
 		odds = Decimal(data.get('odds'))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -683,11 +687,15 @@ def has_received_free_bet():
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 		total_count_free_bet = user_bl.count_user_free_bet(uid)
+		can_free_bet, time_next_free_bet = user_bl.check_time_last_free_bet_by_user_id(uid)
 
+		if can_free_bet is False:
+			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
+		
 		response = {
 			"free_bet_used": total_count_free_bet,
 			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
-			"last_item": handshake_bl.get_last_betting(uid)
+			"last_item": handshake_bl.get_last_bet(uid)
 		}
 
 		return response_ok(response)

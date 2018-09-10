@@ -128,19 +128,10 @@ class TestAdminBluePrint(BaseTestCase):
         # ----- 
         match = Match(
             date=seconds - 200,
-            reportTime=seconds - 100,
+            reportTime=seconds + 100,
             disputeTime=seconds + 300
         )
         db.session.add(match)
-        db.session.commit()
-
-        match2 = Match(
-            date=seconds - 200,
-            reportTime=seconds - 100,
-            disputeTime=seconds + 300,
-            created_user_id=88
-        )
-        db.session.add(match2)
         db.session.commit()
 
         # -----        
@@ -153,6 +144,46 @@ class TestAdminBluePrint(BaseTestCase):
         db.session.add(outcome)
         db.session.commit()
 
+        with self.client:
+            response = self.client.get(
+                                    'admin/match/report',
+                                    headers={
+                                        "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            tmp = None
+            for m in data_json:
+                if m['id'] == match.id:
+                    tmp = m
+                    break
+            self.assertNotEqual(tmp, None)
+
+
+    def test_get_list_match_resolve_with_admin(self):
+        self.clear_data_before_test()
+        arr_hs = []
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        # ----- 
+
+        match2 = Match(
+            date=seconds - 200,
+            reportTime=seconds - 100,
+            disputeTime=seconds + 300,
+            created_user_id=88,
+            name="Dispute"
+        )
+        db.session.add(match2)
+        db.session.commit()
+
+        # -----        
+
         outcome1 = Outcome(
             match_id=match2.id,
             public=1,
@@ -164,7 +195,7 @@ class TestAdminBluePrint(BaseTestCase):
 
         with self.client:
             response = self.client.get(
-                                    'admin/match/report',
+                                    'admin/match/resolve',
                                     headers={
                                         "Authorization": "Bearer {}".format(create_access_token(identity=app.config.get("EMAIL"), fresh=True)),
                                         "Uid": "{}".format(88),
@@ -207,7 +238,7 @@ class TestAdminBluePrint(BaseTestCase):
         self.clear_data_before_test()
 
         t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
+        seconds = local_to_utc(t)
 
         match = Match.find_match_by_id(1)
         
@@ -216,7 +247,7 @@ class TestAdminBluePrint(BaseTestCase):
             match.reportTime = seconds + 1000
             match.disputeTime = seconds + 2000
 
-         with self.client:
+        with self.client:
             response = self.client.post(
                                     'admin/match/report/1',
                                     headers={

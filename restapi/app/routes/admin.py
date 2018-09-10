@@ -145,7 +145,6 @@ def matches_need_report_by_admin():
 		seconds = local_to_utc(t)
 
 		matches_by_admin = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id.is_(None), Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
-		matches_disputed = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['DISPUTED'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches_by_admin:
 			match_json = match.to_json()
@@ -154,8 +153,26 @@ def matches_need_report_by_admin():
 				if outcome.created_user_id is None:
 					arr_outcomes.append(outcome.to_json())
 
-			match_json["outcomes"] = arr_outcomes
-			response.append(match_json)
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes
+				response.append(match_json)
+
+		return response_ok(response)
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@admin_routes.route('/match/resolve', methods=['GET'])
+@jwt_required
+def matches_need_resolve_by_admin():
+	try:
+		response = []
+		matches = []
+
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		matches_disputed = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['DISPUTED'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches_disputed:
 			match_json = match.to_json()
@@ -165,9 +182,9 @@ def matches_need_report_by_admin():
 					outcome_json = outcome.to_json()
 					arr_outcomes.append(outcome_json)
 
-			match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
-			match_json["is_disputed"] = 1
-			response.append(match_json)
+			if len(arr_outcomes) > 0:
+				match_json["outcomes"] = arr_outcomes if len(arr_outcomes) > 0 else []
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:

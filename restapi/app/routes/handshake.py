@@ -388,7 +388,8 @@ def create_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		can_free_bet, time_next_free_bet = user_bl.check_time_last_free_bet_by_user_id(uid)
+		# check user be able to create new free-bet or not
+		can_free_bet, is_win, total_count_free_bet = user_bl.check_user_is_able_to_create_new_free_bet(uid)
 		if can_free_bet is False:
 			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
 
@@ -673,7 +674,11 @@ def refund_free_bet():
 
 @handshake_routes.route('/check_free_bet', methods=['GET'])
 @login_required
-def has_received_free_bet():
+def check_free_bet():
+	"""
+	" Check user be able to create free bet or not
+	"	The maxium free-bet is 3
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -686,8 +691,8 @@ def has_received_free_bet():
 			if setting.status == 0:
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
-		total_count_free_bet = user_bl.count_user_free_bet(uid)
-		can_free_bet, time_next_free_bet = user_bl.check_time_last_free_bet_by_user_id(uid)
+		# check user be able to create new free-bet or not
+		can_free_bet, is_win, total_count_free_bet = user_bl.check_user_is_able_to_create_new_free_bet(uid)
 
 		if can_free_bet is False:
 			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
@@ -695,7 +700,8 @@ def has_received_free_bet():
 		response = {
 			"free_bet_used": total_count_free_bet,
 			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
-			"last_item": handshake_bl.get_last_bet(uid)
+			"can_freebet": can_free_bet,
+			"is_win": is_win
 		}
 
 		return response_ok(response)

@@ -11,11 +11,6 @@ from app.helpers.utils import local_to_utc
 import app.constants as CONST
 import time
 
-def check_user_is_able_to_create_new_free_bet():
-	data = db.session.query(func.sum(User.free_bet).label('amount')).filter(cast(User.date_created,Date) == date.today()).first()
-	if data[0] is not None and int(data[0]) >= 100:
-		return False
-	return True
 
 def count_user_free_bet(user_id):
 	# check win or lose
@@ -43,42 +38,46 @@ def get_first_bet(user_id):
 	# Return date_created, is_free_bet
 	return date_created, is_free_bet
 
-def get_last_free_bet(user_id):
+def check_user_is_able_to_create_new_free_bet(user_id):
 	# Lastest handshake query
-	hs_last = db.session.query(Handshake.date_created.label("created_at") , Handshake.id, bindparam("is_hs", 1))\
+	hs_last = db.session.query(Handshake.date_created.label("created_time"), Outcome.id, Outcome.result, Handshake.side, Handshake.id)\
 	.filter(Handshake.outcome_id == Outcome.id)\
-	.filter(Outcome.result == CONST.RESULT_TYPE['PENDING'])\
+	.filter(Handshake.status != HandshakeStatus['STATUS_PENDING'])\
 	.filter(Handshake.user_id == user_id, Handshake.free_bet == 1)
+
 	# Lastest shaker query
-	s_last = db.session.query(Shaker.date_created.label("created_at"), Shaker.id, bindparam("is_hs", 1))\
+	s_last = db.session.query(Shaker.date_created.label("created_time"), Outcome.id, Outcome.result, Shaker.side, Shaker.id)\
 	.filter(Shaker.handshake_id == Handshake.id)\
 	.filter(Handshake.outcome_id == Outcome.id)\
-	.filter(Outcome.result == CONST.RESULT_TYPE['PENDING'])\
+	.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
 	.filter(Shaker.shaker_id == user_id, Shaker.free_bet == 1)
+
 	# Execute query
-	last_item = hs_last.union_all(s_last).order_by(desc('created_at')).first()
+	item = hs_last.union_all(s_last).order_by(desc('created_time')).first()
 
-	if last_item is None:
-		return None
+	print item
+	# free-bet available + time
+	total_count_free_bet = count_user_free_bet(user_id)
+	can_free_bet = False
+	is_win = True
 
-	date_created = last_item[0]
-	item_id = last_item[1]
-	is_handshake = last_item[2]
+	if item[2] == CONST.RESULT_TYPE['PENDING']:
+		now = time.mktime(datetime.now().timetuple())
+		create_time = time.mktime(utc_to_local(item[0].timetuple()))
+		time_next_free_bet = now - create_time - CONST.DURATION_TIME_FREE_BET
+		if time_next_free_bet > 0:
+			can_free_bet = True
 
-	# Return date_created of lastest item
-	return date_created
+	elif item[2] == CONST.RESULT_TYPE['SUPPORT_WIN'] or \
+		item[2] == CONST.RESULT_TYPE['AGAINST_WIN'] or \
+		item[2] == CONST.RESULT_TYPE['DRAW']:
+		can_free_bet = True
 
-def check_time_last_free_bet_by_user_id(user_id):
-	date_created = get_last_free_bet(user_id)
+	if total_count_free_bet >= CONST.MAXIMUM_FREE_BET:
+		can_free_bet = False
 
-	# User hasn't any free_bet
-	if date_created is None:
-		return True, 0
+	if item[2] != item[3]:
+		is_win = False
 
-	now = time.mktime(datetime.now().timetuple())
-	create_time = time.mktime(utc_to_local(date_created.timetuple()))
-	time_next_free_bet = now - create_time - CONST.DURATION_TIME_FREE_BET
-
-	if time_next_free_bet < 0:
-		return False, time_next_free_bet
-	return True, 0
+	print '{}, {}, {}'.format(can_free_bet, is_win, total_count_free_bet)
+	return can_free_bet, is_win, total_count_free_bet

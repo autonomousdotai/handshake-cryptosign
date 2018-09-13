@@ -59,7 +59,14 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.add(user)
             db.session.commit()
 
-
+        user = User.find_user_with_id(100)
+        if user is None:
+            user = User(
+                id=100
+            )
+            db.session.add(user)
+            db.session.commit() 
+        
         user = User.find_user_with_id(109)
         if user is None:
             user = User(
@@ -1935,18 +1942,6 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_check_free_bet(self):
         self.clear_data_before_test()
         arr_hs = []
-
-        user = User.find_user_with_id(100)
-        if user is not None:
-            db.session.delete(user)
-            db.session.commit()
-
-        user = User(
-            id=100
-        )
-        db.session.add(user)
-        db.session.commit() 
-
         self.clear_all_bet_of_user(100)
     
         with self.client:
@@ -2046,7 +2041,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['message'] == MESSAGE.WATTING_TIME_FREE_BET)
 
         self.clear_all_bet_of_user(100)
@@ -2055,19 +2049,8 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_check_free_bet_less_than_time_config_and_outcome_has_result(self):
         self.clear_data_before_test()
         arr_hs = []
-        uid = 100
-        user = User.find_user_with_id(100)
-        if user is not None:
-            db.session.delete(user)
-            db.session.commit()
+        self.clear_all_bet_of_user(100)
 
-        user = User(
-            id=uid
-        )
-        db.session.add(user)
-        db.session.commit() 
-
-        self.clear_all_bet_of_user(uid)
         # create handshake            
         # -----
         handshake = Handshake(
@@ -2140,24 +2123,22 @@ class TestHandshakeBluePrint(BaseTestCase):
 
         outcome = Outcome.find_outcome_by_id(88)
         outcome.result = 3
-        db.session.merge(outcome)
         db.session.commit()
 
         # call check free bet again
         response = self.client.get(
                                 '/handshake/check_free_bet',
                                 headers={
-                                    "Uid": "{}".format(uid),
+                                    "Uid": "{}".format(100),
                                     "Fcm-Token": "{}".format(123),
                                     "Payload": "{}".format(123),
                                 })
 
         data = json.loads(response.data.decode()) 
-        self.assertTrue(data['status'] == 1)
+        self.assertTrue(data['status'] == 0)
         self.assertEqual(response.status_code, 200)
-        d = data['data']
-        self.assertEqual(d['free_bet_available'], 0)
-        self.assertEqual(d['free_bet_used'], 3)
+        self.assertEqual(data['message'], MESSAGE.WATTING_TIME_FREE_BET)
+        self.assertEqual(data['code'], '1053')
 
         self.clear_all_bet_of_user(100)
 

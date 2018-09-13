@@ -389,7 +389,7 @@ def create_bet():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		# check user be able to create new free-bet or not
-		can_free_bet, is_win, total_count_free_bet = user_bl.check_user_is_able_to_create_new_free_bet(uid)
+		can_free_bet, _, _ = user_bl.check_user_is_able_to_create_new_free_bet(uid)
 		if can_free_bet is False:
 			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
 

@@ -70,14 +70,16 @@ class TestUser(BaseTestCase):
 		for shaker in shakers:
 			db.session.delete(shaker)
 			db.session.commit()
-
-	def test_insert_user(self):
-		pass
-
+	
 	def test_check_user_is_able_to_create_new_free_bet(self):
 		self.clear_data_before_test()
 		arr_hs = []
 
+		can_free_bet, is_win, total_count_free_bet = user_bl.check_user_is_able_to_create_new_free_bet(88)
+		self.assertEqual(can_free_bet, True)
+		self.assertEqual(is_win, None)
+		self.assertEqual(total_count_free_bet, 0)
+		
 		# -----
 		handshake = Handshake(
 				hs_type=3,
@@ -93,7 +95,7 @@ class TestUser(BaseTestCase):
 				from_address='0x123',
 				status=0,
 				free_bet=1,
-                date_created=datetime.now() + timedelta(seconds=1)
+		        date_created=datetime.now() + timedelta(seconds=1)
 		)
 		db.session.add(handshake)
 		db.session.commit()
@@ -111,7 +113,7 @@ class TestUser(BaseTestCase):
 					chain_id=4,
 					status=2,
 					free_bet=1,
-                    date_created=datetime.now() + timedelta(seconds=10)
+		            date_created=datetime.now() + timedelta(seconds=10)
 				)
 
 		# -----
@@ -129,7 +131,7 @@ class TestUser(BaseTestCase):
 				from_address='0x123',
 				status=0,
 				free_bet=1,
-                date_created=datetime.now() + timedelta(seconds=20)
+		        date_created=datetime.now() + timedelta(seconds=20)
 		)
 		db.session.add(handshake)
 		db.session.commit()
@@ -168,7 +170,7 @@ class TestUser(BaseTestCase):
 				from_address='0x123',
 				status=0,
 				free_bet=1,
-                date_created=datetime.now() + timedelta(seconds=100)
+		        date_created=datetime.now() + timedelta(seconds=100)
 		)
 		db.session.add(handshake)
 		db.session.commit()
@@ -179,7 +181,7 @@ class TestUser(BaseTestCase):
 		self.assertEqual(is_win, False)
 		self.assertEqual(total_count_free_bet, 3)
 
-	def test_add_report(self):
+	def test_count_user_free_bet(self):
 		pass
 
 if __name__ == '__main__':

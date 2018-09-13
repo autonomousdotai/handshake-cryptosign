@@ -19,25 +19,6 @@ def count_user_free_bet(user_id):
 	return (hs_count if hs_count is not None else 0) + (s_count if s_count is not None else 0)
 
 
-def get_first_bet(user_id):
-	# check first bet is real-bet or free-bet
-	# Oldest handshake query
-	hs_first = db.session.query(Handshake.date_created.label("created_at"), Handshake.free_bet, bindparam("is_hs", 1)).filter(Handshake.user_id == user_id)
-	# Oldest shaker query
-	s_first = db.session.query(Shaker.date_created.label("created_at"), Shaker.free_bet, bindparam("is_hs", 0)).filter(Shaker.shaker_id == user_id)
-	# Execute query
-	first_item = hs_first.union_all(s_first).order_by(asc('created_at')).first()
-
-	if first_item is None:
-		return None, None
-
-	date_created = first_item[0]
-	is_free_bet = first_item[1]
-	is_handshake = first_item[2]
-
-	# Return date_created, is_free_bet
-	return date_created, is_free_bet
-
 def check_user_is_able_to_create_new_free_bet(user_id):
 	# Lastest handshake query
 	hs_last = db.session.query(Handshake.date_created.label("created_time"), Outcome.id, Outcome.result, Handshake.side, Handshake.id)\
@@ -55,29 +36,30 @@ def check_user_is_able_to_create_new_free_bet(user_id):
 	# Execute query
 	item = hs_last.union_all(s_last).order_by(desc('created_time')).first()
 
-	print item
-	# free-bet available + time
 	total_count_free_bet = count_user_free_bet(user_id)
-	can_free_bet = False
-	is_win = True
+	can_free_bet = True
+	is_win = None
+	if item is None:
+		return can_free_bet, is_win, total_count_free_bet
 
 	if item[2] == CONST.RESULT_TYPE['PENDING']:
 		now = time.mktime(datetime.now().timetuple())
 		create_time = time.mktime(utc_to_local(item[0].timetuple()))
 		time_next_free_bet = now - create_time - CONST.DURATION_TIME_FREE_BET
-		if time_next_free_bet > 0:
-			can_free_bet = True
+		if time_next_free_bet < 0:
+			can_free_bet = False
 
-	elif item[2] == CONST.RESULT_TYPE['SUPPORT_WIN'] or \
-		item[2] == CONST.RESULT_TYPE['AGAINST_WIN'] or \
-		item[2] == CONST.RESULT_TYPE['DRAW']:
-		can_free_bet = True
+	elif item[2] != CONST.RESULT_TYPE['SUPPORT_WIN'] and \
+		item[2] != CONST.RESULT_TYPE['AGAINST_WIN'] and \
+		item[2] != CONST.RESULT_TYPE['DRAW']:
+		can_free_bet = False
 
 	if total_count_free_bet >= CONST.MAXIMUM_FREE_BET:
 		can_free_bet = False
 
 	if item[2] != item[3]:
 		is_win = False
+	else:
+		is_win = True
 
-	print '{}, {}, {}'.format(can_free_bet, is_win, total_count_free_bet)
 	return can_free_bet, is_win, total_count_free_bet

@@ -41,7 +41,7 @@ class MESSAGE(object):
 	HANDSHAKE_EMPTY = 'This Handshake seems to be empty.'
 	HANDSHAKE_NO_PERMISSION = 'You are not authorized to make this Handshake.'
 	HANDSHAKE_NO_CONTRACT_FILE = 'Contract file not found!'
-	HANDSHAKE_NOT_FOUND = 'Handshake not found. Please try again.'
+	HANDSHAKE_NOT_FOUND = 'There is something wrong with your item. Please contact admin for support.'
 	HANDSHAKE_TERM_AND_VALUE_NOT_MATCH = 'Please enter a payment amount.'
 	HANDSHAKE_VALUE_GREATER_THAN_0 = 'Amount should be larger > 0.'
 	HANDSHAKE_AMOUNT_INVALID = 'Amount key is invalid.'

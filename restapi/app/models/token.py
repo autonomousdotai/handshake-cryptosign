@@ -19,7 +19,7 @@ class Token(BaseModel):
 						server_default=str(CONST.TOKEN_STATUS['PENDING']),
 						default=CONST.TOKEN_STATUS['PENDING'])
 
-	handshakes = db.relationship('Handshake', backref='token', primaryjoin="Token.id == Handshake.token_id", lazy='dynamic')
+	outcomes = db.relationship('Outcome', backref='token', primaryjoin="Token.id == Outcome.token_id", lazy='dynamic')
 
 	@classmethod
 	def find_token_by_id(cls, _id):

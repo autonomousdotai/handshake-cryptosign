@@ -19,16 +19,12 @@ const baseConfig = {
     }
   },
   port: 5000,
-  timeAlive: 60,
   restApiEndpoint: process.env.CRYPTOSIGN_RESTAPI_ENDPOINT || 'http://localhost:5000',
   solrApiEndpoint: process.env.SOLR_ENDPOINT || 'http://localhost:6000',
   payload: process.env.CRYPTOSIGN_RESTAPI_PAYLOAD || '',
   network_id: 4,
   network: {
     '1': {
-      basicHandshakeAddress: '',
-      payableHandshakeAddress: '',
-      bettingHandshakeAddress: '',
       tokenRegistryAddress: '',
       ownerAddress: '',
       privateKey: '',
@@ -36,9 +32,6 @@ const baseConfig = {
       blockchainNetwork: 'https://mainnet.infura.io/',
     },
     '4': {
-      basicHandshakeAddress: '',
-      payableHandshakeAddress: '',
-      bettingHandshakeAddress: '',
       tokenRegistryAddress: '',
       ownerAddress: '',
       privateKey: '',
@@ -46,9 +39,6 @@ const baseConfig = {
       blockchainNetwork: 'https://rinkeby.infura.io/',
     },
     '5': { 
-      basicHandshakeAddress: '',
-      payableHandshakeAddress: '',
-      bettingHandshakeAddress: '',
       tokenRegistryAddress: '',
       ownerAddress: '',
       privateKey: '',

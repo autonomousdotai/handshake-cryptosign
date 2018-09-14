@@ -12,6 +12,8 @@ class MESSAGE(object):
 	WATTING_TIME_FREE_BET = 'Please watting to next free bet'
 	CANNOT_WITHDRAW = 'You cannot withdraw this handshake!'
 	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
+	CANNOT_VERIFY_EMAIL = 'Cannot verification email!'
+	CANNOT_UNSUBSCRIBE_EMAIL = 'Cannot unsubscribe email!'
 
 	# OUTCOME
 	OUTCOME_INVALID = 'Please check your outcome id'
@@ -91,6 +93,8 @@ class CODE(object):
 	CANNOT_WITHDRAW = '1006' 												
 	CANNOT_ROLLBACK = '1007' 
 	WATTING_TIME_FREE_BET = '1053'
+	CANNOT_VERIFY_EMAIL = '1054'
+	CANNOT_UNSUBSCRIBE_EMAIL = '1055'
 
 	# OUTCOME
 	OUTCOME_INVALID = '1008'												

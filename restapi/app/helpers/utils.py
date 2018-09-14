@@ -5,10 +5,11 @@ import re
 import json
 import time
 import calendar
+import hashlib
 
 from fractions import Fraction
 from datetime import datetime
-
+from flask import g
 
 def is_valid_email(email):
 	if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email) != None:
@@ -100,4 +101,8 @@ def is_equal(a, b):
 		return True
 
 	return False
-		
+
+def render_unsubscribe_url(user_id, passphase):
+	code = hashlib.md5('{}{}'.format(user_id, passphase)).hexdigest()
+	code = "{}=={}".format(code, user_id)
+	return "ninja.org/unsubscribe?token={}".format(code)

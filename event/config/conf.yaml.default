@@ -3,7 +3,8 @@ blockchainNetwork: https://rinkeby.infura.io/
 blockchainId: 4
 contracts:  
   0x123: PredictionHandshake
-  0x123: PredictionHandshake101
+  0x123: PredictionHandshake_v1_1
+  0x123: PredictionHandshake_v1_2
   0x123: TokenRegistry
   0x123: PredictionHandshakeWithToken
 etherScanEndpoint: https://api.etherscan.io/api

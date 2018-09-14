@@ -1,8 +1,9 @@
 from flask import Flask
 from app.factory import make_celery
-from app.core import db, configure_app, firebase, dropbox_services
-from app.models import Handshake, Outcome, Shaker, Match, Task, Contract
+from app.core import db, configure_app, firebase, dropbox_services, mail_services
+from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local
+from app.helpers.mail_content import render_email_notify_result_content
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -288,66 +289,6 @@ def send_dispute_email(outcome_id, outcome_name):
 		print(str(e))
 
 
-# @celery.task()
-# def update_contract_feed(arr_id, contract_address, contract_json):
-# 	try:
-# 		arr_handshakes = []
-# 		for _id in arr_id:
-# 			hs = {
-# 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-# 				"contract_address_s": {"set": contract_address},
-# 				"contract_json_s": {"set": contract_json}
-# 			}
-# 			arr_handshakes.append(hs)
-
-# 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-# 		data = {
-# 			"add": arr_handshakes
-# 		}
-# 		res = requests.post(endpoint, json=data)
-# 		if res.status_code > 400 or \
-# 			res.content is None or \
-# 			(isinstance(res.content, str) and 'null' in res.content):
-# 			print "Update contract feeds fail"
-# 			print res
-# 			print res.content
-
-# 	except Exception as e:
-# 		exc_type, exc_obj, exc_tb = sys.exc_info()
-# 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-# 		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
-
-@celery.task()
-def update_status_feed(_id, status):
-	try:
-		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-
-		shake_user_infos = []
-		handshake = Handshake.find_handshake_by_id(_id)
-
-		if handshake.shakers is not None:
-			for s in handshake.shakers:
-				shake_user_infos.append(s.to_json())
-
-		data = {
-			"add": [{
-				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"status_i": {"set":status},
-				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
-			}]
-		}
-
-		res = requests.post(endpoint, json=data)
-		if res.status_code > 400 or \
-			res.content is None or \
-			(isinstance(res.content, str) and 'null' in res.content):
-			print "Update status feed fail id: {}".format(_id)
-
-	except Exception as e:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
-
 @celery.task()
 def log_responsed_time():
 	try:
@@ -362,87 +303,89 @@ def log_responsed_time():
 
 
 @celery.task()
-def data_send_email_result_notifcation(_outcome, _handshakes, _shakers):
-
-	outcome = Outcome.find_outcome_by_id(outcome.id)
-	if outcome is None or outcome.result < 1:
-		print("data_send_email_result_notifcation => Invalid outcome: ", outcome)
-		return False
-
-	match = Match.find_match_by_id(outcome.match_id)
-	if match is None:
-		print("data_send_email_result_notifcation => Invalid match: ", outcome)
-		return False
-
-	for s in _shakers:
-		shaker = Shaker.find_shaker_by_id(s.id)
-		handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-		if shaker is None or handshake is None:
-			print("data_send_email_result_notifcation => Invalid shaker or handshake: ", shaker, handshake)
-			return False
-
-		free_bet_available = None
-		if shaker.free_bet == 1:
-			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(shaker.shaker_id)
-
-		send_mail_result_notification.delay(shaker.shaker_id, outcome.name, match.name, outcome.result, shaker.side, shaker.status, is_free_bet, free_bet_available)
-
-	for hs in _handshakes:
-		handshake = Handshake.find_handshake_by_id(hs.id)
-		if handshake is None:
-			print("data_send_email_result_notifcation => Invalid handshake: ", shaker, handshake)
-			return False
-
-		free_bet_available = None
-		if handshake.free_bet == 1:
-			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(handshake.user_id)
-
-		send_mail_result_notification.delay(handshake.user_id, outcome.name, match.name, outcome.result, handshake.side, handshake.status, is_free_bet, free_bet_available)
-
-
-@celery.task()
-def send_mail_result_notification(user_id, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
+def subscribe_email_dispatcher(email, fcm, payload, uid):
 	try:
-		data = {
-			"uninit": False,
-			"is_win": bet_side == result,
-			"is_outcome_draw": outcome_result == CONST.RESULT_TYPE["DRAW"],
-			"outcome_result": outcome_result,
-			"is_free_bet": is_free_bet,
-			"free_bet_available": free_bet_available,
-			"user_id": user_id,
-			"outcome_name": outcome_name,
-			"match_name": match_name
+		# Subscribe email 
+		endpoint = '{}/user/subscribe-email'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
+		data_request = {
+			"email": email
 		}
-		if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-			data["uninit"] = False
-		if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-			data["uninit"] = True
-
-		
-		if user_id is not None:
-    			endpoint = "{}/api/system/betsuccess/{}".format(app.config['DISPATCHER_SERVICE_ENDPOINT'], user_id)
-			params = {
-				"type": str(shuriken_type)
-			}
-			res = requests.post(endpoint, params=params)
-			print 'add_shuriken {}'.format(res)
-			if res.status_code > 400:
-				print('Add shuriken is failed.')
-		
-		
-		
-		
-		
-		
-		endpoint = "{}/api/user/prediction-notification".format(app.config['DISPATCHER_SERVICE_ENDPOINT'])
-		print("log_send_mail_notification => ", data)
-		res = requests.post(endpoint, json=data)
-		print 'send mail report notification {}'.format(res)
+		data_headers = {
+			"Fcm-Token": email,
+			"Payload": payload,
+			"Uid": uid
+		}
+		res = requests.post(endpoint, headers=data_headers, json=data_request, timeout=10) # timeout: 10s
 		if res.status_code > 400:
-			print('send mail report notification is failed.')
+			print "Subscribe email fail: {}".format(res)
+			return False
+
+		data_res = res.json()
+		print data_res
+		if "status" not in data_res or data_res["status"] == 0:
+			print "Subscribe email fail, status invalid: {}".format(res)
+			return False
+
+		# Call to Dispatcher endpoint verification email
+		endpoint = '{}/user/verification/email/start'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
+		res = requests.post(endpoint, headers=request.headers, json={}, timeout=10) # timeout: 10s
+
+		if res.status_code > 400:
+			print "Verify email fail: {}".format(res)
+			return False
+
+		data = res.json()
+
+		if data['status'] == 0:
+			print "Verify email fail: {}".format(data['message'])
+			return False
+
+		user = User.find_user_with_id(uid)
+		user.email = data["email"]
+		db.session.commit()
+		return True
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_mail_notification => ", exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_email_dispatcher_time=>",exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def send_email_result_notifcation(outcome_id):
+	outcome = Outcome.find_outcome_by_id(outcome_id)
+	if outcome is None or outcome.result < 1:
+		print("send_email_result_notifcation => Invalid outcome: ", outcome)
+		return False
+
+	match = Match.find_match_by_id(outcome.match_id)
+	if match is None:
+		print("send_email_result_notifcation => Invalid match: ", outcome)
+		return False
+
+	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
+	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
+
+	for shaker in shakers:
+		free_bet_available = None
+		if shaker.free_bet == 1:
+			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(shaker.shaker_id)
+
+		user = User.find_user_with_id(shaker.shaker_id)
+		if user is not None and user.email is not None and user.is_subscribe == 1:
+			email_body = render_email_notify_result_content(app, shaker.shaker_id, shaker.from_address, outcome.name, match.name, outcome.result, shaker.side, shaker.status, shaker.free_bet == 0, free_bet_available)
+			mail_services.send(user.email, app.config['EMAIL'], "Ninja email", email_body) 
+		else:
+			print("send_email_result_notifcation => Invalid user: {}", user)
+
+	for handshake in handshakes:
+		free_bet_available = None
+		if handshake.free_bet == 1:
+			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(handshake.user_id)
+
+		user = User.find_user_with_id(handshake.user_id)
+
+		if user is not None and user.email is not None and user.is_subscribe == 1:
+    			email_body = render_email_notify_result_content(app, handshake.user_id, handshake.from_address, outcome.name, match.name, outcome.result, handshake.side, handshake.status, handshake.free_bet == 0, free_bet_available)
+			mail_services.send(user.email, app.config['EMAIL'], "Ninja email", email_body) 
+		else:
+			print("send_email_result_notifcation => Invalid user: {}", user)

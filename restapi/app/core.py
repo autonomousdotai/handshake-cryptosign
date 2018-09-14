@@ -10,6 +10,7 @@ from app.extensions.water_mark import WaterMark
 from app.extensions.fcm import FirebaseCloudMessage
 from app.extensions.firebase_db import FirebaseDatabase
 from app.extensions.dropbox_service import DropboxService
+from app.extensions.mail_service import MailService
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -20,6 +21,7 @@ fcm = FirebaseCloudMessage()
 ipfs = IPFS()
 firebase = FirebaseDatabase()
 dropbox_services = DropboxService()
+mail_services = MailService()
 
 
 # configure app from env + silent local settings.cfg

@@ -11,6 +11,9 @@ class User(BaseModel):
 	free_bet = db.Column(db.Integer,
 						server_default=str(0),
 						default=0)
+	is_subscribe = db.Column(db.Integer,
+						server_default=str(1),
+						default=1)
 	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
 	                             lazy='dynamic')
 

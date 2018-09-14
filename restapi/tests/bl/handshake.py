@@ -9,6 +9,7 @@ from mock import patch
 from datetime import datetime
 from app import db, app
 from app.models import Handshake, User, Outcome, Match, Shaker, Contract
+from app.tasks import send_email_result_notifcation
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
 from app.helpers.utils import local_to_utc
@@ -1263,5 +1264,104 @@ class TestHandshakeBl(BaseTestCase):
 		expected = False
 		self.assertEqual(actual, expected)
 		
+	def test_send_email_result_notifcation(self):
+		user = User(
+			email="test@abcxyz.abc",
+			is_subscribe=1
+		)
+		db.session.add(user)
+		db.session.commit()
+
+		match = Match(
+			name="match test email"
+		)
+		db.session.add(match)
+		db.session.commit()
+
+		outcome = Outcome(
+			match_id=match.id,
+			result=1,
+			contract_id=1
+		)
+		db.session.add(outcome)
+		db.session.commit()
+
+		outcome_draw = Outcome(
+			match_id=match.id,
+			result=3,
+			contract_id=1
+		)
+		db.session.add(outcome_draw)
+		db.session.commit()
+
+		handshake_win = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=user.id,
+						outcome_id=outcome.id,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=outcome.result,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake_win)
+		db.session.commit()
+
+		handshake_draw = Handshake(
+						hs_type=3,
+						chain_id=4,
+						is_private=1,
+						user_id=user.id,
+						outcome_id=outcome.id,
+						odds=1.5,
+						amount=1,
+						currency='ETH',
+						side=1,
+						remaining_amount=0,
+						from_address='0x123',
+						status=0
+					)
+		db.session.add(handshake_draw)
+		db.session.commit()
+
+		handshake_draw = Handshake(
+				hs_type=3,
+				chain_id=4,
+				is_private=1,
+				user_id=user.id,
+				outcome_id=outcome.id,
+				odds=1.5,
+				amount=1,
+				currency='ETH',
+				side=1,
+				remaining_amount=0,
+				from_address='0x123',
+				status=0
+			)
+		db.session.add(handshake_draw)
+		db.session.commit()
+
+		# -----
+		shaker_lose = Shaker(
+			shaker_id=user.id,
+			amount=0.2,
+			currency='ETH',
+			odds=6,
+			side=2,
+			handshake_id=handshake_win.id,
+			from_address='0x123',
+			chain_id=4,
+			status=2
+		)
+		db.session.add(shaker_lose)
+		db.session.commit()
+
+		send_email_result_notifcation.delay(outcome.id)
+		self.assertEqual(True, True)
+
 if __name__ == '__main__':
 	unittest.main()

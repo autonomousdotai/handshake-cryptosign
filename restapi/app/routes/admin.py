@@ -19,7 +19,6 @@ from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
-from app.tasks import update_status_feed
 from app.constants import Handshake as HandshakeStatus
 from flask_jwt_extended import jwt_required
 
@@ -283,46 +282,6 @@ def approve_source(source_id):
 
 		db.session.commit()
 		return response_ok(source.to_json())
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
-@admin_routes.route('/update-feed-status', methods=['POST'])
-@jwt_required
-def update_feed_status():
-	""" Update all feed status:
-	Input: 
-		user_id: int
-		is_maker: 1 or 0
-	"""
-	try:
-		data = request.json
-		is_maker = int(data.get('is_maker', None))
-		item_id = int(data.get('id', None))
-		status = int(data.get('status', None))
-
-		if is_maker is None or status is None or  item_id is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		handshake = None
-
-		if is_maker == 1:
-			handshake = Handshake.find_handshake_by_id(item_id)
-			if handshake is not None:
-				handshake.status = status
-		else:
-			shaker = Shaker.find_shaker_by_id(item_id)
-			if shaker is not None:
-				shaker.status = status
-				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-				status = handshake.status
-
-		db.session.flush()
-		db.session.commit()
-		update_status_feed.delay(handshake.id, status)
-		return response_ok()
-
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)

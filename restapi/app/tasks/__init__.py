@@ -288,66 +288,6 @@ def send_dispute_email(outcome_id, outcome_name):
 		print(str(e))
 
 
-# @celery.task()
-# def update_contract_feed(arr_id, contract_address, contract_json):
-# 	try:
-# 		arr_handshakes = []
-# 		for _id in arr_id:
-# 			hs = {
-# 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-# 				"contract_address_s": {"set": contract_address},
-# 				"contract_json_s": {"set": contract_json}
-# 			}
-# 			arr_handshakes.append(hs)
-
-# 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-# 		data = {
-# 			"add": arr_handshakes
-# 		}
-# 		res = requests.post(endpoint, json=data)
-# 		if res.status_code > 400 or \
-# 			res.content is None or \
-# 			(isinstance(res.content, str) and 'null' in res.content):
-# 			print "Update contract feeds fail"
-# 			print res
-# 			print res.content
-
-# 	except Exception as e:
-# 		exc_type, exc_obj, exc_tb = sys.exc_info()
-# 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-# 		print("update_contract_feed => ", exc_type, fname, exc_tb.tb_lineno)
-
-@celery.task()
-def update_status_feed(_id, status):
-	try:
-		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
-
-		shake_user_infos = []
-		handshake = Handshake.find_handshake_by_id(_id)
-
-		if handshake.shakers is not None:
-			for s in handshake.shakers:
-				shake_user_infos.append(s.to_json())
-
-		data = {
-			"add": [{
-				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"status_i": {"set":status},
-				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
-			}]
-		}
-
-		res = requests.post(endpoint, json=data)
-		if res.status_code > 400 or \
-			res.content is None or \
-			(isinstance(res.content, str) and 'null' in res.content):
-			print "Update status feed fail id: {}".format(_id)
-
-	except Exception as e:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
-
 @celery.task()
 def log_responsed_time():
 	try:
@@ -429,11 +369,6 @@ def send_mail_result_notification(user_id, outcome_name, match_name, outcome_res
 			print 'add_shuriken {}'.format(res)
 			if res.status_code > 400:
 				print('Add shuriken is failed.')
-		
-		
-		
-		
-		
 		
 		endpoint = "{}/api/user/prediction-notification".format(app.config['DISPATCHER_SERVICE_ENDPOINT'])
 		print("log_send_mail_notification => ", data)

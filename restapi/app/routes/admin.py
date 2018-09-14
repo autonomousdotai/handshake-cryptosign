@@ -209,7 +209,6 @@ def report_match(match_id):
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		logfile.debug("DEBUG --> {}".format(data))
 		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
 		if match is not None:
 			result = data['result']

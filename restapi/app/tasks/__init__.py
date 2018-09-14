@@ -303,21 +303,25 @@ def log_responsed_time():
 
 
 @celery.task()
-def subscribe_email_dispatcher(email):
+def subscribe_email_dispatcher(email, fcm, payload, uid):
 	try:
 		# Subscribe email 
 		endpoint = '{}/user/subscribe-email'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
 		data_request = {
 			"email": email
 		}
-		res = requests.post(endpoint, headers=request.headers, json=data_request, timeout=10) # timeout: 10s
-
+		data_headers = {
+			"Fcm-Token": email,
+			"Payload": payload,
+			"Uid": uid
+		}
+		res = requests.post(endpoint, headers=data_headers, json=data_request, timeout=10) # timeout: 10s
 		if res.status_code > 400:
 			print "Subscribe email fail: {}".format(res)
 			return False
 
 		data_res = res.json()
-
+		print data_res
 		if "status" not in data_res or data_res["status"] == 0:
 			print "Subscribe email fail, status invalid: {}".format(res)
 			return False
@@ -339,12 +343,12 @@ def subscribe_email_dispatcher(email):
 		user = User.find_user_with_id(uid)
 		user.email = data["email"]
 		db.session.commit()
+		return True
 
 	except Exception as e:
-		print e
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_responsed_time=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_email_dispatcher_time=>",exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
 def send_email_result_notifcation(outcome_id):

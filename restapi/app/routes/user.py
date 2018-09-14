@@ -87,7 +87,7 @@ def user_subscribe():
 		if data is None or 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		subscribe_email_dispatcher.delay(data["email"])
+		subscribe_email_dispatcher.delay(data["email"], request.headers["Fcm-Token"], request.headers["Payload"], request.headers["Uid"])
 
 		return response_ok()
 

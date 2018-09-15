@@ -38,5 +38,5 @@ def init_routes(app):
     app.register_blueprint(source_routes, url_prefix='/source')
     app.register_blueprint(token_routes, url_prefix='/token')
     app.register_blueprint(contract_routes, url_prefix='/contract')
-    # app.register_blueprint(user_routes, url_prefix='/user')
-    app.register_blueprint(user_routes)
+    app.register_blueprint(user_routes, url_prefix='/user')
+    # app.register_blueprint(user_routes)

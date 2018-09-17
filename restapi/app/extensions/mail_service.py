@@ -19,7 +19,6 @@ class MailService(object):
 				fields= {
 					'body': _body,
 					'subject': _subject,
-					#'to[]': 'abc@abc.com, 123@123.com',
 					'to[]': _to_arr,
 					'from': _from
 				}

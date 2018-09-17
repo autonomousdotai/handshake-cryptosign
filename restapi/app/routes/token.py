@@ -92,7 +92,7 @@ def approve(id):
 
 		# add offchain
 		data = token.to_json()
-		data['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'token{}'.format(token.id)
+		data['offchain'] = CONST.CRYPTOSIGN_ERC20_OFFCHAIN_PREFIX + 'token{}'.format(token.id)
 		task = Task(
 					task_type=CONST.TASK_TYPE['ERC_20'],
 					data=json.dumps(data),

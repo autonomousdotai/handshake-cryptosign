@@ -314,6 +314,7 @@ def render_email_content(email, address, unsubscribe_url):
                         <tr>
                         <td class="content-block powered-by">
                             Powered by <a href="http://ninja.org">HTMLemail</a>.
+                            <img src="https://storage.googleapis.com/cryptosign/images/ninja.svg" alt="Ninja">
                         </td>
                         </tr>
                     </table>
@@ -364,6 +365,7 @@ def render_email_notify_result_content(app, user_id, address, outcome_name, matc
             Hi {},
             {}
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-            Powered by <a href="http://ninja.org">Ninja</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="https://storage.googleapis.com/cryptosign/images/ninja_icon.png" alt="Ninja"> </a>
         </html>""".format(address, content, render_unsubscribe_url(user_id, passphase))
     return mail_content

@@ -3,7 +3,7 @@ from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local
-from app.helpers.mail_content import render_email_notify_result_content
+from app.helpers.mail_content import render_email_notify_result_content, render_email_subscribe_content
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -326,9 +326,13 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 			print "Subscribe email fail, status invalid: {}".format(res)
 			return False
 
+		# Send email
+		email_body = render_email_subscribe_content()
+		mail_services.send(email, app.config['EMAIL'], "Ninja email", email_body)
+
 		# Call to Dispatcher endpoint verification email
 		endpoint = '{}/user/verification/email/start'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
-		res = requests.post(endpoint, headers=request.headers, json={}, timeout=10) # timeout: 10s
+		res = requests.post(endpoint, headers=data_headers, json={}, timeout=10) # timeout: 10s
 
 		if res.status_code > 400:
 			print "Verify email fail: {}".format(res)
@@ -337,12 +341,9 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 		data = res.json()
 
 		if data['status'] == 0:
-			print "Verify email fail: {}".format(data['message'])
+			print "Verify email fail: {}".format(data)
 			return False
 
-		user = User.find_user_with_id(uid)
-		user.email = data["email"]
-		db.session.commit()
 		return True
 
 	except Exception as e:

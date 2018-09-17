@@ -332,6 +332,31 @@ def render_email_content(email, address, unsubscribe_url):
     """.format(unsubscribe_url)
 	return mail_content
 
+
+def render_email_subscribe_content():
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja Subscribe Email</title>
+        </head>
+        <body class="">
+            <p>Subscribed to the outcome email</p>
+            <p>Hey Ninja!</p>
+            <p>You’ve successfully made a prediction. Go you!    </p>
+            <p>We’ll email you the result, the minute it comes in. </p>
+            <p>Enjoy daydreaming about all of the things you’ll (hopefully) do with your winnings.</p>
+            <p>Stay cool. </p>
+            <p>Ninja</p>
+
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="https://goo.gl/2N8oYK" alt="Ninja"> </a>
+        </html>
+    """
+
 def render_email_notify_result_content(app, user_id, address, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
     passphase = app.config["PASSPHASE"]
     uninit = False
@@ -366,6 +391,6 @@ def render_email_notify_result_content(app, user_id, address, outcome_name, matc
             {}
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
-            <br><a href="http://ninja.org"> <img src="https://storage.googleapis.com/cryptosign/images/ninja_icon.png" alt="Ninja"> </a>
+            <br><a href="http://ninja.org"> <img src="https://goo.gl/2N8oYK" alt="Ninja"> </a>
         </html>""".format(address, content, render_unsubscribe_url(user_id, passphase))
     return mail_content

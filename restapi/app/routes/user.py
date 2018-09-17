@@ -50,34 +50,6 @@ def auth():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@user_routes.route('/hook/dispatcher', methods=['POST'])
-@admin_required
-def user_hook():
-	try:
-		data = request.json
-		print "Hook data: {}".format(data)
-		if data is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		type_change = data['type_change']
-		user_id = data['user_id']
-		email = data['email']
-		meta_data = data['meta_data']
-
-		if type_change == "Update":
-			user = User.find_user_with_id(user_id)
-			# TODO: check email is empty
-			if user.email != email:
-				print "Update email: {}".format(email)
-				user.email = email
-				db.session.commit()
-
-		return response_ok()
-
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
 @user_routes.route('/subscribe', methods=['POST'])
 @login_required
 def user_subscribe():
@@ -87,22 +59,15 @@ def user_subscribe():
 		if data is None or 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		subscribe_email_dispatcher.delay(data["email"], request.headers["Fcm-Token"], request.headers["Payload"], request.headers["Uid"])
+		email = data["email"]
+		uid = request.headers["Uid"]
 
-		return response_ok()
-
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-@user_routes.route('/unsubscribe', methods=['POST'])
-@login_required
-def user_unsubscribe():
-	try:
-		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
-		user.is_subscribe = 0
+		user.email = email
 		db.session.commit()
+
+		subscribe_email_dispatcher.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
 		return response_ok()
 
 	except Exception, ex:

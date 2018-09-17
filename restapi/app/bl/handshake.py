@@ -784,7 +784,7 @@ def can_withdraw(handshake, shaker=None):
 
 	if shaker is None:
 		if handshake is not None:
-			if handshake.status == HandshakeStatus['STATUS_INITED']:
+			if handshake.status == HandshakeStatus['STATUS_INITED'] or handshake.status == HandshakeStatus['STATUS_RESOLVED']:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				result = handshake.side
 			else:
@@ -792,7 +792,7 @@ def can_withdraw(handshake, shaker=None):
 		else:
 			return MESSAGE.CANNOT_WITHDRAW
 	else:
-		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED'] or shaker.status == HandshakeStatus['STATUS_RESOLVED']:
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
 			result = shaker.side

@@ -64,9 +64,11 @@ func (s MailService) SendEmailForReportingOutcome(email string, match models.Mat
 			&nbsp;&nbsp;&nbsp;&nbsp;1. Open <a href="www.ninja.org/">ninja.org</a> on mobile.<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;2. Go to the Bet tab.<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;3. Click on FILL US IN to go the report page.<br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;3. Select your event.<br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;4. Then select the outcome (Support, Oppose or Draw)<br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;5. Click Submit.<br/>
+			<img src="https://storage.googleapis.com/cryptosign/images/reporting_email/fill_us_in.png"/><br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;4. Select your event.<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;5. Then select the outcome (Support, Oppose or Draw)<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;6. Click Submit.<br/>
+			<img src="https://storage.googleapis.com/cryptosign/images/reporting_email/user_report.png"/><br/>
 				<br/>
 				<br/>
 				Talk soon,<br/>

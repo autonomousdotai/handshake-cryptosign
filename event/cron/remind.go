@@ -30,9 +30,9 @@ func (r *Remind) RemindUser() {
 				m := make(map[int]bool)
 				for i := 0; i < len(outcomes); i++ {
 					o := outcomes[i]
-					if m[o.OutcomeID] == false {
+					if m[o.CreatedUserID] == false {
 						go r.fireNotification(o, matches[index])
-						m[o.OutcomeID] = true
+						m[o.CreatedUserID] = true
 					}
 				}
 			}

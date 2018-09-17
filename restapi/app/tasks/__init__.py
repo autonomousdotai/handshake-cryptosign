@@ -344,10 +344,6 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 			print "Verify email fail: {}".format(data)
 			return False
 
-		user = User.find_user_with_id(uid)
-		user.email = data["email"]
-		db.session.commit()
-
 		return True
 
 	except Exception as e:

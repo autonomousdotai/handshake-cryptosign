@@ -59,7 +59,14 @@ def user_subscribe():
 		if data is None or 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		subscribe_email_dispatcher.delay(data["email"], request.headers["Fcm-Token"], request.headers["Payload"], request.headers["Uid"])
+		email = data["email"]
+		uid = request.headers["Uid"]
+
+		user = User.find_user_with_id(uid)
+		user.email = email
+		db.session.commit()
+
+		subscribe_email_dispatcher.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
 		return response_ok()
 

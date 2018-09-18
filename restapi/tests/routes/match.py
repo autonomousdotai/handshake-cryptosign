@@ -20,12 +20,17 @@ class TestMatchBluePrint(BaseTestCase):
         if contract is None:
             contract = Contract(
                 id=1,
-                contract_name="contract1",
-                contract_address="0x123",
-                json_name="name1"
+                contract_name='PredictionHandshake',
+                contract_address=app.config['PREDICTION_SMART_CONTRACT'],
+                json_name=app.config['PREDICTION_JSON']
             )
             db.session.add(contract)
             db.session.commit()
+        else:
+            contract.contract_address = app.config['PREDICTION_SMART_CONTRACT']
+            contract.json_name = app.config['PREDICTION_JSON']
+            db.session.commit()
+
 
         # create match
         match = Match.find_match_by_id(1)
@@ -613,7 +618,7 @@ class TestMatchBluePrint(BaseTestCase):
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
                                     })
-            data = json.loads(response.data.decode())          
+            data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
 
     def test_add_match_without_market_fee(self):

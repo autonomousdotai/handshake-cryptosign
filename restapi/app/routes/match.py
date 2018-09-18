@@ -14,7 +14,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time
 from app import db
-from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker
+from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -23,6 +23,7 @@ match_routes = Blueprint('match', __name__)
 @login_required
 def matches():
 	try:
+		source = request.args.get('source')
 		response = []
 		matches = []
 
@@ -30,6 +31,10 @@ def matches():
 		seconds = local_to_utc(t)
 		
 		matches = db.session.query(Match).filter(Match.deleted == 0, Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+		if source is not None:
+			s = Source.find_source_by_url(source)
+			matches = sorted(matches, key=lambda m: m.source_id != s.id)
+			
 		for match in matches:
 			match_json = match.to_json()
 

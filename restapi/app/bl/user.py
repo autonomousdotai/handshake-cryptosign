@@ -99,7 +99,8 @@ def handle_mail_notif(app, user_id, from_address, oc_name, match_name, oc_result
 		user.email = email_exist
 		db.session.commit()
 		email = email_exist
-	elif user.is_subscribe == 1:
+	
+	if user.is_subscribe == 1:
 		email_body = render_email_notify_result_content(app, user_id, from_address, oc_name, match_name, oc_result, side, status, free_bet == 0, free_bet_available)
 		mail_services.send(email, app.config['EMAIL'], "Ninja email", email_body) 
 	else:

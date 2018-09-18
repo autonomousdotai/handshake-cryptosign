@@ -352,7 +352,7 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 		print("log_subscribe_email_dispatcher_time=>",exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
-def send_email_result_notifcation(outcome_id, result):
+def send_email_result_notifcation(outcome_id, result, is_resolve):
 	try:
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None or result < 1:

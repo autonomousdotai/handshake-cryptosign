@@ -104,5 +104,4 @@ def is_equal(a, b):
 
 def render_unsubscribe_url(user_id, passphase):
 	code = hashlib.md5('{}{}'.format(user_id, passphase)).hexdigest()
-	code = "{}=={}".format(code, user_id)
-	return "ninja.org/unsubscribe?token={}".format(code)
+	return "ninja.org/unsubscribe?token={}&id={}".format(code, user_id)

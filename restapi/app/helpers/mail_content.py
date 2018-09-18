@@ -333,7 +333,8 @@ def render_email_content(email, address, unsubscribe_url):
 	return mail_content
 
 
-def render_email_subscribe_content():
+def render_email_subscribe_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
     return """
     <!doctype html>
         <html>
@@ -355,7 +356,7 @@ def render_email_subscribe_content():
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
             <br><a href="http://ninja.org"> <img src="https://goo.gl/2N8oYK" alt="Ninja"> </a>
         </html>
-    """
+    """.format(render_unsubscribe_url(user_id, passphase))
 
 def render_email_notify_result_content(app, user_id, address, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
     passphase = app.config["PASSPHASE"]

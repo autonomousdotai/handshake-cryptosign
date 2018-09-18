@@ -3,7 +3,7 @@ from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local
-from app.helpers.mail_content import render_email_notify_result_content, render_email_subscribe_content
+from app.helpers.mail_content import render_email_subscribe_content
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -327,7 +327,7 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 			return False
 
 		# Send email
-		email_body = render_email_subscribe_content()
+		email_body = render_email_subscribe_content(app, uid)
 		mail_services.send(email, app.config['EMAIL'], "Ninja email", email_body)
 
 		# Call to Dispatcher endpoint verification email
@@ -353,40 +353,35 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 
 @celery.task()
 def send_email_result_notifcation(outcome_id):
-	outcome = Outcome.find_outcome_by_id(outcome_id)
-	if outcome is None or outcome.result < 1:
-		print("send_email_result_notifcation => Invalid outcome: ", outcome)
-		return False
+	try:
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None or outcome.result < 1:
+			print("send_email_result_notifcation => Invalid outcome: ", outcome)
+			return False
 
-	match = Match.find_match_by_id(outcome.match_id)
-	if match is None:
-		print("send_email_result_notifcation => Invalid match: ", outcome)
-		return False
+		match = Match.find_match_by_id(outcome.match_id)
+		if match is None:
+			print("send_email_result_notifcation => Invalid match: ", outcome)
+			return False
 
-	handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
-	shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
+		handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
+		shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
 
-	for shaker in shakers:
-		free_bet_available = None
-		if shaker.free_bet == 1:
-			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(shaker.shaker_id)
+		for shaker in shakers:
+			free_bet_available = None
+			if shaker.free_bet == 1:
+				free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(shaker.shaker_id)
+			# Check or update email of user and send mail
+			user_bl.handle_mail_notif(app, shaker.shaker_id, shaker.from_address, outcome.name, match.name, outcome.result, shaker.side, shaker.status, shaker.free_bet, free_bet_available)
 
-		user = User.find_user_with_id(shaker.shaker_id)
-		if user is not None and user.email is not None and user.is_subscribe == 1:
-			email_body = render_email_notify_result_content(app, shaker.shaker_id, shaker.from_address, outcome.name, match.name, outcome.result, shaker.side, shaker.status, shaker.free_bet == 0, free_bet_available)
-			mail_services.send(user.email, app.config['EMAIL'], "Ninja email", email_body) 
-		else:
-			print("send_email_result_notifcation => Invalid user: {}", user)
-
-	for handshake in handshakes:
-		free_bet_available = None
-		if handshake.free_bet == 1:
-			free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(handshake.user_id)
-
-		user = User.find_user_with_id(handshake.user_id)
-
-		if user is not None and user.email is not None and user.is_subscribe == 1:
-    			email_body = render_email_notify_result_content(app, handshake.user_id, handshake.from_address, outcome.name, match.name, outcome.result, handshake.side, handshake.status, handshake.free_bet == 0, free_bet_available)
-			mail_services.send(user.email, app.config['EMAIL'], "Ninja email", email_body) 
-		else:
-			print("send_email_result_notifcation => Invalid user: {}", user)
+		for handshake in handshakes:
+			free_bet_available = None
+			if handshake.free_bet == 1:
+				free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(handshake.user_id)
+			# Check or update email of user and send mail
+			user_bl.handle_mail_notif(app, handshake.user_id, handshake.from_address, outcome.name, match.name, outcome.result, handshake.side, handshake.status, handshake.free_bet, free_bet_available)
+	except Exception as e:
+		db.session.rollback()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_mail_result_notify=>",exc_type, fname, exc_tb.tb_lineno)

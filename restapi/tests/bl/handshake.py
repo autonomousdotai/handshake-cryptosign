@@ -1266,7 +1266,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="test@abcxyz.abc",
+			email="abcdef@avfccddd.com",
+			payload="ABC123",
 			is_subscribe=1
 		)
 		db.session.add(user)

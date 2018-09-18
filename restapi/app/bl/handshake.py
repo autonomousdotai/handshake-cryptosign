@@ -485,7 +485,7 @@ def save_handshake_for_event(event_name, inputs):
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			send_email_result_notifcation.delay(outcome.id, result, False)
+			# send_email_result_notifcation.delay(outcome.id, result, False)
 			return handshakes, shakers
 
 		return None, None
@@ -674,7 +674,7 @@ def save_handshake_for_event(event_name, inputs):
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
-		send_email_result_notifcation.delay(outcome.id, result, True)
+		# send_email_result_notifcation.delay(outcome.id, result, True)
 		return handshakes, shakers
 
 

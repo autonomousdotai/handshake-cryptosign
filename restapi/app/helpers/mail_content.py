@@ -344,7 +344,6 @@ def render_email_subscribe_content(app, user_id):
             <title>Ninja Subscribe Email</title>
         </head>
         <body class="">
-            <p>Subscribed to the outcome email</p>
             <p>Hey Ninja!</p>
             <p>You’ve successfully made a prediction. Go you!    </p>
             <p>We’ll email you the result, the minute it comes in. </p>
@@ -354,44 +353,210 @@ def render_email_subscribe_content(app, user_id):
 
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
-            <br><a href="http://ninja.org"> <img src="https://goo.gl/2N8oYK" alt="Ninja"> </a>
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
         </html>
     """.format(render_unsubscribe_url(user_id, passphase))
 
-def render_email_notify_result_content(app, user_id, address, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
+def render_email_lose_free_bet_content(app, user_id):
     passphase = app.config["PASSPHASE"]
-    uninit = False
-    content = ""
-    is_win = bet_side == outcome_result
-    is_outcome_draw = outcome_result == CONST.RESULT_TYPE["DRAW"]
-
-    if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-        uninit = False
-    elif status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-        uninit = True
-
-    if is_win:
-        content = "You {} {}, {}, {}"
-    else:
-        content = "You {} {}, {}, {}"
-    content = content.format("win" if is_win else "lose", "free bet" if is_free_bet else "real bet",match_name, outcome_name)
-
-    if is_free_bet and free_bet_available > 0:
-        content = content + ". You have {} free bet available".format(free_bet_available)
-
-    mail_content = """
+    return """
     <!doctype html>
         <html>
         <head>
             <meta name="viewport" content="width=device-width" />
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-            <title>Ninja Subscribe Email</title>
+            <title>Ninja results email</title>
         </head>
         <body class="">
-            Hi {},
-            {}
+            <p>Hey Ninja!</p>
+            <p>Not so lucky this time :( </p>
+            <p>But you know what we say... </p>
+            <p>If at first you don’t succeed, try again for free.</p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
-            <br><a href="http://ninja.org"> <img src="https://goo.gl/2N8oYK" alt="Ninja"> </a>
-        </html>""".format(address, content, render_unsubscribe_url(user_id, passphase))
-    return mail_content
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+def render_email_win_free_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>YOU WON! </p>
+            <p>Wanna win more? </p>
+            <p>Of course you do, who doesn’t!</p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+def render_email_draw_free_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>So... it’s a DRAW. </p>
+            <p>Wanna another shot at glory? </p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+def render_email_not_match_free_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>Unfortunately, this time you weren't matched. </p>
+            <p>No worries, let’s have another go. </p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+def render_email_lose_real_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>Sorry, you lost :( </p>
+            <p>You know what they say... </p>
+            <p>"If at first you don’t succeed, try again for free."</p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+def render_email_win_real_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>YOU WON! </p>
+            <p>Congrats, you’ve successfully predicted the future.</p>
+            <p>Wanna see if you can do it again? </p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+
+def render_email_draw_real_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>So... it’s a DRAW. </p>
+            <p>Not to worry, there’s always next time. </p>
+            <p>We believe in you! </p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+
+def render_email_not_match_real_bet_content(app, user_id):
+    passphase = app.config["PASSPHASE"]
+    return """
+    <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>Ninja results email</title>
+        </head>
+        <body class="">
+            <p>Hey Ninja!</p>
+            <p>Unfortunately, this time you weren't matched. </p>
+            <p>Luckily, you can always try again. </p>
+            <p>Let’s do it!</p>
+            <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
+            <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
+            <br>Powered by <a href="http://ninja.org">Ninja</a>.
+            <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
+        </html>
+    """.format(render_unsubscribe_url(user_id, passphase))
+
+
+def render_email_notify_result_content(app, user_id, address, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
+    content = ""
+
+    if is_free_bet:
+        # if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+            content = render_email_not_match_free_bet_content(app, user_id)
+        else:
+            if outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                content = render_email_draw_free_bet_content(app, user_id)
+            elif outcome_result == CONST.RESULT_TYPE["SUPPORT_WIN"]:
+                content = render_email_win_free_bet_content(app, user_id)
+            elif outcome_result == CONST.RESULT_TYPE["AGAINST_WIN"]:
+                content = render_email_lose_free_bet_content(app, user_id)
+    else:
+        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+            content = render_email_not_match_real_bet_content(app, user_id)
+        else:
+            if outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                content = render_email_draw_real_bet_content(app, user_id)
+            elif outcome_result == CONST.RESULT_TYPE["SUPPORT_WIN"]:
+                content = render_email_win_real_bet_content(app, user_id)
+            elif outcome_result == CONST.RESULT_TYPE["AGAINST_WIN"]:
+                content = render_email_lose_real_bet_content(app, user_id)
+
+    return content

@@ -1266,8 +1266,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="abcdef@avfccddd.com",
-			payload="ABC123",
+			email="abc@xyz.com",
+			payload="123abc",
 			is_subscribe=1
 		)
 		db.session.add(user)
@@ -1334,7 +1334,7 @@ class TestHandshakeBl(BaseTestCase):
 				chain_id=4,
 				is_private=1,
 				user_id=user.id,
-				outcome_id=outcome.id,
+				outcome_id=outcome_draw.id,
 				odds=1.5,
 				amount=1,
 				currency='ETH',
@@ -1361,7 +1361,8 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(shaker_lose)
 		db.session.commit()
 
-		send_email_result_notifcation.delay(outcome.id)
+		send_email_result_notifcation.delay(outcome_draw.id, outcome_draw.result, True)
+		send_email_result_notifcation.delay(outcome.id, outcome.result, True)
 		self.assertEqual(True, True)
 
 if __name__ == '__main__':

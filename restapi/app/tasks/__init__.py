@@ -328,7 +328,7 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 
 		# Send email
 		email_body = render_email_subscribe_content(app, uid)
-		mail_services.send(email, app.config['EMAIL'], "Ninja email", email_body)
+		mail_services.send(email, app.config['EMAIL'], "Subscribed to the outcome email", email_body)
 
 		# Call to Dispatcher endpoint verification email
 		endpoint = '{}/user/verification/email/start'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])

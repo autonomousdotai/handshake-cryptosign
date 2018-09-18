@@ -22,5 +22,9 @@ class Source(BaseModel):
 	def find_source_by_id(cls, sid):
 		return db.session.query(Source).filter_by(id=sid).first()
 
+	@classmethod
+	def find_source_by_url(cls, url):
+		return db.session.query(Source).filter(Source.url.contains(url)).first()
+
 	def __repr__(self):
 		return '<source {}, {}>'.format(self.id, self.name)

@@ -543,7 +543,7 @@ def render_email_notify_result_content(app, user_id, address, outcome_name, matc
 
     if is_free_bet and free_bet_available > 0:
         # if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or status == HandshakeStatus['STATUS_INITED']:
+        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
             content = render_email_not_match_free_bet_content(app, user_id, free_bet_available)
         else:
             if outcome_result == CONST.RESULT_TYPE["DRAW"]:
@@ -554,7 +554,7 @@ def render_email_notify_result_content(app, user_id, address, outcome_name, matc
                 else:
                     content = render_email_lose_free_bet_content(app, user_id, free_bet_available)
     else:
-        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or status == HandshakeStatus['STATUS_INITED']:
+        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
             content = render_email_not_match_real_bet_content(app, user_id)
         else:
             if outcome_result == CONST.RESULT_TYPE["DRAW"]:

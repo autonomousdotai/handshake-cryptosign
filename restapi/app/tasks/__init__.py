@@ -325,6 +325,10 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 			print "Verify email fail: {}".format(data)
 			return False
 
+		# Send email
+		email_body = render_email_subscribe_content(app, uid)
+		mail_services.send(email, app.config['EMAIL'], "Subscribed to the outcome email", email_body)
+
 		return True
 
 	except Exception as e:

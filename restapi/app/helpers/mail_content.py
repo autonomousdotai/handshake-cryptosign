@@ -544,19 +544,21 @@ def render_email_notify_result_content(app, user_id, address, outcome_name, matc
         else:
             if outcome_result == CONST.RESULT_TYPE["DRAW"]:
                 content = render_email_draw_free_bet_content(app, user_id)
-            elif outcome_result == CONST.RESULT_TYPE["SUPPORT_WIN"]:
-                content = render_email_win_free_bet_content(app, user_id)
-            elif outcome_result == CONST.RESULT_TYPE["AGAINST_WIN"]:
-                content = render_email_lose_free_bet_content(app, user_id)
+            else:
+                if outcome_result == bet_side:
+                    content = render_email_win_free_bet_content(app, user_id)
+                else:
+                    content = render_email_lose_free_bet_content(app, user_id)
     else:
         if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
             content = render_email_not_match_real_bet_content(app, user_id)
         else:
             if outcome_result == CONST.RESULT_TYPE["DRAW"]:
                 content = render_email_draw_real_bet_content(app, user_id)
-            elif outcome_result == CONST.RESULT_TYPE["SUPPORT_WIN"]:
-                content = render_email_win_real_bet_content(app, user_id)
-            elif outcome_result == CONST.RESULT_TYPE["AGAINST_WIN"]:
-                content = render_email_lose_real_bet_content(app, user_id)
+            else:
+                if outcome_result == bet_side:
+                    content = render_email_win_real_bet_content(app, user_id)
+                else:
+                    content = render_email_lose_real_bet_content(app, user_id)
 
     return content

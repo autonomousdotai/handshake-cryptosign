@@ -305,33 +305,14 @@ def log_responsed_time():
 @celery.task()
 def subscribe_email_dispatcher(email, fcm, payload, uid):
 	try:
-		# Subscribe email 
-		endpoint = '{}/user/subscribe-email'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
-		data_request = {
-			"email": email
-		}
+		# Call to Dispatcher endpoint verification email
+		endpoint = '{}/user/verification/email/start?email={}'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
 		data_headers = {
-			"Fcm-Token": email,
+			"Fcm-Token": fcm,
 			"Payload": payload,
 			"Uid": uid
 		}
-		res = requests.post(endpoint, headers=data_headers, json=data_request, timeout=10) # timeout: 10s
-		if res.status_code > 400:
-			print "Subscribe email fail: {}".format(res)
-			return False
 
-		data_res = res.json()
-		print data_res
-		if "status" not in data_res or data_res["status"] == 0:
-			print "Subscribe email fail, status invalid: {}".format(res)
-			return False
-
-		# Send email
-		email_body = render_email_subscribe_content(app, uid)
-		mail_services.send(email, app.config['EMAIL'], "Subscribed to the outcome email", email_body)
-
-		# Call to Dispatcher endpoint verification email
-		endpoint = '{}/user/verification/email/start'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
 		res = requests.post(endpoint, headers=data_headers, json={}, timeout=10) # timeout: 10s
 
 		if res.status_code > 400:

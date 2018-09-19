@@ -1266,8 +1266,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="abc@xyz.com",
-			payload="123abc",
+			email="email@email.com",
+			payload="abc123==",
 			is_subscribe=1
 		)
 		db.session.add(user)
@@ -1281,6 +1281,7 @@ class TestHandshakeBl(BaseTestCase):
 
 		outcome = Outcome(
 			match_id=match.id,
+			name="Outcome name",
 			result=1,
 			contract_id=1
 		)
@@ -1289,6 +1290,7 @@ class TestHandshakeBl(BaseTestCase):
 
 		outcome_draw = Outcome(
 			match_id=match.id,
+			name="Outcome Draw",
 			result=3,
 			contract_id=1
 		)
@@ -1321,7 +1323,7 @@ class TestHandshakeBl(BaseTestCase):
 						odds=1.5,
 						amount=1,
 						currency='ETH',
-						side=1,
+						side=2,
 						remaining_amount=0,
 						from_address='0x123',
 						status=0

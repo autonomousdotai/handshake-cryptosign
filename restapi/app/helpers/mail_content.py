@@ -357,7 +357,7 @@ def render_email_subscribe_content(app, user_id):
         </html>
     """.format(render_unsubscribe_url(user_id, passphase))
 
-def render_email_lose_free_bet_content(app, user_id):
+def render_email_lose_free_bet_content(app, user_id, free_bet_available):
     passphase = app.config["PASSPHASE"]
     return """
     <!doctype html>
@@ -370,6 +370,7 @@ def render_email_lose_free_bet_content(app, user_id):
         <body class="">
             <p>Hey Ninja!</p>
             <p>Not so lucky this time :( </p>
+            <p>You have {} freebets </p>
             <p>But you know what we say... </p>
             <p>If at first you don’t succeed, try again for free.</p>
             <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
@@ -377,9 +378,9 @@ def render_email_lose_free_bet_content(app, user_id):
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
             <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
         </html>
-    """.format(render_unsubscribe_url(user_id, passphase))
+    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
 
-def render_email_win_free_bet_content(app, user_id):
+def render_email_win_free_bet_content(app, user_id, free_bet_available):
     passphase = app.config["PASSPHASE"]
     return """
     <!doctype html>
@@ -394,14 +395,15 @@ def render_email_win_free_bet_content(app, user_id):
             <p>YOU WON! </p>
             <p>Wanna win more? </p>
             <p>Of course you do, who doesn’t!</p>
+            <p>You have {} freebets </p>
             <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
             <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
         </html>
-    """.format(render_unsubscribe_url(user_id, passphase))
+    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
 
-def render_email_draw_free_bet_content(app, user_id):
+def render_email_draw_free_bet_content(app, user_id, free_bet_available):
     passphase = app.config["PASSPHASE"]
     return """
     <!doctype html>
@@ -415,14 +417,15 @@ def render_email_draw_free_bet_content(app, user_id):
             <p>Hey Ninja!</p>
             <p>So... it’s a DRAW. </p>
             <p>Wanna another shot at glory? </p>
+            <p>You have {} freebets </p>
             <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
             <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
         </html>
-    """.format(render_unsubscribe_url(user_id, passphase))
+    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
 
-def render_email_not_match_free_bet_content(app, user_id):
+def render_email_not_match_free_bet_content(app, user_id, free_bet_available):
     passphase = app.config["PASSPHASE"]
     return """
     <!doctype html>
@@ -436,12 +439,13 @@ def render_email_not_match_free_bet_content(app, user_id):
             <p>Hey Ninja!</p>
             <p>Unfortunately, this time you weren't matched. </p>
             <p>No worries, let’s have another go. </p>
+            <p>You have {} freebets </p>
             <p><a href="http://ninja.org/prediction">PLAY NOW</a></p>
             <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
             <br>Powered by <a href="http://ninja.org">Ninja</a>.
             <br><a href="http://ninja.org"> <img src="" alt="Ninja"> </a>
         </html>
-    """.format(render_unsubscribe_url(user_id, passphase))
+    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
 
 def render_email_lose_real_bet_content(app, user_id):
     passphase = app.config["PASSPHASE"]
@@ -537,20 +541,20 @@ def render_email_not_match_real_bet_content(app, user_id):
 def render_email_notify_result_content(app, user_id, address, outcome_name, match_name, outcome_result, bet_side, status, is_free_bet, free_bet_available):
     content = ""
 
-    if is_free_bet:
+    if is_free_bet and free_bet_available > 0:
         # if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-            content = render_email_not_match_free_bet_content(app, user_id)
+        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or status == HandshakeStatus['STATUS_INITED']:
+            content = render_email_not_match_free_bet_content(app, user_id, free_bet_available)
         else:
             if outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                content = render_email_draw_free_bet_content(app, user_id)
+                content = render_email_draw_free_bet_content(app, user_id, free_bet_available)
             else:
                 if outcome_result == bet_side:
-                    content = render_email_win_free_bet_content(app, user_id)
+                    content = render_email_win_free_bet_content(app, user_id, free_bet_available)
                 else:
-                    content = render_email_lose_free_bet_content(app, user_id)
+                    content = render_email_lose_free_bet_content(app, user_id, free_bet_available)
     else:
-        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+        if status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or status == HandshakeStatus['STATUS_INITED']:
             content = render_email_not_match_real_bet_content(app, user_id)
         else:
             if outcome_result == CONST.RESULT_TYPE["DRAW"]:

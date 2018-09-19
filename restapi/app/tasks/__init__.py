@@ -306,7 +306,7 @@ def log_responsed_time():
 def subscribe_email_dispatcher(email, fcm, payload, uid):
 	try:
 		# Call to Dispatcher endpoint verification email
-		endpoint = '{}/user/verification/email/start?email={}'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
+		endpoint = '{}/user/verification/email/start?email={}&isNeedEmail=0'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
 		data_headers = {
 			"Fcm-Token": fcm,
 			"Payload": payload,

@@ -101,7 +101,7 @@ def handle_mail_notif(app, user_id, from_address, oc_name, match_name, oc_result
 		email = email_exist
 	
 	if user.is_subscribe == 1:
-		email_body = render_email_notify_result_content(app, user_id, from_address, oc_name, match_name, oc_result, side, status, free_bet == 0, free_bet_available)
+		email_body = render_email_notify_result_content(app, user_id, from_address, oc_name, match_name, oc_result, side, status, free_bet == 1, free_bet_available)
 		mail_services.send(email, app.config['EMAIL'], "Results [{}]".format(oc_name), email_body) 
 	else:
 		print("send_email_result_notifcation => User did not subscribe: {}", user)

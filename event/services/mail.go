@@ -53,10 +53,26 @@ func (s MailService) send(from string, to string, subject string, content string
 	return
 }
 
-// SendEmailForReportingOutcome : email, outcome
+// SendEmailForReportingOutcome : email, match, outcome
 func (s MailService) SendEmailForReportingOutcome(email string, match models.Match, outcome string) {
 	subject := fmt.Sprintf(`The event: %s need your reporting!`, match.Name)
-	body := fmt.Sprintf(`It’s 15 min until the report window/time begins. Please report outcome: %s by using this link: <a href="www.ninja.org/report">www.ninja.org/report</a> on mobile.`, outcome)
+	body := fmt.Sprintf(`Hey Ninja!<br/><br/>
+			&nbsp;The time has come for you to report the results of your market.<br/>
+			&nbsp;Your market will close in 15 mins. <br/>
+			&nbsp;<a href="www.ninja.org/report">Click here to report </a> on mobile. <br/><br/>
+			&nbsp;&nbsp;Or check the quick guide below:<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;1. Open Ninja on mobile.<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;2. Go to the Bet tab.<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;3. Click on FILL US IN to go the report page.<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;4. Select your event.<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;5. Then select the outcome (Support, Oppose or Draw)<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;6. Click Submit.<br/>
+			<img src="https://storage.googleapis.com/cryptosign/images/reporting_email/fill_us_in.png"/>&nbsp;&nbsp;
+			<img src="https://storage.googleapis.com/cryptosign/images/reporting_email/user_report.png"/><br/>
+				<br/>
+				<br/>
+				Talk soon,<br/>
+				Ninja`)
 	status, err := s.send("dojo@ninja.org", email, subject, body)
 
 	if err != nil {

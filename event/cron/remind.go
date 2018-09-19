@@ -27,9 +27,13 @@ func (r *Remind) RemindUser() {
 			outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
 			fmt.Println(outcomes)
 			if err == nil {
+				m := make(map[int]bool)
 				for i := 0; i < len(outcomes); i++ {
 					o := outcomes[i]
-					go r.fireNotification(o, matches[index])
+					if m[o.CreatedUserID] == false {
+						go r.fireNotification(o, matches[index])
+						m[o.CreatedUserID] = true
+					}
 				}
 			}
 		}

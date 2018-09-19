@@ -48,6 +48,17 @@ def add():
 			db.session.add(token)
 			db.session.flush()
 
+			task = Task(
+				task_type=CONST.TASK_TYPE['ERC_20'],
+				data=json.dumps(token.to_json()),
+				action=CONST.TASK_ACTION['ADD_TOKEN'],
+				status=-1,
+				contract_address=g.ERC20_TOKEN_REGISTRY_SMART_CONTRACT,
+				contract_json=g.ERC20_TOKEN_REGISTRY_JSON
+			)
+			db.session.add(task)
+			db.session.flush()
+
 			response_json.append(token.to_json())
 
 		db.session.commit()
@@ -92,14 +103,14 @@ def approve(id):
 
 		# add offchain
 		data = token.to_json()
-		data['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'token{}'.format(token.id)
+		data['offchain'] = CONST.CRYPTOSIGN_ERC20_OFFCHAIN_PREFIX + 'token{}'.format(token.id)
 		task = Task(
 					task_type=CONST.TASK_TYPE['ERC_20'],
 					data=json.dumps(data),
-					action=CONST.TASK_ACTION['ADD_TOKEN'],
+					action=CONST.TASK_ACTION['APPROVE_TOKEN'],
 					status=-1,
-					contract_address=g.PREDICTION_SMART_CONTRACT,
-					contract_json=g.PREDICTION_JSON
+					contract_address=g.ERC20_PREDICTION_SMART_CONTRACT,
+					contract_json=g.ERC20_PREDICTION_JSON
 				)
 		db.session.add(task)
 		db.session.commit()

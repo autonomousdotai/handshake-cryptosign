@@ -485,7 +485,7 @@ def save_handshake_for_event(event_name, inputs):
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			# send_email_result_notifcation.delay(outcome.id)
+			send_email_result_notifcation.delay(outcome.id, result, is_resolve=False)
 			return handshakes, shakers
 
 		return None, None
@@ -674,6 +674,7 @@ def save_handshake_for_event(event_name, inputs):
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
+		send_email_result_notifcation.delay(outcome.id, result, is_resolve=True)
 		return handshakes, shakers
 
 
@@ -784,7 +785,7 @@ def can_withdraw(handshake, shaker=None):
 
 	if shaker is None:
 		if handshake is not None:
-			if handshake.status == HandshakeStatus['STATUS_INITED']:
+			if handshake.status == HandshakeStatus['STATUS_INITED'] or handshake.status == HandshakeStatus['STATUS_RESOLVED']:
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				result = handshake.side
 			else:
@@ -792,7 +793,7 @@ def can_withdraw(handshake, shaker=None):
 		else:
 			return MESSAGE.CANNOT_WITHDRAW
 	else:
-		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+		if shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED'] or shaker.status == HandshakeStatus['STATUS_RESOLVED']:
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)	
 			result = shaker.side

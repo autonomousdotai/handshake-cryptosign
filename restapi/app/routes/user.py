@@ -5,6 +5,7 @@ import json
 import hashlib
 import requests
 import app.bl.user as user_bl
+from app.helpers.utils import render_unsubscribe_url
 
 from flask import Blueprint, request, g
 from app import db, sg, s3
@@ -17,7 +18,6 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.response import response_ok, response_error
 from app.helpers.utils import is_valid_email
 from app.tasks import subscribe_email_dispatcher
-
 
 user_routes = Blueprint('user', __name__)
 
@@ -50,34 +50,6 @@ def auth():
 		db.session.rollback()
 		return response_error(ex.message)
 
-@user_routes.route('/hook/dispatcher', methods=['POST'])
-@admin_required
-def user_hook():
-	try:
-		data = request.json
-		print "Hook data: {}".format(data)
-		if data is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		type_change = data['type_change']
-		user_id = data['user_id']
-		email = data['email']
-		meta_data = data['meta_data']
-
-		if type_change == "Update":
-			user = User.find_user_with_id(user_id)
-			# TODO: check email is empty
-			if user.email != email:
-				print "Update email: {}".format(email)
-				user.email = email
-				db.session.commit()
-
-		return response_ok()
-
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
 @user_routes.route('/subscribe', methods=['POST'])
 @login_required
 def user_subscribe():
@@ -87,42 +59,36 @@ def user_subscribe():
 		if data is None or 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		subscribe_email_dispatcher.delay(data["email"], request.headers["Fcm-Token"], request.headers["Payload"], request.headers["Uid"])
+		email = data["email"]
+		uid = request.headers["Uid"]
 
-		return response_ok()
-
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-@user_routes.route('/unsubscribe', methods=['POST'])
-@login_required
-def user_unsubscribe():
-	try:
-		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
-		user.is_subscribe = 0
+		user.email = email
 		db.session.commit()
+
+		subscribe_email_dispatcher.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
 		return response_ok()
 
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
 
-@user_routes.route('/unsubscribe/<string:token>', methods=['GET'])
-def user_check_unsubscribe(token):
+# TODO: Check AuthMiddleware
+@user_routes.route('/unsubscribe', methods=['GET'])
+def user_check_unsubscribe():
 	try:
-		arr = token.split('==')
-		if len(arr) != 2:
+		token = request.args.get('token')
+		uid = request.args.get('id')
+
+		if token is None or uid is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-		
-		user_id = arr[1]
-		confirm = hashlib.md5('{}{}'.format(user_id, g.PASSPHASE)).hexdigest()
-		confirm = "{}=={}".format(confirm, user_id)
+
+		confirm = hashlib.md5('{}{}'.format(uid, g.PASSPHASE)).hexdigest()
 		if confirm != token:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 		
-		user = User.find_user_with_id(user_id)
+		user = User.find_user_with_id(uid)
 		if user is None:
 			return response_error(MESSAGE.CANNOT_UNSUBSCRIBE_EMAIL, CODE.CANNOT_UNSUBSCRIBE_EMAIL)
 		
@@ -134,3 +100,4 @@ def user_check_unsubscribe(token):
 		db.session.rollback()
 		print ex.message
 		return response_error()
+

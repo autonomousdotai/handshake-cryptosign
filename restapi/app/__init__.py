@@ -72,8 +72,12 @@ def before_request():
 	# SmartContract
 	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')
 	g.PREDICTION_JSON = app.config.get('PREDICTION_JSON')
+
 	g.ERC20_PREDICTION_SMART_CONTRACT = app.config.get('ERC20_PREDICTION_SMART_CONTRACT')
 	g.ERC20_PREDICTION_JSON = app.config.get('ERC20_PREDICTION_JSON')
+
+	g.ERC20_TOKEN_REGISTRY_SMART_CONTRACT = app.config.get('ERC20_TOKEN_REGISTRY_SMART_CONTRACT')
+	g.ERC20_TOKEN_REGISTRY_JSON = app.config.get('ERC20_TOKEN_REGISTRY_JSON')
 
 	g.start = [time.time(), request.base_url]
 	g.reported_time = app.config.get('REPORTED_TIME')

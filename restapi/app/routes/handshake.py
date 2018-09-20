@@ -11,6 +11,7 @@ import app.constants as CONST
 import app.bl.handshake as handshake_bl
 import app.bl.match as match_bl
 import app.bl.user as user_bl
+import app.bl.outcome as outcome_bl
 
 from decimal import *
 from flask import Blueprint, request, g
@@ -388,17 +389,12 @@ def create_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		# check user be able to create new free-bet or not
-		can_free_bet, _, _ = user_bl.check_user_is_able_to_create_new_free_bet(uid)
-		if can_free_bet is False:
-			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
+		if user.free_bet >= CONST.MAXIMUM_FREE_BET:
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		odds = Decimal(data.get('odds'))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-
-		if user_bl.count_user_free_bet(user.id) >= CONST.MAXIMUM_FREE_BET:
-			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)
@@ -692,15 +688,18 @@ def check_free_bet():
 			if setting.status == 0:
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
-		# check user be able to create new free-bet or not
-		can_free_bet, is_win, total_count_free_bet = user_bl.check_user_is_able_to_create_new_free_bet(uid)
+		item = user_bl.get_last_user_free_bet(uid)
+		outcome_id = item[1]
+		user_side = item[2]
+		can_free_bet = False
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome_bl.has_result(outcome):
+			is_win = outcome.result == user_side
+			can_free_bet = (CONST.MAXIMUM_FREE_BET - user.free_bet) > 0
 
-		if can_free_bet is False:
-			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
-		
 		response = {
-			"free_bet_used": total_count_free_bet,
-			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
+			"free_bet_used": user.free_bet,
+			"free_bet_available": CONST.MAXIMUM_FREE_BET - user.free_bet,
 			"can_freebet": can_free_bet,
 			"is_win": is_win
 		}

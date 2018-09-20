@@ -269,8 +269,8 @@ def save_handshake_method_for_event(method, inputs):
 
 			if 'maker' in inputs: # free-bet
 				user = User.find_user_with_id(handshake.user_id)
-				if user is not None and user.free_bet == 1:
-					user.free_bet = 0
+				if user is not None and user.free_bet > 0:
+					user.free_bet -= 1
 					db.session.flush()
 
 			arr = []

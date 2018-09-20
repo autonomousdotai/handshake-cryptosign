@@ -40,7 +40,7 @@ def matches():
 		if source is not None:
 			s = Source.find_source_by_url(source)
 			matches = sorted(matches, key=lambda m: m.source_id != s.id)
-		print matches
+
 		for match in matches:
 			match_json = match.to_json()
 			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
@@ -269,20 +269,38 @@ def relevant():
 	try:
 		match_id = int(request.args.get('match'))
 		match = Match.find_match_by_id(match_id)
+		response = []
+		matches = []
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
 		if match is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-		
-		match_json = match.to_json()
-		
-		
-		arr_outcomes = []
-		for outcome in match.outcomes:
-			if outcome.hid is not None and outcome.public == 1:
-				arr_outcomes.append(outcome.to_json())
 
-		match_json["outcomes"] = arr_outcomes
+		matches = db.session.query(Match)\
+		.filter(\
+			or_(Match.source_id == match.source_id, Match.category_id == match.category_id),\
+			Match.deleted == 0,\
+			Match.date > seconds,\
+			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
+		.all()
 
-		return response_ok()
+		for match in matches:
+			match_json = match.to_json()
+			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+			match_json["total_users"] = total_user
+			match_json["total_bets"] = total_bets
+			
+			arr_outcomes = []
+			for outcome in match.outcomes:
+				if outcome.hid is not None and outcome.public == 1:
+					arr_outcomes.append(outcome.to_json())
+
+			match_json["outcomes"] = arr_outcomes
+			
+			response.append(match_json)
+
+		return response_ok(response)
 	except Exception, ex:
 		return response_error(ex.message)
 

@@ -374,3 +374,35 @@ def send_email_result_notifcation(outcome_id, result, is_resolve):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_mail_result_notify=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def update_status_feed(_id, status):
+	try:
+		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
+
+		shake_user_infos = []
+		handshake = Handshake.find_handshake_by_id(_id)
+
+		if handshake.shakers is not None:
+			for s in handshake.shakers:
+				shake_user_infos.append(s.to_json())
+
+		data = {
+			"add": [{
+				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+				"status_i": {"set":status},
+				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
+			}]
+		}
+
+		res = requests.post(endpoint, json=data)
+		if res.status_code > 400 or \
+			res.content is None or \
+			(isinstance(res.content, str) and 'null' in res.content):
+			print "Update status feed fail id: {}".format(_id)
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)

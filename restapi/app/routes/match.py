@@ -43,7 +43,7 @@ def matches():
 		print matches
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_amount = get_total_user_and_amount_by_match_id(match_id)
+			total_user, total_amount = get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			
@@ -273,9 +273,7 @@ def relevant():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 		
 		match_json = match.to_json()
-		total_user, total_amount = get_total_user_and_amount_by_match_id(match_id)
-		match_json["total_users"] = total_user
-		match_json["total_bets"] = total_bets
+		
 		
 		arr_outcomes = []
 		for outcome in match.outcomes:
@@ -312,10 +310,6 @@ def match_detail(match_id):
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.first()
 
-		if match_id is None:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		match = Match.find_match_by_id(match_id)
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 		
@@ -326,7 +320,6 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			print outcome
 			if outcome.hid is not None and outcome.public == is_public:
 				if outcome_id is not None:
 					if outcome.id == outcome_id:

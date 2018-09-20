@@ -43,7 +43,7 @@ def matches():
 		print matches
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_amount = get_total_user_and_amount_by_match_id(match.id)
+			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			

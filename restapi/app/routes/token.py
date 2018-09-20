@@ -8,7 +8,7 @@ from sqlalchemy import and_
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required
 from app import db
-from app.models import Token, Task
+from app.models import Token, Task, User
 from app.helpers.message import MESSAGE, CODE
 
 token_routes = Blueprint('token', __name__)
@@ -17,11 +17,23 @@ token_routes = Blueprint('token', __name__)
 @login_required
 def tokens():
 	try:
+		uid = int(request.headers['Uid'])
+		user = User.find_user_with_id(uid)
+		
 		tokens = db.session.query(Token).filter(and_(Token.status==CONST.TOKEN_STATUS['APPROVED'], Token.deleted==0)).all()
-		data = []
-		for token in tokens:
-			data.append(token.to_json())
+		token_list = []
+		approved_token_list = []
 
+		for token in tokens:
+			token_list.append(token.to_json())
+
+		for approve_token in user.tokens:
+			approved_token_list.append(approve_token.to_json())
+
+		data = {
+			"token": token_list,
+			"approved_token": approved_token_list
+		}
 		return response_ok(data)
 	except Exception, ex:
 		return response_error(ex.message)
@@ -90,7 +102,7 @@ def remove(id):
 def approve(id):
 	try:
 		# set status = 1
-		# call bc: add new token
+		# call bc: approve new token
 		token = db.session.query(Token).filter(Token.id==id).first()
 		if token is None:
 			return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
@@ -118,4 +130,17 @@ def approve(id):
 		return response_ok(message="{} has been approved!".format(token.name))
 	except Exception, ex:
 		db.session.rollback()
+		return response_error(ex.message)
+
+
+@token_routes.route('/user_approve_token/<int:token_id>', methods=['GET'])
+@login_required
+def user_approve_token(token_id):
+	"""
+	""	User approve token:
+	""		+ 
+	"""
+	try:
+		pass
+	except Exception, ex:
 		return response_error(ex.message)

@@ -467,9 +467,12 @@ def uninit_free_bet(handshake_id):
 				if outcome is None:
 					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 				else:
+					contract = Contract.find_contract_by_id(outcome.contract_id)
+					if contract is None:
+						return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
+
 					handshake.status = CONST.Handshake['STATUS_MAKER_UNINIT_PENDING']
 					db.session.flush()
-					update_feed.delay(handshake.id)
 					
 					data = {
 						'hid': outcome.hid,
@@ -482,9 +485,6 @@ def uninit_free_bet(handshake_id):
 						'payload': user.payload,
 						'free_bet': 1
 					}
-					contract = Contract.find_contract_by_id(outcome.contract_id)
-					if contract is None:
-						return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
 					task = Task(
 						task_type=CONST.TASK_TYPE['FREE_BET'],
@@ -497,6 +497,7 @@ def uninit_free_bet(handshake_id):
 					db.session.add(task)
 					db.session.commit()
 
+					update_feed.delay(handshake.id)
 					return response_ok(handshake.to_json())
 					
 		else:

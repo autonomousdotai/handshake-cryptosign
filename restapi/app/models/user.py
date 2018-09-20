@@ -1,6 +1,10 @@
 from app import db
 from app.models.base import BaseModel
 
+user_token = db.Table('user_token',
+                        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+                        db.Column('token_id', db.Integer, db.ForeignKey('token.id'), primary_key=True)
+                        )
 class User(BaseModel):
 	__tablename__ = 'user'
 	__json_public__ = ['id', 'fcm_token', 'email']
@@ -14,6 +18,13 @@ class User(BaseModel):
 	is_subscribe = db.Column(db.Integer,
 						server_default=str(1),
 						default=1)
+	tokens = db.relationship(
+						"Token",
+						secondary=user_token,
+						primaryjoin='user_token.c.user_id==User.id',
+						secondaryjoin='user_token.c.token_id==Token.id',
+						backref=db.backref('back_tokens', lazy='dynamic'),
+						lazy='dynamic')
 	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
 	                             lazy='dynamic')
 

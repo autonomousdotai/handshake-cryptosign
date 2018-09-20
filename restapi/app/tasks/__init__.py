@@ -327,7 +327,7 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 
 		# Send email
 		email_body = render_email_subscribe_content(app, uid)
-		mail_services.send(email, app.config['EMAIL'], "Subscribed to the outcome email", email_body)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Welcome to Ninja", email_body)
 
 		return True
 

@@ -20,7 +20,7 @@ from app.helpers.message import MESSAGE, CODE
 match_routes = Blueprint('match', __name__)
 
 @match_routes.route('/', methods=['GET'])
-# @login_required
+@login_required
 def matches():
 	try:
 		source = request.args.get('source')

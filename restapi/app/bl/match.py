@@ -2,9 +2,10 @@ from flask import g
 from datetime import *
 
 from app import db
-from app.models import User, Handshake, Match, Outcome, Contract
+from app.models import User, Handshake, Match, Outcome, Contract, Shaker
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
+from sqlalchemy import func
 
 import app.constants as CONST
 
@@ -73,3 +74,36 @@ def is_able_to_set_result_for_outcome(outcome):
 		return MESSAGE.OUTCOME_IS_REPORTING, CODE.OUTCOME_IS_REPORTING
 
 	return None, None
+
+def get_total_user_and_amount_by_match_id(match_id):
+	# Total User
+	hs_count_user = db.session.query(Handshake.user_id.label("user_id"))\
+		.filter(Outcome.match_id == match_id)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.group_by(Handshake.user_id)
+
+	s_count_user = db.session.query(Shaker.shaker_id.label("user_id"))\
+		.filter(Outcome.match_id == match_id)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Handshake.id == Shaker.handshake_id)\
+		.group_by(Shaker.shaker_id)
+
+	user_union = hs_count_user.union(s_count_user)
+	total_user = db.session.query(func.count(user_union.subquery().columns.user_id).label("total")).scalar()
+
+	# Total Amount
+	hs_amount = db.session.query(func.sum((Handshake.amount * Handshake.odds)).label("total_amount_hs"))\
+		.filter(Outcome.match_id == match_id)\
+		.filter(Handshake.outcome_id == Outcome.id)
+
+	s_amount = db.session.query(func.sum((Shaker.amount * Shaker.odds)).label("total_amount_s"))\
+		.filter(Outcome.match_id == match_id)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Handshake.id == Shaker.handshake_id)
+
+	total_amount = db.session.query(hs_amount.label("total_amount_hs"), s_amount.label("total_amount_s")).first()
+	
+	total_users = total_user if total_user is not None else 0			
+	total_bets = (total_amount.total_amount_hs if total_amount.total_amount_hs is not None else 0)  + (total_amount.total_amount_s if total_amount.total_amount_s is not None else 0)
+
+	return total_users, total_bets

@@ -12,7 +12,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.bl.match import is_validate_match_time
+from app.bl.match import is_validate_match_time, get_total_user_and_amount_by_match_id
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source
 from app.helpers.message import MESSAGE, CODE
@@ -20,7 +20,7 @@ from app.helpers.message import MESSAGE, CODE
 match_routes = Blueprint('match', __name__)
 
 @match_routes.route('/', methods=['GET'])
-@login_required
+# @login_required
 def matches():
 	try:
 		source = request.args.get('source')
@@ -30,48 +30,26 @@ def matches():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		
-		matches = db.session.query(Match).filter(Match.deleted == 0, Match.date > seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+		matches = db.session.query(Match)\
+				.filter(\
+					Match.deleted == 0,\
+					Match.date > seconds,\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+				.order_by(Match.index.desc(), Match.date.asc())\
+				.all()
 		if source is not None:
 			s = Source.find_source_by_url(source)
 			matches = sorted(matches, key=lambda m: m.source_id != s.id)
-			
+		print matches
 		for match in matches:
 			match_json = match.to_json()
-
-
-			# Total User
-			hs_count_user = db.session.query(Handshake.user_id.label("user_id"))\
-			.filter(Outcome.match_id == match.id)\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.group_by(Handshake.user_id)
-
-			s_count_user = db.session.query(Shaker.shaker_id.label("user_id"))\
-			.filter(Outcome.match_id == match.id)\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Handshake.id == Shaker.handshake_id)\
-			.group_by(Shaker.shaker_id)
-
-			user_union = hs_count_user.union(s_count_user)
-			total_user = db.session.query(func.count(user_union.subquery().columns.user_id).label("total")).scalar()
-
-			# Total Amount
-			hs_amount = db.session.query(func.sum((Handshake.amount * Handshake.odds)).label("total_amount_hs"))\
-			.filter(Outcome.match_id == match.id)\
-			.filter(Handshake.outcome_id == Outcome.id)
-
-			s_amount = db.session.query(func.sum((Shaker.amount * Shaker.odds)).label("total_amount_s"))\
-			.filter(Outcome.match_id == match.id)\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Handshake.id == Shaker.handshake_id)
-
-			total_amount = db.session.query(hs_amount.label("total_amount_hs"), s_amount.label("total_amount_s")).first()
-			
-			match_json["total_users"] = total_user if total_user is not None else 0			
-			match_json["total_bets"] = (total_amount.total_amount_hs if total_amount.total_amount_hs is not None else 0)  + (total_amount.total_amount_s if total_amount.total_amount_s is not None else 0)
+			total_user, total_amount = get_total_user_and_amount_by_match_id(match_id)
+			match_json["total_users"] = total_user
+			match_json["total_bets"] = total_bets
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None:
+				if outcome.hid is not None and outcome.public == 1:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
@@ -282,5 +260,82 @@ def match_need_user_report():
 			response.append(match_json)
 
 		return response_ok(response)
+	except Exception, ex:
+		return response_error(ex.message)
+
+@match_routes.route('/relevant-event', methods=['GET'])
+@login_required
+def relevant():
+	try:
+		match_id = int(request.args.get('match'))
+		match = Match.find_match_by_id(match_id)
+		if match is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+		
+		match_json = match.to_json()
+		total_user, total_amount = get_total_user_and_amount_by_match_id(match_id)
+		match_json["total_users"] = total_user
+		match_json["total_bets"] = total_bets
+		
+		arr_outcomes = []
+		for outcome in match.outcomes:
+			if outcome.hid is not None and outcome.public == 1:
+				arr_outcomes.append(outcome.to_json())
+
+		match_json["outcomes"] = arr_outcomes
+
+		return response_ok()
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@match_routes.route('/<int:match_id>', methods=['GET'])
+@login_required
+def match_detail(match_id):
+	try:
+		outcome_id = None
+		if request.args.get('outcome_id') is not None:
+			outcome_id = int(request.args.get('outcome_id'))
+
+		is_public = 1
+		if request.args.get('public') is not None:
+			is_public = int(request.args.get('public'))
+
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		match = db.session.query(Match)\
+				.filter(\
+					Match.id == match_id,\
+					Match.deleted == 0,\
+					Match.date > seconds,\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+				.first()
+
+		if match_id is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		match = Match.find_match_by_id(match_id)
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+		
+		match_json = match.to_json()
+		total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+		match_json["total_users"] = total_user
+		match_json["total_bets"] = total_bets
+
+		arr_outcomes = []
+		for outcome in match.outcomes:
+			print outcome
+			if outcome.hid is not None and outcome.public == is_public:
+				if outcome_id is not None:
+					if outcome.id == outcome_id:
+						arr_outcomes.append(outcome.to_json())
+				else:
+					arr_outcomes.append(outcome.to_json())
+
+		match_json["outcomes"] = arr_outcomes
+		return response_ok(match_json)
+
 	except Exception, ex:
 		return response_error(ex.message)

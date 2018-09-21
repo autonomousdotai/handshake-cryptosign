@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
+
 from functools import wraps
 from flask import request, g
 from app import db

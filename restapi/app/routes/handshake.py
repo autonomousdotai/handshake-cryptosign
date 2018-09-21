@@ -20,7 +20,7 @@ from sqlalchemy import or_, and_, text, func
 from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.bc_exception import BcException
-from app.helpers.decorators import login_required
+from app.helpers.decorators import login_required, whitelist
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting
@@ -379,6 +379,7 @@ def rollback():
 
 @handshake_routes.route('/create_free_bet', methods=['POST'])
 @login_required
+@whitelist
 def create_bet():
 	try:
 		uid = int(request.headers['Uid'])

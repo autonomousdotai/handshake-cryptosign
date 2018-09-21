@@ -25,6 +25,15 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrap
 
+def whitelist(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        blacklist_path = os.path.abspath(os.path.dirname(__file__)) + '/blacklist.json'
+        remote = request.remote_addr
+        print remote
+        return f(*args, **kwargs)
+    return wrap
+
 def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs): 

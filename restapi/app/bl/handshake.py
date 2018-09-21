@@ -291,8 +291,8 @@ def save_handshake_method_for_event(method, inputs):
 
 			if 'taker' in inputs: # free-bet
 				user = User.find_user_with_id(shaker.shaker_id)
-				if user is not None and user.free_bet == 1:
-					user.free_bet = 0
+				if user is not None and user.free_bet > 0:
+					user.free_bet -= 1
 					db.session.flush()
 
 			arr = []
@@ -408,8 +408,8 @@ def save_failed_handshake_method_for_event(method, tx):
 	
 			if method == 'initTestDrive': # free-bet
 				user = User.find_user_with_id(handshake.user_id)
-				if user is not None and user.free_bet == 1:
-					user.free_bet = 0
+				if user is not None and user.free_bet > 0:
+					user.free_bet -= 1
 					db.session.flush()
 
 			arr = []
@@ -429,8 +429,8 @@ def save_failed_handshake_method_for_event(method, tx):
 
 			if method == 'shakeTestDrive': # free-bet
 				user = User.find_user_with_id(shaker.shaker_id)
-				if user is not None and user.free_bet == 1:
-					user.free_bet = 0
+				if user is not None and user.free_bet > 0:
+					user.free_bet -= 1
 					db.session.flush()
 
 			arr = []
@@ -568,8 +568,8 @@ def save_handshake_for_event(event_name, inputs):
 
 			if handshake.free_bet != 0:
 				user = User.find_user_with_id(handshake.user_id)
-				if user is not None and user.free_bet == 1:
-					user.free_bet = 0
+				if user is not None and user.free_bet > 1:
+					user.free_bet -= 1
     				
 			db.session.flush()
 

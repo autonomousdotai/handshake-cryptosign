@@ -333,9 +333,9 @@ def rollback():
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
 			if handshake is not None:	
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
-					handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
-					if handshake.free_bet == 1:
-						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+					handshake.status = HandshakeStatus['STATUS_MAKER_INIT_ROLLBACK']
+					if handshake.free_bet == 1 and user.free_bet > 0:
+						user.free_bet -= 1
 					
 					db.session.flush()
 					handshakes.append(handshake)
@@ -355,8 +355,8 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
-					if shaker.free_bet == 1:
-						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+					if shaker.free_bet == 1 and user.free_bet > 0:
+						user.free_bet -= 1
 
 					shakers.append(shaker)
 
@@ -629,7 +629,8 @@ def refund_free_bet():
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if handshake_bl.can_refund(None, shaker=shaker):
-				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+				if user.free_bet > 0:
+					user.free_bet -= 1
 
 				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
@@ -644,7 +645,8 @@ def refund_free_bet():
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_refund(handshake):
-				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+				if user.free_bet > 0:
+					user.free_bet -= 1
 
 				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
@@ -698,7 +700,6 @@ def check_free_bet():
 			can_free_bet = (CONST.MAXIMUM_FREE_BET - user.free_bet) > 0
 
 		response = {
-			"free_bet_used": user.free_bet,
 			"free_bet_available": CONST.MAXIMUM_FREE_BET - user.free_bet,
 			"can_freebet": can_free_bet,
 			"is_win": is_win

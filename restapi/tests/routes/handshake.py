@@ -1176,7 +1176,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             handshake = data['data']
             self.assertNotEqual(handshake['status'], handshake['bk_status'])
-            self.assertEqual(handshake['status'], HandshakeStatus['STATUS_MAKER_UNINIT_FAILED'])
+            self.assertEqual(handshake['status'], HandshakeStatus['STATUS_MAKER_INIT_ROLLBACK'])
 
             user = User.find_user_with_id(88)
             self.assertEqual(user.free_bet, 0)

@@ -35,7 +35,7 @@ class MESSAGE(object):
 	USER_NEED_PURCHASE_PRODUCT = 'Please purchase to sign more.'
 	USER_INVALID_ACCESS_TOKEN = 'Invalid user'
 	USER_INVALID_SOURCE = 'Please login with google+ or facebook account.'
-	USER_RECEIVED_FREE_BET_ALREADY = 'You have received enough free bet already!'
+	USER_RECEIVED_FREE_BET_ALREADY = 'You have received free bet already!'
 	USER_TOKE_EXPIRED = 'TOKEN HAD EXPIRED'
 
 	# HANSHAKE

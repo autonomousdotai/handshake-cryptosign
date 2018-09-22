@@ -1027,7 +1027,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             data_json = data['data']
 
             hs = Handshake.find_handshake_by_id(handshake.id)
@@ -1247,13 +1246,16 @@ class TestHandshakeBluePrint(BaseTestCase):
 
     def test_create_free_bet(self):
         self.clear_data_before_test()
+        self.clear_all_bet_of_user(99)
 
         user = User.find_user_with_id(99)
-        user.free_bet = 0
-        db.session.commit()
-
         old_free_bet = user.free_bet
 
+        outcome = Outcome.find_outcome_by_id(88)
+        outcome.result = -1
+        db.session.commit()
+
+        arr_hs = []
         with self.client:
             Uid = 99
 
@@ -1287,6 +1289,66 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             user = User.find_user_with_id(99)
             self.assertEqual(old_free_bet + 1, user.free_bet)
+
+            # create free-bet again
+            handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=99,
+                            outcome_id=88,
+                            odds=6,
+                            amount=0.7,
+                            currency='ETH',
+                            side=2,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=HandshakeStatus['STATUS_RESOLVED'],
+                            bk_status=0,
+                            free_bet=1
+                        )
+            arr_hs.append(handshake)
+            db.session.add(handshake)
+            db.session.commit()
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "DTHTRONG",
+                "outcome_id": 88,
+                "odds": "1.7",
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+            }
+
+            response = self.client.post(
+                                    '/handshake/create_free_bet',
+                                    content_type='application/json',
+                                    data=json.dumps(params),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            
+            # call check-free-bet
+            response = self.client.get(
+                                    '/handshake/check_free_bet',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+            d = data['data']
+            self.assertEqual(d['free_bet_available'], 2)
 
     def test_collect_real_bet(self):
         self.clear_data_before_test()
@@ -2143,7 +2205,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
-            print data
             self.assertEqual(response.status_code, 200)
             self.assertTrue(data['status'] == 1)
 

@@ -1,16 +1,16 @@
 from flask import g
-from sqlalchemy import and_, func, Date, cast, asc, desc, bindparam
+from sqlalchemy import and_, func, cast, asc, desc
 from datetime import date
 from app import db
 from app.models import User, Handshake, Shaker, Outcome
 from app.constants import Handshake as HandshakeStatus
-from app.helpers.utils import utc_to_local
 from app.core import mail_services
 from datetime import datetime
 from app.helpers.utils import local_to_utc
 from app.helpers.mail_content import render_email_notify_result_content
 
 import app.constants as CONST
+import app.bl.outcome as outcome_bl
 import time
 import requests
 
@@ -34,6 +34,23 @@ def get_last_user_free_bet(user_id):
 	return item
 
 
+def is_able_to_create_new_free_bet(user_id):
+	item = get_last_user_free_bet(user_id)
+	can_free_bet = True
+	last_bet_status = None
+	if item is not None:
+		outcome_id = item[1]
+		user_side = item[2]
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome_bl.has_result(outcome):
+			can_free_bet = (CONST.MAXIMUM_FREE_BET - user.free_bet) > 0
+			last_bet_status = outcome.result == user_side
+		else:
+			can_free_bet = False
+	
+	return can_free_bet, last_bet_status
+
+
 def check_email_existed_with_dispatcher(app, payload):
 	# Subscribe email
 	endpoint = '{}/user/profile'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
@@ -52,6 +69,7 @@ def check_email_existed_with_dispatcher(app, payload):
 		print "Subscribe email fail with data is none"
 		return False
 	return data_response['data']['email']
+
 
 def handle_mail_notif(app, user_id, from_address, oc_name, match_name, oc_result, side, status, free_bet, free_bet_available):
 	user = User.find_user_with_id(user_id)

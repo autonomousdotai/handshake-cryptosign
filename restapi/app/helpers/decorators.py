@@ -32,7 +32,7 @@ def whitelist(f):
     def wrap(*args, **kwargs):
         blacklist_path = os.path.abspath(os.path.dirname(__file__)) + '/blacklist.json'
         remote = request.remote_addr
-        print remote
+        print request.headers
         return f(*args, **kwargs)
     return wrap
 

@@ -692,13 +692,15 @@ def check_free_bet():
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 		item = user_bl.get_last_user_free_bet(uid)
-		outcome_id = item[1]
-		user_side = item[2]
 		can_free_bet = False
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome_bl.has_result(outcome):
-			is_win = outcome.result == user_side
-			can_free_bet = (CONST.MAXIMUM_FREE_BET - user.free_bet) > 0
+		is_win = None
+		if item is not None:
+			outcome_id = item[1]
+			user_side = item[2]
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+			if outcome_bl.has_result(outcome):
+				is_win = outcome.result == user_side
+				can_free_bet = (CONST.MAXIMUM_FREE_BET - user.free_bet) > 0
 
 		response = {
 			"free_bet_available": CONST.MAXIMUM_FREE_BET - user.free_bet,

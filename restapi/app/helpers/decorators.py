@@ -36,9 +36,11 @@ def whitelist(f):
             with open(blacklist_path) as data_file:    
                 data = json.load(data_file)
             ip = request.headers['X-Real-Ip']
-            if ip is not None and \
-                ip in data:
-                  return response_error("Access deny!")
+            print '--IP: {}'.format(ip)
+            if ip is not None:
+                ips = ip.split(',')
+                if ips[0] in data:
+                    return response_error("Access deny!")
         except Exception as ex:
             print str(ex)
         

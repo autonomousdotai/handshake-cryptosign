@@ -336,17 +336,18 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_subscribe_email_dispatcher_time=>",exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
 def send_email_result_notifcation(outcome_id, result, is_resolve):
 	try:
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 		if outcome is None or result < 1:
-			print("send_email_result_notifcation => Invalid outcome: ", outcome)
+			print("send_email_result_notifcation => Invalid outcome")
 			return False
 
 		match = Match.find_match_by_id(outcome.match_id)
 		if match is None:
-			print("send_email_result_notifcation => Invalid match: ", outcome)
+			print("send_email_result_notifcation => Invalid match")
 			return False
 
 		handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
@@ -355,18 +356,21 @@ def send_email_result_notifcation(outcome_id, result, is_resolve):
 		for shaker in shakers:
 			free_bet_available = None
 			if shaker.free_bet == 1:
-				free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(shaker.shaker_id)
+				user = User.find_user_with_id(shaker.shaker_id)
+				free_bet_available = CONST.MAXIMUM_FREE_BET - user.free_bet
+
 			# Check or update email of user and send mail
 			user_bl.handle_mail_notif(app, shaker.shaker_id, shaker.from_address, outcome.name, match.name, result, shaker.side, shaker.status, shaker.free_bet, free_bet_available)
 
 		for handshake in handshakes:
 			free_bet_available = None
 			if handshake.free_bet == 1:
-				free_bet_available = CONST.MAXIMUM_FREE_BET - user_bl.count_user_free_bet(handshake.user_id)
+				user = User.find_user_with_id(handshake.user_id)
+				free_bet_available = CONST.MAXIMUM_FREE_BET - user.free_bet
+
 			# Check or update email of user and send mail
-			user_bl.handle_mail_notif(app, handshake.user_id, handshake.from_address, outcome.name, match.name, result, handshake.side, handshake.status, handshake.free_bet, free_bet_available)
+			user_bl.handle_mail_notif(app, handshake.user_id, handshake.from_address, outcome.name, match.name, result, handshake.side, handshake.status, handshake.free_bet, free_bet_available)			
 	except Exception as e:
-		db.session.rollback()
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_mail_result_notify=>",exc_type, fname, exc_tb.tb_lineno)

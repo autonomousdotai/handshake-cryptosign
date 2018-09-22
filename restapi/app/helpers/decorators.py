@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
+import json
+
 from functools import wraps
 from flask import request, g
 from app import db
@@ -22,6 +25,23 @@ def admin_required(f):
         if remote not in white_ips:
             return response_error("Access deny!")       
 
+        return f(*args, **kwargs)
+    return wrap
+
+def whitelist(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        blacklist_path = os.path.abspath(os.path.dirname(__file__)) + '/blacklist.json'
+        try:
+            with open(blacklist_path) as data_file:    
+                data = json.load(data_file)
+            ip = request.headers['X-Real-Ip']
+            if ip is not None and \
+                ip in data:
+                  return response_error("Access deny!")
+        except Exception as ex:
+            print str(ex)
+        
         return f(*args, **kwargs)
     return wrap
 

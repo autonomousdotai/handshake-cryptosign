@@ -11,6 +11,7 @@ import app.constants as CONST
 import app.bl.handshake as handshake_bl
 import app.bl.match as match_bl
 import app.bl.user as user_bl
+import app.bl.outcome as outcome_bl
 
 from decimal import *
 from flask import Blueprint, request, g
@@ -19,7 +20,7 @@ from sqlalchemy import or_, and_, text, func
 from app.helpers.response import response_ok, response_error
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.bc_exception import BcException
-from app.helpers.decorators import login_required
+from app.helpers.decorators import login_required, whitelist
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting
@@ -332,9 +333,9 @@ def rollback():
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==uid)).first()
 			if handshake is not None:	
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
-					handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
-					if handshake.free_bet == 1:
-						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+					handshake.status = HandshakeStatus['STATUS_MAKER_INIT_ROLLBACK']
+					if handshake.free_bet == 1 and user.free_bet > 0:
+						user.free_bet -= 1
 					
 					db.session.flush()
 					handshakes.append(handshake)
@@ -354,8 +355,8 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
-					if shaker.free_bet == 1:
-						user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+					if shaker.free_bet == 1 and user.free_bet > 0:
+						user.free_bet -= 1
 
 					shakers.append(shaker)
 
@@ -378,6 +379,7 @@ def rollback():
 
 @handshake_routes.route('/create_free_bet', methods=['POST'])
 @login_required
+@whitelist
 def create_bet():
 	try:
 		uid = int(request.headers['Uid'])
@@ -388,17 +390,13 @@ def create_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		# check user be able to create new free-bet or not
-		can_free_bet, _, _ = user_bl.check_user_is_able_to_create_new_free_bet(uid)
-		if can_free_bet is False:
-			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
+		can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(uid)
+		if can_free_bet is not True:
+			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		odds = Decimal(data.get('odds'))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-
-		if user_bl.count_user_free_bet(user.id) >= CONST.MAXIMUM_FREE_BET:
-			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)
@@ -633,7 +631,8 @@ def refund_free_bet():
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if handshake_bl.can_refund(None, shaker=shaker):
-				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+				if user.free_bet > 0:
+					user.free_bet -= 1
 
 				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
@@ -648,7 +647,8 @@ def refund_free_bet():
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_refund(handshake):
-				user.free_bet = 0 if user.free_bet <= 0 else (user.free_bet - 1)
+				if user.free_bet > 0:
+					user.free_bet -= 1
 
 				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
@@ -692,17 +692,13 @@ def check_free_bet():
 			if setting.status == 0:
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
-		# check user be able to create new free-bet or not
-		can_free_bet, is_win, total_count_free_bet = user_bl.check_user_is_able_to_create_new_free_bet(uid)
+		item = user_bl.get_last_user_free_bet(uid)
+		can_free_bet, last_bet_status = user_bl.is_able_to_create_new_free_bet(uid)
 
-		if can_free_bet is False:
-			return response_error(MESSAGE.WATTING_TIME_FREE_BET, CODE.WATTING_TIME_FREE_BET)
-		
 		response = {
-			"free_bet_used": total_count_free_bet,
-			"free_bet_available": CONST.MAXIMUM_FREE_BET - total_count_free_bet,
+			"free_bet_available": CONST.MAXIMUM_FREE_BET - user.free_bet,
 			"can_freebet": can_free_bet,
-			"is_win": is_win
+			"is_win": last_bet_status
 		}
 
 		return response_ok(response)

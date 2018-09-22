@@ -42,3 +42,11 @@ def count_against_users_play_on_outcome(outcome_id):
 																			.filter(Handshake.outcome_id==outcome_id)))))\
 			.group_by(User.id).all()
 	return len(users)
+
+def has_result(outcome):
+	if outcome is not None and \
+		outcome.result is not None and \
+		outcome.result in [1, 2, 3]:
+		return True
+
+	return False

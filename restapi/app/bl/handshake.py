@@ -462,10 +462,20 @@ def save_handshake_for_event(event_name, inputs):
 	offchain = offchain.replace(CONST.CRYPTOSIGN_OFFCHAIN_PREFIX, '')
 
 	if event_name == '__createMarket':
+		print '__createMarket'
 		offchain = int(offchain.replace('createMarket', ''))
 		outcome = Outcome.find_outcome_by_id(offchain)
 		if outcome is not None:
 			outcome.hid = hid
+
+			if 'closingTime' in inputs and \
+				'reportTime' in inputs and \
+				'disputeTime' in inputs:
+				m = Match.find_match_by_id(outcome.match_id)
+				m.date = int(inputs['closingTime'])
+				m.reportTime = int(inputs['reportTime'])
+				m.disputeTime = int(inputs['disputeTime'])
+
 			db.session.flush()
 
 		return None, None

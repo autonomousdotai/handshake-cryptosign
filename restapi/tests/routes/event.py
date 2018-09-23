@@ -90,6 +90,7 @@ class TestEventBluePrint(BaseTestCase):
             db.session.add(outcome)
             db.session.commit()
         else:
+            outcome.match_id = 1
             outcome.result = -1
             db.session.commit()
 

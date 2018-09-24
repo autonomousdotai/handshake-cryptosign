@@ -4,7 +4,6 @@ from app import db
 from app import app
 from app.models import Match, Outcome
 from app.helpers.message import MESSAGE
-from app.helpers.utils import decrypt_string
 import mock
 import json
 import time

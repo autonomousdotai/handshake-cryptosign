@@ -274,7 +274,7 @@ def send_dispute_email(outcome_id, outcome_name):
 				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
 				'subject': 'Dispute',
 				'to[]': app.config['RESOLVER_EMAIL'],
-				'from': app.config['RESOLVER_EMAIL']
+				'from': app.config['FROM_EMAIL']
 			}
     	)
 		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})

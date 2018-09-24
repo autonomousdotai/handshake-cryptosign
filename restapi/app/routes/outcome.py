@@ -114,11 +114,8 @@ def generate_link():
 		outcome_id = data['outcome_id']
 		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
 		if outcome is not None:
-			slug = '-'
-			if len(outcome.name) > 0:
-				slug = re.sub('[^\w]+', '-', outcome.name.lower())
 			response = {
-				'slug': 'discover/{}?match_id={}&outcome={}&ref={}'.format(slug, outcome.match_id, outcome.id, uid)
+				'slug': '?match_id={}&outcome={}&ref={}'.format(outcome.match_id, outcome.id, uid)
 			}
 			# slug_hash = jwt.encode({
 			# 	"match_id": outcome.match_id if outcome.match_id is not None else "",

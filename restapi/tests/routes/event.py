@@ -90,6 +90,7 @@ class TestEventBluePrint(BaseTestCase):
             db.session.add(outcome)
             db.session.commit()
         else:
+            outcome.match_id = 1
             outcome.result = -1
             db.session.commit()
 
@@ -134,7 +135,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -187,7 +187,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -243,7 +242,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -340,7 +338,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=33,
 				outcome_id=88,
 				odds=1.2,
@@ -374,7 +371,15 @@ class TestEventBluePrint(BaseTestCase):
         outcome.result = 1
 
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 18600
+        if match is not None:
+            match.date=time.time() - 18600
+            db.session.flush()
+        else:
+            match = Match(
+                id=outcome.match_id,
+                date=time.time() - 18600
+            )
+            db.session.add(match)
         db.session.commit()
 
         with self.client:
@@ -414,7 +419,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=22,
 				outcome_id=88,
 				odds=1.2,
@@ -446,10 +450,19 @@ class TestEventBluePrint(BaseTestCase):
 
         outcome = Outcome.find_outcome_by_id(88)
         outcome.result = 2
-
+        
         match = Match.find_match_by_id(outcome.match_id)
-        match.date = time.time() - 18600
+        if match is not None:
+            match.date=time.time() - 18600
+            db.session.flush()
+        else:
+            match = Match(
+                id=outcome.match_id,
+                date=time.time() - 18600
+            )
+            db.session.add(match)
         db.session.commit()
+
 
         with self.client:
             Uid = 22
@@ -489,7 +502,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=66,
 				outcome_id=88,
 				odds=1.2,
@@ -559,7 +571,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake1 = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=66,
 						outcome_id=88,
 						odds=1.5,
@@ -577,7 +588,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake2 = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=66,
 						outcome_id=88,
 						odds=1.5,
@@ -595,7 +605,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake3 = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=66,
 						outcome_id=88,
 						odds=1.5,
@@ -613,7 +622,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake_uninited = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=66,
 				outcome_id=88,
 				odds=1.2,
@@ -632,7 +640,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake_uninit_failed = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=66,
 				outcome_id=88,
 				odds=1.2,
@@ -794,7 +801,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=66,
 				outcome_id=88,
 				odds=1.2,
@@ -871,7 +877,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -960,7 +965,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1010,7 +1014,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1099,7 +1102,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1150,7 +1152,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1203,7 +1204,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1220,7 +1220,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -1338,7 +1337,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1356,7 +1354,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake1 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1374,7 +1371,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake2 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1392,7 +1388,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -1410,7 +1405,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker2 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -1428,7 +1422,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker3 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1500,7 +1493,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1518,7 +1510,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake1 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=2.2,
@@ -1536,7 +1527,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake2 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1554,7 +1544,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1572,7 +1561,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker1 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1590,7 +1578,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker2 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=100,
 				outcome_id=88,
 				odds=1.2,
@@ -1664,7 +1651,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1682,7 +1668,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake1 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=2.2,
@@ -1700,7 +1685,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake2 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1718,7 +1702,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1736,7 +1719,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker1 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1754,7 +1736,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker2 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=100,
 				outcome_id=88,
 				odds=1.2,
@@ -1842,7 +1823,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=33,
 				outcome_id=outcome.id,
 				odds=1.2,
@@ -1918,7 +1898,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake_user88_side1 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -1936,7 +1915,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake_user88_side2 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -1954,7 +1932,6 @@ class TestEventBluePrint(BaseTestCase):
         handshake_user99 = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -1972,7 +1949,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker_user88_side2 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -1990,7 +1966,6 @@ class TestEventBluePrint(BaseTestCase):
         shaker_user88_shaked_user99_side1 = Shaker(
 				hs_type=3,
 				chain_id=4,
-				is_private=0,
 				shaker_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -2111,7 +2086,6 @@ class TestEventBluePrint(BaseTestCase):
     #     handshake = Handshake(
 	# 			hs_type=3,
 	# 			chain_id=4,
-	# 			is_private=1,
 	# 			user_id=33,
 	# 			outcome_id=100,
 	# 			odds=1.2,

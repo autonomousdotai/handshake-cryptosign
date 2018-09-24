@@ -83,7 +83,6 @@ def update_feed(handshake_id):
 			"shake_count_i": handshake.shake_count,
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
-			"is_private_i": handshake.is_private,
 			"extra_data_s": handshake.extra_data,
 			"remaining_amount_s": str(handshake.remaining_amount),
 			"amount_s": str(amount),
@@ -275,7 +274,7 @@ def send_dispute_email(outcome_id, outcome_name):
 				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
 				'subject': 'Dispute',
 				'to[]': app.config['RESOLVER_EMAIL'],
-				'from': app.config['RESOLVER_EMAIL']
+				'from': app.config['FROM_EMAIL']
 			}
     	)
 		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})

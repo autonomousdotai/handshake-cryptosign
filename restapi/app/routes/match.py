@@ -267,8 +267,9 @@ def match_need_user_report():
 @login_required
 def relevant():
 	try:
-		match_id = int(request.args.get('match'))
+		match_id = int(request.args.get('match_id')) if request.args.get('match_id') is not None else None
 		match = Match.find_match_by_id(match_id)
+
 		response = []
 		matches = []
 		t = datetime.now().timetuple()
@@ -306,16 +307,16 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
-@login_required
+# @login_required
 def match_detail(match_id):
 	try:
 		outcome_id = None
 		if request.args.get('outcome_id') is not None:
 			outcome_id = int(request.args.get('outcome_id'))
 
-		is_public = 1
+		public = [0,1] # Default: all private and public outcome
 		if request.args.get('public') is not None:
-			is_public = int(request.args.get('public'))
+			public = [int(request.args.get('public'))]
 
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -338,7 +339,7 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome.hid is not None and outcome.public == is_public:
+			if outcome.hid is not None and outcome.public in public:
 				if outcome_id is not None:
 					if outcome.id == outcome_id:
 						arr_outcomes.append(outcome.to_json())

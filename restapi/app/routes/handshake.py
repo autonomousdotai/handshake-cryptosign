@@ -120,7 +120,6 @@ def init():
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		is_private = data.get('is_private', 1)
 		outcome_id = data.get('outcome_id')
 		odds = Decimal(data.get('odds')).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN)
 		amount = Decimal(data.get('amount'))
@@ -160,7 +159,6 @@ def init():
 				extra_data=extra_data,
 				description=description,
 				chain_id=chain_id,
-				is_private=is_private,
 				user_id=user.id,
 				outcome_id=outcome_id,
 				odds=odds,
@@ -267,7 +265,6 @@ def init():
 					extra_data=extra_data,
 					description=description,
 					chain_id=chain_id,
-					is_private=is_private,
 					user_id=user.id,
 					outcome_id=outcome_id,
 					odds=odds,

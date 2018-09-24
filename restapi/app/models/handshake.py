@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Handshake(BaseModel):
 	__tablename__ = 'handshake'
-	__json_public__ = ['id', 'extra_data', 'chain_id', 'is_private', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'contract_address', 'contract_json', 'side', 'shakers', 'outcome_id', 'from_address', 'free_bet']
+	__json_public__ = ['id', 'extra_data', 'chain_id', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'contract_address', 'contract_json', 'side', 'shakers', 'outcome_id', 'from_address', 'free_bet']
 	__json_modifiers__ = {
         'shakers': lambda shakers, _: [shaker.to_json() for shaker in shakers]
     }
@@ -21,9 +21,6 @@ class Handshake(BaseModel):
 	state = db.Column(db.Integer,
 						server_default=str(CONST.STATE_TYPE['PUBLISH']),
 	                   	default=CONST.STATE_TYPE['PUBLISH'])
-	is_private = db.Column(db.Integer,
-							server_default=str(CONST.COMMUNITY_TYPE['PUBLIC']),
-							default=CONST.COMMUNITY_TYPE['PUBLIC'])
 	description = db.Column(db.Text)
 	status = db.Column(db.Integer,
 						server_default=str(CONST.Handshake['STATUS_PENDING']),

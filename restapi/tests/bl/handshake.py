@@ -98,7 +98,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -116,7 +115,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.1,
@@ -149,7 +147,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -167,7 +164,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.4,
@@ -199,7 +195,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -217,7 +212,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.1,
@@ -240,7 +234,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.0,
@@ -271,7 +264,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -321,7 +313,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -359,7 +350,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -377,7 +367,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.1,
@@ -400,7 +389,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -426,7 +414,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.25,
@@ -444,7 +431,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.25,
@@ -462,7 +448,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.10,
@@ -480,7 +465,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.10,
@@ -498,7 +482,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.10,
@@ -524,7 +507,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -542,7 +524,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.2,
@@ -560,7 +541,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.1,
@@ -578,7 +558,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.1,
@@ -596,7 +575,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=99,
 				outcome_id=88,
 				odds=1.1,
@@ -622,7 +600,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -668,7 +645,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=99,
 			outcome_id=88,
 			odds=1.2,
@@ -686,7 +662,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=99,
 			outcome_id=88,
 			odds=1.2,
@@ -705,7 +680,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=99,
 			outcome_id=88,
 			odds=1.2,
@@ -728,7 +702,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -808,7 +781,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.2,
@@ -862,7 +834,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=88,
 			outcome_id=1000,
 			odds=1.2,
@@ -881,7 +852,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=88,
 			outcome_id=88,
 			odds=1.2,
@@ -900,7 +870,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=88,
 			outcome_id=88,
 			odds=1.2,
@@ -924,7 +893,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 			hs_type=3,
 			chain_id=4,
-			is_private=1,
 			user_id=88,
 			outcome_id=88,
 			odds=1.2,
@@ -950,7 +918,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -1000,7 +967,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake1 = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -1018,7 +984,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake2 = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -1036,7 +1001,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake3 = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=99,
 						outcome_id=88,
 						odds=1.5,
@@ -1123,7 +1087,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -1184,7 +1147,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=88,
 						outcome_id=88,
 						odds=1.5,
@@ -1266,8 +1228,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="email@email.com",
-			payload="abc123==",
+			email="abc@abcxyz",
+			payload="123abc",
 			is_subscribe=1
 		)
 		db.session.add(user)
@@ -1300,7 +1262,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake_win = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=user.id,
 						outcome_id=outcome.id,
 						odds=1.5,
@@ -1317,7 +1278,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake_draw = Handshake(
 						hs_type=3,
 						chain_id=4,
-						is_private=1,
 						user_id=user.id,
 						outcome_id=outcome.id,
 						odds=1.5,
@@ -1334,7 +1294,6 @@ class TestHandshakeBl(BaseTestCase):
 		handshake_draw = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=user.id,
 				outcome_id=outcome_draw.id,
 				odds=1.5,

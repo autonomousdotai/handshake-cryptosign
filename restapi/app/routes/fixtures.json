@@ -3,20 +3,22 @@
     {
       "homeTeamName": "",
       "awayTeamName": "",
-      "date": 1535788800,
-      "reportTime": 1535875200,
-      "disputeTime": 1535877000,
+      "date": 1537286700,
+      "reportTime": 1537287300,
+      "disputeTime": 1537287400,
       "homeTeamCode": "",
       "homeTeamFlag": "",
       "awayTeamCode": "",
       "awayTeamFlag": "",
-      "name": "[Asiad 2018] Viet Nam vs UAE",
+      "name": "[AAA] Khanh test2",
       "source_id": 1,
       "category_id": 4,
       "market_fee": 2,
       "outcomes": [
         {
-          "name": "Viet Nam wins"
+          "name": "1"
+        },{
+          "name": "2"
         }
       ]
     }

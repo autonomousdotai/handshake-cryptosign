@@ -15,7 +15,6 @@ module.exports = (sequelize, DataTypes) => {
     extra_data: DataTypes.TEXT,
     chain_id: DataTypes.INTEGER,
     state: DataTypes.INTEGER,
-    is_private: DataTypes.INTEGER,
     description: DataTypes.TEXT,
     status: DataTypes.INTEGER,
     bk_status: DataTypes.INTEGER,

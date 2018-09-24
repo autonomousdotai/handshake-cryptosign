@@ -98,7 +98,6 @@ class TestMatchBl(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.25,
@@ -117,7 +116,6 @@ class TestMatchBl(BaseTestCase):
         handshake = Handshake(
 				hs_type=3,
 				chain_id=4,
-				is_private=1,
 				user_id=88,
 				outcome_id=88,
 				odds=1.10,

@@ -83,7 +83,6 @@ def update_feed(handshake_id):
 			"shake_count_i": handshake.shake_count,
 			"init_at_i": int(time.mktime(handshake.date_created.timetuple())),
 			"last_update_at_i": int(time.mktime(handshake.date_modified.timetuple())),
-			"is_private_i": handshake.is_private,
 			"extra_data_s": handshake.extra_data,
 			"remaining_amount_s": str(handshake.remaining_amount),
 			"amount_s": str(amount),

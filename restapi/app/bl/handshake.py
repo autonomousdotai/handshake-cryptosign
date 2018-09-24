@@ -716,7 +716,6 @@ def find_all_matched_handshakes(side, odds, outcome_id, amount, maker):
 							extra_data=row['extra_data'],
 							description=row['description'],
 							chain_id=row['chain_id'],
-							is_private=row['is_private'],
 							user_id=row['user_id'],
 							outcome_id=row['outcome_id'],
 							odds=row['odds'],

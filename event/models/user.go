@@ -3,7 +3,7 @@ package models
 // User : model
 type User struct {
 	UserID  int    `gorm:"column:id;" json:"id"`
-	Email   int    `gorm:"column:email;" json:"email"`
+	Email   string `gorm:"column:email;" json:"email"`
 	Payload string `gorm:"column:payload;" json:"payload"`
 }
 

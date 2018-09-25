@@ -47,7 +47,6 @@ def matches():
 			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
-			match_json["public"] = 1
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
@@ -56,6 +55,7 @@ def matches():
 
 			match_json["outcomes"] = arr_outcomes
 			if len(arr_outcomes) > 0:
+				match_json["public"] = arr_outcomes[0]["public"]
 				response.append(match_json)
 
 		return response_ok(response)

@@ -341,7 +341,7 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome.hid is not None and outcome.public in public:
+			if outcome.public in public:
 				if outcome_id is not None:
 					if outcome.id == outcome_id:
 						arr_outcomes.append(outcome.to_json())

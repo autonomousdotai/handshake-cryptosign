@@ -310,8 +310,7 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
-# @login_required
-def match_detail(match_id):
+def match_detail():
 	try:
 		outcome_id = None
 		if request.args.get('outcome_id') is not None:

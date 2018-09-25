@@ -117,16 +117,6 @@ def generate_link():
 			response = {
 				'slug': '?match={}&outcome={}&ref={}'.format(outcome.match_id, outcome.id, uid)
 			}
-			# slug_hash = jwt.encode({
-			# 	"match_id": outcome.match_id if outcome.match_id is not None else "",
-			# 	"outcome_id": outcome.id,
-			# 	"uid": uid
-			# }, g.PASSPHASE, algorithm='HS256')
-			# response = {
-			# 	'slug': '?key={}'.format(slug_hash),
-			# }
-			# decrypt_json = jwt.decode(event, app.config['PASSPHASE'], algorithms=['HS256'])
-			# decrypt_json["match_id"]
 			return response_ok(response)
 			
 		else:

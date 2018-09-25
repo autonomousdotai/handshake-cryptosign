@@ -46,6 +46,7 @@ def matches():
 			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
+			match_json["is_pubilc"] = 1
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:

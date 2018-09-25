@@ -34,6 +34,7 @@ def matches():
 				.filter(\
 					Match.deleted == 0,\
 					Match.date > seconds,\
+					Match.public == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
@@ -50,13 +51,11 @@ def matches():
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.public == 1:
-					arr_outcomes.append(outcome.to_json())
+				if outcome.hid is not None:
+    					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
 			if len(arr_outcomes) > 0:
-    			# Get frist outcome and set public to match
-				match_json["public"] = arr_outcomes[0]["public"]
 				response.append(match_json)
 
 		return response_ok(response)
@@ -74,14 +73,13 @@ def add_match():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		token = request.args.get('token', 'ETH')
-		print 'DTHTRONG --> {}'.format(token)
-		contract = contract_bl.get_active_smart_contract(token)
+		matches = []
+		response_json = []
+
+		contract = contract_bl.get_active_smart_contract()
 		if contract is None:
 			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
 
-		matches = []
-		response_json = []
 		for item in data:
 			source = None
 			category = None
@@ -89,8 +87,8 @@ def add_match():
 			if match_bl.is_validate_match_time(item) == False:				
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
-			# parse source
 			if "source_id" in item:
+    			# TODO: check deleted and approved
 				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
@@ -106,10 +104,6 @@ def add_match():
 					db.session.add(source)
 					db.session.flush()
 
-			if source is None:
-				return response_error(MESSAGE.SOURCE_INVALID, CODE.SOURCE_INVALID)
-				
-			# parse category
 			if "category_id" in item:
 				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
 			else:
@@ -121,9 +115,6 @@ def add_match():
 					db.session.add(category)
 					db.session.flush()
 
-			if category is None:
-				return response_error(MESSAGE.CATEGORY_INVALID, CODE.CATEGORY_INVALID)
-
 			match = Match(
 				homeTeamName=item['homeTeamName'],
 				homeTeamCode=item['homeTeamCode'],
@@ -132,6 +123,7 @@ def add_match():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
+				public=item['public'],
 				market_fee=int(item.get('market_fee', 0)),
 				date=item['date'],
 				reportTime=item['reportTime'],
@@ -149,7 +141,6 @@ def add_match():
 					outcome = Outcome(
 						name=outcome_data['name'],
 						match_id=match.id,
-						public=item.get('public', 0),
 						contract_id=contract.id,
 						modified_user_id=uid,
 						created_user_id=uid
@@ -274,7 +265,6 @@ def match_need_user_report():
 	except Exception, ex:
 		return response_error(ex.message)
 
-
 @match_routes.route('/relevant-event', methods=['GET'])
 @login_required
 def relevant():
@@ -294,6 +284,7 @@ def relevant():
 			or_(Match.source_id == match.source_id, Match.category_id == match.category_id),\
 			Match.deleted == 0,\
 			Match.date > seconds,\
+			Match.public == 1,\
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
@@ -306,7 +297,7 @@ def relevant():
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.public == 1:
+				if outcome.hid is not None:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
@@ -324,10 +315,6 @@ def match_detail(match_id):
 		outcome_id = None
 		if request.args.get('outcome_id') is not None:
 			outcome_id = int(request.args.get('outcome_id'))
-
-		public = [0,1] # Default: all private and public outcome
-		if request.args.get('public') is not None:
-			public = [int(request.args.get('public'))]
 
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -350,12 +337,11 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome.public in public:
-				if outcome_id is not None:
-					if outcome.id == outcome_id:
-						arr_outcomes.append(outcome.to_json())
-				else:
+			if outcome_id is not None:
+				if outcome.id == outcome_id:
 					arr_outcomes.append(outcome.to_json())
+			else:
+				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
 		return response_ok(match_json)

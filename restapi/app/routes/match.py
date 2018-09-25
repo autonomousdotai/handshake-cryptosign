@@ -55,8 +55,8 @@ def matches():
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
-			
-			response.append(match_json)
+			if len(arr_outcomes) > 0:
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:

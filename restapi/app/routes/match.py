@@ -74,13 +74,14 @@ def add_match():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		matches = []
-		response_json = []
-
-		contract = contract_bl.get_active_smart_contract()
+		token = request.args.get('token', 'ETH')
+		print 'DTHTRONG --> {}'.format(token)
+		contract = contract_bl.get_active_smart_contract(token)
 		if contract is None:
 			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
 
+		matches = []
+		response_json = []
 		for item in data:
 			source = None
 			category = None
@@ -88,8 +89,8 @@ def add_match():
 			if match_bl.is_validate_match_time(item) == False:				
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
+			# parse source
 			if "source_id" in item:
-    			# TODO: check deleted and approved
 				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
@@ -105,6 +106,10 @@ def add_match():
 					db.session.add(source)
 					db.session.flush()
 
+			if source is None:
+				return response_error(MESSAGE.SOURCE_INVALID, CODE.SOURCE_INVALID)
+				
+			# parse category
 			if "category_id" in item:
 				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
 			else:
@@ -115,6 +120,9 @@ def add_match():
 					)
 					db.session.add(category)
 					db.session.flush()
+
+			if category is None:
+				return response_error(MESSAGE.CATEGORY_INVALID, CODE.CATEGORY_INVALID)
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -266,6 +274,7 @@ def match_need_user_report():
 	except Exception, ex:
 		return response_error(ex.message)
 
+
 @match_routes.route('/relevant-event', methods=['GET'])
 @login_required
 def relevant():
@@ -310,7 +319,7 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
-def match_detail():
+def match_detail(match_id):
 	try:
 		outcome_id = None
 		if request.args.get('outcome_id') is not None:

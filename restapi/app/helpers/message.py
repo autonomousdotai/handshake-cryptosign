@@ -81,6 +81,9 @@ class MESSAGE(object):
 	SOURCE_APPOVED_ALREADY = 'Source has been approved already!'
 	SOURCE_EXISTED_ALREADY = 'Source has been existed already!'
 
+	# CATEGORY
+	CATEGORY_INVALID = 'Category is invalid!'
+
 
 class CODE(object):
 	# ERROR
@@ -161,3 +164,6 @@ class CODE(object):
 	SOURCE_INVALID = '1050'
 	SOURCE_APPOVED_ALREADY = '1051'
 	SOURCE_EXISTED_ALREADY = '1052'
+
+	# CATEGORY
+	CATEGORY_INVALID = '1056'

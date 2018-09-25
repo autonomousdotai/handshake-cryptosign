@@ -950,6 +950,7 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
+            print data
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']['outcomes']) == 2)
 

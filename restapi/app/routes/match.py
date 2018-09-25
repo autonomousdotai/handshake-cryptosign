@@ -55,6 +55,7 @@ def matches():
 
 			match_json["outcomes"] = arr_outcomes
 			if len(arr_outcomes) > 0:
+    			# Get frist outcome and set public to match
 				match_json["public"] = arr_outcomes[0]["public"]
 				response.append(match_json)
 
@@ -269,7 +270,7 @@ def match_need_user_report():
 @login_required
 def relevant():
 	try:
-		match_id = int(request.args.get('match_id')) if request.args.get('match_id') is not None else None
+		match_id = int(request.args.get('match')) if request.args.get('match') is not None else None
 		match = Match.find_match_by_id(match_id)
 
 		response = []
@@ -328,7 +329,7 @@ def match_detail(match_id):
 					Match.id == match_id,\
 					Match.deleted == 0,\
 					Match.date > seconds,\
-					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 				.first()
 
 		if match is None:

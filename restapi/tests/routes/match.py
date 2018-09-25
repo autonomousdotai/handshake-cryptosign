@@ -873,7 +873,7 @@ class TestMatchBluePrint(BaseTestCase):
         with self.client:
             Uid = 66
             response = self.client.get(
-                                    '/match/relevant-event?match_id={}'.format(match.id),
+                                    '/match/relevant-event?match={}'.format(match.id),
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),

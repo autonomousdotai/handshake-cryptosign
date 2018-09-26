@@ -38,7 +38,7 @@ class MESSAGE(object):
 	USER_RECEIVED_FREE_BET_ALREADY = 'You have received free bet already!'
 	USER_TOKE_EXPIRED = 'TOKEN HAD EXPIRED'
 
-	# HANSHAKE
+	# HANDSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = 'You\'re out of gas! Please wait while we add ETH to your account.'
 	HANDSHAKE_EMPTY = 'This Handshake seems to be empty.'
 	HANDSHAKE_NO_PERMISSION = 'You are not authorized to make this Handshake.'
@@ -121,7 +121,7 @@ class CODE(object):
 	USER_INVALID_SOURCE = '1019' 											
 	USER_RECEIVED_FREE_BET_ALREADY = '1020' 								
 
-	# HANSHAKE
+	# HANDSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = '1021'	
 	HANDSHAKE_EMPTY = '1022' 												
 	HANDSHAKE_NO_PERMISSION = '1023' 										

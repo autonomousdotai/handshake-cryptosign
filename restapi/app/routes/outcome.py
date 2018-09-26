@@ -59,7 +59,6 @@ def add(match_id):
 		for item in data:
 			outcome = Outcome(
 				name=item['name'],
-				public=item['public'],
 				match_id=match_id,
 				modified_user_id=uid,
 				created_user_id=uid,
@@ -115,18 +114,8 @@ def generate_link():
 		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
 		if outcome is not None:
 			response = {
-				'slug': '?match_id={}&outcome={}&ref={}'.format(outcome.match_id, outcome.id, uid)
+				'slug': '?match={}&outcome={}&ref={}'.format(outcome.match_id, outcome.id, uid)
 			}
-			# slug_hash = jwt.encode({
-			# 	"match_id": outcome.match_id if outcome.match_id is not None else "",
-			# 	"outcome_id": outcome.id,
-			# 	"uid": uid
-			# }, g.PASSPHASE, algorithm='HS256')
-			# response = {
-			# 	'slug': '?key={}'.format(slug_hash),
-			# }
-			# decrypt_json = jwt.decode(event, app.config['PASSPHASE'], algorithms=['HS256'])
-			# decrypt_json["match_id"]
 			return response_ok(response)
 			
 		else:

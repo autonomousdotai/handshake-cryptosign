@@ -198,7 +198,6 @@ class TestMatchBluePrint(BaseTestCase):
         # -----        
         outcome = Outcome(
             match_id=1000,
-            public=1,
             hid=0
         )
         db.session.add(outcome)
@@ -239,6 +238,7 @@ class TestMatchBluePrint(BaseTestCase):
             match.date=seconds + 100,
             match.reportTime=seconds + 200,
             match.disputeTime=seconds + 300,
+            match.public=1,
             db.session.flush()
         else:
             match = Match(
@@ -246,6 +246,7 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 200,
                 disputeTime=seconds + 300,
+                public=1
             )
             db.session.add(match)
         db.session.commit()
@@ -258,6 +259,7 @@ class TestMatchBluePrint(BaseTestCase):
             match.date=seconds + 50,
             match.reportTime=seconds + 200,
             match.disputeTime=seconds + 300,
+            match.public=1,
             db.session.flush()
         else:
             match = Match(
@@ -265,6 +267,7 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 50,
                 reportTime=seconds + 200,
                 disputeTime=seconds + 300,
+                public=1,
             )
             db.session.add(match)
 
@@ -275,7 +278,6 @@ class TestMatchBluePrint(BaseTestCase):
         # -----        
         outcome = Outcome(
             match_id=1001,
-            public=1,
             hid=0,
             result=-1
         )
@@ -286,7 +288,6 @@ class TestMatchBluePrint(BaseTestCase):
         # -----        
         outcome = Outcome(
             match_id=1002,
-            public=1,
             hid=1,
             result=-1
         )
@@ -309,6 +310,7 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
+            print data_json
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 2)
 
@@ -347,7 +349,6 @@ class TestMatchBluePrint(BaseTestCase):
         outcome = Outcome(
             created_user_id=88,
             match_id=match.id,
-            public=1,
             hid=0,
             name="88",
             result=CONST.RESULT_TYPE['PENDING']
@@ -357,7 +358,6 @@ class TestMatchBluePrint(BaseTestCase):
         outcome1 = Outcome(
             created_user_id=99,
             match_id=match.id,
-            public=1,
             hid=0,
             name="99",
             result=CONST.RESULT_TYPE['PENDING']
@@ -367,7 +367,6 @@ class TestMatchBluePrint(BaseTestCase):
         outcome2 = Outcome(
             created_user_id=88,
             match_id=match2.id,
-            public=1,
             hid=1,
             result=CONST.RESULT_TYPE['PROCESSING']
         )
@@ -438,7 +437,6 @@ class TestMatchBluePrint(BaseTestCase):
             name='outcome1',
             created_user_id=99,
             match_id=match1.id,
-            public=1,
             hid=0,
             contract_id=1,
             result=CONST.RESULT_TYPE['PENDING']
@@ -450,7 +448,6 @@ class TestMatchBluePrint(BaseTestCase):
             name='outcome2',
             created_user_id=88,
             match_id=match2.id,
-            public=1,
             hid=1,
             result=CONST.RESULT_TYPE['PENDING']
         )
@@ -461,7 +458,6 @@ class TestMatchBluePrint(BaseTestCase):
             name='outcome3',
             created_user_id=88,
             match_id=match1.id,
-            public=1,
             hid=2,
             result=CONST.RESULT_TYPE['PENDING']
         )
@@ -534,7 +530,6 @@ class TestMatchBluePrint(BaseTestCase):
             name='outcome1',
             created_user_id=88,
             match_id=match1.id,
-            public=1,
             hid=0,
             contract_id=1,
             result=CONST.RESULT_TYPE['PENDING']
@@ -546,7 +541,6 @@ class TestMatchBluePrint(BaseTestCase):
             name='outcome2',
             created_user_id=88,
             match_id=match1.id,
-            public=1,
             hid=1,
             result=CONST.RESULT_TYPE['PENDING']
         )
@@ -854,7 +848,6 @@ class TestMatchBluePrint(BaseTestCase):
         # -----        
         outcome1 = Outcome(
             match_id=match_source.id,
-            public=1,
             hid=1,
             result=-1
         )
@@ -862,7 +855,6 @@ class TestMatchBluePrint(BaseTestCase):
 
         outcome2 = Outcome(
             match_id=match_cate.id,
-            public=1,
             hid=1,
             result=-1
             
@@ -873,7 +865,7 @@ class TestMatchBluePrint(BaseTestCase):
         with self.client:
             Uid = 66
             response = self.client.get(
-                                    '/match/relevant-event?match_id={}'.format(match.id),
+                                    '/match/relevant-event?match={}'.format(match.id),
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
@@ -903,6 +895,7 @@ class TestMatchBluePrint(BaseTestCase):
             match.date=seconds + 100
             match.reportTime=seconds + 200
             match.disputeTime=seconds + 300
+            match.public=1
             db.session.flush()
             arr_match.append(match)
 
@@ -912,6 +905,7 @@ class TestMatchBluePrint(BaseTestCase):
         else:
             match = Match(
                 id=999,
+                public=1,
                 date=seconds + 100,
                 reportTime=seconds + 200,
                 disputeTime=seconds + 300
@@ -920,27 +914,18 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.add(match)
 
         # -----        
-        outcome_public = Outcome(
+        outcome = Outcome(
             match_id=match.id,
-            public=1,
             hid=1,
             result=-1
         )
-        db.session.add(outcome_public)
+        db.session.add(outcome)
 
-        outcome_private = Outcome(
-            match_id=match.id,
-            public=0,
-            hid=1,
-            result=-1
-            
-        )
-        db.session.add(outcome_private)
         db.session.commit()
 
         with self.client:
             Uid = 66
-            # Case: get all private and public outcome
+            # Case: get event
             response = self.client.get(
                                     '/match/{}'.format(match.id),
                                     headers={
@@ -950,90 +935,9 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
+            print data
             self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 2)
-
-            # Case: get private outcome
-            response = self.client.get(
-                                    '/match/{}?public=0'.format(match.id),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 1)
-            self.assertTrue(data['data']['outcomes'][0]["id"] == outcome_private.id)
-
-            # Case: get public outcome
-            response = self.client.get(
-                                    '/match/{}?public=1'.format(match.id),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 1)
-            self.assertTrue(data['data']['outcomes'][0]["id"] == outcome_public.id)
-
-            # Case: get only public outcome
-            response = self.client.get(
-                                    '/match/{}?outcome_id={}&public=1'.format(match.id, outcome_public.id),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 1)
-            self.assertTrue(data['data']['outcomes'][0]["id"] == outcome_public.id)
-
-            # Case: get only public outcome with public = 0
-            response = self.client.get(
-                                    '/match/{}?outcome_id={}&public=0'.format(match.id, outcome_public.id),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 0)
-
-            # Case: get only private outcome
-            response = self.client.get(
-                                    '/match/{}?outcome_id={}&public=0'.format(match.id, outcome_private.id),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 1)
-            self.assertTrue(data['data']['outcomes'][0]["id"] == outcome_private.id)
-
-            # Case: get only private outcome with public = 1
-            response = self.client.get(
-                                    '/match/{}?outcome_id={}&public=1'.format(match.id, outcome_private.id),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 1)
-            self.assertTrue(len(data['data']['outcomes']) == 0)
+            self.assertTrue(len(data['data']['outcomes']) != 0)
 
             for match in arr_match:
                 db.session.delete(match)

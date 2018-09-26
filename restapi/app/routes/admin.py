@@ -52,6 +52,7 @@ def create_market():
 							market_fee=int(item.get('market_fee', 0)),
 							source_id=int(item['source_id']),
 							category_id=int(item['category_id']),
+							public=int(item['public']),
 							date=item['date'],
 							reportTime=item['reportTime'],
 							disputeTime=item['disputeTime']
@@ -64,7 +65,6 @@ def create_market():
 						name=o.get('name', ''),
 						match_id=match.id,
 						contract_id=contract.id,
-						public=1
 					)
 					db.session.add(outcome)
 					db.session.flush()

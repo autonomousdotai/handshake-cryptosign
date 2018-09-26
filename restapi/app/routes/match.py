@@ -34,12 +34,14 @@ def matches():
 				.filter(\
 					Match.deleted == 0,\
 					Match.date > seconds,\
+					Match.public == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
 		if source is not None:
 			s = Source.find_source_by_url(source)
-			matches = sorted(matches, key=lambda m: m.source_id != s.id)
+			if s is not None:
+				matches = sorted(matches, key=lambda m: m.source_id != s.id)
 
 		for match in matches:
 			match_json = match.to_json()
@@ -49,12 +51,12 @@ def matches():
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.public == 1:
-					arr_outcomes.append(outcome.to_json())
+				if outcome.hid is not None:
+    					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
-			
-			response.append(match_json)
+			if len(arr_outcomes) > 0:
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -121,6 +123,7 @@ def add_match():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
+				public=item['public'],
 				market_fee=int(item.get('market_fee', 0)),
 				date=item['date'],
 				reportTime=item['reportTime'],
@@ -138,7 +141,6 @@ def add_match():
 					outcome = Outcome(
 						name=outcome_data['name'],
 						match_id=match.id,
-						public=item.get('public', 0),
 						contract_id=contract.id,
 						modified_user_id=uid,
 						created_user_id=uid
@@ -267,7 +269,7 @@ def match_need_user_report():
 @login_required
 def relevant():
 	try:
-		match_id = int(request.args.get('match_id')) if request.args.get('match_id') is not None else None
+		match_id = int(request.args.get('match')) if request.args.get('match') is not None else None
 		match = Match.find_match_by_id(match_id)
 
 		response = []
@@ -282,6 +284,7 @@ def relevant():
 			or_(Match.source_id == match.source_id, Match.category_id == match.category_id),\
 			Match.deleted == 0,\
 			Match.date > seconds,\
+			Match.public == 1,\
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
@@ -294,7 +297,7 @@ def relevant():
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.public == 1:
+				if outcome.hid is not None:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
@@ -307,16 +310,11 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
-# @login_required
 def match_detail(match_id):
 	try:
 		outcome_id = None
 		if request.args.get('outcome_id') is not None:
 			outcome_id = int(request.args.get('outcome_id'))
-
-		public = [0,1] # Default: all private and public outcome
-		if request.args.get('public') is not None:
-			public = [int(request.args.get('public'))]
 
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -326,7 +324,7 @@ def match_detail(match_id):
 					Match.id == match_id,\
 					Match.deleted == 0,\
 					Match.date > seconds,\
-					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 				.first()
 
 		if match is None:
@@ -339,12 +337,11 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome.hid is not None and outcome.public in public:
-				if outcome_id is not None:
-					if outcome.id == outcome_id:
-						arr_outcomes.append(outcome.to_json())
-				else:
+			if outcome_id is not None:
+				if outcome.id == outcome_id:
 					arr_outcomes.append(outcome.to_json())
+			else:
+				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
 		return response_ok(match_json)

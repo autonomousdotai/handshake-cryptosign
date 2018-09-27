@@ -31,6 +31,9 @@ logfile = logging.getLogger('file')
 @admin_routes.route('/create_market', methods=['POST'])
 @admin_required
 def create_market():
+	"""
+	" Admin create new market in ETH
+	"""
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
 		data = {}
@@ -88,9 +91,12 @@ def create_market():
 		return response_error(ex.message)
 
 
-@admin_routes.route('/init_default_outcomes', methods=['POST'])
+@admin_routes.route('/init_default_odds', methods=['POST'])
 @admin_required
-def init_default_outcomes():
+def init_default_odds():
+	"""
+	"	Admin create odds for market in ETH
+	"""
 	try:
 		data = request.json
 		if data is None:

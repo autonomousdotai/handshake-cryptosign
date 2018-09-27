@@ -54,10 +54,13 @@ class MESSAGE(object):
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
 	HANDSHAKE_CANNOT_UNINIT = 'There is an error happens or you are calling cancel too fast. Need wait for 5 minutes!'
+	HANDSHAKE_CANNOT_UNINIT_FREE_BET_IN_ERC20 = 'You cannot uninit ERC20 handshake!'
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 	HANDSHAKE_CANNOT_REFUND = 'Cannot refund this handshake!'
 	HANDSHAKE_CANNOT_DISPUTE = 'Cannot dispute this handshake!'
+	HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20 = 'You cannot create new freebet in ERC20!'
+	HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20 = 'You cannot withdraw ERC20 handshake!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
@@ -136,11 +139,14 @@ class CODE(object):
 	HANDSHAKE_DESC_TOO_LONG = '1032' 										
 	HANDSHAKE_NO_TYPE = '1033' 												
 	HANDSHAKE_INVALID_BETTING_TYPE = '1034' 								
-	HANDSHAKE_CANNOT_UNINIT = '1035' 										
+	HANDSHAKE_CANNOT_UNINIT = '1035'
+	HANDSHAKE_CANNOT_UNINIT_FREE_BET_IN_ERC20 = '1058' 										
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
 	HANDSHAKE_CANNOT_REFUND = '1044'
 	HANDSHAKE_CANNOT_DISPUTE = '1045'
+	HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20 = '1057'
+	HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20 = '1059'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												

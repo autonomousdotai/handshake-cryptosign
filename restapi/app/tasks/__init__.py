@@ -100,7 +100,8 @@ def update_feed(handshake_id):
 			"outcome_total_amount_s": '{0:f}'.format(outcome.total_amount if outcome.total_amount is not None else 0),
 			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0),
 			"contract_address_s": handshake.contract_address,
-			"contract_json_s": handshake.contract_json
+			"contract_json_s": handshake.contract_json,
+			"contract_type_s": CONST.CONTRACT_TYPE['ETH'] if outcome.token_id is None else CONST.CONTRACT_TYPE['ERC20']
 		}
 		print 'create maker {}'.format(hs)
 

@@ -15,6 +15,7 @@
       "source_id": 1,
       "category_id": 4,
       "market_fee": 2,
+      "token_id": null,
       "outcomes": [
         {
           "name": "Viet Nam wins"

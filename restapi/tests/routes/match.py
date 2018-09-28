@@ -1,7 +1,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db
-from app.models import Handshake, User, Outcome, Match, Task, Contract, Source, Category
+from app.models import Handshake, User, Outcome, Match, Task, Contract, Source, Category, Token
 from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
@@ -14,7 +14,20 @@ import app.constants as CONST
 
 class TestMatchBluePrint(BaseTestCase):
 
-    def setUp(self):
+    def setUp(self):     
+
+        # create token
+        token = Token.find_token_by_id(1)
+        if token is None:
+            token = Token(
+                id=1,
+                name="SHURIKEN",
+                symbol="SHURI",
+                decimal=18
+            )
+            db.session.add(token)
+            db.session.commit()
+
         # create contract
         contract = Contract.find_contract_by_id(1)
         if contract is None:
@@ -29,6 +42,22 @@ class TestMatchBluePrint(BaseTestCase):
         else:
             contract.contract_address = app.config['PREDICTION_SMART_CONTRACT']
             contract.json_name = app.config['PREDICTION_JSON']
+            db.session.commit()
+
+
+        contract = Contract.find_contract_by_id(2)
+        if contract is None:
+            contract = Contract(
+                id=2,
+                contract_name='PredictionHandshakeWithToken',
+                contract_address=app.config['ERC20_PREDICTION_SMART_CONTRACT'],
+                json_name=app.config['ERC20_PREDICTION_JSON']
+            )
+            db.session.add(contract)
+            db.session.commit()
+        else:
+            contract.contract_address = app.config['ERC20_PREDICTION_SMART_CONTRACT']
+            contract.json_name = app.config['ERC20_PREDICTION_JSON']
             db.session.commit()
 
 
@@ -634,8 +663,8 @@ class TestMatchBluePrint(BaseTestCase):
                             "name": "Nigeria - Iceland - Sangunji",
                             "public": 1,
                             "source": {
-                                "name": "Worlcup Russia 2018_{}".format(seconds),
-                                "url": "google.com_{}".format(seconds),
+                                "name": "{}".format(seconds),
+                                "url": "{}".format(seconds),
                             },
                             "category": {
                                 "name": "Worlcup Russia 2018"
@@ -942,6 +971,62 @@ class TestMatchBluePrint(BaseTestCase):
             for match in arr_match:
                 db.session.delete(match)
                 db.session.commit()
+
+
+    def test_add_match_with_token_id(self):
+        self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        with self.client:
+            params = [
+                        {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": 1539913910,
+                            "reportTime": 1539923910,
+                            "disputeTime": 1539933910,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "public": 1,
+                            "source": {
+                                "name": "Worlcup Russia 2018_{}".format(seconds),
+                                "url": "google.com_{}".format(seconds),
+                            },
+                            "category": {
+                                "name": "Worlcup Russia 2018"
+                            },
+                            "outcomes": [
+                                {
+                                    "name": "Nigeria wins"
+                                },
+                                {
+                                    "name": "Iceland wins"
+                                }
+                            ]
+                        }
+                    ]
+
+            response = self.client.post(
+                                    '/match/add?token_id=1',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['status'] == 1)
+            contract = data['data'][0]['contract']
+            self.assertEqual(contract['json_name'], app.config['ERC20_PREDICTION_JSON'])
+            self.assertEqual(contract['contract_address'], app.config['ERC20_PREDICTION_SMART_CONTRACT'])
+
+            for match in data['data']:
+                if 'market_fee' not in match or match['market_fee'] is None:
+                    self.assertTrue(match['market_fee'] == 0)
 
 if __name__ == '__main__':
     unittest.main()

@@ -15,7 +15,7 @@ from datetime import datetime
 from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
-from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source
+from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source, Token
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
@@ -32,7 +32,7 @@ logfile = logging.getLogger('file')
 @admin_required
 def create_market():
 	"""
-	" Admin create new market in ETH
+	" Admin create new market
 	"""
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
@@ -40,14 +40,28 @@ def create_market():
 		with open(fixtures_path, 'r') as f:
 			data = json.load(f)
 
-		contract = contract_bl.get_active_smart_contract()
-		if contract is None:
-			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
-
 		matches = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
+
+				contract = contract_bl.get_active_smart_contract()
+				if contract is None:
+					return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
+				# check token id
+				token_id = item['token_id']
+				if token_id is not None:
+					token = Token.find_token_by_id(token_id)
+					if token is None:
+						return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
+					token_id = token.id
+
+					# refresh erc20 contract
+					contract = contract_bl.get_active_smart_contract(contract_type=CONST.CONTRACT_TYPE['ERC20'])
+					if contract is None:
+						return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 				match = Match(
 							homeTeamName=item['homeTeamName'],
 							awayTeamName=item['awayTeamName'],
@@ -68,6 +82,7 @@ def create_market():
 						name=o.get('name', ''),
 						match_id=match.id,
 						contract_id=contract.id,
+						token_id=token_id
 					)
 					db.session.add(outcome)
 					db.session.flush()

@@ -1228,8 +1228,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="abc@abcxyz",
-			payload="123abc",
+			email="abc012@abc3456.com",
+			payload="LDwp7UQoRNW5tUwzrA6q2trkwJLS3q6IHdOB0vt4T3dWV-a720yuWC1A9g==",
 			is_subscribe=1
 		)
 		db.session.add(user)
@@ -1243,7 +1243,7 @@ class TestHandshakeBl(BaseTestCase):
 
 		outcome = Outcome(
 			match_id=match.id,
-			name="Outcome name",
+			name="Outcome Name",
 			result=1,
 			contract_id=1
 		)

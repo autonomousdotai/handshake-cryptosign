@@ -39,7 +39,7 @@ def matches():
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
 		if source is not None:
-			s = Source.find_source_by_url(source)
+			s = Source.find_source_by_url(match_bl.clean_source_with_valid_format(source))
 			if s is not None:
 				matches = sorted(matches, key=lambda m: m.source_id != s.id)
 

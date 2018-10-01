@@ -20,6 +20,7 @@ def find_best_odds_which_match_support_side(outcome_id):
 		return best_odds, best_amount
 	return 0, 0
 
+
 def is_exceed_report_time(match_id):
 	match = Match.find_match_by_id(match_id)
 	if match.reportTime is not None:
@@ -30,6 +31,7 @@ def is_exceed_report_time(match_id):
 			return True
 	return False
 
+
 def is_exceed_closing_time(match_id):
 	match = Match.find_match_by_id(match_id)
 	if match.date is not None:
@@ -38,6 +40,7 @@ def is_exceed_closing_time(match_id):
 		if seconds > match.date:
 			return True
 	return False
+
 
 def is_exceed_dispute_time(match_id):
 	match = Match.find_match_by_id(match_id)
@@ -48,6 +51,7 @@ def is_exceed_dispute_time(match_id):
 		if seconds > match.disputeTime:
 			return True
 	return False
+
 
 def is_validate_match_time(data):
 	if 'date' not in data or 'reportTime' not in data or 'disputeTime' not in data:
@@ -64,6 +68,7 @@ def is_validate_match_time(data):
 	
 	return False
 
+
 def is_able_to_set_result_for_outcome(outcome):
 	if outcome.result == CONST.RESULT_TYPE['SUPPORT_WIN'] or \
 		outcome.result == CONST.RESULT_TYPE['AGAINST_WIN'] or \
@@ -75,6 +80,7 @@ def is_able_to_set_result_for_outcome(outcome):
 		return MESSAGE.OUTCOME_IS_REPORTING, CODE.OUTCOME_IS_REPORTING
 
 	return None, None
+
 
 def get_total_user_and_amount_by_match_id(match_id):
 	# Total User
@@ -110,3 +116,22 @@ def get_total_user_and_amount_by_match_id(match_id):
 	total_bets = (total_amount.total_amount_hs if total_amount.total_amount_hs is not None else 0)  + (total_amount.total_amount_s if total_amount.total_amount_s is not None else 0)
 
 	return total_users, total_bets
+
+
+def clean_source_with_valid_format(source):
+	if source is None:
+		return source
+		
+	if 'https://www.' in source:
+		source = source.replace('https://www.', '')
+
+	elif 'http://www.' in source:
+		source = source.replace('http://www.', '')
+
+	elif 'http://' in source:
+		source = source.replace('http://', '')
+
+	elif 'https://' in source:
+		source = source.replace('https://', '')
+
+	return source

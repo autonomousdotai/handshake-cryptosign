@@ -1,5 +1,6 @@
 from flask import g
 from datetime import *
+from urllib3 import util
 
 from sqlalchemy import func
 from app import db
@@ -119,19 +120,6 @@ def get_total_user_and_amount_by_match_id(match_id):
 
 
 def clean_source_with_valid_format(source):
-	if source is None:
-		return source
-		
-	if 'https://www.' in source:
-		source = source.replace('https://www.', '')
-
-	elif 'http://www.' in source:
-		source = source.replace('http://www.', '')
-
-	elif 'http://' in source:
-		source = source.replace('http://', '')
-
-	elif 'https://' in source:
-		source = source.replace('https://', '')
-
-	return source
+	parsed_uri = util.parse_url(source)
+	result = '{uri.netloc}'.format(uri=parsed_uri)
+	return result

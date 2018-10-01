@@ -131,16 +131,3 @@ def approve(id):
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
-
-
-@token_routes.route('/user_approve_token/<int:token_id>', methods=['GET'])
-@login_required
-def user_approve_token(token_id):
-	"""
-	""	User approve token:
-	""		+ 
-	"""
-	try:
-		pass
-	except Exception, ex:
-		return response_error(ex.message)

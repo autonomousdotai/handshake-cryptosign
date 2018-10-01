@@ -1,11 +1,12 @@
 from flask import g
 from datetime import *
 
+from sqlalchemy import func
 from app import db
 from app.models import User, Handshake, Match, Outcome, Contract, Shaker
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
-from sqlalchemy import func
+from app.constants import Handshake as HandshakeStatus
 
 import app.constants as CONST
 
@@ -80,12 +81,14 @@ def get_total_user_and_amount_by_match_id(match_id):
 	hs_count_user = db.session.query(Handshake.user_id.label("user_id"))\
 		.filter(Outcome.match_id == match_id)\
 		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Handshake.status != HandshakeStatus['STATUS_PENDING'])\
 		.group_by(Handshake.user_id)
 
 	s_count_user = db.session.query(Shaker.shaker_id.label("user_id"))\
 		.filter(Outcome.match_id == match_id)\
 		.filter(Handshake.outcome_id == Outcome.id)\
 		.filter(Handshake.id == Shaker.handshake_id)\
+		.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
 		.group_by(Shaker.shaker_id)
 
 	user_union = hs_count_user.union(s_count_user)

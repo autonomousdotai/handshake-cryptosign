@@ -14,7 +14,7 @@ from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.bl.match import is_validate_match_time, get_total_user_and_amount_by_match_id
 from app import db
-from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source
+from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -68,18 +68,30 @@ def matches():
 def add_match():
 	try:
 		uid = int(request.headers['Uid'])
+		token_id = request.args.get('token_id')
 
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
+		if token_id is None:
+			contract = contract_bl.get_active_smart_contract()
+			if contract is None:
+				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
+		else:
+			token = Token.find_token_by_id(token_id)
+			if token is None:
+				return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
+			
+			token_id = token.id
+			# refresh erc20 contract
+			contract = contract_bl.get_active_smart_contract(contract_type=CONST.CONTRACT_TYPE['ERC20'])
+			if contract is None:
+				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 		matches = []
 		response_json = []
-
-		contract = contract_bl.get_active_smart_contract()
-		if contract is None:
-			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
-
 		for item in data:
 			source = None
 			category = None
@@ -143,7 +155,8 @@ def add_match():
 						match_id=match.id,
 						contract_id=contract.id,
 						modified_user_id=uid,
-						created_user_id=uid
+						created_user_id=uid,
+						token_id=token_id
 					)
 					db.session.add(outcome)
 					db.session.flush()

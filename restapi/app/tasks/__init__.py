@@ -100,7 +100,8 @@ def update_feed(handshake_id):
 			"outcome_total_amount_s": '{0:f}'.format(outcome.total_amount if outcome.total_amount is not None else 0),
 			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0),
 			"contract_address_s": handshake.contract_address,
-			"contract_json_s": handshake.contract_json
+			"contract_json_s": handshake.contract_json,
+			"contract_type_s": CONST.CONTRACT_TYPE['ETH'] if outcome.token_id is None else CONST.CONTRACT_TYPE['ERC20']
 		}
 		print 'create maker {}'.format(hs)
 
@@ -349,26 +350,21 @@ def send_email_result_notifcation(outcome_id, result, is_resolve):
 			print("send_email_result_notifcation => Invalid match")
 			return False
 
-		handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
-		shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
+		# Get users betted by outcome
+		hs_user = db.session.query(Handshake.user_id.label("user_id"))\
+			.filter(Handshake.outcome_id == outcome.id)\
+			.group_by(Handshake.user_id)
 
-		for shaker in shakers:
-			free_bet_available = None
-			if shaker.free_bet == 1:
-				user = User.find_user_with_id(shaker.shaker_id)
-				free_bet_available = CONST.MAXIMUM_FREE_BET - user.free_bet
+		s_user = db.session.query(Shaker.shaker_id.label("user_id"))\
+			.filter(Shaker.handshake_id == Handshake.id)\
+			.filter(Handshake.outcome_id == outcome.id)\
+			.group_by(Shaker.shaker_id)
 
-			# Check or update email of user and send mail
-			user_bl.handle_mail_notif(app, shaker.shaker_id, shaker.from_address, outcome.name, match.name, result, shaker.side, shaker.status, shaker.free_bet, free_bet_available)
+		total_users = hs_user.union_all(s_user).group_by('user_id').all()
+		for item in total_users:
+			if hasattr(item, 'user_id') and item.user_id is not None:
+				user_bl.handle_mail_notif_by_user(app.config, CONST.MAXIMUM_FREE_BET, item.user_id, outcome, match, result)
 
-		for handshake in handshakes:
-			free_bet_available = None
-			if handshake.free_bet == 1:
-				user = User.find_user_with_id(handshake.user_id)
-				free_bet_available = CONST.MAXIMUM_FREE_BET - user.free_bet
-
-			# Check or update email of user and send mail
-			user_bl.handle_mail_notif(app, handshake.user_id, handshake.from_address, outcome.name, match.name, result, handshake.side, handshake.status, handshake.free_bet, free_bet_available)			
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

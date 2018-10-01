@@ -16,8 +16,8 @@ class User(BaseModel):
 						server_default=str(0),
 						default=0)
 	is_subscribe = db.Column(db.Integer,
-						server_default=str(1),
-						default=1)
+						server_default=str(0),
+						default=0)
 	tokens = db.relationship(
 						"Token",
 						secondary=user_token,

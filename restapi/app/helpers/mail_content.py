@@ -150,9 +150,9 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
             if counter_lose > 0:
                 content += " - Your have: {} bet lose<br/>".format(counter_lose)
 
-            content += "{}<br/>".format(outcome_name)
             outcome_name = bet.outcome_name
             outcome_id = bet.outcome_id
+            content += "{}<br/>".format(outcome_name)
             counter_not_match = 0
             counter_draw = 0
             counter_win = 0

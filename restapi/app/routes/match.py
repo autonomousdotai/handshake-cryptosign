@@ -39,9 +39,10 @@ def matches():
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
 		if source is not None:
-			s = Source.find_source_by_url(source)
-			if s is not None:
-				matches = sorted(matches, key=lambda m: m.source_id != s.id)
+			arr_sources = Source.find_source_by_url(match_bl.clean_source_with_valid_format(source))
+			if arr_sources is not None:
+				for s in arr_sources:
+					matches = sorted(matches, key=lambda m: m.source_id != s.id)
 
 		for match in matches:
 			match_json = match.to_json()

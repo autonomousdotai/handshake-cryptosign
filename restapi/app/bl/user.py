@@ -70,26 +70,29 @@ def check_email_existed_with_dispatcher(app_config, payload):
 		return False
 	return data_response['data']['email']
 
-def handle_mail_notif_by_user(app_config, MAXIMUM_FREE_BET, user_id, outcome, match, outcome_result):
+
+def handle_mail_notif_by_user(app_config, MAXIMUM_FREE_BET, user_id, match):
 	# Get all bets by outcome and user_id
-	hs_bets = db.session.query(Handshake.user_id.label("user_id"), bindparam("is_hs", 1), Handshake.free_bet, Handshake.side,Handshake.status, Handshake.side, Handshake.from_address)\
-		.filter(Handshake.outcome_id == outcome.id)\
+	# bindparam("is_hs", 0)
+	hs_bets = db.session.query(Handshake.user_id.label("user_id"), Handshake.free_bet, Handshake.status, Handshake.side, Handshake.from_address, Outcome.id.label("outcome_id"), Outcome.name.label("outcome_name"), Outcome.result.label("outcome_result"))\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Outcome.match_id == match.id)\
 		.filter(Handshake.user_id == user_id)
-
-	s_bets = db.session.query(Shaker.shaker_id.label("user_id"), bindparam("is_hs", 0), Shaker.free_bet, Shaker.side,Handshake.status, Shaker.side, Shaker.from_address)\
+	s_bets = db.session.query(Shaker.shaker_id.label("user_id"), Shaker.free_bet, Shaker.status, Shaker.side, Shaker.from_address, Outcome.id.label("outcome_id"), Outcome.name.label("outcome_name"), Outcome.result.label("outcome_result"))\
 		.filter(Shaker.handshake_id == Handshake.id)\
-		.filter(Handshake.outcome_id == outcome.id)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Outcome.match_id == match.id)\
 		.filter(Shaker.shaker_id == user_id)
+	bets = s_bets.union_all(hs_bets).order_by(Outcome.id.desc()).all()
 
-	bets = hs_bets.union_all(s_bets).all()
+	if bets is None or len(bets) == 0:
+		return False
 
 	user = User.find_user_with_id(user_id)
 	if user is None:
 		return False
-
 	email = user.email
 	free_bet_available = MAXIMUM_FREE_BET - user.free_bet
-
 	if user.email is None:
 		email_exist = check_email_existed_with_dispatcher(app_config, user.payload)
 		if email_exist is False:
@@ -97,11 +100,11 @@ def handle_mail_notif_by_user(app_config, MAXIMUM_FREE_BET, user_id, outcome, ma
 		user.email = email_exist
 		email = email_exist
 		db.session.commit()
-
 	if user.is_subscribe == 1:
-		email_body = render_email_notify_result_content(app_config, bets, outcome_result, free_bet_available)
-
-		mail_services.send(email, app_config['FROM_EMAIL'], "Results [{}]".format(outcome.name), email_body) 
+		email_body = render_email_notify_result_content(app_config, bets, free_bet_available)
+		if email_body is None or email_body is False or email_body == "":
+			return False
+		mail_services.send(email, app_config['FROM_EMAIL'], "Results [{}]".format(match.name), email_body) 
 	else:
 		print("send_email_result_notifcation => User did not subscribe: {}", user)
 		return False

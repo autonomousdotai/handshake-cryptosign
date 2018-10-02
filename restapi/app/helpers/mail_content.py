@@ -127,55 +127,68 @@ def render_footer_email_content(app_config, user_id, free_bet_available):
         <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
     """.format(render_unsubscribe_url(user_id, passphase))
 
-def render_email_notify_result_content(app_config, items, outcome_result, free_bet_available):
+def render_email_notify_result_content(app_config, items, free_bet_available):
     content = "Hey Ninja!<br/>"
+
+    outcome_name = items[0].outcome_name
+    outcome_id = items[0].outcome_id
+    content += "{}<br/>".format(outcome_name)
     
     counter_not_match = 0
     counter_draw = 0
     counter_win = 0
     counter_lose = 0
 
-    for item in items:
-        if item.free_bet == 1:
-            # if status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
-            if item.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                # content = render_email_not_match_free_bet_content(app_config, user_id, free_bet_available)
+    for bet in items:
+        if bet.outcome_name != outcome_name and bet.outcome_id != outcome_id:
+            if counter_not_match > 0:
+                content += " - Your have: {} bet not match<br/>".format(counter_not_match)
+            if counter_draw > 0:
+                content += " - Your have: {} bet draw<br/>".format(counter_draw)
+            if counter_win > 0:
+                content += " - Your have: {} bet win<br/>".format(counter_win)
+            if counter_lose > 0:
+                content += " - Your have: {} bet lose<br/>".format(counter_lose)
+
+            content += "{}<br/>".format(outcome_name)
+            outcome_name = bet.outcome_name
+            outcome_id = bet.outcome_id
+            counter_not_match = 0
+            counter_draw = 0
+            counter_win = 0
+            counter_lose = 0
+
+        if bet.free_bet == 1:
+            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED'] or bet.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
                 counter_not_match += 1
             else:
-                if outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
                     counter_draw += 1
-                    # content = render_email_draw_free_bet_content(app_config, user_id, free_bet_available)
                 else:
-                    if outcome_result == item.side:
+                    if bet.outcome_result == bet.side:
                         counter_win += 1
-                        # content = render_email_win_free_bet_content(app_config, user_id, free_bet_available)
                     else:
                         counter_lose += 1
-                        # content = render_email_lose_free_bet_content(app_config, user_id, free_bet_available)
         else:
-            if item.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED'] or bet.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
                 counter_not_match += 1
-                # content = render_email_not_match_real_bet_content(app_config, user_id)
             else:
-                if outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
                     counter_draw += 1
-                    # content = render_email_draw_real_bet_content(app_config, user_id)
                 else:
-                    if outcome_result == item.side:
+                    if bet.outcome_result == bet.side:
                         counter_win += 1
-                        # content = render_email_win_real_bet_content(app_config, user_id)
                     else:
                         counter_lose += 1
-                        # content = render_email_lose_real_bet_content(app_config, user_id)
 
     if counter_not_match > 0:
-        content += "Your have: {} bet not match<br/>".format(counter_not_match)
+        content += " - Your have: {} bet not match<br/>".format(counter_not_match)
     if counter_draw > 0:
-        content += "Your have: {} bet draw<br/>".format(counter_draw)
+        content += " - Your have: {} bet draw<br/>".format(counter_draw)
     if counter_win > 0:
-        content += "Your have: {} bet win<br/>".format(counter_win)
+        content += " - Your have: {} bet win<br/>".format(counter_win)
     if counter_lose > 0:
-        content += "Your have: {} bet lose<br/>".format(counter_lose)
+        content += " - Your have: {} bet lose<br/>".format(counter_lose)            
 
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
     return content

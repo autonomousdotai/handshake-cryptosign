@@ -1228,7 +1228,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="abc012@abc3456.com",
+			# email="abc012@abc3456.com",
+			email="dragonhehe88@gmail.com",
 			payload="LDwp7UQoRNW5tUwzrA6q2trkwJLS3q6IHdOB0vt4T3dWV-a720yuWC1A9g==",
 			is_subscribe=1
 		)
@@ -1322,8 +1323,7 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(shaker_lose)
 		db.session.commit()
 
-		send_email_result_notifcation.delay(outcome_draw.id, outcome_draw.result, True)
-		send_email_result_notifcation.delay(outcome.id, outcome.result, True)
+		send_email_result_notifcation.delay(match.id, True)
 		self.assertEqual(True, True)
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import hashlib
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
@@ -366,11 +367,16 @@ def match_detail(match_id):
 
 
 @match_routes.route('/count-event', methods=['GET'])
-@login_required
 def count_events_based_on_source():
 	try:
 		source = request.args.get('source')
+		code = request.args.get('code')
+
 		if source is None:
+			return response_error()
+
+		server_key = hashlib.md5('{}{}'.format(source, g.PASSPHASE)).hexdigest()
+		if server_key != code:
 			return response_error()
 
 		response = {

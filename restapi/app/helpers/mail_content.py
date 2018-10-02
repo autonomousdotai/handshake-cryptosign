@@ -159,7 +159,7 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
             counter_lose = 0
 
         if bet.free_bet == 1:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED'] or bet.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED']:
                 counter_not_match += 1
             else:
                 if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
@@ -170,7 +170,7 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
                     else:
                         counter_lose += 1
         else:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED'] or bet.status == HandshakeStatus['STATUS_SHAKER_SHAKED']:
+            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED']:
                 counter_not_match += 1
             else:
                 if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:

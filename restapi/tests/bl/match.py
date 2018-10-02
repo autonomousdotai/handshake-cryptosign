@@ -200,5 +200,10 @@ class TestMatchBl(BaseTestCase):
         expected = 'www.ninja.org'
         self.assertEqual(actual, expected)
 
+        data = 'abc'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'abc'
+        self.assertEqual(actual, expected)
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,7 +1,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db
-from app.models import Handshake, User, Outcome, Match, Task, Contract, Source, Category, Token
+from app.models import Handshake, User, Outcome, Match, Task, Contract, Source, Category, Token, Source
 from app.helpers.utils import local_to_utc
 from app import app
 from datetime import datetime
@@ -158,6 +158,11 @@ class TestMatchBluePrint(BaseTestCase):
         outcomes = db.session.query(Outcome).filter(or_(Outcome.created_user_id==88, Outcome.created_user_id==99, Outcome.created_user_id==None)).all()
         for oc in outcomes:
             db.session.delete(oc)
+            db.session.commit()
+
+        sources = Source.find_source_by_url('voa.com')
+        for s in sources:
+            db.session.delete(s)
             db.session.commit()
 
         Task.query.delete()
@@ -339,7 +344,6 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             data_json = data['data']
-            print data_json
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 2)
 
@@ -742,6 +746,7 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 0)
 
+
     def test_get_matchs_relevant_event(self):
         self.clear_data_before_test()
         t = datetime.now().timetuple()
@@ -949,7 +954,6 @@ class TestMatchBluePrint(BaseTestCase):
             result=-1
         )
         db.session.add(outcome)
-
         db.session.commit()
 
         with self.client:
@@ -964,9 +968,72 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
-            print data
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']['outcomes']) != 0)
+
+            for match in arr_match:
+                db.session.delete(match)
+                db.session.commit()
+
+
+    def test_count_event_based_on_source(self):
+        self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        arr_match = []
+
+        # ------
+        source = Source(
+            name = "Source",
+            url = "voa.com",
+            approved = 1
+        )
+        db.session.add(source)
+        db.session.commit()
+        
+        # ------
+        match = Match.find_match_by_id(4685)
+        if match is not None:
+            match.date = seconds + 100
+            match.reportTime = seconds + 200
+            match.disputeTime = seconds + 300
+            match.source_id = source.id,
+            match.category_id = cate.id
+        else:
+            match = Match(
+                id=4685,
+                public=1,
+                date=seconds + 100,
+                reportTime=seconds + 200,
+                disputeTime=seconds + 300,
+                source_id = source.id
+            )
+            db.session.add(match)
+
+        # -----        
+        outcome = Outcome(
+            match_id=match.id,
+            hid=1,
+            result=-1
+        )
+        db.session.add(outcome)
+        arr_match.append(match)
+        db.session.commit()
+
+        with self.client:
+            Uid = 88
+            response = self.client.get(
+                                    '/match/count-event?source=https://voa.com',
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['status'] == 1)
+            bets = data['data']
+            self.assertEqual(int(bets['bets']), 1)
 
             for match in arr_match:
                 db.session.delete(match)

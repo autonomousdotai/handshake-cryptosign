@@ -279,6 +279,7 @@ def match_need_user_report():
 	except Exception, ex:
 		return response_error(ex.message)
 
+
 @match_routes.route('/relevant-event', methods=['GET'])
 @login_required
 def relevant():
@@ -359,6 +360,40 @@ def match_detail(match_id):
 
 		match_json["outcomes"] = arr_outcomes
 		return response_ok(match_json)
+
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@match_routes.route('/count-event', methods=['GET'])
+@login_required
+def count_events_based_on_source():
+	try:
+		source = request.args.get('source')
+		if source is None:
+			return response_error()
+
+		response = {
+			"bets": 0
+		}
+		
+		url = match_bl.clean_source_with_valid_format(source)
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		match = db.session.query(Match)\
+				.filter(\
+					Match.deleted == 0,\
+					Match.date > seconds,\
+					Match.source_id.in_(db.session.query(Source.id).filter(Source.url.contains(url))),\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
+				.all()
+
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		response["bets"] = len(match)
+		return response_ok(response)
 
 	except Exception, ex:
 		return response_error(ex.message)

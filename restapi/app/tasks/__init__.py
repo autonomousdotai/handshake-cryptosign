@@ -271,13 +271,13 @@ def send_dispute_email(outcome_id, outcome_name):
 		# Send mail to admin
 		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
 		multipart_form_data = MultipartEncoder(
-    		fields= {
+			fields= {
 				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
 				'subject': 'Dispute',
 				'to[]': app.config['RESOLVER_EMAIL'],
 				'from': app.config['FROM_EMAIL']
 			}
-    	)
+		)
 		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})
 
 		if res.status_code > 400:
@@ -338,37 +338,42 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 
 
 @celery.task()
-def send_email_result_notifcation(outcome_id, result, is_resolve):
+def send_email_result_notifcation(match_id, is_resolve):
 	try:
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None or result < 1:
-			print("send_email_result_notifcation => Invalid outcome")
+
+		# Check event's outcomes had reported 
+		outcomes = db.session.query(Outcome).filter(Outcome.match_id == match_id).all()
+		outcomes_reported = list(filter(lambda x: x.result > 0, outcomes))
+		if len(outcomes_reported) != len(outcomes):
+			print("Some of outcomes had not report")
 			return False
 
-		match = Match.find_match_by_id(outcome.match_id)
+		match = Match.find_match_by_id(match_id)
 		if match is None:
 			print("send_email_result_notifcation => Invalid match")
 			return False
 
-		# Get users betted by outcome
+		# Get users betted by event
 		hs_user = db.session.query(Handshake.user_id.label("user_id"))\
-			.filter(Handshake.outcome_id == outcome.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.filter(Outcome.match_id == match_id)\
 			.group_by(Handshake.user_id)
 
 		s_user = db.session.query(Shaker.shaker_id.label("user_id"))\
 			.filter(Shaker.handshake_id == Handshake.id)\
-			.filter(Handshake.outcome_id == outcome.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.filter(Outcome.match_id == match_id)\
 			.group_by(Shaker.shaker_id)
 
 		total_users = hs_user.union_all(s_user).group_by('user_id').all()
 		for item in total_users:
 			if hasattr(item, 'user_id') and item.user_id is not None:
-				user_bl.handle_mail_notif_by_user(app.config, CONST.MAXIMUM_FREE_BET, item.user_id, outcome, match, result)
+				user_bl.handle_mail_notif_by_user(app.config, CONST.MAXIMUM_FREE_BET, item.user_id, match)
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_mail_result_notify=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_send_mail_result_notify=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

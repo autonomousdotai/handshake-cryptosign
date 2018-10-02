@@ -251,7 +251,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 1)
             self.assertEqual(response.status_code, 200)
@@ -381,7 +381,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 4)
             self.assertEqual(response.status_code, 200)
@@ -494,7 +494,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 1)
 
@@ -606,7 +606,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 1)
 
@@ -683,7 +683,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
             self.assertTrue(data['status'] == 1)
             self.assertEqual(len(data_json), 1)
 
@@ -756,7 +756,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
 
             handshake = data_json[0]
             self.assertEqual(len(data_json), 1)
@@ -820,7 +820,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
 
             handshake = data_json[0]
             self.assertTrue(data['status'] == 1)
@@ -887,7 +887,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
 
             handshake = data_json[0]
             self.assertEqual(len(data_json), 1)
@@ -952,7 +952,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
 
             handshake = data_json[0]
             self.assertEqual(len(data_json), 2)
@@ -1045,7 +1045,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
+            data_json = data['data']['handshakes']
 
             hs = Handshake.find_handshake_by_id(handshake.id)
             self.assertEqual(float(hs.remaining_amount), 0.6)

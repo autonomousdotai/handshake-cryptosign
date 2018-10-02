@@ -158,7 +158,7 @@ def init():
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
-
+		arr_hs = []
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -185,7 +185,6 @@ def init():
 			run_bots.delay(outcome_id)
 
 			# response data
-			arr_hs = []
 			hs_json = handshake.to_json()
 			hs_json['maker_address'] = handshake.from_address
 			hs_json['maker_odds'] = handshake.odds
@@ -195,9 +194,7 @@ def init():
 			arr_hs.append(hs_json)
 
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
-			return response_ok(arr_hs)
 		else:
-			arr_hs = []
 			shaker_amount = amount
 
 			hs_feed = []
@@ -300,7 +297,13 @@ def init():
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
 			run_bots.delay(outcome_id)
-			return response_ok(arr_hs)
+
+		# make response
+		response = {
+			"handshakes": arr_hs,
+			"total_users": match_bl.get_total_real_users()
+		}
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()

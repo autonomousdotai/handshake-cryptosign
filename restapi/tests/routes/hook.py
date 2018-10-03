@@ -67,5 +67,27 @@ class TestHookBluePrint(BaseTestCase):
             user = User.find_user_with_id(1)
             self.assertTrue(user.email == email)
 
+        # Test email with different email
+        with self.client:
+            email2 = "abc789@abc789.com"
+            params = {
+                "type_change": "Update",
+                "user_id": user.id,
+                "email": email2,
+                "meta_data": ""
+            }
+
+            response = self.client.post(
+                                    '/hook/dispatcher',
+                                    data=json.dumps(params), 
+                                    content_type='application/json'
+                                    )
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            user = User.find_user_with_id(1)
+            self.assertTrue(user.email == email2)
+
 if __name__ == '__main__':
     unittest.main()

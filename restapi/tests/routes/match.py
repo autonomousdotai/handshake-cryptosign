@@ -7,9 +7,11 @@ from app import app
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)
 from sqlalchemy import or_
+
 import mock
 import json
 import time
+import hashlib
 import app.constants as CONST
 
 class TestMatchBluePrint(BaseTestCase):
@@ -1056,8 +1058,11 @@ class TestMatchBluePrint(BaseTestCase):
 
         with self.client:
             Uid = 88
+
+            source = 'https://voa.com'
+            code = hashlib.md5('{}{}'.format(source, app.config['PASSPHASE'])).hexdigest()
             response = self.client.get(
-                                    '/match/count-event?source=https://voa.com',
+                                    '/match/count-event?source={}&code={}'.format(source, code),
                                     content_type='application/json',
                                     headers={
                                         "Uid": "{}".format(88),

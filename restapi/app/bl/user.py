@@ -104,7 +104,7 @@ def handle_mail_notif_by_user(app_config, MAXIMUM_FREE_BET, user_id, match):
 		email_body = render_email_notify_result_content(app_config, bets, free_bet_available)
 		if email_body is None or email_body is False or email_body == "":
 			return False
-		mail_services.send(email, app_config['FROM_EMAIL'], "Results [{}]".format(match.name), email_body) 
+		mail_services.send(email, app_config['FROM_EMAIL'], "The results of [{}] are live!".format(match.name), email_body) 
 	else:
 		print("send_email_result_notifcation => User did not subscribe: {}", user)
 		return False

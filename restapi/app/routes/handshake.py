@@ -158,7 +158,7 @@ def init():
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
-
+		arr_hs = []
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -185,7 +185,6 @@ def init():
 			run_bots.delay(outcome_id)
 
 			# response data
-			arr_hs = []
 			hs_json = handshake.to_json()
 			hs_json['maker_address'] = handshake.from_address
 			hs_json['maker_odds'] = handshake.odds
@@ -195,9 +194,7 @@ def init():
 			arr_hs.append(hs_json)
 
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
-			return response_ok(arr_hs)
 		else:
-			arr_hs = []
 			shaker_amount = amount
 
 			hs_feed = []
@@ -300,7 +297,13 @@ def init():
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
 			run_bots.delay(outcome_id)
-			return response_ok(arr_hs)
+
+		# make response
+		response = {
+			"handshakes": arr_hs,
+			"total_bets": handshake_bl.get_total_real_bets()
+		}
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -719,13 +722,14 @@ def check_free_bet():
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
+		request_from = request.headers.get('Request-From', 'mobile')
 
 		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
 		if setting is not None:
-			if setting.status == 0:
+			if setting.status == 0 and request_from != 'extension':
 				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
 
 		item = user_bl.get_last_user_free_bet(uid)

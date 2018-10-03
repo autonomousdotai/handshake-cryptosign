@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import hashlib
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
@@ -12,7 +13,6 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.bl.match import is_validate_match_time, get_total_user_and_amount_by_match_id
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -46,7 +46,7 @@ def matches():
 
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			
@@ -306,7 +306,7 @@ def relevant():
 
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			
@@ -346,7 +346,7 @@ def match_detail(match_id):
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 		
 		match_json = match.to_json()
-		total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+		total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 		match_json["total_users"] = total_user
 		match_json["total_bets"] = total_bets
 
@@ -366,11 +366,16 @@ def match_detail(match_id):
 
 
 @match_routes.route('/count-event', methods=['GET'])
-@login_required
 def count_events_based_on_source():
 	try:
 		source = request.args.get('source')
+		code = request.args.get('code')
+
 		if source is None:
+			return response_error()
+
+		server_key = hashlib.md5('{}{}'.format(source, g.PASSPHASE)).hexdigest()
+		if server_key != code:
 			return response_error()
 
 		response = {

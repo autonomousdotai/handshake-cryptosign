@@ -23,104 +23,32 @@ def render_email_subscribe_content(app_config, user_id):
         <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
     """.format(render_unsubscribe_url(user_id, passphase))
 
-def render_email_lose_free_bet_content(app_config, user_id, free_bet_available):
-    passphase = app_config["PASSPHASE"]
+def render_row_table_content(outcome_name, side, result):
+    text = ""
+    if result == "DRAW":
+        text = "So... it’s a DRAW."
+    elif result == "WIN":
+        text = "You won! Please wait to withdraw your winnings."
+    elif result == "LOSE":
+        text = "You lost. Better luck next time."
+    else:
+        text = "Unfortunately, this time you weren't matched. "
+
     return """
-        Hey Ninja!<br/>
-        Not so lucky this time :( <br/>
-        You have {} freebets <br/>
-        But you know what we say... <br/>
-        If at first you don’t succeed, try again for free.<br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
-
-def render_email_win_free_bet_content(app_config, user_id, free_bet_available):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        YOU WON! <br/>
-        Wanna win more? <br/>
-        Of course you do, who doesn’t!<br/>
-        You have {} freebets <br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
-
-def render_email_draw_free_bet_content(app_config, user_id, free_bet_available):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        So... it’s a DRAW. <br/>
-        Wanna another shot at glory? <br/>
-        You have {} freebets <br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
-
-def render_email_not_match_free_bet_content(app_config, user_id, free_bet_available):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        Unfortunately, this time you weren't matched. <br/>
-        No worries, let’s have another go. <br/>
-        You have {} freebets <br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(free_bet_available, render_unsubscribe_url(user_id, passphase))
-
-def render_email_lose_real_bet_content(app_config, user_id):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        Sorry, you lost :( <br/>
-        You know what they say... <br/>
-        "If at first you don’t succeed, try again for free."<br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
-
-def render_email_win_real_bet_content(app_config, user_id):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        YOU WON! <br/>
-        Congrats, you’ve successfully predicted the future.<br/>
-        Wanna see if you can do it again? <br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
-
-
-def render_email_draw_real_bet_content(app_config, user_id):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        So... it’s a DRAW. <br/>
-        Not to worry, there’s always next time. <br/>
-        We believe in you! <br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
-
-
-def render_email_not_match_real_bet_content(app_config, user_id):
-    passphase = app_config["PASSPHASE"]
-    return """
-        Hey Ninja!<br/>
-        Unfortunately, this time you weren't matched. <br/>
-        Luckily, you can always try again. <br/>
-        Let’s do it!<br/>
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
+    <tr>
+        <td>{}</td>
+        <td>{}</td>
+        <td>{}</td>
+    </tr>
+    """.format(outcome_name, "Support" if side == 1 else "Oppose", text)
 
 def render_footer_email_content(app_config, user_id, free_bet_available):
     passphase = app_config["PASSPHASE"]
     html = ""
 
     if free_bet_available > 0:
-        html = "You have {} freebets <br/>".format(free_bet_available)
+        # html = "You've unlocked {} free bets!  <br/>".format(free_bet_available)
+        html += """Please go <a href="http://ninja.org/me">Ninja Prediction</a> on your mobile to claim them. <br/>"""
 
     return html + """
         <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
@@ -128,67 +56,69 @@ def render_footer_email_content(app_config, user_id, free_bet_available):
     """.format(render_unsubscribe_url(user_id, passphase))
 
 def render_email_notify_result_content(app_config, items, free_bet_available):
-    content = "Hey Ninja!<br/>"
+    content = """
+    <html>
+    <head>
+    <style>
+        #bet_result {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-    outcome_name = items[0].outcome_name
-    outcome_id = items[0].outcome_id
-    content += "{}<br/>".format(outcome_name)
-    
-    counter_not_match = 0
-    counter_draw = 0
-    counter_win = 0
-    counter_lose = 0
+        #bet_result td, #bet_result th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #bet_result tr:nth-child(even){background-color: #f2f2f2;}
+
+        #bet_result tr:hover {background-color: #ddd;}
+
+        #bet_result th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+        }
+    </style>
+    </head>
+    <body>
+    Hey Ninja!<br/>
+    The results are in!<br/>
+    Let’s see how you did?<br/>
+
+    <table id="bet_result">
+        <tr>
+            <th>Outcome</th>
+            <th>Side</th>
+            <th>Result</th>
+        </tr>
+    """
 
     for bet in items:
-        if bet.outcome_name != outcome_name and bet.outcome_id != outcome_id:
-            if counter_not_match > 0:
-                content += " - Your have: {} bet not match<br/>".format(counter_not_match)
-            if counter_draw > 0:
-                content += " - Your have: {} bet draw<br/>".format(counter_draw)
-            if counter_win > 0:
-                content += " - Your have: {} bet win<br/>".format(counter_win)
-            if counter_lose > 0:
-                content += " - Your have: {} bet lose<br/>".format(counter_lose)
-
-            outcome_name = bet.outcome_name
-            outcome_id = bet.outcome_id
-            content += "{}<br/>".format(outcome_name)
-            counter_not_match = 0
-            counter_draw = 0
-            counter_win = 0
-            counter_lose = 0
-
         if bet.free_bet == 1:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED']:
-                counter_not_match += 1
+            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+                content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
             else:
                 if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                    counter_draw += 1
+                    content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
                 else:
                     if bet.outcome_result == bet.side:
-                        counter_win += 1
+                        content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
                     else:
-                        counter_lose += 1
+                        content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
         else:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT'] or bet.status == HandshakeStatus['STATUS_INITED']:
-                counter_not_match += 1
+            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+                content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
             else:
                 if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                    counter_draw += 1
+                    content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
                 else:
                     if bet.outcome_result == bet.side:
-                        counter_win += 1
+                        content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
                     else:
-                        counter_lose += 1
+                        content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
 
-    if counter_not_match > 0:
-        content += " - Your have: {} bet not match<br/>".format(counter_not_match)
-    if counter_draw > 0:
-        content += " - Your have: {} bet draw<br/>".format(counter_draw)
-    if counter_win > 0:
-        content += " - Your have: {} bet win<br/>".format(counter_win)
-    if counter_lose > 0:
-        content += " - Your have: {} bet lose<br/>".format(counter_lose)            
-
+    content += "</table></body></html>"
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
     return content

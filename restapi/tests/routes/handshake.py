@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker, Task, Contract, Token
+from app.models import Handshake, User, Outcome, Match, Shaker, Task, Contract, Token, Setting
 from app.helpers.message import MESSAGE
 from io import BytesIO
 from datetime import datetime
@@ -1354,6 +1354,16 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 0)
             
             # call check-free-bet
+            setting = Setting.find_setting_by_name('FreeBet')
+            if setting is None:
+                setting = Setting(
+                    name="FreeBet",
+                    status=1
+                )
+                db.session.add(setting)
+            else:
+                setting.status = 1
+            db.session.commit()
             response = self.client.get(
                                     '/handshake/check_free_bet',
                                     headers={
@@ -2018,7 +2028,16 @@ class TestHandshakeBluePrint(BaseTestCase):
     
         with self.client:
             Uid = 100
-
+            setting = Setting.find_setting_by_name('FreeBet')
+            if setting is None:
+                setting = Setting(
+                    name="FreeBet",
+                    status=1
+                )
+                db.session.add(setting)
+            else:
+                setting.status = 1
+            db.session.commit()
             response = self.client.get(
                                     '/handshake/check_free_bet',
                                     headers={
@@ -2060,6 +2079,16 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
 
             # call check free bet again
+            setting = Setting.find_setting_by_name('FreeBet')
+            if setting is None:
+                setting = Setting(
+                    name="FreeBet",
+                    status=1
+                )
+                db.session.add(setting)
+            else:
+                setting.status = 1
+            db.session.commit()
             response = self.client.get(
                                     '/handshake/check_free_bet',
                                     headers={
@@ -2073,6 +2102,56 @@ class TestHandshakeBluePrint(BaseTestCase):
             d = data['data']
             self.assertEqual(d['free_bet_available'], 2)
 
+
+            # call check-free-bet with extension
+            setting = Setting.find_setting_by_name('FreeBet')
+            if setting is None:
+                setting = Setting(
+                    name="FreeBet",
+                    status=0
+                )
+                db.session.add(setting)
+            else:
+                setting.status = 0
+            db.session.commit()
+
+            response = self.client.get(
+                                    '/handshake/check_free_bet',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+            response = self.client.get(
+                                    '/handshake/check_free_bet?view_type=extension',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(response.status_code, 200)
+
+            response = self.client.get(
+                                    '/handshake/check_free_bet?view_type=mobile',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+            self.assertEqual(response.status_code, 200)
+
+            setting = Setting.find_setting_by_name('FreeBet')
+            setting.status = 1
+            db.session.commit()
 
     def test_refund_free_bet(self):
         self.clear_data_before_test()

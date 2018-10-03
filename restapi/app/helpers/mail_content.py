@@ -47,7 +47,7 @@ def render_footer_email_content(app_config, user_id, free_bet_available):
     html = ""
 
     if free_bet_available > 0:
-        html = "You've unlocked {} free bets!  <br/>".format(free_bet_available)
+        # html = "You've unlocked {} free bets!  <br/>".format(free_bet_available)
         html += """Please go <a href="http://ninja.org/me">Ninja Prediction</a> on your mobile to claim them. <br/>"""
 
     return html + """
@@ -79,8 +79,6 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
             padding-top: 12px;
             padding-bottom: 12px;
             text-align: left;
-            background-color: #4CAF50;
-            color: white;
         }
     </style>
     </head>

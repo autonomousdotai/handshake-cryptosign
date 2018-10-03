@@ -2128,22 +2128,24 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(response.status_code, 200)
 
             response = self.client.get(
-                                    '/handshake/check_free_bet?view_type=extension',
+                                    '/handshake/check_free_bet',
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Request-From": 'extension'
                                     })
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
             self.assertEqual(response.status_code, 200)
 
             response = self.client.get(
-                                    '/handshake/check_free_bet?view_type=mobile',
+                                    '/handshake/check_free_bet',
                                     headers={
                                         "Uid": "{}".format(Uid),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Request-From": 'mobile'
                                     })
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 0)

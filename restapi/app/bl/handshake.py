@@ -822,6 +822,7 @@ def can_withdraw(handshake, shaker=None):
 
 	return ''
 
+
 def can_uninit(handshake):
 	if handshake is None:
 		return False
@@ -844,3 +845,19 @@ def can_uninit(handshake):
 					return False
 
 	return True
+
+
+def get_total_real_bets():
+	# Total User
+	hs = db.session.query(Handshake)\
+		.filter(Handshake.status != HandshakeStatus['STATUS_PENDING'])\
+		.filter(Handshake.free_bet != 1)\
+		.all()
+
+	s = db.session.query(Shaker)\
+		.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
+		.filter(Shaker.free_bet != 1)\
+		.all()
+
+	total_bets = len(hs) + len(s)
+	return total_bets

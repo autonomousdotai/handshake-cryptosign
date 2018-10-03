@@ -301,7 +301,7 @@ def init():
 		# make response
 		response = {
 			"handshakes": arr_hs,
-			"total_users": match_bl.get_total_real_users()
+			"total_bets": handshake_bl.get_total_real_bets()
 		}
 		return response_ok(response)
 

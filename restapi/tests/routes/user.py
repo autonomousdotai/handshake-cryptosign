@@ -27,7 +27,7 @@ class TestUserBluePrint(BaseTestCase):
             )
             db.session.add(token)
             db.session.commit()
-        
+
         else:
             token.tid = None
             token.status = -1

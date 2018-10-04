@@ -5,10 +5,9 @@ import json
 import hashlib
 import requests
 import app.bl.user as user_bl
-from app.helpers.utils import render_unsubscribe_url
 
 from flask import Blueprint, request, g
-from app import db, sg, s3
+from app import db
 from app.models import User, Token
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)

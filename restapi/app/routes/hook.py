@@ -32,8 +32,7 @@ def user_hook():
 
 		if type_change == "Update":
 			user = User.find_user_with_id(user_id)
-			# TODO: check email is empty
-			if user.email != email:
+			if user.email != email and email is not None and email != "":
 				print "Update email: {}".format(email)
 				user.email = email
 				db.session.commit()

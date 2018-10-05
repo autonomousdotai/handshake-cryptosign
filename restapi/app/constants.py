@@ -63,6 +63,11 @@ COMMUNITY_TYPE = {
 	'PRIVATE': 1
 }
 
+CONTRACT_TYPE = {
+	'ETH': 'ETH',
+	'ERC20': 'ERC20'
+}
+
 STATE_TYPE = {
 	'NEW': 0,
 	'PUBLISH': 1

@@ -495,7 +495,8 @@ def save_handshake_for_event(event_name, inputs):
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			send_email_result_notifcation.delay(outcome.id, result, is_resolve=False)
+			db.session.commit()
+			send_email_result_notifcation.delay(outcome.match_id, is_resolve=False)
 			return handshakes, shakers
 
 		return None, None
@@ -684,7 +685,8 @@ def save_handshake_for_event(event_name, inputs):
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
-		send_email_result_notifcation.delay(outcome.id, result, is_resolve=True)
+		db.session.commit()
+		send_email_result_notifcation.delay(outcome.match_id, is_resolve=True)
 		return handshakes, shakers
 
 
@@ -820,6 +822,7 @@ def can_withdraw(handshake, shaker=None):
 
 	return ''
 
+
 def can_uninit(handshake):
 	if handshake is None:
 		return False
@@ -842,3 +845,21 @@ def can_uninit(handshake):
 					return False
 
 	return True
+
+
+def get_total_real_bets():
+	# Total User
+	hs = db.session.query(Handshake)\
+		.filter(Handshake.status != HandshakeStatus['STATUS_PENDING'])\
+		.filter(Handshake.free_bet != 1)\
+		.filter(Handshake.amount > CONST.MAXIMUM_FREE_BET)\
+		.all()
+
+	s = db.session.query(Shaker)\
+		.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
+		.filter(Shaker.free_bet != 1)\
+		.filter(Shaker.amount > CONST.MAXIMUM_FREE_BET)\
+		.all()
+
+	total_bets = len(hs) + len(s)
+	return total_bets

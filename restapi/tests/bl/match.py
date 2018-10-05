@@ -174,5 +174,36 @@ class TestMatchBl(BaseTestCase):
         self.assertEqual(actual, expected)
 
 
+    def test_clean_source_with_valid_format(self):
+        data = 'https://ninja.org'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'ninja.org'
+        self.assertEqual(actual, expected)
+
+        data = 'http://ninja.org'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'ninja.org'
+        self.assertEqual(actual, expected)
+
+        data = 'www.ninja.org'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'www.ninja.org'
+        self.assertEqual(actual, expected)
+
+        data = 'https://www.ninja.org'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'www.ninja.org'
+        self.assertEqual(actual, expected)
+
+        data = 'http://www.ninja.org'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'www.ninja.org'
+        self.assertEqual(actual, expected)
+
+        data = 'abc'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'abc'
+        self.assertEqual(actual, expected)
+
 if __name__ == '__main__':
     unittest.main()

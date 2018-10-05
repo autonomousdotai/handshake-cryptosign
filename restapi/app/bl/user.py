@@ -1,5 +1,5 @@
 from flask import g
-from sqlalchemy import and_, func, cast, asc, desc
+from sqlalchemy import and_, func, cast, asc, desc, bindparam
 from datetime import date
 from app import db
 from app.models import User, Handshake, Shaker, Outcome
@@ -51,9 +51,9 @@ def is_able_to_create_new_free_bet(user_id):
 	return can_free_bet, last_bet_status
 
 
-def check_email_existed_with_dispatcher(app, payload):
+def check_email_existed_with_dispatcher(app_config, payload):
 	# Subscribe email
-	endpoint = '{}/user/profile'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"])
+	endpoint = '{}/user/profile'.format(app_config["DISPATCHER_SERVICE_ENDPOINT"])
 	data_headers = {
 		"Payload": payload
 	}
@@ -71,24 +71,45 @@ def check_email_existed_with_dispatcher(app, payload):
 	return data_response['data']['email']
 
 
-def handle_mail_notif(app, user_id, from_address, oc_name, match_name, oc_result, side, status, free_bet, free_bet_available):
-	user = User.find_user_with_id(user_id)
-	email = user.email
-	if user is None:
+def handle_mail_notif_by_user(app_config, MAXIMUM_FREE_BET, user_id, match):
+	# Get all bets by outcome and user_id
+	# bindparam("is_hs", 0)
+	hs_bets = db.session.query(Handshake.user_id.label("user_id"), Handshake.free_bet, Handshake.status, Handshake.side, Handshake.from_address, Outcome.id.label("outcome_id"), Outcome.name.label("outcome_name"), Outcome.result.label("outcome_result"))\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Outcome.match_id == match.id)\
+		.filter(Handshake.user_id == user_id)
+	s_bets = db.session.query(Shaker.shaker_id.label("user_id"), Shaker.free_bet, Shaker.status, Shaker.side, Shaker.from_address, Outcome.id.label("outcome_id"), Outcome.name.label("outcome_name"), Outcome.result.label("outcome_result"))\
+		.filter(Shaker.handshake_id == Handshake.id)\
+		.filter(Handshake.outcome_id == Outcome.id)\
+		.filter(Outcome.match_id == match.id)\
+		.filter(Shaker.shaker_id == user_id)
+	bets = s_bets.union_all(hs_bets).order_by(Outcome.id.desc()).all()
+
+	if bets is None or len(bets) == 0:
 		return False
 
+	user = User.find_user_with_id(user_id)
+	if user is None:
+		return False
+	email = user.email
+	free_bet_available = MAXIMUM_FREE_BET - user.free_bet
 	if user.email is None:
-		email_exist = check_email_existed_with_dispatcher(app, user.payload)
+		email_exist = check_email_existed_with_dispatcher(app_config, user.payload)
 		if email_exist is False:
 			return False
 		user.email = email_exist
-		db.session.commit()
 		email = email_exist
-	
+		db.session.commit()
 	if user.is_subscribe == 1:
-		email_body = render_email_notify_result_content(app, user_id, from_address, oc_name, match_name, oc_result, side, status, free_bet == 1, free_bet_available)
-		mail_services.send(email, app.config['FROM_EMAIL'], "Results [{}]".format(oc_name), email_body) 
+		email_body = render_email_notify_result_content(app_config, bets, free_bet_available)
+		if email_body is None or email_body is False or email_body == "":
+			return False
+		mail_services.send(email, app_config['FROM_EMAIL'], "The results of [{}] are live!".format(match.name), email_body) 
 	else:
 		print("send_email_result_notifcation => User did not subscribe: {}", user)
 		return False
 	return True
+
+
+
+

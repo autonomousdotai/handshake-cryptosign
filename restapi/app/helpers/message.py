@@ -9,6 +9,7 @@ class MESSAGE(object):
 	MISSING_OFFCHAIN = 'Missing offchain data!'
 	INVALID_ODDS = 'Odds shoule be large than 1'
 	MAXIMUM_FREE_BET = 'The maximum free bet is 100!'
+	FREE_BET_UNABLE = 'The free bet is unable!'
 	WATTING_TIME_FREE_BET = 'Please watting to next free bet'
 	CANNOT_WITHDRAW = 'You cannot withdraw this handshake!'
 	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
@@ -38,7 +39,7 @@ class MESSAGE(object):
 	USER_RECEIVED_FREE_BET_ALREADY = 'You have received free bet already!'
 	USER_TOKE_EXPIRED = 'TOKEN HAD EXPIRED'
 
-	# HANSHAKE
+	# HANDSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = 'You\'re out of gas! Please wait while we add ETH to your account.'
 	HANDSHAKE_EMPTY = 'This Handshake seems to be empty.'
 	HANDSHAKE_NO_PERMISSION = 'You are not authorized to make this Handshake.'
@@ -54,10 +55,13 @@ class MESSAGE(object):
 	HANDSHAKE_NO_TYPE = 'Please choose type of handshake.'
 	HANDSHAKE_INVALID_BETTING_TYPE = 'This is not betting template.'
 	HANDSHAKE_CANNOT_UNINIT = 'There is an error happens or you are calling cancel too fast. Need wait for 5 minutes!'
+	HANDSHAKE_CANNOT_UNINIT_FREE_BET_IN_ERC20 = 'You cannot uninit ERC20 handshake!'
 	HANDSHAKE_NOT_THE_SAME_RESULT = 'Your result does not match with outcome!'
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = 'Withdraw only works after dispute time.'
 	HANDSHAKE_CANNOT_REFUND = 'Cannot refund this handshake!'
 	HANDSHAKE_CANNOT_DISPUTE = 'Cannot dispute this handshake!'
+	HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20 = 'You cannot create new freebet in ERC20!'
+	HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20 = 'You cannot withdraw ERC20 handshake!'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = 'Shaker not found. Please try again.'
@@ -81,6 +85,9 @@ class MESSAGE(object):
 	SOURCE_APPOVED_ALREADY = 'Source has been approved already!'
 	SOURCE_EXISTED_ALREADY = 'Source has been existed already!'
 
+	# CATEGORY
+	CATEGORY_INVALID = 'Category is invalid!'
+
 
 class CODE(object):
 	# ERROR
@@ -90,6 +97,7 @@ class CODE(object):
 	MISSING_OFFCHAIN = '1003' 												
 	INVALID_ODDS = '1004' 													
 	MAXIMUM_FREE_BET = '1005' 												
+	FREE_BET_UNABLE = '1060'
 	CANNOT_WITHDRAW = '1006' 												
 	CANNOT_ROLLBACK = '1007' 
 	WATTING_TIME_FREE_BET = '1053'
@@ -118,7 +126,7 @@ class CODE(object):
 	USER_INVALID_SOURCE = '1019' 											
 	USER_RECEIVED_FREE_BET_ALREADY = '1020' 								
 
-	# HANSHAKE
+	# HANDSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = '1021'	
 	HANDSHAKE_EMPTY = '1022' 												
 	HANDSHAKE_NO_PERMISSION = '1023' 										
@@ -133,11 +141,14 @@ class CODE(object):
 	HANDSHAKE_DESC_TOO_LONG = '1032' 										
 	HANDSHAKE_NO_TYPE = '1033' 												
 	HANDSHAKE_INVALID_BETTING_TYPE = '1034' 								
-	HANDSHAKE_CANNOT_UNINIT = '1035' 										
+	HANDSHAKE_CANNOT_UNINIT = '1035'
+	HANDSHAKE_CANNOT_UNINIT_FREE_BET_IN_ERC20 = '1058' 										
 	HANDSHAKE_NOT_THE_SAME_RESULT = '1036' 									
 	HANDSHAKE_WITHDRAW_AFTER_DISPUTE = '1037' 	
 	HANDSHAKE_CANNOT_REFUND = '1044'
 	HANDSHAKE_CANNOT_DISPUTE = '1045'
+	HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20 = '1057'
+	HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20 = '1059'
 
 	# SHAKER
 	SHAKER_NOT_FOUND = '1038' 												
@@ -161,3 +172,6 @@ class CODE(object):
 	SOURCE_INVALID = '1050'
 	SOURCE_APPOVED_ALREADY = '1051'
 	SOURCE_EXISTED_ALREADY = '1052'
+
+	# CATEGORY
+	CATEGORY_INVALID = '1056'

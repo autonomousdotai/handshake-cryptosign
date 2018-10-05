@@ -5,11 +5,10 @@ import json
 import hashlib
 import requests
 import app.bl.user as user_bl
-from app.helpers.utils import render_unsubscribe_url
 
 from flask import Blueprint, request, g
-from app import db, sg, s3
-from app.models import User
+from app import db
+from app.models import User, Token
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)
 
@@ -50,6 +49,7 @@ def auth():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @user_routes.route('/subscribe', methods=['POST'])
 @login_required
 def user_subscribe():
@@ -74,7 +74,7 @@ def user_subscribe():
 		db.session.rollback()
 		return response_error(ex.message)
 
-# TODO: Check AuthMiddleware
+
 @user_routes.route('/unsubscribe', methods=['GET'])
 def user_check_unsubscribe():
 	try:
@@ -98,6 +98,40 @@ def user_check_unsubscribe():
 
 	except Exception, ex:
 		db.session.rollback()
-		print ex.message
-		return response_error()
+		return response_error(ex.message)
 
+
+@user_routes.route('/approve_token', methods=['POST'])
+@login_required
+def user_approve_new_token():
+	"""
+	" Add token that approved by user. It's used for ERC20 function.
+	"""
+	try:
+		data = request.json
+		if data is None or \
+			'token_id' not in data:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		uid = int(request.headers['Uid'])
+		token_id = data['token_id']
+
+		token = Token.find_token_by_id(token_id)
+		if token is None or \
+			token.tid is None or \
+			token.status == -1:
+			return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
+		
+		user = User.find_user_with_id(uid)
+
+		if token not in user.tokens:
+			user.tokens.append(token)
+		else:
+			return response_error('121212', '121221')
+		
+		db.session.commit()
+		return response_ok(user.to_json())
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)

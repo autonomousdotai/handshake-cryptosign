@@ -26,7 +26,8 @@ module.exports = (sequelize, DataTypes) => {
     created_user_id: DataTypes.INTEGER,
     name: DataTypes.STRING,
     market_fee: DataTypes.INTEGER,
-    source: DataTypes.STRING
+    source: DataTypes.STRING,
+    public: DataTypes.INTEGER
   }, {
     tableName: 'match',
     timestamps: false,

@@ -137,7 +137,6 @@ class TestAdminBluePrint(BaseTestCase):
         # -----        
         outcome = Outcome(
             match_id=match.id,
-            public=1,
             hid=0,
             result=CONST.RESULT_TYPE['PENDING']
         )
@@ -186,7 +185,6 @@ class TestAdminBluePrint(BaseTestCase):
 
         outcome1 = Outcome(
             match_id=match2.id,
-            public=1,
             hid=1,
             result=CONST.RESULT_TYPE['DISPUTED']
         )

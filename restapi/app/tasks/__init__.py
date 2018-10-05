@@ -100,7 +100,8 @@ def update_feed(handshake_id):
 			"outcome_total_amount_s": '{0:f}'.format(outcome.total_amount if outcome.total_amount is not None else 0),
 			"outcome_total_dispute_amount_s": '{0:f}'.format(outcome.total_dispute_amount if outcome.total_dispute_amount is not None else 0),
 			"contract_address_s": handshake.contract_address,
-			"contract_json_s": handshake.contract_json
+			"contract_json_s": handshake.contract_json,
+			"contract_type_s": CONST.CONTRACT_TYPE['ETH'] if outcome.token_id is None else CONST.CONTRACT_TYPE['ERC20']
 		}
 		print 'create maker {}'.format(hs)
 
@@ -270,13 +271,13 @@ def send_dispute_email(outcome_id, outcome_name):
 		# Send mail to admin
 		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
 		multipart_form_data = MultipartEncoder(
-    		fields= {
+			fields= {
 				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
 				'subject': 'Dispute',
 				'to[]': app.config['RESOLVER_EMAIL'],
 				'from': app.config['FROM_EMAIL']
 			}
-    	)
+		)
 		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})
 
 		if res.status_code > 400:
@@ -337,42 +338,42 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 
 
 @celery.task()
-def send_email_result_notifcation(outcome_id, result, is_resolve):
+def send_email_result_notifcation(match_id, is_resolve):
 	try:
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None or result < 1:
-			print("send_email_result_notifcation => Invalid outcome")
+
+		# Check event's outcomes had reported 
+		outcomes = db.session.query(Outcome).filter(Outcome.match_id == match_id).all()
+		outcomes_reported = list(filter(lambda x: x.result > 0, outcomes))
+		if len(outcomes_reported) != len(outcomes):
+			print("Some of outcomes had not report")
 			return False
 
-		match = Match.find_match_by_id(outcome.match_id)
+		match = Match.find_match_by_id(match_id)
 		if match is None:
 			print("send_email_result_notifcation => Invalid match")
 			return False
 
-		handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
-		shakers = db.session.query(Shaker).filter(Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))).all()
+		# Get users betted by event
+		hs_user = db.session.query(Handshake.user_id.label("user_id"))\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.filter(Outcome.match_id == match_id)\
+			.group_by(Handshake.user_id)
 
-		for shaker in shakers:
-			free_bet_available = None
-			if shaker.free_bet == 1:
-				user = User.find_user_with_id(shaker.shaker_id)
-				free_bet_available = CONST.MAXIMUM_FREE_BET - user.free_bet
+		s_user = db.session.query(Shaker.shaker_id.label("user_id"))\
+			.filter(Shaker.handshake_id == Handshake.id)\
+			.filter(Handshake.outcome_id == Outcome.id)\
+			.filter(Outcome.match_id == match_id)\
+			.group_by(Shaker.shaker_id)
 
-			# Check or update email of user and send mail
-			user_bl.handle_mail_notif(app, shaker.shaker_id, shaker.from_address, outcome.name, match.name, result, shaker.side, shaker.status, shaker.free_bet, free_bet_available)
+		total_users = hs_user.union_all(s_user).group_by('user_id').all()
+		for item in total_users:
+			if hasattr(item, 'user_id') and item.user_id is not None:
+				user_bl.handle_mail_notif_by_user(app.config, CONST.MAXIMUM_FREE_BET, item.user_id, match)
 
-		for handshake in handshakes:
-			free_bet_available = None
-			if handshake.free_bet == 1:
-				user = User.find_user_with_id(handshake.user_id)
-				free_bet_available = CONST.MAXIMUM_FREE_BET - user.free_bet
-
-			# Check or update email of user and send mail
-			user_bl.handle_mail_notif(app, handshake.user_id, handshake.from_address, outcome.name, match.name, result, handshake.side, handshake.status, handshake.free_bet, free_bet_available)			
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_mail_result_notify=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_send_mail_result_notify=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

@@ -30,14 +30,12 @@ class TestOutcomeBluePrint(BaseTestCase):
 				match_id=1,
 				name="1",
 				hid=88,
-				public=0,
 				created_user_id=66
 			)
 			db.session.add(outcome)
 			db.session.commit()
 
 		else:
-			outcome.public = 0
 			outcome.name = "1"
 			outcome.created_user_id = 66
 			db.session.commit()
@@ -64,14 +62,12 @@ class TestOutcomeBluePrint(BaseTestCase):
 				match_id=1,
 				name="1",
 				hid=88,
-				public=0,
 				created_user_id=Uid
 			)
 			db.session.add(outcome)
 			db.session.commit()
 
 		else:
-			outcome.public = 0
 			outcome.name = "1"
 			outcome.created_user_id = Uid
 			db.session.commit()

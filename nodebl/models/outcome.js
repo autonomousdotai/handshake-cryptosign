@@ -15,7 +15,6 @@ module.exports = (sequelize, DataTypes) => {
     match_id: DataTypes.INTEGER,
     hid: DataTypes.STRING,
     result: DataTypes.INTEGER,
-    public: DataTypes.INTEGER,
     index: DataTypes.INTEGER,
     tx: DataTypes.STRING,
     contract_id: DataTypes.INTEGER,

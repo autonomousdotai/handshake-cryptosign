@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import hashlib
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
@@ -12,9 +13,8 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.bl.match import is_validate_match_time, get_total_user_and_amount_by_match_id
 from app import db
-from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source
+from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
 
 match_routes = Blueprint('match', __name__)
@@ -34,27 +34,30 @@ def matches():
 				.filter(\
 					Match.deleted == 0,\
 					Match.date > seconds,\
+					Match.public == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
 		if source is not None:
-			s = Source.find_source_by_url(source)
-			matches = sorted(matches, key=lambda m: m.source_id != s.id)
+			arr_sources = Source.find_source_by_url(match_bl.clean_source_with_valid_format(source))
+			if arr_sources is not None:
+				for s in arr_sources:
+					matches = sorted(matches, key=lambda m: m.source_id != s.id)
 
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.public == 1:
-					arr_outcomes.append(outcome.to_json())
+				if outcome.hid is not None:
+    					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
-			
-			response.append(match_json)
+			if len(arr_outcomes) > 0:
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:
@@ -66,18 +69,30 @@ def matches():
 def add_match():
 	try:
 		uid = int(request.headers['Uid'])
+		token_id = request.args.get('token_id')
 
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
+		if token_id is None:
+			contract = contract_bl.get_active_smart_contract()
+			if contract is None:
+				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
+		else:
+			token = Token.find_token_by_id(token_id)
+			if token is None:
+				return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
+			
+			token_id = token.id
+			# refresh erc20 contract
+			contract = contract_bl.get_active_smart_contract(contract_type=CONST.CONTRACT_TYPE['ERC20'])
+			if contract is None:
+				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
 		matches = []
 		response_json = []
-
-		contract = contract_bl.get_active_smart_contract()
-		if contract is None:
-			return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
-
 		for item in data:
 			source = None
 			category = None
@@ -121,6 +136,7 @@ def add_match():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
+				public=item['public'],
 				market_fee=int(item.get('market_fee', 0)),
 				date=item['date'],
 				reportTime=item['reportTime'],
@@ -138,10 +154,10 @@ def add_match():
 					outcome = Outcome(
 						name=outcome_data['name'],
 						match_id=match.id,
-						public=item.get('public', 0),
 						contract_id=contract.id,
 						modified_user_id=uid,
-						created_user_id=uid
+						created_user_id=uid,
+						token_id=token_id
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -263,11 +279,12 @@ def match_need_user_report():
 	except Exception, ex:
 		return response_error(ex.message)
 
+
 @match_routes.route('/relevant-event', methods=['GET'])
 @login_required
 def relevant():
 	try:
-		match_id = int(request.args.get('match_id')) if request.args.get('match_id') is not None else None
+		match_id = int(request.args.get('match')) if request.args.get('match') is not None else None
 		match = Match.find_match_by_id(match_id)
 
 		response = []
@@ -282,19 +299,20 @@ def relevant():
 			or_(Match.source_id == match.source_id, Match.category_id == match.category_id),\
 			Match.deleted == 0,\
 			Match.date > seconds,\
+			Match.public == 1,\
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
 
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.public == 1:
+				if outcome.hid is not None:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
@@ -307,16 +325,11 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
-# @login_required
 def match_detail(match_id):
 	try:
 		outcome_id = None
 		if request.args.get('outcome_id') is not None:
 			outcome_id = int(request.args.get('outcome_id'))
-
-		public = [0,1] # Default: all private and public outcome
-		if request.args.get('public') is not None:
-			public = [int(request.args.get('public'))]
 
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
@@ -326,28 +339,66 @@ def match_detail(match_id):
 					Match.id == match_id,\
 					Match.deleted == 0,\
 					Match.date > seconds,\
-					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 				.first()
 
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 		
 		match_json = match.to_json()
-		total_user, total_bets = get_total_user_and_amount_by_match_id(match.id)
+		total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 		match_json["total_users"] = total_user
 		match_json["total_bets"] = total_bets
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome.hid is not None and outcome.public in public:
-				if outcome_id is not None:
-					if outcome.id == outcome_id:
-						arr_outcomes.append(outcome.to_json())
-				else:
+			if outcome_id is not None:
+				if outcome.id == outcome_id:
 					arr_outcomes.append(outcome.to_json())
+			else:
+				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
 		return response_ok(match_json)
+
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@match_routes.route('/count-event', methods=['GET'])
+def count_events_based_on_source():
+	try:
+		source = request.args.get('source')
+		code = request.args.get('code')
+
+		if source is None:
+			return response_error()
+
+		server_key = hashlib.md5('{}{}'.format(source, g.PASSPHASE)).hexdigest()
+		if server_key != code:
+			return response_error()
+
+		response = {
+			"bets": 0
+		}
+		
+		url = match_bl.clean_source_with_valid_format(source)
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		match = db.session.query(Match)\
+				.filter(\
+					Match.deleted == 0,\
+					Match.date > seconds,\
+					Match.source_id.in_(db.session.query(Source.id).filter(Source.url.contains(url))),\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
+				.all()
+
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		response["bets"] = len(match)
+		return response_ok(response)
 
 	except Exception, ex:
 		return response_error(ex.message)

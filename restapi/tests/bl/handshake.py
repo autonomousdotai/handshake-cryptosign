@@ -9,7 +9,6 @@ from mock import patch
 from datetime import datetime
 from app import db, app
 from app.models import Handshake, User, Outcome, Match, Shaker, Contract
-from app.tasks import send_email_result_notifcation
 from app.helpers.message import MESSAGE
 from app.constants import Handshake as HandshakeStatus
 from app.helpers.utils import local_to_utc
@@ -819,12 +818,24 @@ class TestHandshakeBl(BaseTestCase):
 	def test_can_withdraw(self):
 		self.clear_data_before_test()
 
-		outcome = Outcome.find_outcome_by_id(88)
-		outcome.result = 1
-
 		match = Match.find_match_by_id(1)
 		match.disputeTime = time.time() + 1000
 		match.reportTime = time.time() + 1000
+		db.session.commit()
+
+		outcome = Outcome.find_outcome_by_id(88)
+		if outcome is not None:
+			outcome.result = 1
+		else:
+			outcome = Outcome(
+				id=88,
+				match_id=match.id,
+				result=1,
+				hid=88,
+				contract_id=1
+			)
+			db.session.add(outcome)
+			db.session.commit()
 		db.session.commit()
 
 		actual = handshake_bl.can_withdraw(None, shaker=None)
@@ -835,11 +846,11 @@ class TestHandshakeBl(BaseTestCase):
 			hs_type=3,
 			chain_id=4,
 			user_id=88,
-			outcome_id=1000,
+			outcome_id=9999999,
 			odds=1.2,
 			amount=1,
 			currency='ETH',
-			side=2,
+			side=1,
 			remaining_amount=0,
 			from_address='0x123',
 			status=0
@@ -1228,8 +1239,8 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="abc@abcxyz",
-			payload="123abc",
+			email="abc012@abc3456.com",
+			payload="LDwp7UQoRNW5tUwzrA6q2trkwJLS3q6IHdOB0vt4T3dWV-a720yuWC1A9g==",
 			is_subscribe=1
 		)
 		db.session.add(user)
@@ -1243,8 +1254,9 @@ class TestHandshakeBl(BaseTestCase):
 
 		outcome = Outcome(
 			match_id=match.id,
-			name="Outcome name",
+			name="Outcome Name",
 			result=1,
+			hid=9999999,
 			contract_id=1
 		)
 		db.session.add(outcome)
@@ -1322,9 +1334,31 @@ class TestHandshakeBl(BaseTestCase):
 		db.session.add(shaker_lose)
 		db.session.commit()
 
-		send_email_result_notifcation.delay(outcome_draw.id, outcome_draw.result, True)
-		send_email_result_notifcation.delay(outcome.id, outcome.result, True)
-		self.assertEqual(True, True)
+		with self.client:
+			params = {
+                "contract": app.config.get("PREDICTION_JSON"),
+                "eventName": "__report",
+                "status": 1,
+                'id': outcome_draw.id,
+                "inputs": {
+                    "offchain": "cryptosign_report{}_3".format(outcome_draw.id),
+                    "hid": outcome_draw.hid
+                }   
+            }
+
+			response = self.client.post(
+                                    '/event',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(1),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+			data = json.loads(response.data.decode()) 
+			print data
+			self.assertTrue(data['status'] == 1)
 
 if __name__ == '__main__':
 	unittest.main()

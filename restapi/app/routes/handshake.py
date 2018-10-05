@@ -23,7 +23,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required, whitelist
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
@@ -142,6 +142,12 @@ def init():
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
+		# make sure user cannot call free-bet in ETH
+		if free_bet == 1:
+			token = Token.find_token_by_id(outcome.token_id)
+			if token is not None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20, CODE.HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20)
+
 		if odds <= 1:
 			return response_error(MESSAGE.INVALID_ODDS, CODE.INVALID_ODDS)
 
@@ -152,7 +158,7 @@ def init():
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
-
+		arr_hs = []
 		if len(handshakes) == 0:
 			handshake = Handshake(
 				hs_type=hs_type,
@@ -179,7 +185,6 @@ def init():
 			run_bots.delay(outcome_id)
 
 			# response data
-			arr_hs = []
 			hs_json = handshake.to_json()
 			hs_json['maker_address'] = handshake.from_address
 			hs_json['maker_odds'] = handshake.odds
@@ -189,9 +194,7 @@ def init():
 			arr_hs.append(hs_json)
 
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
-			return response_ok(arr_hs)
 		else:
-			arr_hs = []
 			shaker_amount = amount
 
 			hs_feed = []
@@ -294,7 +297,13 @@ def init():
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
 			run_bots.delay(outcome_id)
-			return response_ok(arr_hs)
+
+		# make response
+		response = {
+			"handshakes": arr_hs,
+			"total_bets": handshake_bl.get_total_real_bets()
+		}
+		return response_ok(response)
 
 	except Exception, ex:
 		db.session.rollback()
@@ -377,7 +386,10 @@ def rollback():
 @handshake_routes.route('/create_free_bet', methods=['POST'])
 @login_required
 @whitelist
-def create_bet():
+def create_free_bet():
+	"""
+	"	Create a free-bet in ETH
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -402,6 +414,11 @@ def create_bet():
 
 		elif outcome.result != -1:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
+
+		# check erc20 token or not
+		token = Token.find_token_by_id(outcome.token_id)
+		if token is not None:
+			return response_error(MESSAGE.HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20, CODE.HANDSHAKE_CANNOT_CREATE_FREEBET_IN_ERC20)
 
 		contract = Contract.find_contract_by_id(outcome.contract_id)
 		if contract is None:
@@ -446,6 +463,9 @@ def create_bet():
 @handshake_routes.route('/uninit_free_bet/<int:handshake_id>', methods=['POST'])
 @login_required
 def uninit_free_bet(handshake_id):
+	"""
+	"	Uninit free-bet in ETH
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -455,13 +475,20 @@ def uninit_free_bet(handshake_id):
 		if handshake is not None and \
 			(handshake.status == CONST.Handshake['STATUS_INITED'] or \
 			handshake.status == CONST.Handshake['STATUS_MAKER_SHOULD_UNINIT']):
+
 			if handshake_bl.can_uninit(handshake) == False:
 				return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT, CODE.HANDSHAKE_CANNOT_UNINIT)
 			else:
+
 				outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
 				if outcome is None:
 					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 				else:
+					# check erc20 token or not
+					token = Token.find_token_by_id(outcome.token_id)
+					if token is not None:
+						return response_error(MESSAGE.HANDSHAKE_CANNOT_UNINIT_FREE_BET_IN_ERC20, CODE.HANDSHAKE_CANNOT_UNINIT_FREE_BET_IN_ERC20)
+
 					contract = Contract.find_contract_by_id(outcome.contract_id)
 					if contract is None:
 						return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
@@ -507,6 +534,9 @@ def uninit_free_bet(handshake_id):
 @handshake_routes.route('/collect_free_bet', methods=['POST'])
 @login_required
 def collect_free_bet():
+	"""
+	"	Collect free-bet in ETH
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
@@ -532,6 +562,12 @@ def collect_free_bet():
 			
 			hs = Handshake.find_handshake_by_id(shaker.handshake_id)
 			outcome = Outcome.find_outcome_by_id(hs.outcome_id)
+
+			# check erc20 token or not
+			token = Token.find_token_by_id(outcome.token_id)
+			if token is not None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20, CODE.HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20)
+
 			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==hs.outcome_id, Handshake.side==shaker.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==shaker.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==hs.outcome_id)))).all()
 
@@ -546,6 +582,12 @@ def collect_free_bet():
 				return response_error(msg, CODE.CANNOT_WITHDRAW)
 
 			outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
+
+			# check erc20 token or not
+			token = Token.find_token_by_id(outcome.token_id)
+			if token is not None:
+				return response_error(MESSAGE.HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20, CODE.HANDSHAKE_CANNOT_WITHDRAW_FREEBET_IN_ERC20)
+
 			h = db.session.query(Handshake).filter(and_(Handshake.user_id==user.id, Handshake.outcome_id==handshake.outcome_id, Handshake.side==handshake.side, Handshake.status==HandshakeStatus['STATUS_INITED'])).all()
 			s = db.session.query(Shaker).filter(and_(Shaker.shaker_id==user.id, Shaker.side==handshake.side, Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==handshake.outcome_id)))).all()
 
@@ -605,7 +647,7 @@ def collect_free_bet():
 @login_required
 def refund_free_bet():
 	"""
-	" TODO: refund all free_bet and real_bet
+	"	Refund free-bet in ETH
 	"""
 	try:
 		uid = int(request.headers['Uid'])
@@ -680,14 +722,15 @@ def check_free_bet():
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
+		request_from = request.headers.get('Request-From', 'mobile')
 
 		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
 		if setting is not None:
-			if setting.status == 0:
-				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+			if setting.status == 0 and request_from != 'extension':
+				return response_error(MESSAGE.FREE_BET_UNABLE, CODE.FREE_BET_UNABLE)
 
 		item = user_bl.get_last_user_free_bet(uid)
 		can_free_bet, last_bet_status = user_bl.is_able_to_create_new_free_bet(uid)
@@ -708,6 +751,10 @@ def check_free_bet():
 @handshake_routes.route('/uninit', methods=['POST'])
 @login_required
 def uninit():
+	"""
+	"	Uninit real bet:
+	"		This step make sure user's feed will update pending status
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -750,6 +797,10 @@ def uninit():
 @handshake_routes.route('/collect', methods=['POST'])
 @login_required
 def withdraw():
+	"""
+	"	Collect real bet:
+	"		This step make sure user's feed will update pending status
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -809,6 +860,10 @@ def withdraw():
 @handshake_routes.route('/refund', methods=['POST'])
 @login_required
 def refund():
+	"""
+	"	Refund real bet:
+	"		This step make sure user's feed will update pending status
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
@@ -869,6 +924,10 @@ def refund():
 @handshake_routes.route('/dispute', methods=['POST'])
 @login_required
 def dispute():
+	"""
+	"	Dispute real bet:
+	"		This step make sure user's feed will update pending status
+	"""
 	try:
 		handshakes = []
 		shakers = []

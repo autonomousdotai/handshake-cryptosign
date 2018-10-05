@@ -848,7 +848,7 @@ def can_uninit(handshake):
 
 
 def get_total_real_bets():
-	chain_info_path = os.path.abspath(os.path.join(__file__, '../../')) + '/chain-info.json'
+	chain_info_path = os.path.abspath(os.path.dirname(__file__)) + '/chain-info.json'
 	data = []
 	with open(chain_info_path, 'r') as f:
 		data = json.load(f)
@@ -861,11 +861,5 @@ def get_total_real_bets():
 		.filter(~Handshake.from_address.in_(user_address))\
 		.all()
 
-	s = db.session.query(Shaker)\
-		.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
-		.filter(Shaker.free_bet != 1)\
-		.filter(~Shaker.from_address.in_(user_address))\
-		.all()
-
-	total_bets = len(hs) + len(s)
+	total_bets = len(hs)
 	return total_bets

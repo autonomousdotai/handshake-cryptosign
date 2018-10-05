@@ -722,10 +722,7 @@ def check_free_bet():
 	try:
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
-		request_from = request.headers.get('Request-From', 'mobile')
-		print "=============@@@@###"
-		print request_from
-		print request.headers
+		request_from = request.headers.get('Request-From', '')
 		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 

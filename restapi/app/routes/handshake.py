@@ -723,14 +723,16 @@ def check_free_bet():
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 		request_from = request.headers.get('Request-From', 'mobile')
-
+		print "=============@@@@###"
+		print request_from
+		print request.headers
 		if user is None:
 			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
 		if setting is not None:
 			if setting.status == 0 and request_from != 'extension':
-				return response_error(MESSAGE.MAXIMUM_FREE_BET, CODE.MAXIMUM_FREE_BET)
+				return response_error(MESSAGE.FREE_BET_UNABLE, CODE.FREE_BET_UNABLE)
 
 		item = user_bl.get_last_user_free_bet(uid)
 		can_free_bet, last_bet_status = user_bl.is_able_to_create_new_free_bet(uid)

@@ -852,11 +852,13 @@ def get_total_real_bets():
 	hs = db.session.query(Handshake)\
 		.filter(Handshake.status != HandshakeStatus['STATUS_PENDING'])\
 		.filter(Handshake.free_bet != 1)\
+		.filter(Handshake.amount > CONST.MAXIMUM_FREE_BET)\
 		.all()
 
 	s = db.session.query(Shaker)\
 		.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
 		.filter(Shaker.free_bet != 1)\
+		.filter(Shaker.amount > CONST.MAXIMUM_FREE_BET)\
 		.all()
 
 	total_bets = len(hs) + len(s)

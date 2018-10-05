@@ -14,7 +14,7 @@
 restapi/.env
 restapi/app/settings.cfg
 restapi/app/settings.py
-restapi/app/chain-info.json
+restapi/app/bl/chain-info.json
 .pytest_cache
 __pycache__
 

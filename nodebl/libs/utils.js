@@ -96,6 +96,7 @@ const submitInitAPI = (options) => {
             }
         })
         .then(response => {
+            console.log(response)
             if (response.data.status == 1 && response.data.data.length != 0) {
                 const results = [];
                 response.data.data.forEach(item => {

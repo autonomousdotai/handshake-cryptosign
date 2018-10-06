@@ -383,19 +383,16 @@ def update_status_feed(_id, status):
 
 		shake_user_ids = []
 		shake_user_infos = []
-		if shakers is not None:
-			for s in shakers:
+
+
+		handshake = Handshake.find_handshake_by_id(_id)
+		if handshake.shakers is not None:
+			for s in handshake.shakers:
 				shake_user_ids.append(s.shaker_id)	
 				shake_user_infos.append(s.to_json())
 
-		handshake = Handshake.find_handshake_by_id(_id)
-
-		if handshake.shakers is not None:
-			for s in handshake.shakers:
-				shake_user_infos.append(s.to_json())
-
 		data = {
-			"update": [{
+			"add": [{
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
 				"shake_user_ids_is": {"set":shake_user_ids},
 				"status_i": {"set":status},

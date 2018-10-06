@@ -86,7 +86,7 @@ const submitInitAPI = (options) => {
         };
 
         console.log('CALL HANDSHAKE INIT API: ', dataRequest);
-
+        console.log(`${configs.restApiEndpoint}/handshake/init`)
         axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
             headers: {
                 'Content-Type': 'application/json',

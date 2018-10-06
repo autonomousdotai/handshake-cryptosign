@@ -86,7 +86,6 @@ const submitInitAPI = (options) => {
         };
 
         console.log('CALL HANDSHAKE INIT API: ', dataRequest);
-
         axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
             headers: {
                 'Content-Type': 'application/json',
@@ -96,9 +95,9 @@ const submitInitAPI = (options) => {
             }
         })
         .then(response => {
-            if (response.data.status == 1 && response.data.data.length != 0) {
+            if (response.data.status == 1 && response.data.data && response.data.data.handshakes.length != 0) {
                 const results = [];
-                response.data.data.forEach(item => {
+                response.data.data.handshakes.forEach(item => {
                     if (item.type == 'init') {
                         results.push(Object.assign({
                             contract_method: options.isFreeBet ? 'initTestDriveTransaction' : 'init',

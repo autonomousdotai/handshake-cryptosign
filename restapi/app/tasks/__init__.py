@@ -397,7 +397,7 @@ def update_status_feed(_id, status):
 		data = {
 			"add": [{
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"shake_user_ids_is": shake_user_ids,
+				"shake_user_ids_is": {"set":shake_user_ids},
 				"status_i": {"set":status},
 				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
 			}]

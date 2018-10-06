@@ -381,7 +381,13 @@ def update_status_feed(_id, status):
 	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 
+		shake_user_ids = []
 		shake_user_infos = []
+		if shakers is not None:
+			for s in shakers:
+				shake_user_ids.append(s.shaker_id)	
+				shake_user_infos.append(s.to_json())
+
 		handshake = Handshake.find_handshake_by_id(_id)
 
 		if handshake.shakers is not None:
@@ -391,6 +397,7 @@ def update_status_feed(_id, status):
 		data = {
 			"add": [{
 				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+				"shake_user_ids_is": shake_user_ids,
 				"status_i": {"set":status},
 				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
 			}]

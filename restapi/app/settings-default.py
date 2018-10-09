@@ -61,6 +61,11 @@ class BaseConfig(object):
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
 
+	# Algolia
+	ALGOLIA_APPLICATION_ID = os.environ.get('ALGOLIA_APPLICATION_ID', '')
+	ALGOLIA_API_KEY = os.environ.get('ALGOLIA_API_KEY', '')
+	ALGOLIA_INDEX_NAME = os.environ.get('ALGOLIA_INDEX_NAME', '')
+
 class DevelopmentConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 

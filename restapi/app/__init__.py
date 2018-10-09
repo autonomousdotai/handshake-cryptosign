@@ -1,5 +1,5 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services, mail_services
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services, mail_services, algolia
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
@@ -54,6 +54,8 @@ firebase.init_app(app)
 dropbox_services.init_app(app)
 # init mail service
 mail_services.init_app(app)
+# init algolia
+algolia.init_app(app)
 
 @app.before_request
 def before_request():

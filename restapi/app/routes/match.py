@@ -38,6 +38,8 @@ def matches():
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
+
+		# sort match if any
 		if source is not None:
 			arr_sources = Source.find_source_by_url(match_bl.clean_source_with_valid_format(source))
 			if arr_sources is not None:

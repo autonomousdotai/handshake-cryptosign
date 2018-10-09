@@ -68,6 +68,7 @@ class TestOutcomeBluePrint(BaseTestCase):
 			db.session.commit()
 
 		else:
+			outcome.match_id =1
 			outcome.name = "1"
 			outcome.created_user_id = Uid
 			db.session.commit()
@@ -89,7 +90,8 @@ class TestOutcomeBluePrint(BaseTestCase):
 
 			data = json.loads(response.data.decode()) 
 			data_json = data['data']
-			self.assertTrue(data['status'] == 1)
+			print data_json
+			self.assertTrue(data_json['slug'] == '?match=1&outcome=88&ref=66')
 
 
 if __name__ == '__main__':

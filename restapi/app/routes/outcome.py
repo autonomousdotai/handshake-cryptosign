@@ -1,6 +1,7 @@
 from flask import Blueprint, request, g, current_app as app
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
+from app.helpers.utils import render_generate_link
 from app import db
 from app.models import User, Outcome, Match, Task
 from app.helpers.message import MESSAGE, CODE
@@ -112,9 +113,10 @@ def generate_link():
 
 		outcome_id = data['outcome_id']
 		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
+
 		if outcome is not None:
 			response = {
-				'slug': '?match={}&outcome={}&ref={}'.format(outcome.match_id, outcome.id, uid)
+				'slug': render_generate_link(outcome.match_id, outcome.id, uid)
 			}
 			return response_ok(response)
 			

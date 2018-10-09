@@ -92,6 +92,10 @@ def utc_to_local(t):
 	secs = calendar.timegm(t)
 	return time.localtime(secs)
 
+def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p'):
+    # '%Y-%m-%d %H:%M:%S'
+	return datetime.fromtimestamp(seconds).strftime(format)
+
 def is_equal(a, b):
 	if a is None or b is None:
 		return False
@@ -105,3 +109,9 @@ def is_equal(a, b):
 def render_unsubscribe_url(user_id, passphase):
 	code = hashlib.md5('{}{}'.format(user_id, passphase)).hexdigest()
 	return "ninja.org/unsubscribe?token={}&id={}".format(code, user_id)
+
+def render_generate_link(match_id, outcome_id, uid):
+	outcome = ""
+	if outcome_id is not None:
+		outcome = "&outcome={}".format(outcome_id)
+	return "?match={}{}&ref={}".format(match_id, outcome, uid)

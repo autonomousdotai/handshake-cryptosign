@@ -13,6 +13,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
+from app.tasks import send_email_create_private_market
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -167,6 +168,10 @@ def add_match():
 			match_json['source_name'] = None if source is None else source.name
 			match_json['category_name'] = None if category is None else category.name
 			response_json.append(match_json)
+
+			# Send mail private market
+			if match.public == 0:
+				send_email_create_private_market.delay(match.id, uid)
 
 		db.session.commit()
 

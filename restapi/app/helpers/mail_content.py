@@ -7,7 +7,7 @@ import time
 import app.constants as CONST
 
 from datetime import datetime
-from app.helpers.utils import render_unsubscribe_url
+from app.helpers.utils import render_unsubscribe_url, second_to_strftime
 from app.constants import Handshake as HandshakeStatus
 
 def render_email_subscribe_content(app_config, user_id):
@@ -122,3 +122,25 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     content += "</table></body></html>"
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
     return content
+
+def new_private_market_mail_content(match, link):
+    closing_time = second_to_strftime(match.date) 
+    report_time = second_to_strftime(match.reportTime)
+    dispute_time = second_to_strftime(match.disputeTime)
+
+    return """
+        Hey Ninja Master,<br/><br/>
+        Your event was create successfully.<br/>
+        Please review the event info below:<br/>
+        <div>
+            <blockquote style="margin:0 0 0 40px;border:none;padding:0px">
+                <div>
+                    Event name: {}<br/>
+                    User can play bet before: {} (UTC)<br/>
+                    You need to report before : {} (UTC)<br/>
+                    The bet end if no dispute after : {} (UTC)<br/>
+                </div>
+            </blockquote>
+        </div>
+        Share your event to your friend: <a href="http://ninja.org/prediction{}">ninja.org/prediction{} </a>
+    """.format(match.name, closing_time, report_time, dispute_time, link, link)

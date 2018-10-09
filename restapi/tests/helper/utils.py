@@ -114,6 +114,18 @@ class TestUtils(BaseTestCase):
         local_time = (datetime.now()-datetime(1970,1,1)).total_seconds()
         self.assertGreater(actual, local_time)
 
+    def test_second_to_strftime(self):
+        # Tue Jan 01 2019 23:59:59
+        seconds = 1546361999
+        str_time = second_to_strftime(seconds, '%Y-%m-%d %H:%M:%S')
+        self.assertEqual(str_time, "2019-01-01 23:59:59")
+        
+        str_time = second_to_strftime(seconds, '%b %d %Y %I:%M:%S %p')
+        self.assertEqual(str_time, "Jan 01 2019 11:59:59 PM")
+
+        str_time = second_to_strftime(seconds)
+        self.assertEqual(str_time, "Jan 01 2019 11:59:59 PM")
+
     def test_parse_shakers_array(self):
         shakers = []
         

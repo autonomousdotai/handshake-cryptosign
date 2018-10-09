@@ -1,6 +1,10 @@
-hash: 27840fa4b07d88a88689f6e3cba9678874ce1681c88c8a13ca3ece1d598dce37
-updated: 2018-07-30T14:36:22.462287+07:00
+hash: 948104b06a88380cf4054f6f1b8642d76b118fcb7d292bfd36d88c060be9019d
+updated: 2018-10-05T15:27:57.839874+07:00
 imports:
+- name: github.com/algolia/algoliasearch-client-go
+  version: 68149ecd478242b4323aa535fe0fadca0d98912e
+  subpackages:
+  - algoliasearch
 - name: github.com/btcsuite/btcd
   version: 86fed781132ac890ee03e906e4ecd5d6fa180c64
   subpackages:

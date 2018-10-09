@@ -11,6 +11,18 @@ import (
 	"github.com/ninjadotorg/handshake-cryptosign/event/services"
 )
 
+// Remind : struct to handle remind user
+type Remind struct {
+	Email     string
+	IsRunning bool
+}
+
+// NewRemind : creates a new Remind instance
+func NewRemind(email string) (r Remind) {
+	r = Remind{email, false}
+	return
+}
+
 // RemindUser : loop for 15 minutes
 func (r *Remind) RemindUser() {
 	matches, err := matchDAO.GetAllIncomingMatches()
@@ -23,8 +35,8 @@ func (r *Remind) RemindUser() {
 	} else {
 		log.Println("matches: ", len(matches))
 		for index := 0; index < len(matches); index++ {
-			log.Println("-- Match: ", matches[index].MatchID)
-			outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].MatchID)
+			log.Println("-- Match: ", matches[index].ID)
+			outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].ID)
 			fmt.Println(outcomes)
 			if err == nil {
 				m := make(map[int]bool)

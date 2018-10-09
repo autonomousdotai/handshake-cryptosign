@@ -34,3 +34,15 @@ func (m MatchDAO) GetMatchByOutcomeID(outcomeID int) (models.Match, error) {
 
 	return match, nil
 }
+
+// GetAllMatchesExceedID : matchID
+func (m MatchDAO) GetAllMatchesExceedID(matchID int) ([]models.Match, error) {
+	result := []models.Match{}
+	err := models.Database().Preload("Source").Where("match.id > ?", matchID).Find(&result).Error
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return result, nil
+}

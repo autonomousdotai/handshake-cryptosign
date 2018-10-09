@@ -34,18 +34,6 @@ func NewCron(contractJSON string, contractAddress string) (cr Cron) {
 	return
 }
 
-// Remind : struct to handle remind user
-type Remind struct {
-	Email     string
-	IsRunning bool
-}
-
-// NewRemind : creates a new Remind instance
-func NewRemind(email string) (r Remind) {
-	r = Remind{email, false}
-	return
-}
-
 // ScanTx : load pending tx from db
 func (cr *Cron) ScanTx() {
 	// todo get list transaction pending

@@ -19,4 +19,4 @@ class Algolia(object):
 
 
 	def search(self, text):
-		print '[DEBUG] --> {}'.format(index.search(text))
+		return self.index.search(text)

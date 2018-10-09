@@ -111,7 +111,7 @@ const initBet = (params, task, isFreeBet) => {
 				amount: betAmount,
 				currency: 'ETH',
 				side: params.side,
-				from_address: params.from_address || ownerAddress, // TODO: check this address
+				from_address: ownerAddress, // params.from_address
 				hid: params.hid,
 				isFreeBet: isFreeBet,
 				payload: params.payload,

@@ -138,5 +138,4 @@ def algolia_search(text):
 			except Exception as ex:
 				print(str(ex))
 
-	print arr
 	return arr

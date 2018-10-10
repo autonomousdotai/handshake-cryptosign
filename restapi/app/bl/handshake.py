@@ -10,6 +10,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 
 from decimal import *
+from datetime import datetime
 from flask import g
 from app import db, fcm, sg, firebase
 from sqlalchemy import and_, or_, func, text, not_
@@ -18,9 +19,7 @@ from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
 from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_result_notifcation
 from app.helpers.message import MESSAGE
-from app.helpers.utils import utc_to_local
-from datetime import datetime
-from app.helpers.utils import local_to_utc
+from app.helpers.utils import utc_to_local, local_to_utc
 
 getcontext().prec = 18
 

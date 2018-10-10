@@ -1,4 +1,6 @@
+from datetime import datetime
 from algoliasearch import algoliasearch
+from app.helpers.utils import local_to_utc
 
 class Algolia(object):
 	def __init__(self, app=None):
@@ -19,4 +21,6 @@ class Algolia(object):
 
 
 	def search(self, text):
-		return self.index.search(text)
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+		return self.index.search(text, {"filters": "closingTime > {}".format(seconds)})

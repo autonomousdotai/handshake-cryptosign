@@ -7,7 +7,7 @@ import app.constants as CONST
 
 class Shaker(BaseModel):
 	__tablename__ = 'shaker'
-	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'contract_address', 'contract_json', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address', 'free_bet']
+	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'contract_address', 'contract_json', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address', 'free_bet', 'from_request']
 
 	shaker_id = db.Column(db.Integer)
 	amount = db.Column(db.Numeric(36, 18))
@@ -31,6 +31,9 @@ class Shaker(BaseModel):
 	free_bet = db.Column(db.Integer,
 	                   server_default=str(0),
 	                   default=0)
+	from_request = db.Column(db.String(255),
+							server_default=str(''),
+	                      	default='')
 	handshake_id = db.Column('handshake_id', db.ForeignKey('handshake.id'))
 
 	@classmethod

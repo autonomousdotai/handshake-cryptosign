@@ -109,6 +109,7 @@ def detail(id):
 @login_required
 def init():
 	try:
+		request_from = request.headers.get('Request-From', 'mobile')
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)		
@@ -175,7 +176,8 @@ def init():
 				from_address=from_address,
 				free_bet=free_bet,
 				contract_address=contract.contract_address,
-				contract_json=contract.json_name
+				contract_json=contract.json_name,
+				request_from=request_from
 			)
 
 			db.session.add(handshake)
@@ -247,7 +249,8 @@ def init():
 					chain_id=chain_id,
 					free_bet=free_bet,
 					contract_address=c.contract_address,
-					contract_json=c.json_name
+					contract_json=c.json_name,
+					request_from=request_from
 				)
 
 				db.session.add(shaker)
@@ -278,7 +281,8 @@ def init():
 					from_address=from_address,
 					free_bet=free_bet,
 					contract_address=contract.contract_address,
-					contract_json=contract.json_name
+					contract_json=contract.json_name,
+					request_from=request_from
 				)
 				db.session.add(handshake)
 				db.session.flush()

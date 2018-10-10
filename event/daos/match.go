@@ -38,7 +38,8 @@ func (m MatchDAO) GetMatchByOutcomeID(outcomeID int) (models.Match, error) {
 // GetAllMatchesExceedID : matchID
 func (m MatchDAO) GetAllMatchesExceedID(matchID int) ([]models.Match, error) {
 	result := []models.Match{}
-	err := models.Database().Preload("Source").Where("match.id > ?", matchID).Find(&result).Error
+	sec := time.Now().Unix()
+	err := models.Database().Preload("Source").Where("match.id > ? and match.date > ?", matchID, sec).Find(&result).Error
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

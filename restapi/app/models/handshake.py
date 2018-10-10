@@ -41,6 +41,9 @@ class Handshake(BaseModel):
 	amount = db.Column(db.Numeric(36, 18))
 	remaining_amount = db.Column(db.Numeric(36, 18))
 	currency = db.Column(db.String(10))
+	from_request = db.Column(db.String(255),
+							server_default=str(''),
+	                      	default='')
 	side = db.Column(db.Integer,
 						server_default=str(CONST.SIDE_TYPE['SUPPORT']),
 	                   	default=CONST.SIDE_TYPE['SUPPORT'])

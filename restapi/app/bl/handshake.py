@@ -10,6 +10,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 
 from decimal import *
+from datetime import datetime
 from flask import g
 from app import db, fcm, sg, firebase
 from sqlalchemy import and_, or_, func, text, not_
@@ -18,9 +19,7 @@ from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
 from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_result_notifcation
 from app.helpers.message import MESSAGE
-from app.helpers.utils import utc_to_local
-from datetime import datetime
-from app.helpers.utils import local_to_utc
+from app.helpers.utils import utc_to_local, local_to_utc
 
 getcontext().prec = 18
 
@@ -863,3 +862,11 @@ def get_total_real_bets():
 
 	total_bets = len(hs)
 	return total_bets
+
+
+def all_master_accounts():
+	data_file_path = os.path.abspath(os.path.dirname(__file__)) + '/master-accounts.json'
+	accounts = []
+	with open(data_file_path, 'r') as f:
+		accounts = json.load(f)
+	return accounts

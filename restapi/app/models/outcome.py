@@ -21,6 +21,9 @@ class Outcome(BaseModel):
 	index = db.Column(db.Integer,
 							server_default=str(1),
 	                      	default=1)
+	from_request = db.Column(db.String(255),
+							server_default=str(''),
+	                      	default='')
 	token_id = db.Column('token_id', db.ForeignKey('token.id'))
 	handshakes = db.relationship('Handshake', backref='outcome', primaryjoin="Outcome.id == Handshake.outcome_id",
 	                             lazy='dynamic')

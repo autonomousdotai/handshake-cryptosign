@@ -552,11 +552,11 @@ class TestMatchBluePrint(BaseTestCase):
 
             m = data_json[0]
             o = m['outcomes'][0]
-            self.assertEqual(o['name'], 'outcome3')
+            self.assertEqual(o['name'], 'outcome2')
 
             m1 = data_json[1]
             o1 = m1['outcomes'][0]
-            self.assertEqual(o1['name'], 'outcome2')
+            self.assertEqual(o1['name'], 'outcome3')
 
             # Get match for uid = 99
             # Expected: 
@@ -1133,6 +1133,63 @@ class TestMatchBluePrint(BaseTestCase):
             for match in data['data']:
                 if 'market_fee' not in match or match['market_fee'] is None:
                     self.assertTrue(match['market_fee'] == 0)
+
+    def test_add_private_event_and_send_mail(self):
+        self.clear_data_before_test()
+        
+        email = "abc1234567890@xyz0987.com"
+        user = db.session.query(User).filter_by(email=email).first()
+
+        if user is None:
+            user = User(
+                email=email,
+                payload="LDwp7UQoRNW5tUwzrA6q2trkwJLS3q6IHdOB0vt4T3dWV-a720yuWC1A9g==",
+                is_subscribe=1
+            )
+            db.session.add(user)
+        else: 
+            user.is_subscribe=1
+        db.session.commit()
+        with self.client:
+            params = [
+                        {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": 2539913910,
+                            "reportTime": 2539923910,
+                            "disputeTime": 2539933910,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "market_fee": 5,
+                            "public": 0,
+                            "source_id": 1,
+                            "category": {
+                                "name": "Worlcup Russia 2018"
+                            },
+                            "outcomes": [
+                                {
+                                    "name": "Nigeria wins"
+                                }
+                            ]
+                        }
+                    ]
+
+            response = self.client.post(
+                                    '/match/add',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(user.id),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())
+            print data
+            self.assertTrue(data['status'] == 1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -31,6 +31,9 @@ class Shaker(BaseModel):
 	free_bet = db.Column(db.Integer,
 	                   server_default=str(0),
 	                   default=0)
+	from_request = db.Column(db.String(255),
+							server_default=str(''),
+	                      	default='')
 	handshake_id = db.Column('handshake_id', db.ForeignKey('handshake.id'))
 
 	@classmethod

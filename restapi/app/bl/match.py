@@ -3,11 +3,13 @@ from datetime import *
 from urllib3 import util
 
 from sqlalchemy import func
+from algoliasearch import algoliasearch
 from app import db
 from app.models import User, Handshake, Match, Outcome, Contract, Shaker
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
+from app.core import algolia
 
 import app.constants as CONST
 
@@ -123,3 +125,17 @@ def clean_source_with_valid_format(source):
 	parsed_uri = util.parse_url(source)
 	result = '{uri.netloc}'.format(uri=parsed_uri)
 	return result
+
+
+def algolia_search(text):
+	arr = []
+	response = algolia.search(text)
+	hits = response['hits']
+	if hits is not None and len(hits) > 0:
+		for data in hits:
+			try:
+				arr.append(int(data['objectID']))	
+			except Exception as ex:
+				print(str(ex))
+
+	return arr

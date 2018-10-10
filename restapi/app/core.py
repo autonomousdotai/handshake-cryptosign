@@ -11,6 +11,7 @@ from app.extensions.fcm import FirebaseCloudMessage
 from app.extensions.firebase_db import FirebaseDatabase
 from app.extensions.dropbox_service import DropboxService
 from app.extensions.mail_service import MailService
+from app.extensions.algolia import Algolia
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -22,6 +23,7 @@ ipfs = IPFS()
 firebase = FirebaseDatabase()
 dropbox_services = DropboxService()
 mail_services = MailService()
+algolia = Algolia()
 
 
 # configure app from env + silent local settings.cfg

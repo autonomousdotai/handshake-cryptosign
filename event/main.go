@@ -60,7 +60,7 @@ func main() {
 	appCron := cron.New()
 	remind := cp.NewRemind(c.GetString("email"))
 	appCron.AddFunc("@every 15m", func() {
-		fmt.Println("remind user every 15m")
+		fmt.Println("remind user run every 15m")
 		if !remind.IsRunning {
 			remind.IsRunning = true
 			remind.RemindUser()
@@ -70,6 +70,21 @@ func main() {
 		}
 	})
 	appCron.Start()
+
+	// Add algolia job
+	algoliaCron := cron.New()
+	algolia := cp.NewAlgoliaJob()
+	algoliaCron.AddFunc("@every 15m", func() {
+		fmt.Println("algolia run every 15m")
+		if !algolia.IsRunning {
+			algolia.IsRunning = true
+			algolia.ScanAllMatches()
+			algolia.IsRunning = false
+		} else {
+			fmt.Println("algolia is running")
+		}
+	})
+	algoliaCron.Start()
 
 	// loop forever
 	select {}

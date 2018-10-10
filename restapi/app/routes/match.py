@@ -13,6 +13,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
+from app.tasks import send_email_create_private_market
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -38,11 +39,12 @@ def matches():
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
+
+		# sort match if any
 		if source is not None:
-			arr_sources = Source.find_source_by_url(match_bl.clean_source_with_valid_format(source))
-			if arr_sources is not None:
-				for s in arr_sources:
-					matches = sorted(matches, key=lambda m: m.source_id != s.id)
+			arr_ids = match_bl.algolia_search(match_bl.clean_source_with_valid_format(source))
+			if arr_ids is not None:
+				matches = sorted(matches, key=lambda m: m.source_id not in arr_ids)
 
 		for match in matches:
 			match_json = match.to_json()
@@ -68,6 +70,7 @@ def matches():
 @login_required
 def add_match():
 	try:
+		from_request = request.headers.get('Request-From', 'mobile')
 		uid = int(request.headers['Uid'])
 		token_id = request.args.get('token_id')
 
@@ -157,7 +160,8 @@ def add_match():
 						contract_id=contract.id,
 						modified_user_id=uid,
 						created_user_id=uid,
-						token_id=token_id
+						token_id=token_id,
+						from_request=from_request
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -166,6 +170,10 @@ def add_match():
 			match_json['source_name'] = None if source is None else source.name
 			match_json['category_name'] = None if category is None else category.name
 			response_json.append(match_json)
+
+			# Send mail private market
+			if match.public == 0:
+				send_email_create_private_market.delay(match.id, uid)
 
 		db.session.commit()
 

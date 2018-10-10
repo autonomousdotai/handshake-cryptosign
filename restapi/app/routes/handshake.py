@@ -157,6 +157,8 @@ def init():
 			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
 
+		master_accounts = handshake_bl.all_master_accounts()
+		
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
 		arr_hs = []
@@ -184,7 +186,8 @@ def init():
 			db.session.commit()
 
 			update_feed.delay(handshake.id)
-			run_bots.delay(outcome_id)
+			if from_address not in master_accounts:
+				run_bots.delay(outcome_id)
 
 			# response data
 			hs_json = handshake.to_json()
@@ -300,7 +303,8 @@ def init():
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
-			run_bots.delay(outcome_id)
+			if from_address not in master_accounts:
+				run_bots.delay(outcome_id)
 
 		# make response
 		response = {

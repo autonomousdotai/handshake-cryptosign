@@ -863,3 +863,11 @@ def get_total_real_bets():
 
 	total_bets = len(hs)
 	return total_bets
+
+
+def all_master_accounts():
+	data_file_path = os.path.abspath(os.path.dirname(__file__)) + '/master-accounts.json'
+	accounts = []
+	with open(data_file_path, 'r') as f:
+		accounts = json.load(f)
+	return accounts

@@ -15,6 +15,7 @@ restapi/.env
 restapi/app/settings.cfg
 restapi/app/settings.py
 restapi/app/bl/chain-info.json
+master-accounts.json
 .pytest_cache
 __pycache__
 

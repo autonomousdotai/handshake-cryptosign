@@ -7,7 +7,7 @@ import app.constants as CONST
 
 class Shaker(BaseModel):
 	__tablename__ = 'shaker'
-	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'contract_address', 'contract_json', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address', 'free_bet', 'from_request']
+	__json_public__ = ['id', 'handshake_id', 'shaker_id', 'amount', 'contract_address', 'contract_json', 'side', 'odds', 'status', 'bk_status', 'chain_id', 'from_address', 'free_bet']
 
 	shaker_id = db.Column(db.Integer)
 	amount = db.Column(db.Numeric(36, 18))

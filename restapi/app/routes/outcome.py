@@ -41,7 +41,7 @@ def add(match_id):
 	""		match json with contract address for frontend
 	"""
 	try:
-		request_from = request.headers.get('Request-From', 'mobile')
+		from_request = request.headers.get('Request-From', 'mobile')
 		uid = int(request.headers['Uid'])
 
 		data = request.json
@@ -65,7 +65,7 @@ def add(match_id):
 				modified_user_id=uid,
 				created_user_id=uid,
 				contract_id=contract.id,
-				request_from=request_from
+				from_request=from_request
 			)
 			db.session.add(outcome)
 			db.session.flush()

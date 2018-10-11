@@ -71,7 +71,7 @@ def matches():
 @login_required
 def add_match():
 	try:
-		request_from = request.headers.get('Request-From', 'mobile')
+		from_request = request.headers.get('Request-From', 'mobile')
 		uid = int(request.headers['Uid'])
 		token_id = request.args.get('token_id')
 
@@ -162,7 +162,7 @@ def add_match():
 						modified_user_id=uid,
 						created_user_id=uid,
 						token_id=token_id,
-						request_from=request_from
+						from_request=from_request
 					)
 					db.session.add(outcome)
 					db.session.flush()

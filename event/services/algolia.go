@@ -46,6 +46,7 @@ func (s AlgoliaService) ImportMatches(matches []models.Match) (err error) {
 		data["eventName"] = m.Name
 		data["sourceName"] = m.Source.Name
 		data["sourceURL"] = m.Source.URL
+		data["closingTime"] = m.CloseTime
 		objects = append(objects, data)
 	}
 

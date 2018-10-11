@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Handshake(BaseModel):
 	__tablename__ = 'handshake'
-	__json_public__ = ['id', 'extra_data', 'chain_id', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'contract_address', 'contract_json', 'side', 'shakers', 'outcome_id', 'from_address', 'free_bet', 'from_request']
+	__json_public__ = ['id', 'extra_data', 'chain_id', 'description', 'status', 'bk_status', 'user_id', 'odds', 'amount', 'remaining_amount', 'contract_address', 'contract_json', 'side', 'shakers', 'outcome_id', 'from_address', 'free_bet']
 	__json_modifiers__ = {
         'shakers': lambda shakers, _: [shaker.to_json() for shaker in shakers]
     }

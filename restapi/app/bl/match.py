@@ -130,7 +130,6 @@ def clean_source_with_valid_format(source):
 def algolia_search(text):
 	arr = []
 	response = algolia.search(text)
-	print 'text: {} --> response: {}'.format(text, response)
 	hits = response['hits']
 	if hits is not None and len(hits) > 0:
 		for data in hits:

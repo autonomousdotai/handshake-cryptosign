@@ -43,9 +43,8 @@ def matches():
 		# sort match if any
 		if source is not None:
 			arr_ids = match_bl.algolia_search(match_bl.clean_source_with_valid_format(source))
-			print '[DEBUG] --> {}'.format(arr_ids)
 			if arr_ids is not None:
-				matches = sorted(matches, key=lambda m: m.source_id not in arr_ids)
+				matches = sorted(matches, key=lambda m: m.id not in arr_ids)
 
 		for match in matches:
 			match_json = match.to_json()

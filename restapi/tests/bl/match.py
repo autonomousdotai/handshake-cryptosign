@@ -200,6 +200,11 @@ class TestMatchBl(BaseTestCase):
         expected = 'www.ninja.org'
         self.assertEqual(actual, expected)
 
+        data = 'https://www.livescore.com/'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'www.livescore.com'
+        self.assertEqual(actual, expected)
+
         data = 'abc'
         actual = match_bl.clean_source_with_valid_format(data)
         expected = 'abc'

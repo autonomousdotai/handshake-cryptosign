@@ -124,7 +124,9 @@ def get_total_user_and_amount_by_match_id(match_id):
 def clean_source_with_valid_format(source):
 	parsed_uri = util.parse_url(source)
 	result = '{uri.netloc}'.format(uri=parsed_uri)
-	return result
+	result = result.replace('www.', '')
+	result = result.split('.')
+	return result[0]
 
 
 def algolia_search(text):

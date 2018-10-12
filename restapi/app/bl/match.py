@@ -126,6 +126,7 @@ def get_domain(source):
 	result = '{uri.netloc}'.format(uri=parsed_uri)
 	return result
 
+
 def clean_source_with_valid_format(source):
 	result = get_domain(source)
 	result = result.replace('www.', '')

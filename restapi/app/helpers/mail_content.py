@@ -129,18 +129,25 @@ def new_private_market_mail_content(match, link):
     dispute_time = second_to_strftime(match.disputeTime)
 
     return """
-        Hey Ninja Master,<br/><br/>
-        Your event was create successfully.<br/>
-        Please review the event info below:<br/>
+        Hey Ninja,<br/><br/>
+        Congrats! <br/>
+        You’ve successfully created an event. <br/>
+        Please review all your event info below: <br/>
         <div>
             <blockquote style="margin:0 0 0 40px;border:none;padding:0px">
                 <div>
                     Event name: {}<br/>
-                    User can play bet before: {} (UTC)<br/>
-                    You need to report before : {} (UTC)<br/>
-                    The bet end if no dispute after : {} (UTC)<br/>
+                    When your event ends: {} (UTC)<br/>
+                    Report event results before: {} (UTC)<br/>
+                    Event closes (if there’s no dispute): {} (UTC)<br/>
                 </div>
             </blockquote>
         </div>
-        Share your event to your friend: <a href="http://ninja.org/prediction{}">ninja.org/prediction{} </a>
+        Tell your friends: <a href="http://ninja.org/prediction{}">ninja.org/prediction{}</a><br/>
+        Good luck!<br/>
+        <div>
+            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/facebook.svg" alt="FACEBOOK">
+            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/twitter.svg" alt="TWITTER">
+        </div>
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.
     """.format(match.name, closing_time, report_time, dispute_time, link, link)

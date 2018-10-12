@@ -382,13 +382,10 @@ def send_email_create_private_market(match_id, uid):
 		if user is None or user.is_subscribe == 0 or user.email is None or user.email == "":
 			print("User is invalid")
 			return False
-
 		match = Match.find_match_by_id(match_id)
 		link = render_generate_link(match.id, None, uid)
-
 		body = new_private_market_mail_content(match, link)
-		subject = """Event "{}" was create successfully.""".format(match.name)
-
+		subject = """Yout event "{}" has been successfully created.""".format(match.name)
 		# Send email
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, body)
 

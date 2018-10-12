@@ -819,13 +819,29 @@ class TestHandshakeBl(BaseTestCase):
 		self.clear_data_before_test()
 
 		match = Match.find_match_by_id(1)
-		match.disputeTime = time.time() + 1000
-		match.reportTime = time.time() + 1000
-		db.session.commit()
+		t = datetime.now().timetuple()
+		seconds = local_to_utc(t)
+
+		if match is None:
+			match = Match(
+				public=1,
+				date=seconds - 100,
+				reportTime=seconds + 200,
+				disputeTime=seconds + 300,
+				source_id = source.id
+			)
+			db.session.add(match)
+			db.session.commit()
+		else:
+			match.date = time.time() - 100
+			match.disputeTime = time.time() + 200
+			match.reportTime = time.time() + 300
+			db.session.commit()
 
 		outcome = Outcome.find_outcome_by_id(88)
 		if outcome is not None:
 			outcome.result = 1
+			outcome.match_id=match.id
 		else:
 			outcome = Outcome(
 				id=88,
@@ -835,7 +851,6 @@ class TestHandshakeBl(BaseTestCase):
 				contract_id=1
 			)
 			db.session.add(outcome)
-			db.session.commit()
 		db.session.commit()
 
 		actual = handshake_bl.can_withdraw(None, shaker=None)
@@ -1145,11 +1160,38 @@ class TestHandshakeBl(BaseTestCase):
 
 	def test_can_refund_for_shaker(self):
 		self.clear_data_before_test()
-
 		match = Match.find_match_by_id(1)
-		match.disputeTime = time.time() + 1000
-		match.reportTime = time.time() + 1000
-		db.session.merge(match)
+		if match is None:
+    			match = Match(
+				public=1,
+				date=seconds - 100,
+				reportTime=seconds + 1000,
+				disputeTime=seconds + 1000,
+				source_id = source.id
+			)
+
+			db.session.add(match)
+			db.session.commit()
+		else:
+			match.date = time.time() - 100
+			match.disputeTime = time.time() + 1000
+			match.reportTime = time.time() + 1000
+			db.session.merge(match)
+			db.session.commit()
+
+		outcome = Outcome.find_outcome_by_id(88)
+		if outcome is not None:
+			outcome.result = 1
+			outcome.match_id=match.id
+		else:
+			outcome = Outcome(
+				id=88,
+				match_id=match.id,
+				result=1,
+				hid=88,
+				contract_id=1
+			)
+			db.session.add(outcome)
 		db.session.commit()
 
 		arr_hs = []
@@ -1239,7 +1281,7 @@ class TestHandshakeBl(BaseTestCase):
 		
 	def test_send_email_result_notifcation(self):
 		user = User(
-			email="abc012@abc3456.com",
+			email="abcxyz@abcxyz.com",
 			payload="LDwp7UQoRNW5tUwzrA6q2trkwJLS3q6IHdOB0vt4T3dWV-a720yuWC1A9g==",
 			is_subscribe=1
 		)

@@ -5,7 +5,7 @@ from urllib3 import util
 from sqlalchemy import func
 from algoliasearch import algoliasearch
 from app import db
-from app.models import User, Handshake, Match, Outcome, Contract, Shaker
+from app.models import User, Handshake, Match, Outcome, Contract, Shaker, Source
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
@@ -146,3 +146,11 @@ def algolia_search(text):
 				print(str(ex))
 
 	return arr
+
+def get_source_by_id(source_id):
+	source = Source.find_source_by_id(source_id)
+	if source is None:
+		return None
+	source_json = source.to_json()
+	source_json['domain'] = get_domain(source.url)
+	return source_json

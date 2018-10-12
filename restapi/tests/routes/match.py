@@ -959,6 +959,18 @@ class TestMatchBluePrint(BaseTestCase):
         seconds = local_to_utc(t)
         arr_match = []
 
+        sources = Source.find_source_by_url('voa.com')
+        source = None
+        if sources is None or len(sources) == 0:
+            source = Source(
+                name="voa",
+                url="https://www.voa.com"
+            )
+            db.session.add(source)
+            db.session.commit()
+        else:
+            source = sources[0]
+
         # ----- 
         match = Match.find_match_by_id(999)
         if match is not None:
@@ -966,6 +978,7 @@ class TestMatchBluePrint(BaseTestCase):
             match.reportTime=seconds + 200
             match.disputeTime=seconds + 300
             match.public=1
+            match.source_id=source.id
             db.session.flush()
             arr_match.append(match)
 
@@ -978,7 +991,8 @@ class TestMatchBluePrint(BaseTestCase):
                 public=1,
                 date=seconds + 100,
                 reportTime=seconds + 200,
-                disputeTime=seconds + 300
+                disputeTime=seconds + 300,
+                source_id=source.id
             )
             arr_match.append(match)
             db.session.add(match)
@@ -1006,6 +1020,8 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']['outcomes']) != 0)
+            self.assertTrue(data['data']['source'] != None)
+            self.assertTrue(data['data']['source']['domain'] == 'www.voa.com')
 
             for match in arr_match:
                 db.session.delete(match)

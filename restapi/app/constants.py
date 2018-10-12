@@ -122,5 +122,6 @@ SETTING_TYPE = {
 	'TASK_CRON_JOB': 'TaskCronJob',
 	'GAS_PRICE': 'GasPrice',
 	'ONCHAIN_CRON_JOB': 'OnchainCronJob',
-	'FREE_BET': 'FreeBet'
+	'FREE_BET': 'FreeBet',
+	'BOT_NEW_ODDS': 'BotNewOdds'
 }

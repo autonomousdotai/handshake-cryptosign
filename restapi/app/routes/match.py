@@ -55,10 +55,13 @@ def matches():
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				if outcome.hid is not None:
-    					arr_outcomes.append(outcome.to_json())
+						arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
 			if len(arr_outcomes) > 0:
+				if match_json["source_id"]:
+					source_json = match_bl.get_source_by_id(match.source_id)
+					match_json["source"] = source_json
 				response.append(match_json)
 
 		return response_ok(response)
@@ -104,7 +107,7 @@ def add_match():
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
 			if "source_id" in item:
-    			# TODO: check deleted and approved
+				# TODO: check deleted and approved
 				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
@@ -325,6 +328,10 @@ def relevant():
 
 			match_json["outcomes"] = arr_outcomes
 			
+			if match_json["source_id"]:
+				source_json = match_bl.get_source_by_id(match.source_id)
+				match_json["source"] = source_json
+
 			response.append(match_json)
 
 		return response_ok(response)
@@ -367,6 +374,11 @@ def match_detail(match_id):
 				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
+
+		if match_json["source_id"]:
+			source_json = match_bl.get_source_by_id(match.source_id)
+			match_json["source"] = source_json
+
 		return response_ok(match_json)
 
 	except Exception, ex:

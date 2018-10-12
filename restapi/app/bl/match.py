@@ -121,9 +121,13 @@ def get_total_user_and_amount_by_match_id(match_id):
 	return total_users, total_bets
 
 
-def clean_source_with_valid_format(source):
+def get_domain(source):
 	parsed_uri = util.parse_url(source)
 	result = '{uri.netloc}'.format(uri=parsed_uri)
+	return result
+
+def clean_source_with_valid_format(source):
+	result = get_domain(source)
 	result = result.replace('www.', '')
 	result = result.split('.')
 	return result[0]

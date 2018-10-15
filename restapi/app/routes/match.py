@@ -9,6 +9,7 @@ import app.bl.contract as contract_bl
 from sqlalchemy import and_, or_, desc, func
 from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
+from collections import OrderedDict
 from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
@@ -45,6 +46,13 @@ def matches():
 			arr_ids = match_bl.algolia_search(match_bl.clean_source_with_valid_format(source))
 			if arr_ids is not None:
 				matches = sorted(matches, key=lambda m: m.id not in arr_ids)
+		
+		# Get all source_id
+		source_ids = list(OrderedDict.fromkeys(list(map(lambda x: x.source_id, matches))))
+		sources = db.session.query(Source)\
+				.filter(\
+					Source.id.in_(source_ids))\
+				.all()
 
 		for match in matches:
 			match_json = match.to_json()
@@ -60,8 +68,9 @@ def matches():
 			match_json["outcomes"] = arr_outcomes
 			if len(arr_outcomes) > 0:
 				if match_json["source_id"]:
-					source_json = match_bl.get_source_by_id(match.source_id)
+					source_json = match_bl.get_source_by_id(match.source_id, sources)
 					match_json["source"] = source_json
+					del match_json["source_id"]
 				response.append(match_json)
 
 		return response_ok(response)
@@ -317,6 +326,13 @@ def relevant():
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
 
+		# Get all source_id
+		source_ids = list(OrderedDict.fromkeys(list(map(lambda x: x.source_id, matches))))
+		sources = db.session.query(Source)\
+				.filter(\
+					Source.id.in_(source_ids))\
+				.all()
+
 		for match in matches:
 			match_json = match.to_json()
 			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
@@ -331,8 +347,9 @@ def relevant():
 			match_json["outcomes"] = arr_outcomes
 			
 			if match_json["source_id"]:
-				source_json = match_bl.get_source_by_id(match.source_id)
+				source_json = match_bl.get_source_by_id(match.source_id, sources)
 				match_json["source"] = source_json
+				del match_json["source_id"]
 
 			response.append(match_json)
 
@@ -376,8 +393,8 @@ def match_detail(match_id):
 				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
-
-		if match_json["source_id"]:
+		del	match_json["source_id"]
+		if match.source_id:
 			source_json = match_bl.get_source_by_id(match.source_id)
 			match_json["source"] = source_json
 

@@ -303,6 +303,16 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             old_matches = len(data_json)
 
+            source1 = Source.find_source_by_id(1)
+            if source1 is None:
+                source1 = Source(
+                    id = 1,
+                    name = "Source",
+                    url = "htpp://www.abc.com",
+                    approved = 1
+                )
+                db.session.add(source1)
+                db.session.commit()
             # ----- 
             match = Match.find_match_by_id(1001)
             if match is not None:
@@ -310,6 +320,7 @@ class TestMatchBluePrint(BaseTestCase):
                 match.reportTime=seconds + 200,
                 match.disputeTime=seconds + 300,
                 match.public=1,
+                source_id=1
                 db.session.flush()
             else:
                 match = Match(
@@ -331,6 +342,7 @@ class TestMatchBluePrint(BaseTestCase):
                 match.reportTime=seconds + 200,
                 match.disputeTime=seconds + 300,
                 match.public=1,
+                source_id=1
                 db.session.flush()
             else:
                 match = Match(
@@ -1020,8 +1032,11 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']['outcomes']) != 0)
+            self.assertNotIn("source_id", data['data'])
             self.assertTrue(data['data']['source'] != None)
-            self.assertTrue(data['data']['source']['domain'] == 'www.voa.com')
+            self.assertTrue(data['data']['source']['id'] == source.id)
+            self.assertTrue(data['data']['source']['name'] == source.name)
+            self.assertTrue(data['data']['source']['url_icon'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
 
             for match in arr_match:
                 db.session.delete(match)

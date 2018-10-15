@@ -35,6 +35,10 @@ class Match(BaseModel):
 	public = db.Column(db.Integer,
 						server_default=str(1),
 						default=0)
+	# this field help admin set outcome for creator
+	grant_permission = db.Column(db.Integer,
+						server_default=str(0),
+						default=0)
 	category_id = db.Column('category_id', db.ForeignKey('category.id'))
 	source_id = db.Column('source_id', db.ForeignKey('source.id'))
 	outcomes = db.relationship('Outcome', backref='match', primaryjoin="Match.id == Outcome.match_id", lazy='dynamic')

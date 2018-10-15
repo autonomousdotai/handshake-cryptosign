@@ -152,7 +152,7 @@ def get_source_by_id(source_id, sources = None):
 	if sources is None or len(sources) == 0:
 		source = Source.find_source_by_id(source_id)
 	else:
-		tmp = filter(lambda x: x.source_id == source_id, sources)
+		tmp = filter(lambda x: x.id == source_id, sources)
 		source = tmp[0] if len(tmp) > 0 else None
 	if source is None:
 		return None

@@ -70,7 +70,7 @@ def matches():
 				if match_json["source_id"]:
 					source_json = match_bl.get_source_by_id(match.source_id, sources)
 					match_json["source"] = source_json
-					# del match_json["source_id"]
+					del match_json["source_id"]
 				response.append(match_json)
 
 		return response_ok(response)
@@ -348,7 +348,7 @@ def relevant():
 			if match_json["source_id"]:
 				source_json = match_bl.get_source_by_id(match.source_id, sources)
 				match_json["source"] = source_json
-				# del match_json["source_id"]
+				del match_json["source_id"]
 
 			response.append(match_json)
 
@@ -392,7 +392,7 @@ def match_detail(match_id):
 				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
-		# del	match_json["source_id"]
+		del	match_json["source_id"]
 		if match.source_id:
 			source_json = match_bl.get_source_by_id(match.source_id)
 			match_json["source"] = source_json

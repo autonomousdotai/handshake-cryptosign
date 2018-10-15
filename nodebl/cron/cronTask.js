@@ -242,7 +242,6 @@ const addFeed = (hs, task) => {
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
-		// taskDAO.getTasksByStatus()
 		utils.taskMarkId(taskIdTracking)
 		.then(_tasks => {
 			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0;

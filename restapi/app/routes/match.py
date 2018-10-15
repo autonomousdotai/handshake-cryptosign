@@ -150,7 +150,8 @@ def add_match():
 				created_user_id=uid,
 				source_id=None if source is None else source.id,
 				category_id=None if category is None else category.id,
-				grant_permission=int(item.get('grant_permission', 0))
+				grant_permission=int(item.get('grant_permission', 0)),
+				approved=0
 			)
 			matches.append(match)
 			db.session.add(match)

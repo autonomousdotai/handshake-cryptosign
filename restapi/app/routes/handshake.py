@@ -159,8 +159,8 @@ def init():
 
 		master_accounts = handshake_bl.all_master_accounts()
 		
-		# Get setting create new odds
-		setting_new_odds = Setting.find_setting_by_name(CONST.SETTING_TYPE['BOT_NEW_ODDS'])
+		# check bot is turned on or off
+		bot_setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['BOT'])
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
@@ -190,7 +190,7 @@ def init():
 
 			update_feed.delay(handshake.id)
 
-			if setting_new_odds is not None and setting_new_odds.status == 1 and from_address not in master_accounts:
+			if bot_setting is not None and bot_setting.status == 1 and from_address not in master_accounts:
 				run_bots.delay(outcome_id)
 
 			# response data
@@ -308,7 +308,7 @@ def init():
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
 
-			if setting_new_odds is not None and setting_new_odds.status == 1 and from_address not in master_accounts:
+			if bot_setting is not None and bot_setting.status == 1 and from_address not in master_accounts:
 				run_bots.delay(outcome_id)
 
 		# make response

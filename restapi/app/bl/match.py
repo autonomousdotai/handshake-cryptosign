@@ -146,18 +146,3 @@ def algolia_search(text):
 				print(str(ex))
 
 	return arr
-
-def get_source_by_id(source_id, sources = None):
-	source = None
-	if sources is None or len(sources) == 0:
-		source = Source.find_source_by_id(source_id)
-	else:
-		tmp = filter(lambda x: x.id == source_id, sources)
-		source = tmp[0] if len(tmp) > 0 else None
-	if source is None:
-		return None
-	return {
-		"id": source.id,
-		"name": source.name,
-		"url_icon": CONST.SOURCE_URL_ICON.format(get_domain(source.url))
-	}

@@ -121,27 +121,27 @@ def add_match():
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
 					source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
-					if source is not None:
-						return response_error(MESSAGE.SOURCE_EXISTED_ALREADY, CODE.SOURCE_EXISTED_ALREADY)
-
-					source = Source(
-						name=item["source"]["name"],
-						url=item["source"]["url"],
-						created_user_id=uid
-					)
-					db.session.add(source)
-					db.session.flush()
+					if source is None:
+						source = Source(
+							name=item["source"]["name"],
+							url=item["source"]["url"],
+							created_user_id=uid
+						)
+						db.session.add(source)
+						db.session.flush()
 
 			if "category_id" in item:
 				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
 			else:
 				if "category" in item and "name" in item["category"]:
-					category = Category(
-						name=item["category"]["name"],
-						created_user_id=uid
-					)
-					db.session.add(category)
-					db.session.flush()
+					category = db.session.query(Category).filter(Category.name==item["category"]["name"]).first()
+					if category is None:
+						category = Category(
+							name=item["category"]["name"],
+							created_user_id=uid
+						)
+						db.session.add(category)
+						db.session.flush()
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -160,7 +160,8 @@ def add_match():
 				source_id=None if source is None else source.id,
 				category_id=None if category is None else category.id,
 				grant_permission=int(item.get('grant_permission', 0)),
-				approved=0
+				approved=0,
+				creator_wallet_address=item.get('creator_wallet_address')
 			)
 			matches.append(match)
 			db.session.add(match)

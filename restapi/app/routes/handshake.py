@@ -87,6 +87,7 @@ def handshakes():
 	
 	return response_ok()
 
+
 @handshake_routes.route('/<int:id>')
 @login_required
 def detail(id):

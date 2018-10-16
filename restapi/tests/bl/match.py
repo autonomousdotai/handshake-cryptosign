@@ -177,27 +177,32 @@ class TestMatchBl(BaseTestCase):
     def test_clean_source_with_valid_format(self):
         data = 'https://ninja.org'
         actual = match_bl.clean_source_with_valid_format(data)
-        expected = 'ninja.org'
+        expected = 'ninja'
         self.assertEqual(actual, expected)
 
         data = 'http://ninja.org'
         actual = match_bl.clean_source_with_valid_format(data)
-        expected = 'ninja.org'
+        expected = 'ninja'
         self.assertEqual(actual, expected)
 
         data = 'www.ninja.org'
         actual = match_bl.clean_source_with_valid_format(data)
-        expected = 'www.ninja.org'
+        expected = 'ninja'
         self.assertEqual(actual, expected)
 
         data = 'https://www.ninja.org'
         actual = match_bl.clean_source_with_valid_format(data)
-        expected = 'www.ninja.org'
+        expected = 'ninja'
         self.assertEqual(actual, expected)
 
         data = 'http://www.ninja.org'
         actual = match_bl.clean_source_with_valid_format(data)
-        expected = 'www.ninja.org'
+        expected = 'ninja'
+        self.assertEqual(actual, expected)
+
+        data = 'https://www.livescore.com/'
+        actual = match_bl.clean_source_with_valid_format(data)
+        expected = 'livescore'
         self.assertEqual(actual, expected)
 
         data = 'abc'

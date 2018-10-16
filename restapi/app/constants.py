@@ -58,6 +58,8 @@ CRYPTOSIGN_MINIMUM_MONEY = Decimal('0.0005')
 CRYPTOSIGN_FREE_BET_AMOUNT = '0.005'
 MAXIMUM_FREE_BET = 3
 
+SOURCE_URL_ICON = 'https://api.statvoo.com/favicon/?url={}'
+
 COMMUNITY_TYPE = {
 	'PUBLIC': 0,
 	'PRIVATE': 1
@@ -122,5 +124,6 @@ SETTING_TYPE = {
 	'TASK_CRON_JOB': 'TaskCronJob',
 	'GAS_PRICE': 'GasPrice',
 	'ONCHAIN_CRON_JOB': 'OnchainCronJob',
-	'FREE_BET': 'FreeBet'
+	'FREE_BET': 'FreeBet',
+	'BOT': 'Bot'
 }

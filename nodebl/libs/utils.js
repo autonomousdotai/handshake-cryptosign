@@ -91,7 +91,8 @@ const submitInitAPI = (options) => {
                 'Content-Type': 'application/json',
                 'Payload': options.payload || configs.payload,
                 'UID': options.uid || configs.uid,
-                'Fcm-Token': configs.fcm_token
+                'Fcm-Token': configs.fcm_token,
+                'Request-From': 'bot'
             }
         })
         .then(response => {

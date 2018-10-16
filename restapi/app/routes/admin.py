@@ -106,6 +106,51 @@ def create_market():
 		return response_error(ex.message)
 
 
+@admin_routes.route('/approve_market/<int:market_id>', methods=['POST'])
+@admin_required
+def approve_market(market_id):
+	"""
+	" Admin approve user market and create it then.
+	"""
+	try:
+		match = Match.find_match_by_id(market_id)
+		if match is not None:
+			if match.approved != 1:
+				match.approved = 1
+				db.session.flush()
+
+				# get active contract
+				contract = contract_bl.get_active_smart_contract()
+				if contract is None:
+					return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
+				
+
+				# add task
+				task = Task(
+					task_type=CONST.TASK_TYPE['REAL_BET'],
+					data=json.dumps(match.to_json()),
+					action=CONST.TASK_ACTION['CREATE_MARKET'],
+					status=-1,
+					contract_address=contract.contract_address,
+					contract_json=contract.json_name
+				)
+				db.session.add(task)
+				db.session.flush()
+				
+			else:
+				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
+				
+		else:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		db.session.commit()
+		return response_ok(match.to_json())
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
 @admin_routes.route('/init_default_odds', methods=['POST'])
 @admin_required
 def init_default_odds():
@@ -287,6 +332,7 @@ def report_match(match_id):
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
 
 @admin_routes.route('/source/approve/<int:source_id>', methods=['POST'])
 @jwt_required

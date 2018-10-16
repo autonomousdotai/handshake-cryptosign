@@ -5,7 +5,7 @@ from urllib3 import util
 from sqlalchemy import func
 from algoliasearch import algoliasearch
 from app import db
-from app.models import User, Handshake, Match, Outcome, Contract, Shaker
+from app.models import User, Handshake, Match, Outcome, Contract, Shaker, Source
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
@@ -121,10 +121,17 @@ def get_total_user_and_amount_by_match_id(match_id):
 	return total_users, total_bets
 
 
-def clean_source_with_valid_format(source):
+def get_domain(source):
 	parsed_uri = util.parse_url(source)
 	result = '{uri.netloc}'.format(uri=parsed_uri)
 	return result
+
+
+def clean_source_with_valid_format(source):
+	result = get_domain(source)
+	result = result.replace('www.', '')
+	result = result.split('.')
+	return result[0]
 
 
 def algolia_search(text):

@@ -303,6 +303,16 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['status'] == 1)
             old_matches = len(data_json)
 
+            source1 = Source.find_source_by_id(1)
+            if source1 is None:
+                source1 = Source(
+                    id = 1,
+                    name = "Source",
+                    url = "htpp://www.abc.com",
+                    approved = 1
+                )
+                db.session.add(source1)
+                db.session.commit()
             # ----- 
             match = Match.find_match_by_id(1001)
             if match is not None:
@@ -310,6 +320,7 @@ class TestMatchBluePrint(BaseTestCase):
                 match.reportTime=seconds + 200,
                 match.disputeTime=seconds + 300,
                 match.public=1,
+                source_id=1
                 db.session.flush()
             else:
                 match = Match(
@@ -317,6 +328,7 @@ class TestMatchBluePrint(BaseTestCase):
                     date=seconds + 100,
                     reportTime=seconds + 200,
                     disputeTime=seconds + 300,
+                    source_id=1,
                     public=1
                 )
                 db.session.add(match)
@@ -331,6 +343,7 @@ class TestMatchBluePrint(BaseTestCase):
                 match.reportTime=seconds + 200,
                 match.disputeTime=seconds + 300,
                 match.public=1,
+                source_id=1
                 db.session.flush()
             else:
                 match = Match(
@@ -338,6 +351,7 @@ class TestMatchBluePrint(BaseTestCase):
                     date=seconds + 50,
                     reportTime=seconds + 200,
                     disputeTime=seconds + 300,
+                    source_id=1,
                     public=1,
                 )
                 db.session.add(match)
@@ -376,8 +390,8 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
-
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
             new_matches = len(data_json)
@@ -959,6 +973,18 @@ class TestMatchBluePrint(BaseTestCase):
         seconds = local_to_utc(t)
         arr_match = []
 
+        sources = Source.find_source_by_url('voa.com')
+        source = None
+        if sources is None or len(sources) == 0:
+            source = Source(
+                name="voa",
+                url="https://www.voa.com"
+            )
+            db.session.add(source)
+            db.session.commit()
+        else:
+            source = sources[0]
+
         # ----- 
         match = Match.find_match_by_id(999)
         if match is not None:
@@ -966,6 +992,7 @@ class TestMatchBluePrint(BaseTestCase):
             match.reportTime=seconds + 200
             match.disputeTime=seconds + 300
             match.public=1
+            match.source_id=source.id
             db.session.flush()
             arr_match.append(match)
 
@@ -978,7 +1005,8 @@ class TestMatchBluePrint(BaseTestCase):
                 public=1,
                 date=seconds + 100,
                 reportTime=seconds + 200,
-                disputeTime=seconds + 300
+                disputeTime=seconds + 300,
+                source_id=source.id
             )
             arr_match.append(match)
             db.session.add(match)
@@ -1006,6 +1034,12 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']['outcomes']) != 0)
+            print data
+            # self.assertNotIn("source_id", data['data'])
+            self.assertTrue(data['data']['source'] != None)
+            self.assertTrue(data['data']['source']['id'] == source.id)
+            self.assertTrue(data['data']['source']['name'] == source.name)
+            self.assertTrue(data['data']['source']['url'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
 
             for match in arr_match:
                 db.session.delete(match)

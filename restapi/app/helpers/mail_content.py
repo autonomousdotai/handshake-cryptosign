@@ -96,28 +96,29 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     """
 
     for bet in items:
-        if bet.free_bet == 1:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
-            else:
-                if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
+        if bet.status != HandshakeStatus['STATUS_PENDING']:
+            if bet.free_bet == 1:
+                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
                 else:
-                    if bet.outcome_result == bet.side:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
                     else:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
-        else:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
+                        if bet.outcome_result == bet.side:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                        else:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
             else:
-                if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
+                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
                 else:
-                    if bet.outcome_result == bet.side:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
                     else:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
+                        if bet.outcome_result == bet.side:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                        else:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
 
     content += "</table></body></html>"
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)

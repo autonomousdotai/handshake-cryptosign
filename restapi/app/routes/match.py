@@ -58,7 +58,7 @@ def matches():
 
 				if match.source is not None:
 					source_json = match.source.to_json()
-					source_json["url"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+					source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
 					match_json["source"] = source_json
 
 				if match.category is not None:
@@ -347,7 +347,7 @@ def relevant():
 			
 			if match.source is not None:
 				source_json = match.source.to_json()
-				source_json["url"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
 				match_json["source"] = source_json
 
 			if match.category is not None:
@@ -397,7 +397,7 @@ def match_detail(match_id):
 
 		if match.source is not None:
 			source_json = match.source.to_json()
-			source_json["url"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+			source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
 			match_json["source"] = source_json
 
 		if match.category is not None:

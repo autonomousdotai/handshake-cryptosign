@@ -14,7 +14,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.tasks import send_email_create_private_market
+from app.tasks import send_email_create_market
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -56,11 +56,15 @@ def matches():
 			if len(arr_outcomes) > 0:
 				match_json = match.to_json()
 
-				source_json = match.source.to_json()
-				source_json["url"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				if match.source is not None:
+					source_json = match.source.to_json()
+					source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+					match_json["source"] = source_json
+
+				if match.category is not None:
+					match_json["category"] = match.category.to_json()
+
 				match_json["outcomes"] = arr_outcomes
-				match_json["source"] = source_json
-				match_json["category"] = match.category.to_json()
 
 				total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
 				match_json["total_users"] = total_user
@@ -181,9 +185,8 @@ def add_match():
 			match_json['category_name'] = None if category is None else category.name
 			response_json.append(match_json)
 
-			# Send mail private market
-			if match.public == 0:
-				send_email_create_private_market.delay(match.id, uid)
+			# Send mail create market
+			send_email_create_market.delay(match.id, uid)
 
 		db.session.commit()
 
@@ -342,11 +345,13 @@ def relevant():
 
 			match_json["outcomes"] = arr_outcomes
 			
-			if match_json["source_id"]:
-				source_json = match_bl.get_source_by_id(match.source_id, sources)
+			if match.source is not None:
+				source_json = match.source.to_json()
+				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
 				match_json["source"] = source_json
-				del match_json["source_id"]
 
+			if match.category is not None:
+				match_json["category"] = match.category.to_json()
 			response.append(match_json)
 
 		return response_ok(response)
@@ -389,10 +394,14 @@ def match_detail(match_id):
 				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
-		del	match_json["source_id"]
-		if match.source_id:
-			source_json = match_bl.get_source_by_id(match.source_id)
+
+		if match.source is not None:
+			source_json = match.source.to_json()
+			source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
 			match_json["source"] = source_json
+
+		if match.category is not None:
+			match_json["category"] = match.category.to_json()
 
 		return response_ok(match_json)
 

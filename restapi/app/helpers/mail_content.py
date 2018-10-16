@@ -123,7 +123,7 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
     return content
 
-def new_private_market_mail_content(match, link):
+def new_market_mail_content(match, link):
     closing_time = second_to_strftime(match.date) 
     report_time = second_to_strftime(match.reportTime)
     dispute_time = second_to_strftime(match.disputeTime)

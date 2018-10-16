@@ -328,6 +328,7 @@ class TestMatchBluePrint(BaseTestCase):
                     date=seconds + 100,
                     reportTime=seconds + 200,
                     disputeTime=seconds + 300,
+                    source_id=1,
                     public=1
                 )
                 db.session.add(match)
@@ -350,6 +351,7 @@ class TestMatchBluePrint(BaseTestCase):
                     date=seconds + 50,
                     reportTime=seconds + 200,
                     disputeTime=seconds + 300,
+                    source_id=1,
                     public=1,
                 )
                 db.session.add(match)
@@ -388,8 +390,8 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             self.assertTrue(data['status'] == 1)
-
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
             new_matches = len(data_json)
@@ -1037,7 +1039,7 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['data']['source'] != None)
             self.assertTrue(data['data']['source']['id'] == source.id)
             self.assertTrue(data['data']['source']['name'] == source.name)
-            self.assertTrue(data['data']['source']['url_icon'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
+            self.assertTrue(data['data']['source']['url'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
 
             for match in arr_match:
                 db.session.delete(match)

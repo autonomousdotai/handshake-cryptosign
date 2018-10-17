@@ -17,7 +17,7 @@ from app.helpers.response import response_ok, response_error
 hook_routes = Blueprint('hook', __name__)
 
 @hook_routes.route('/dispatcher', methods=['POST'])
-@admin_required
+@service_required
 def user_hook():
 	try:
 		data = request.json

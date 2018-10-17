@@ -17,12 +17,6 @@ white_ips = ( '127.0.0.1' )
 def admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
-        print request
-        print request.remote_addr
-        print request.access_route
-        print request.path
-        print request.host
-
         remote = request.remote_addr
         route = list(request.access_route)
         while remote not in trusted_proxies:
@@ -88,5 +82,16 @@ def dev_required(f):
     def wrap(*args, **kwargs):
         if g.ENV != 'DEV':
             return response_error("Access deny!") 
+        return f(*args, **kwargs)
+    return wrap
+
+def service_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        remote = request.remote_addr
+
+        if "10." not in remote or remote not in white_ips:
+            return response_error("Access deny!")
+
         return f(*args, **kwargs)
     return wrap

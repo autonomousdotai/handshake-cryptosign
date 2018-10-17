@@ -265,6 +265,7 @@ def run_bots(outcome_id):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
 def send_dispute_email(outcome_id, outcome_name):
 	try:
@@ -375,6 +376,7 @@ def send_email_result_notifcation(match_id, is_resolve):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_mail_result_notify=>", exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
 def send_email_create_market(match_id, uid):
 	try:
@@ -395,6 +397,7 @@ def send_email_create_market(match_id, uid):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_email_create_market=>", exc_type, fname, exc_tb.tb_lineno)
+
 
 @celery.task()
 def update_status_feed(_id, status):

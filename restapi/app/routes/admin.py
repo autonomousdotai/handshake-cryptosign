@@ -124,8 +124,6 @@ def approve_market(market_id):
 				if contract is None:
 					return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
 
-				
-
 				# add task
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],

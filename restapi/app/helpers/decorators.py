@@ -17,6 +17,12 @@ white_ips = ( '127.0.0.1' )
 def admin_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
+        print request
+        print request.remote_addr
+        print request.access_route
+        print request.path
+        print request.host
+
         remote = request.remote_addr
         route = list(request.access_route)
         while remote not in trusted_proxies:

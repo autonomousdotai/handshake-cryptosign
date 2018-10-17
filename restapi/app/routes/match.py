@@ -184,6 +184,15 @@ def add_match():
 			match_json['contract'] = contract.to_json()
 			match_json['source_name'] = None if source is None else source.name
 			match_json['category_name'] = None if category is None else category.name
+
+			if source is not None:
+				source_json = source.to_json()
+				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				match_json["source"] = source_json
+
+			if category is not None:
+				match_json["category"] = category.to_json()
+
 			response_json.append(match_json)
 
 			# Send mail create market

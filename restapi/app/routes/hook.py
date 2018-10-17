@@ -25,14 +25,15 @@ def user_hook():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		type_change = data['type_change']
-		user_id = data['user_id']
-		email = data['email']
-		meta_data = data['meta_data']
+		type_change = data.get('type_change', None)
+		user_id = data.get('user_id', None)
+		email = data.get('email', None)
+		meta_data = data.get('meta_data', None)
 
 		if type_change == "Update":
 			user = User.find_user_with_id(user_id)
-			if user.email != email and email is not None and email != "":
+			
+			if user is not None and user.email != email and email is not None and email != "":
 				print "Update email: {}".format(email)
 				user.email = email
 				db.session.commit()

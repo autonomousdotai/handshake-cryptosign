@@ -11,7 +11,7 @@ from app.models import User
 from flask_jwt_extended import (create_access_token)
 
 from app.helpers.message import MESSAGE, CODE
-from app.helpers.decorators import admin_required
+from app.helpers.decorators import service_required
 from app.helpers.response import response_ok, response_error
 
 hook_routes = Blueprint('hook', __name__)

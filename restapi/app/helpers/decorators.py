@@ -84,3 +84,13 @@ def dev_required(f):
             return response_error("Access deny!") 
         return f(*args, **kwargs)
     return wrap
+
+def service_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        remote = request.remote_addr
+        if "10." not in remote and remote not in white_ips:
+            return response_error("Access deny!")
+
+        return f(*args, **kwargs)
+    return wrap

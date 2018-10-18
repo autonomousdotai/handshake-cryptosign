@@ -9,11 +9,12 @@ import app.bl.contract as contract_bl
 from sqlalchemy import and_, or_, desc, func
 from flask_jwt_extended import jwt_required, decode_token
 from flask import g, Blueprint, request, current_app as app
+from collections import OrderedDict
 from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.tasks import send_email_create_private_market
+from app.tasks import send_email_create_market
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -47,19 +48,30 @@ def matches():
 				matches = sorted(matches, key=lambda m: m.id not in arr_ids)
 
 		for match in matches:
-			match_json = match.to_json()
-			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
-			match_json["total_users"] = total_user
-			match_json["total_bets"] = total_bets
-			
 			arr_outcomes = []
 			for outcome in match.outcomes:
 				if outcome.hid is not None:
-    					arr_outcomes.append(outcome.to_json())
+					arr_outcomes.append(outcome.to_json())
 
-			match_json["outcomes"] = arr_outcomes
 			if len(arr_outcomes) > 0:
+				match_json = match.to_json()
+
+				if match.source is not None:
+					source_json = match.source.to_json()
+					source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+					match_json["source"] = source_json
+
+				if match.category is not None:
+					match_json["category"] = match.category.to_json()
+
+				match_json["outcomes"] = arr_outcomes
+
+				total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
+				match_json["total_users"] = total_user
+				match_json["total_bets"] = total_bets
+
 				response.append(match_json)
+
 
 		return response_ok(response)
 	except Exception, ex:
@@ -104,32 +116,32 @@ def add_match():
 				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
 			if "source_id" in item:
-    			# TODO: check deleted and approved
+				# TODO: check deleted and approved
 				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
 			else:
 				if "source" in item and "name" in item["source"] and "url" in item["source"]:
 					source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
-					if source is not None:
-						return response_error(MESSAGE.SOURCE_EXISTED_ALREADY, CODE.SOURCE_EXISTED_ALREADY)
-
-					source = Source(
-						name=item["source"]["name"],
-						url=item["source"]["url"],
-						created_user_id=uid
-					)
-					db.session.add(source)
-					db.session.flush()
+					if source is None:
+						source = Source(
+							name=item["source"]["name"],
+							url=item["source"]["url"],
+							created_user_id=uid
+						)
+						db.session.add(source)
+						db.session.flush()
 
 			if "category_id" in item:
 				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
 			else:
 				if "category" in item and "name" in item["category"]:
-					category = Category(
-						name=item["category"]["name"],
-						created_user_id=uid
-					)
-					db.session.add(category)
-					db.session.flush()
+					category = db.session.query(Category).filter(Category.name==item["category"]["name"]).first()
+					if category is None:
+						category = Category(
+							name=item["category"]["name"],
+							created_user_id=uid
+						)
+						db.session.add(category)
+						db.session.flush()
 
 			match = Match(
 				homeTeamName=item['homeTeamName'],
@@ -146,7 +158,10 @@ def add_match():
 				disputeTime=item['disputeTime'],
 				created_user_id=uid,
 				source_id=None if source is None else source.id,
-				category_id=None if category is None else category.id
+				category_id=None if category is None else category.id,
+				grant_permission=int(item.get('grant_permission', 0)),
+				approved=0,
+				creator_wallet_address=item.get('creator_wallet_address')
 			)
 			matches.append(match)
 			db.session.add(match)
@@ -169,11 +184,19 @@ def add_match():
 			match_json['contract'] = contract.to_json()
 			match_json['source_name'] = None if source is None else source.name
 			match_json['category_name'] = None if category is None else category.name
+
+			if source is not None:
+				source_json = source.to_json()
+				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				match_json["source"] = source_json
+
+			if category is not None:
+				match_json["category"] = category.to_json()
+
 			response_json.append(match_json)
 
-			# Send mail private market
-			if match.public == 0:
-				send_email_create_private_market.delay(match.id, uid)
+			# Send mail create market
+			send_email_create_market.delay(match.id, uid)
 
 		db.session.commit()
 
@@ -312,6 +335,13 @@ def relevant():
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
 
+		# Get all source_id
+		source_ids = list(OrderedDict.fromkeys(list(map(lambda x: x.source_id, matches))))
+		sources = db.session.query(Source)\
+				.filter(\
+					Source.id.in_(source_ids))\
+				.all()
+
 		for match in matches:
 			match_json = match.to_json()
 			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
@@ -325,6 +355,13 @@ def relevant():
 
 			match_json["outcomes"] = arr_outcomes
 			
+			if match.source is not None:
+				source_json = match.source.to_json()
+				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				match_json["source"] = source_json
+
+			if match.category is not None:
+				match_json["category"] = match.category.to_json()
 			response.append(match_json)
 
 		return response_ok(response)
@@ -367,6 +404,15 @@ def match_detail(match_id):
 				arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
+
+		if match.source is not None:
+			source_json = match.source.to_json()
+			source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+			match_json["source"] = source_json
+
+		if match.category is not None:
+			match_json["category"] = match.category.to_json()
+
 		return response_ok(match_json)
 
 	except Exception, ex:

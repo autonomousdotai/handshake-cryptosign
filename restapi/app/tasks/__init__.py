@@ -3,7 +3,7 @@ from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local, render_generate_link
-from app.helpers.mail_content import render_email_subscribe_content, new_private_market_mail_content
+from app.helpers.mail_content import render_email_subscribe_content, new_market_mail_content
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -265,6 +265,7 @@ def run_bots(outcome_id):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
 def send_dispute_email(outcome_id, outcome_name):
 	try:
@@ -375,27 +376,28 @@ def send_email_result_notifcation(match_id, is_resolve):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_mail_result_notify=>", exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
-def send_email_create_private_market(match_id, uid):
+def send_email_create_market(match_id, uid):
 	try:
+		if uid is None:
+			return False
 		user = User.find_user_with_id(uid)
 		if user is None or user.is_subscribe == 0 or user.email is None or user.email == "":
 			print("User is invalid")
 			return False
-
 		match = Match.find_match_by_id(match_id)
 		link = render_generate_link(match.id, None, uid)
-
-		body = new_private_market_mail_content(match, link)
-		subject = """Event "{}" was create successfully.""".format(match.name)
-
+		body = new_market_mail_content(match, link)
+		subject = """Yout event "{}" has been successfully created.""".format(match.name)
 		# Send email
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, body)
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_email_create_private_market=>", exc_type, fname, exc_tb.tb_lineno)
+		print("log_send_email_create_market=>", exc_type, fname, exc_tb.tb_lineno)
+
 
 @celery.task()
 def update_status_feed(_id, status):

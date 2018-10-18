@@ -35,9 +35,7 @@ const saveTnxs = (arr) => {
 					contract_json: (item.contract_json.length > 0) ? item.contract_json: item.onchainData.contract_json,
 					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
 					contract_method: item.onchainData.contract_method,
-					is_erc20: item.is_erc20 || 0,
 					from_address: item.onchainData.from_address,
-					description: item.onchainData.description || 'cron tnx',
 					data: JSON.stringify(item),
 					status: -1,
 					task_id: item.task.id,
@@ -242,7 +240,6 @@ const addFeed = (hs, task) => {
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
-		// taskDAO.getTasksByStatus()
 		utils.taskMarkId(taskIdTracking)
 		.then(_tasks => {
 			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0;

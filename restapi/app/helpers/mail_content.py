@@ -96,51 +96,59 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     """
 
     for bet in items:
-        if bet.free_bet == 1:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
-            else:
-                if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
+        if bet.status != HandshakeStatus['STATUS_PENDING']:
+            if bet.free_bet == 1:
+                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
                 else:
-                    if bet.outcome_result == bet.side:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
                     else:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
-        else:
-            if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
+                        if bet.outcome_result == bet.side:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                        else:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
             else:
-                if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
+                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
+                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
                 else:
-                    if bet.outcome_result == bet.side:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
+                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
                     else:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
+                        if bet.outcome_result == bet.side:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
+                        else:
+                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
 
     content += "</table></body></html>"
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
     return content
 
-def new_private_market_mail_content(match, link):
+def new_market_mail_content(match, link):
     closing_time = second_to_strftime(match.date) 
     report_time = second_to_strftime(match.reportTime)
     dispute_time = second_to_strftime(match.disputeTime)
 
     return """
-        Hey Ninja Master,<br/><br/>
-        Your event was create successfully.<br/>
-        Please review the event info below:<br/>
+        Hey Ninja,<br/><br/>
+        Congrats! <br/>
+        You’ve successfully created an event. <br/>
+        Please review all your event info below: <br/>
         <div>
             <blockquote style="margin:0 0 0 40px;border:none;padding:0px">
                 <div>
                     Event name: {}<br/>
-                    User can play bet before: {} (UTC)<br/>
-                    You need to report before : {} (UTC)<br/>
-                    The bet end if no dispute after : {} (UTC)<br/>
+                    When your event ends: {} (UTC)<br/>
+                    Report event results before: {} (UTC)<br/>
+                    Event closes (if there’s no dispute): {} (UTC)<br/>
                 </div>
             </blockquote>
         </div>
-        Share your event to your friend: <a href="http://ninja.org/prediction{}">ninja.org/prediction{} </a>
+        Tell your friends: <a href="http://ninja.org/prediction{}">ninja.org/prediction{}</a><br/>
+        Good luck!<br/>
+        <div>
+            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/facebook.svg" alt="FACEBOOK">
+            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/twitter.svg" alt="TWITTER">
+        </div>
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.
     """.format(match.name, closing_time, report_time, dispute_time, link, link)

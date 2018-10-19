@@ -85,7 +85,6 @@ const submitInitAPI = (options) => {
             free_bet: options.is_free_bet || 0
         };
 
-        console.log('CALL HANDSHAKE INIT API: ', dataRequest);
         axios.post(`${configs.restApiEndpoint}/handshake/init`, dataRequest, {
             headers: {
                 'Content-Type': 'application/json',
@@ -131,7 +130,6 @@ const submitInitAPI = (options) => {
                         }));
                     }
                 });
-                console.log('RESPONSE CALL HANDSHAKE INIT API: ', JSON.stringify(results));
                 return resolve(results);
             } else {
                 return reject({
@@ -156,23 +154,43 @@ const submitInitAPI = (options) => {
 };
 
 
-/* @param {number} result
- * @param {number} public
- * @param {number} hid
- * @param {string} name
+/**
+ * @param {array} outcomes
+ * @param {number} grant_permission
+ * @param {string} creator_wallet_address
+ * @param {number} market_fee
+ * @param {number} date
+ * @param {number} disputeTime
+ * @param {number} reportTime
+ * @param {string} source
  */
-const generateMarkets = (_arr, _market_fee, _date, _disputeTime, _reportTime, _source ) => {
+const generateMarkets = (_arr, _grant_permission, _creator_wallet_address, _market_fee, _date, _disputeTime, _reportTime, _source ) => {
     const markets = [];
     _arr.forEach(outcome => {
-        markets.push({
-			contract_method: 'createMarket',
-            fee: _market_fee,
-            source: _source,
-            closingTime: _date - Math.floor(+moment.utc()/1000),
-            reportTime: _reportTime - _date,
-            disputeTime: _disputeTime - _reportTime,
-            offchain: `cryptosign_createMarket${outcome.id}`
-		});
+        if(_creator_wallet_address !== null && _creator_wallet_address !== '') {
+            markets.push({
+                contract_method: 'createMarketForShurikenUser',
+                fee: _market_fee,
+                grant_permission: _grant_permission,
+                creator_wallet_address: _creator_wallet_address,
+                source: _source,
+                closingTime: _date - Math.floor(+moment.utc()/1000),
+                reportTime: _reportTime - _date,
+                disputeTime: _disputeTime - _reportTime,
+                offchain: `cryptosign_createMarket${outcome.id}`
+            });
+            
+        } else {
+            markets.push({
+                contract_method: 'createMarket',
+                fee: _market_fee,
+                source: _source,
+                closingTime: _date - Math.floor(+moment.utc()/1000),
+                reportTime: _reportTime - _date,
+                disputeTime: _disputeTime - _reportTime,
+                offchain: `cryptosign_createMarket${outcome.id}`
+            });
+        }
     });
     return markets;
 };
@@ -218,14 +236,11 @@ const getGasAndNonce = () => {
 		.then(gasPrice => {
 			predictionContract.getNonce(ownerAddress, 'pending')
 			.then(_nonce => {
-				console.log('Current nonce pending from onchain: ', _nonce);
 				let nonce = web3Util.getNonce();
 				if (!web3Util.getNonce() || web3Util.getNonce() <= _nonce) {
-					console.log('SET NONCE: ', web3Util.getNonce(), _nonce);
 					web3Util.setNonce(_nonce);
 					nonce = _nonce;
 				}
-				console.log('Current nonce pending: ', nonce);
 				resolve({
 					gasPriceStr: `${gasPrice}`,
 					nonce: nonce

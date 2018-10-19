@@ -37,6 +37,7 @@ def matches():
 					Match.deleted == 0,\
 					Match.date > seconds,\
 					Match.public == 1,\
+					Match.approved == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
@@ -292,7 +293,7 @@ def match_need_user_report():
 		contracts = contract_bl.all_contracts()
 
 		# Get all matchs are PENDING (-1)
-		matches = db.session.query(Match).filter(and_(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
+		matches = db.session.query(Match).filter(and_(Match.approved==1, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
 
 		# Filter all outcome of user
 		for match in matches:
@@ -331,6 +332,7 @@ def relevant():
 			Match.deleted == 0,\
 			Match.date > seconds,\
 			Match.public == 1,\
+			Match.approved == 1,\
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
@@ -383,6 +385,7 @@ def match_detail(match_id):
 				.filter(\
 					Match.id == match_id,\
 					Match.deleted == 0,\
+					Match.approved == 1,\
 					Match.date > seconds,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 				.first()
@@ -444,6 +447,7 @@ def count_events_based_on_source():
 				.filter(\
 					Match.deleted == 0,\
 					Match.date > seconds,\
+					Match.approved == 1,\
 					Match.source_id.in_(db.session.query(Source.id).filter(Source.url.contains(url))),\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 				.all()

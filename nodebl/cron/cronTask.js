@@ -35,9 +35,7 @@ const saveTnxs = (arr) => {
 					contract_json: (item.contract_json.length > 0) ? item.contract_json: item.onchainData.contract_json,
 					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
 					contract_method: item.onchainData.contract_method,
-					is_erc20: item.is_erc20 || 0,
 					from_address: item.onchainData.from_address,
-					description: item.onchainData.description || 'cron tnx',
 					data: JSON.stringify(item),
 					status: -1,
 					task_id: item.task.id,
@@ -93,7 +91,6 @@ const initBet = (params, task, isFreeBet) => {
 		try {
 
 			if (params.hid == null || params.hid == 'null' || params.hid == undefined) {
-				console.log(`NOT FOUND HID, UPDATE TASK'S STATUS TO: WAITING`);
 				await taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_WAITING_ONCHAIN_HID)
 				return resolve(undefined);
 			}
@@ -194,6 +191,8 @@ const collect = (params) => {
  * @param {number} params.reportTime
  * @param {number} params.date
  * @param {string} params.source
+ * @param {string} params.grant_permission
+ * @param {string} params.creator_wallet_address
  * @param {number} params.market_fee
  * @param {number} params.id
  * @param {array} params.outcomes
@@ -206,7 +205,7 @@ const collect = (params) => {
 const createMarket = (params) => {
 	return new Promise((resolve, reject) => {
 		if (params.date < params.reportTime && params.reportTime < params.disputeTime) {
-			return resolve(utils.generateMarkets(params.outcomes, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
+			return resolve(utils.generateMarkets(params.outcomes, params.grant_permission, params.creator_wallet_address, params.market_fee, params.date, params.disputeTime, params.reportTime, params.source));
 		}
 		return reject({
 			err_type: constants.TASK_STATUS.CREATE_MARKET_TIME_INVALID,
@@ -348,7 +347,6 @@ const asyncScanTask = () => {
 
 			Promise.all(tasks)
 			.then(results => {
-				console.log('START SUBMIT MULTI TRANSACTION!');
 				let tnxs = [];
 				(results || []).forEach(i => {
 					if (Array.isArray(i.onchainData)) {
@@ -367,18 +365,13 @@ const asyncScanTask = () => {
 
 				saveTnxs(tnxs)
 				.then(tnxResults => {
-					console.log('SUBMIT MULTI TNX DONE WITH RESULT: ', tnxResults.length);
-
 					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
 						const taskIds = tnxResults.map(i => { return i.task_id; })
-						
-						console.log('UPDATE TASK STATUS ', taskIds);
 						taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
 						.then(updateResults => {
 							return resolve(tnxResults);
 						})
 						.catch(err => {
-							console.error('Error update task status: ', err);
 							return reject(err);
 						})
 					} else {
@@ -400,7 +393,6 @@ const asyncScanTask = () => {
 
 const runTaskCron = () => {
     cron.schedule('*/5 * * * * *', async () => {
-		console.log('task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('TaskCronJob');
 				if (!setting) {
@@ -411,15 +403,12 @@ const runTaskCron = () => {
 					console.log('Exit TaskCronJob setting with status: ' + setting.status);
 					return;
 				}
-				console.log('Begin run TaskCronJob!');
 
 			if (isRunningTask === false) {
 				isRunningTask = true;
 				
 				asyncScanTask()
 				.then(results => {
-					console.log('task cron done at ' + new Date());
-					console.log('EXIT SCAN TASK');
 					isRunningTask = false;
 				})
 				.catch(e => {
@@ -427,9 +416,7 @@ const runTaskCron = () => {
 					console.error(e);
 				})
 
-			} else {
-        		console.log('CRON JOB SCAN TASK IS RUNNING!');
-			}
+			} 
 		} catch (e) {
 			isRunningTask = false;
 			console.log('cron task error');

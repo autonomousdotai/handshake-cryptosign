@@ -27,8 +27,6 @@ const loadABI = (contract_json) => {
 //     submit init transaction
 // */
 const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options, contract_address, contract_json) => {
-  console.log('submitInitTransaction');
-  console.log(_nonce, _hid, _side, _odds, _offchain, _value, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = contract_address;
@@ -67,7 +65,6 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
         });
       })
       .on('receipt', (receipt) => {
-        console.log(receipt);
       })
       .on('error', err => {
         console.log('submitInitTransaction Error');
@@ -511,6 +508,96 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
 };
 
 
+/**
+ * @param {address} creator
+ * @param {uint} fee
+ * @param {bytes32} source
+ * @param {bool} isGrantedPermission
+ * @param {uint} closingWindow
+ * @param {uint} reportWindow
+ * @param {uint} disputeWindow
+ * @param {bytes32} offchain
+ */
+
+const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, isGrantedPermission, closingTime, reportTime, disputeTime, offchain, gasPrice, _options, contract_address, contract_json) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      console.log('createMarketForShurikenUserTransaction');
+      console.log(_nonce, creator, fee, source, isGrantedPermission, closingTime, reportTime, disputeTime, offchain, contract_address, contract_json);
+      const contractAddress = contract_address;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
+      const nonce           = _nonce;
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
+          from: ownerAddress
+      });
+
+      const rawTransaction = {
+          'from'    : ownerAddress,
+          'nonce'   : '0x' + nonce.toString(16),
+          'gasPrice': web3.utils.toHex(gasPriceWei),
+          'gasLimit': web3.utils.toHex(gasLimit),
+          'to'      : contractAddress,
+          'value'   : '0x0',
+          'data'    : contract.methods.createMarketForShurikenUser(creator, fee, web3.utils.fromUtf8(source || '-'), isGrantedPermission, closingTime, reportTime, disputeTime, web3.utils.fromUtf8(offchain)).encodeABI()
+      };
+
+      const tx                    = new ethTx(rawTransaction);
+      tx.sign(privKey);
+      const serializedTx          = tx.serialize();
+      let tnxHash = -1;
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+
+        txDAO.create(tnxHash, contract_address, 'createMarketForShurikenUser', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        .catch(console.error);
+
+        return resolve({
+          raw: rawTransaction,
+          hash: hash,
+          task: _options.task
+        });
+      })
+      .on('receipt', (receipt) => {
+        console.log('createMarketForShurikenUserTransactionReceipt');
+        console.log(receipt);
+      })
+      .on('error', err => {
+        console.log('createMarketForShurikenUserTransaction Error');
+        console.log(err);
+        // Fail at offchain
+        if (tnxHash == -1) {
+          txDAO.create(-1, contract_address, 'createMarketForShurikenUser', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          .catch(console.error);
+        } else {
+          if (!(err.message || err).includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at createMarketForShurikenUserTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
+        }
+        return reject({
+          err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_FAIL,
+          error: err,
+          options_data: {
+            task: _options.task
+          }
+        });
+      });
+    } catch (e) {
+      reject({
+        err_type: constants.TASK_STATUS.CREATE_MARKET_TNX_EXCEPTION,
+        error: e,
+        options_data: {
+          task: _options.task
+        }
+      });
+    }
+  });
+};
+
+
 const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
   return new Promise(async(resolve, reject) => {
     try {
@@ -758,5 +845,6 @@ module.exports = {
   submitShakeTransaction,
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction,
-  uninitForTrial
+  uninitForTrial,
+  createMarketForShurikenUserTransaction
 };

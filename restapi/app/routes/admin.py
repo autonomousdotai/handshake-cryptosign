@@ -124,8 +124,6 @@ def approve_market(market_id):
 				if contract is None:
 					return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
 
-				
-
 				# add task
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],
@@ -211,7 +209,7 @@ def matches_need_report_by_admin():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 
-		matches_by_admin = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id.is_(None), Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+		matches_by_admin = db.session.query(Match).filter(Match.approved==1, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id.is_(None), Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
 
 		for match in matches_by_admin:
 			match_json = match.to_json()

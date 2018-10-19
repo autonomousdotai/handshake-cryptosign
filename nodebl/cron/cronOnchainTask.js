@@ -20,7 +20,6 @@ const asyncScanOnchainTask = () => {
 	return new Promise((resolve, reject) => {
 		utils.getGasAndNonce()
 		.then(result => {
-			console.log('Onchain infor: ', result);
 			const gasPriceStr = result.gasPriceStr;
 			const nonce = result.nonce;
 			const tasks = [];
@@ -44,6 +43,9 @@ const asyncScanOnchainTask = () => {
 											switch (onchainData.contract_method) {
 												case 'createMarket':
 													smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+												break;
+												case 'createMarketForShurikenUser':
+													smartContractFunc = predictionContract.createMarketForShurikenUserTransaction(nonce + index, onchainData.creator_wallet_address, onchainData.fee, onchainData.source, onchainData.grant_permission, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
 												break;
 												case 'init':
 													smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPriceStr, item, task.contract_address, task.contract_json);
@@ -116,7 +118,6 @@ const asyncScanOnchainTask = () => {
 						web3.setNonce( web3.getNonce() + results.length);
 						const taskIds = results.map(i => { return i.onchainTaskId; })
 
-						console.log('UPDATE ONCHAIN TASK STATUS ', taskIds);
 						onchainTaskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
 						.then(updateResults => {
 							return resolve(results);
@@ -141,7 +142,6 @@ const asyncScanOnchainTask = () => {
 
 const runOnchainTaskCron = () => {
     cron.schedule('*/5 * * * * *', async () => {
-		console.log('Onchain task cron running a task every 5s at ' + new Date());
 		try {
 			const setting = await settingDAO.getByName('OnchainCronJob');
 				if (!setting) {
@@ -152,15 +152,12 @@ const runOnchainTaskCron = () => {
 					console.log('Exit OnchainCronJob setting with status: ' + setting.status);
 					return;
 				}
-				console.log('Begin run OnchainCronJob!');
 
 			if (isRunningOnchainTask === false) {
 				isRunningOnchainTask = true;
 				
 				asyncScanOnchainTask()
 				.then(results => {
-					console.log('Onchain task cron done at ' + new Date());
-					console.log('EXIT SCAN TASK');
 					isRunningOnchainTask = false;
 				})
 				.catch(e => {
@@ -168,9 +165,7 @@ const runOnchainTaskCron = () => {
 					console.error(e);
 				})
 
-			} else {
-        		console.log('CRON JOB SCAN ONCHAIN_TASK IS RUNNING!');
-			}
+			} 
 		} catch (e) {
 			isRunningOnchainTask = false;
 			console.log('Onchain cron task error');

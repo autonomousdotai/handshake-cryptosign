@@ -794,7 +794,68 @@ class TestMatchBluePrint(BaseTestCase):
                                         "Payload": "{}".format(123),
                                     })
             data = json.loads(response.data.decode())
-            self.assertTrue(data['status'] == 0)
+            self.assertTrue(data['status'] == 1)
+
+    def test_add_match_with_category_existed(self):
+        self.clear_data_before_test()
+        cate = Category.find_category_by_id(1)
+        if cate is None:
+            cate = Category(
+                id = 1,
+                name = "Cate Existed",
+                approved = 1
+            )
+        else:
+            cate.name = "Cate Existed"
+
+        db.session.flush()
+        db.session.commit()
+        with self.client:
+            params = [
+                        {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": 1539913910,
+                            "reportTime": 1539923910,
+                            "disputeTime": 1539933910,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "public": 1,
+                            "source": {
+                                "name": "Worlcup Russia 2018",
+                                "url": "google.com",
+                            },
+                            "category": {
+                                "name": "Cate Existed"
+                            },
+                            "outcomes": [
+                                {
+                                    "name": "Nigeria wins"
+                                },
+                                {
+                                    "name": "Iceland wins"
+                                }
+                            ]
+                        }
+                    ]
+
+            response = self.client.post(
+                                    '/match/add',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['status'] == 1)
+            self.assertTrue(len(data['data']) > 0)
+            self.assertTrue(data['data'][0]['category']['id'] == cate.id)
+            self.assertTrue(data['data'][0]['category']['name'] == cate.name)
 
 
     def test_get_matchs_relevant_event(self):
@@ -1034,12 +1095,11 @@ class TestMatchBluePrint(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']['outcomes']) != 0)
-            print data
             # self.assertNotIn("source_id", data['data'])
             self.assertTrue(data['data']['source'] != None)
             self.assertTrue(data['data']['source']['id'] == source.id)
             self.assertTrue(data['data']['source']['name'] == source.name)
-            self.assertTrue(data['data']['source']['url'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
+            self.assertTrue(data['data']['source']['url_icon'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
 
             for match in arr_match:
                 db.session.delete(match)

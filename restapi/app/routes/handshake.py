@@ -23,7 +23,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required, whitelist
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, run_bots
 from datetime import datetime
@@ -418,6 +418,7 @@ def create_free_bet():
 		if can_free_bet is not True:
 			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
+		redeem = data.get('redeem', '')
 		odds = Decimal(data.get('odds'))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -429,6 +430,14 @@ def create_free_bet():
 
 		elif outcome.result != -1:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
+
+		# check valid redeem or not
+		r = Redeem.find_redeem_by_code(redeem)
+		if r is None:
+			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
+		else:
+			r.used_user = uid
+			db.session.flush()
 
 		# check erc20 token or not
 		token = Token.find_token_by_id(outcome.token_id)

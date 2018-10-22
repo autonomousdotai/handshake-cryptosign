@@ -37,7 +37,6 @@ def matches():
 					Match.deleted == 0,\
 					Match.date > seconds,\
 					Match.public == 1,\
-					Match.approved == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
@@ -51,7 +50,7 @@ def matches():
 		for match in matches:
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None:
+				if outcome.hid is not None and outcome.approved == 1:
 					arr_outcomes.append(outcome.to_json())
 
 			if len(arr_outcomes) > 0:
@@ -293,14 +292,14 @@ def match_need_user_report():
 		contracts = contract_bl.all_contracts()
 
 		# Get all matchs are PENDING (-1)
-		matches = db.session.query(Match).filter(and_(Match.approved==1, Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
+		matches = db.session.query(Match).filter(and_(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['PENDING'], Outcome.hid != None, Outcome.created_user_id == uid)).group_by(Outcome.match_id)))).all()
 
 		# Filter all outcome of user
 		for match in matches:
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.created_user_id == uid and outcome.hid >= 0:
+				if outcome.created_user_id == uid and outcome.hid >= 0 and outcome.approved == 1:
 					outcome_json = contract_bl.filter_contract_id_in_contracts(outcome.to_json(), contracts)
 					arr_outcomes.append(outcome_json)
 			
@@ -314,7 +313,7 @@ def match_need_user_report():
 
 @match_routes.route('/relevant-event', methods=['GET'])
 @login_required
-def relevant():
+def relevant_events():
 	try:
 		match_id = int(request.args.get('match')) if request.args.get('match') is not None else None
 		match = Match.find_match_by_id(match_id)
@@ -332,7 +331,6 @@ def relevant():
 			Match.deleted == 0,\
 			Match.date > seconds,\
 			Match.public == 1,\
-			Match.approved == 1,\
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
 		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
 		.all()
@@ -372,23 +370,22 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
+@login_required
 def match_detail(match_id):
 	try:
-		outcome_id = None
-		if request.args.get('outcome_id') is not None:
-			outcome_id = int(request.args.get('outcome_id'))
+		outcome_id = int(request.args.get('outcome_id', -1))
 
 		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
+		seconds = local_to_utc(t)		
 
 		match = db.session.query(Match)\
-				.filter(\
-					Match.id == match_id,\
-					Match.deleted == 0,\
-					Match.approved == 1,\
-					Match.date > seconds,\
-					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
-				.first()
+			.filter(\
+				Match.id == match_id,\
+				Match.deleted == 0,\
+				Match.public == public,\
+				Match.date > seconds,\
+				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
+			.first()
 
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
@@ -400,9 +397,10 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome_id is not None:
+			if outcome_id != -1:
 				if outcome.id == outcome_id:
 					arr_outcomes.append(outcome.to_json())
+					break
 			else:
 				arr_outcomes.append(outcome.to_json())
 
@@ -447,7 +445,6 @@ def count_events_based_on_source():
 				.filter(\
 					Match.deleted == 0,\
 					Match.date > seconds,\
-					Match.approved == 1,\
 					Match.source_id.in_(db.session.query(Source.id).filter(Source.url.contains(url))),\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 				.all()

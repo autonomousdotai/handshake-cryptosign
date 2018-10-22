@@ -18,6 +18,7 @@ restapi/app/bl/chain-info.json
 master-accounts.json
 .pytest_cache
 __pycache__
+redeem.txt
 
 # event ignore
 event/vendor

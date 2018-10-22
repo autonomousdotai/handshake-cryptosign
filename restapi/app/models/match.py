@@ -29,9 +29,6 @@ class Match(BaseModel):
 	index = db.Column(db.Integer,
 							server_default=str(1),
 	                      	default=1)
-	approved = db.Column(db.Integer,
-						server_default=str(1),
-						default=1)
 	public = db.Column(db.Integer,
 						server_default=str(1),
 						default=0)

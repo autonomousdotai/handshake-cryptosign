@@ -23,6 +23,7 @@ def render_email_subscribe_content(app_config, user_id):
         <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
     """.format(render_unsubscribe_url(user_id, passphase))
 
+
 def render_row_table_content(outcome_name, side, result):
     text = ""
     if result == "DRAW":
@@ -42,6 +43,7 @@ def render_row_table_content(outcome_name, side, result):
     </tr>
     """.format(outcome_name, "Support" if side == 1 else "Oppose", text)
 
+
 def render_footer_email_content(app_config, user_id, free_bet_available):
     passphase = app_config["PASSPHASE"]
     html = ""
@@ -54,6 +56,7 @@ def render_footer_email_content(app_config, user_id, free_bet_available):
         <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
         <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
     """.format(render_unsubscribe_url(user_id, passphase))
+
 
 def render_email_notify_result_content(app_config, items, free_bet_available):
     content = """
@@ -123,6 +126,7 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     content += "</table></body></html>"
     content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
     return content
+
 
 def new_market_mail_content(match, link):
     closing_time = second_to_strftime(match.date) 

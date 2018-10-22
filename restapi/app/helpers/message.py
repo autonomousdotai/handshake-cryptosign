@@ -89,6 +89,9 @@ class MESSAGE(object):
 	# CATEGORY
 	CATEGORY_INVALID = 'Category is invalid!'
 
+	# REDEEM
+	REDEEM_NOT_FOUND = 'Redeem is not found!'
+
 
 class CODE(object):
 	# ERROR
@@ -177,3 +180,6 @@ class CODE(object):
 
 	# CATEGORY
 	CATEGORY_INVALID = '1056'
+
+	# REDEEM
+	REDEEM_NOT_FOUND = '1062'

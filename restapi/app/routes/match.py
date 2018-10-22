@@ -59,6 +59,8 @@ def matches():
 				if match.source is not None:
 					source_json = match.source.to_json()
 					source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+					if source_json["name"] is None or source_json["name"] is "":
+						source_json["name"] = match_bl.get_domain(match.source.url)
 					match_json["source"] = source_json
 
 				if match.category is not None:
@@ -188,6 +190,8 @@ def add_match():
 			if source is not None:
 				source_json = source.to_json()
 				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				if source_json["name"] is None or source_json["name"] is "":
+					source_json["name"] = match_bl.get_domain(match.source.url)
 				match_json["source"] = source_json
 
 			if category is not None:
@@ -358,6 +362,8 @@ def relevant_events():
 			if match.source is not None:
 				source_json = match.source.to_json()
 				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				if source_json["name"] is None or source_json["name"] is "":
+					source_json["name"] = match_bl.get_domain(match.source.url)
 				match_json["source"] = source_json
 
 			if match.category is not None:
@@ -382,7 +388,6 @@ def match_detail(match_id):
 			.filter(\
 				Match.id == match_id,\
 				Match.deleted == 0,\
-				Match.public == public,\
 				Match.date > seconds,\
 				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
 			.first()
@@ -409,6 +414,8 @@ def match_detail(match_id):
 		if match.source is not None:
 			source_json = match.source.to_json()
 			source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+			if source_json["name"] is None or source_json["name"] is "":
+				source_json["name"] = match_bl.get_domain(match.source.url)
 			match_json["source"] = source_json
 
 		if match.category is not None:

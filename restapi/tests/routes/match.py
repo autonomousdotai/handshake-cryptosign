@@ -658,9 +658,9 @@ class TestMatchBluePrint(BaseTestCase):
                         {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
-                            "date": 1539913910,
-                            "reportTime": 1539923910,
-                            "disputeTime": 1539933910,
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
                             "homeTeamCode": "",
                             "homeTeamFlag": "",
                             "awayTeamCode": "",
@@ -707,9 +707,9 @@ class TestMatchBluePrint(BaseTestCase):
                         {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
-                            "date": 1539913910,
-                            "reportTime": 1539923910,
-                            "disputeTime": 1539933910,
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
                             "homeTeamCode": "",
                             "homeTeamFlag": "",
                             "awayTeamCode": "",
@@ -744,7 +744,6 @@ class TestMatchBluePrint(BaseTestCase):
                                         "Payload": "{}".format(123),
                                     })
             data = json.loads(response.data.decode())
-            print data
             self.assertTrue(data['status'] == 1)
             for match in data['data']:
                 if 'market_fee' not in match or match['market_fee'] is None:
@@ -752,14 +751,16 @@ class TestMatchBluePrint(BaseTestCase):
 
     def test_add_match_with_source_existed(self):
         self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
         with self.client:
             params = [
                         {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
-                            "date": 1539913910,
-                            "reportTime": 1539923910,
-                            "disputeTime": 1539933910,
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
                             "homeTeamCode": "",
                             "homeTeamFlag": "",
                             "awayTeamCode": "",
@@ -798,6 +799,8 @@ class TestMatchBluePrint(BaseTestCase):
 
     def test_add_match_with_category_existed(self):
         self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
         cate = Category.find_category_by_id(1)
         if cate is None:
             cate = Category(
@@ -815,9 +818,9 @@ class TestMatchBluePrint(BaseTestCase):
                         {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
-                            "date": 1539913910,
-                            "reportTime": 1539923910,
-                            "disputeTime": 1539933910,
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
                             "homeTeamCode": "",
                             "homeTeamFlag": "",
                             "awayTeamCode": "",
@@ -1080,6 +1083,58 @@ class TestMatchBluePrint(BaseTestCase):
         )
         db.session.add(outcome)
         db.session.commit()
+        arr_match.append(outcome)
+
+        # Data before test source_name is none
+        source1 = Source.find_source_by_id(1)
+        if source1 is None:
+            source1 = Source(
+                id = 1,
+                url = "htpp://www.abc.com",
+                approved = 1
+            )
+            db.session.add(source1)
+        else:
+            source1.url = "htpp://www.abc.com"
+            source1.name= None
+            db.session.flush()
+        db.session.commit()
+        arr_match.append(source1)
+
+        match1 = Match.find_match_by_id(1000)
+        if match1 is not None:
+            match1.date=seconds + 100
+            match1.reportTime=seconds + 200
+            match1.disputeTime=seconds + 300
+            match1.public=1
+            match1.source_id=source1.id
+            db.session.flush()
+            arr_match.append(match1)
+
+            for oc in match1.outcomes:
+                db.session.delete(oc)
+                db.session.commit()
+        else:
+            match1 = Match(
+                id=1000,
+                public=1,
+                date=seconds + 100,
+                reportTime=seconds + 200,
+                disputeTime=seconds + 300,
+                source_id=source1.id
+            )
+            arr_match.append(match1)
+            db.session.add(match1)
+        db.session.commit()
+        # -----        
+        outcome1 = Outcome(
+            match_id=match1.id,
+            hid=1,
+            result=-1
+        )
+        db.session.add(outcome1)
+        db.session.commit()
+        arr_match.append(outcome1)
 
         with self.client:
             Uid = 66
@@ -1100,6 +1155,22 @@ class TestMatchBluePrint(BaseTestCase):
             self.assertTrue(data['data']['source']['id'] == source.id)
             self.assertTrue(data['data']['source']['name'] == source.name)
             self.assertTrue(data['data']['source']['url_icon'] == CONST.SOURCE_URL_ICON.format('www.voa.com'))
+
+            response = self.client.get(
+                                    '/match/{}'.format(match1.id),
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['status'] == 1)
+            self.assertTrue(len(data['data']['outcomes']) != 0)
+            self.assertTrue(data['data']['source'] != None)
+            self.assertTrue(data['data']['source']['id'] == source1.id)
+            self.assertTrue(data['data']['source']['name'] == "www.abc.com")
+            self.assertTrue(data['data']['source']['url_icon'] == CONST.SOURCE_URL_ICON.format('www.abc.com'))
 
             for match in arr_match:
                 db.session.delete(match)
@@ -1182,9 +1253,9 @@ class TestMatchBluePrint(BaseTestCase):
                         {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
-                            "date": 1539913910,
-                            "reportTime": 1539923910,
-                            "disputeTime": 1539933910,
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
                             "homeTeamCode": "",
                             "homeTeamFlag": "",
                             "awayTeamCode": "",
@@ -1219,6 +1290,7 @@ class TestMatchBluePrint(BaseTestCase):
                                         "Payload": "{}".format(123),
                                     })
             data = json.loads(response.data.decode())
+            print data
             self.assertTrue(data['status'] == 1)
             contract = data['data'][0]['contract']
             self.assertEqual(contract['json_name'], app.config['ERC20_PREDICTION_JSON'])

@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 from app.models.contract import Contract
 class Outcome(BaseModel):
 	__tablename__ = 'outcome'
-	__json_public__ = ['id', 'name', 'hid', 'result', 'total_amount', 'total_dispute_amount', 'index', 'contract_id']
+	__json_public__ = ['id', 'name', 'hid', 'result', 'total_amount', 'total_dispute_amount', 'index', 'contract_id', 'approved']
 	name = db.Column(db.String(255))
 	hid = db.Column(db.BigInteger)
 	result = db.Column(db.Integer,
@@ -23,8 +23,8 @@ class Outcome(BaseModel):
 							server_default=str(''),
 	                      	default='')
 	approved = db.Column(db.Integer,
-		server_default=str(1),
-		default=1)
+						server_default=str(1),
+						default=1)
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
 	contract_id = db.Column('contract_id', db.ForeignKey('contract.id'))
 	token_id = db.Column('token_id', db.ForeignKey('token.id'))

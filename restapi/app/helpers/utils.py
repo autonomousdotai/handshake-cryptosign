@@ -124,9 +124,6 @@ def render_unsubscribe_url(user_id, passphase):
 	code = hashlib.md5('{}{}'.format(user_id, passphase)).hexdigest()
 	return "ninja.org/unsubscribe?token={}&id={}".format(code, user_id)
 
+def render_generate_link(match_id, uid):
+	return "?match={}{}&ref={}".format(match_id, uid)
 
-def render_generate_link(match_id, outcome_id, uid):
-	outcome = ""
-	if outcome_id is not None:
-		outcome = "&outcome={}".format(outcome_id)
-	return "?match={}{}&ref={}".format(match_id, outcome, uid)

@@ -113,17 +113,15 @@ def generate_link():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		outcome_id = data['outcome_id']
-		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
+		match_id = data['match_id']
+		match = db.session.query(Match).filter(and_(Match.id==match_id, Match.created_user_id==uid)).first()
 
-		if outcome is not None:
-			response = {
-				'slug': render_generate_link(outcome.match_id, outcome.id, uid)
-			}
-			return response_ok(response)
-			
-		else:
-			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		return response_ok({
+			'slug': render_generate_link(match_id, uid)
+		})
 
 	except Exception, ex:
 		return response_error(ex.message)

@@ -388,7 +388,7 @@ def send_email_create_market(match_id, uid):
 			return False
 		
 		match = Match.find_match_by_id(match_id)
-		link = render_generate_link(match.id, None, uid)
+		link = render_generate_link(match.id, uid)
 		body = new_market_mail_content(match, link)
 		subject = """Yout event "{}" has been successfully created.""".format(match.name)
 		# Send email

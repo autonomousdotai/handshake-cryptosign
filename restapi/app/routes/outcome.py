@@ -72,6 +72,7 @@ def add(match_id):
 			
 			outcomes.append(outcome)
 			outcome_json = outcome.to_json()
+			outcome_json["match_id"] = match_id
 			outcome_json["contract"] = contract.to_json()
 
 			response_json.append(outcome_json)

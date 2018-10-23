@@ -125,5 +125,5 @@ def render_unsubscribe_url(user_id, passphase):
 	return "ninja.org/unsubscribe?token={}&id={}".format(code, user_id)
 
 def render_generate_link(match_id, uid):
-	return "?match={}{}&ref={}".format(match_id, uid)
+	return "?match={}&ref={}".format(match_id, uid)
 

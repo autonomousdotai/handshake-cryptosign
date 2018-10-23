@@ -114,7 +114,7 @@ def generate_link():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		match_id = data['match_id']
-		match = db.session.query(Match).filter(and_(Match.id==match_id, Match.created_user_id==uid)).first()
+		match = db.session.query(Match).filter(and_(Match.id==match_id)).first()
 
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)

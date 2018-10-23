@@ -76,7 +76,7 @@ class TestOutcomeBluePrint(BaseTestCase):
 		with self.client:
 
 			params = {
-				"outcome_id": 88
+				"match_id": 1
 			}
 			response = self.client.post(
 									'/outcome/generate-link',
@@ -89,9 +89,9 @@ class TestOutcomeBluePrint(BaseTestCase):
 									})
 
 			data = json.loads(response.data.decode()) 
+			print data
 			data_json = data['data']
-			print data_json
-			self.assertTrue(data_json['slug'] == '?match=1&outcome=88&ref=66')
+			self.assertTrue(data_json['slug'] == '?match=1&ref=66')
 
 
 if __name__ == '__main__':

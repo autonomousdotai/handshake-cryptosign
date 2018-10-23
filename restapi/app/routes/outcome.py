@@ -113,7 +113,7 @@ def generate_link():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		match_id = data['match_id']
+		match_id = data.get("match_id")
 		match = db.session.query(Match).filter(and_(Match.id==match_id)).first()
 
 		if match is None:

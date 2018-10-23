@@ -1265,7 +1265,7 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_create_free_bet(self):
         self.clear_data_before_test()
         self.clear_all_bets_for_user(99)
-
+        arr_hs = []
         # Make sure redeem_code added into "routes/redeem.txt"
         # Add reddem code
         redeem_code = "123abcd"
@@ -1281,7 +1281,8 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.add(redeem)
         else:
             redeem.used_user=None
-        db.session.commit()    
+        db.session.commit()
+        arr_hs.append(redeem)
 
         user = User.find_user_with_id(99)
         old_free_bet = user.free_bet
@@ -1290,7 +1291,6 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = -1
         db.session.commit()
 
-        arr_hs = []
         with self.client:
             Uid = 99
 
@@ -2054,6 +2054,7 @@ class TestHandshakeBluePrint(BaseTestCase):
         else:
             redeem.used_user=None
         db.session.commit()    
+        arr_hs.append(redeem)
 
         with self.client:
             Uid = 100

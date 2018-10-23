@@ -91,6 +91,7 @@ class MESSAGE(object):
 
 	# REDEEM
 	REDEEM_NOT_FOUND = 'Redeem is not found!'
+	REDEEM_INVALID = 'Redeem is invalid!'
 
 
 class CODE(object):
@@ -183,3 +184,4 @@ class CODE(object):
 
 	# REDEEM
 	REDEEM_NOT_FOUND = '1062'
+	REDEEM_INVALID = '1063'

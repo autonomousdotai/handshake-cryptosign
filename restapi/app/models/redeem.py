@@ -3,6 +3,7 @@
 
 from app import db
 from app.models.base import BaseModel
+from sqlalchemy import func
 
 class Redeem(BaseModel):
 	__tablename__ = 'redeem'
@@ -15,7 +16,8 @@ class Redeem(BaseModel):
 
 	@classmethod
 	def find_redeem_by_code(cls, code):
-		return Redeem.query.filter_by(code=code).first()
+		return Redeem.query.filter(Redeem.code == func.binary(code)).first()
+		# return Redeem.query.filter_by(code=code).first()
 
 	def __repr__(self):
 		return '<redeem {}>'.format(self.id)

@@ -167,29 +167,31 @@ const submitInitAPI = (options) => {
 const generateMarkets = (_arr, _grant_permission, _creator_wallet_address, _market_fee, _date, _disputeTime, _reportTime, _source ) => {
     const markets = [];
     _arr.forEach(outcome => {
-        if(_creator_wallet_address !== null && _creator_wallet_address !== '') {
-            markets.push({
-                contract_method: 'createMarketForShurikenUser',
-                fee: _market_fee,
-                grant_permission: _grant_permission,
-                creator_wallet_address: _creator_wallet_address,
-                source: _source,
-                closingTime: _date - Math.floor(+moment.utc()/1000),
-                reportTime: _reportTime - _date,
-                disputeTime: _disputeTime - _reportTime,
-                offchain: `cryptosign_createMarket${outcome.id}`
-            });
-            
-        } else {
-            markets.push({
-                contract_method: 'createMarket',
-                fee: _market_fee,
-                source: _source,
-                closingTime: _date - Math.floor(+moment.utc()/1000),
-                reportTime: _reportTime - _date,
-                disputeTime: _disputeTime - _reportTime,
-                offchain: `cryptosign_createMarket${outcome.id}`
-            });
+        if (outcome.hid === null) {
+            if(_creator_wallet_address !== null && _creator_wallet_address !== '') {
+                markets.push({
+                    contract_method: 'createMarketForShurikenUser',
+                    fee: _market_fee,
+                    grant_permission: _grant_permission,
+                    creator_wallet_address: _creator_wallet_address,
+                    source: _source,
+                    closingTime: _date - Math.floor(+moment.utc()/1000),
+                    reportTime: _reportTime - _date,
+                    disputeTime: _disputeTime - _reportTime,
+                    offchain: `cryptosign_createMarket${outcome.id}`
+                });
+                
+            } else {
+                markets.push({
+                    contract_method: 'createMarket',
+                    fee: _market_fee,
+                    source: _source,
+                    closingTime: _date - Math.floor(+moment.utc()/1000),
+                    reportTime: _reportTime - _date,
+                    disputeTime: _disputeTime - _reportTime,
+                    offchain: `cryptosign_createMarket${outcome.id}`
+                });
+            }
         }
     });
     return markets;

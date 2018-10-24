@@ -83,7 +83,8 @@ def create_market():
 						name=o.get('name', ''),
 						match_id=match.id,
 						contract_id=contract.id,
-						token_id=token_id
+						token_id=token_id,
+						approved=CONST.OUTCOME_STATUS['APPROVED']
 					)
 					db.session.add(outcome)
 					db.session.flush()

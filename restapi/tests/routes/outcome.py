@@ -9,6 +9,7 @@ import json
 import time
 import jwt
 import app.bl.user as user_bl
+import app.constants as CONST
 
 from datetime import datetime
 from app.helpers.utils import local_to_utc
@@ -112,49 +113,17 @@ class TestOutcomeBluePrint(BaseTestCase):
             db.session.add(source1)
             db.session.commit()
 
-        match = Match.find_match_by_id(1000)
-        if match is not None:
-            match.date=seconds + 100
-            match.reportTime=seconds + 200
-            match.disputeTime=seconds + 300
-            match.public=1
-            match.source_id=source1.id
-            db.session.flush()
-            arr_match.append(match)
-
-        else:
-            match = Match(
-                id=1000,
-                public=1,
-                date=seconds + 100,
-                reportTime=seconds + 200,
-                disputeTime=seconds + 300,
-                source_id=source1.id
-            )
-            arr_match.append(match)
-            db.session.add(match)
+        match = Match(
+            public=1,
+            date=seconds + 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id=source1.id
+        )
+        arr_match.append(match)
+        db.session.add(match)
         db.session.commit()
 
-        # create outcome
-        outcome = Outcome.find_outcome_by_id(888)
-        if outcome is None:
-            outcome = Outcome(
-                id=888,
-                match_id=match.id,
-                name="1",
-                hid=88,
-                created_user_id=Uid
-            )
-            db.session.add(outcome)
-            arr_match.append(outcome)
-            db.session.commit()
-
-        else:
-            outcome.match_id =match.id
-            outcome.name = "1"
-            outcome.created_user_id = Uid
-            db.session.commit()
-    
         with self.client:
 
             params = [
@@ -175,8 +144,22 @@ class TestOutcomeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            data_json = data['data']
             self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertTrue(data_json[0]['approved'] == CONST.OUTCOME_STATUS['PENDING'])
+
+            response = self.client.get(
+                                    '/match/{}'.format(match.id),
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+            data_json = data['data']
+            self.assertTrue(len(data_json['outcomes']) == 0)
 
             for item in arr_match:
                 db.session.delete(item)

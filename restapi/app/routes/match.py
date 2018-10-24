@@ -50,17 +50,14 @@ def matches():
 		for match in matches:
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.approved == 1:
+				if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
 					arr_outcomes.append(outcome.to_json())
 
 			if len(arr_outcomes) > 0:
 				match_json = match.to_json()
 
 				if match.source is not None:
-					source_json = match.source.to_json()
-					source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
-					if source_json["name"] is None or source_json["name"] is "":
-						source_json["name"] = match_bl.get_domain(match.source.url)
+					source_json = match_bl.handle_source_data(match.source)
 					match_json["source"] = source_json
 
 				if match.category is not None:
@@ -162,7 +159,6 @@ def add_match():
 				source_id=None if source is None else source.id,
 				category_id=None if category is None else category.id,
 				grant_permission=int(item.get('grant_permission', 0)),
-				approved=0,
 				creator_wallet_address=item.get('creator_wallet_address')
 			)
 			matches.append(match)
@@ -178,7 +174,8 @@ def add_match():
 						modified_user_id=uid,
 						created_user_id=uid,
 						token_id=token_id,
-						from_request=from_request
+						from_request=from_request,
+						approved=CONST.OUTCOME_STATUS['PENDING']
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -188,10 +185,7 @@ def add_match():
 			match_json['category_name'] = None if category is None else category.name
 
 			if source is not None:
-				source_json = source.to_json()
-				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
-				if source_json["name"] is None or source_json["name"] is "":
-					source_json["name"] = match_bl.get_domain(match.source.url)
+				source_json = match_bl.handle_source_data(match.source)
 				match_json["source"] = source_json
 
 			if category is not None:
@@ -354,16 +348,13 @@ def relevant_events():
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None:
+				if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
 			
 			if match.source is not None:
-				source_json = match.source.to_json()
-				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
-				if source_json["name"] is None or source_json["name"] is "":
-					source_json["name"] = match_bl.get_domain(match.source.url)
+				source_json = match_bl.handle_source_data(match.source)
 				match_json["source"] = source_json
 
 			if match.category is not None:
@@ -407,15 +398,13 @@ def match_detail(match_id):
 					arr_outcomes.append(outcome.to_json())
 					break
 			else:
-				arr_outcomes.append(outcome.to_json())
+				if outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
+					arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
 
 		if match.source is not None:
-			source_json = match.source.to_json()
-			source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
-			if source_json["name"] is None or source_json["name"] is "":
-				source_json["name"] = match_bl.get_domain(match.source.url)
+			source_json = match_bl.handle_source_data(match.source)
 			match_json["source"] = source_json
 
 		if match.category is not None:

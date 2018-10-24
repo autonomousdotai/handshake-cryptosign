@@ -34,8 +34,8 @@ def get_last_user_free_bet(user_id):
 	return item
 
 
-def is_able_to_create_new_free_bet(user_id):
-	item = get_last_user_free_bet(user_id)
+def is_able_to_create_new_free_bet(user):
+	item = get_last_user_free_bet(user.id)
 	can_free_bet = True
 	last_bet_status = None
 	if item is not None:

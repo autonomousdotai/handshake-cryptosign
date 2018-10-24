@@ -414,7 +414,7 @@ def create_free_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(uid)
+		can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(user)
 		if can_free_bet is not True:
 			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
@@ -759,7 +759,7 @@ def check_free_bet():
 				return response_error(MESSAGE.FREE_BET_UNABLE, CODE.FREE_BET_UNABLE)
 
 		item = user_bl.get_last_user_free_bet(uid)
-		can_free_bet, last_bet_status = user_bl.is_able_to_create_new_free_bet(uid)
+		can_free_bet, last_bet_status = user_bl.is_able_to_create_new_free_bet(user)
 
 		response = {
 			"free_bet_available": CONST.MAXIMUM_FREE_BET - user.free_bet,

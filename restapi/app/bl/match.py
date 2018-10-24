@@ -133,6 +133,12 @@ def clean_source_with_valid_format(source):
 	result = result.split('.')
 	return result[0]
 
+def handle_source_data(source):
+	source_json = source.to_json()
+	source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(get_domain(source.url))
+	if source_json["name"] is None or source_json["name"] == "":
+		source_json["name"] = get_domain(source.url)    
+	return source_json
 
 def algolia_search(text):
 	arr = []

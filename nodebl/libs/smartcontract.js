@@ -27,8 +27,6 @@ const loadABI = (contract_json) => {
 //     submit init transaction
 // */
 const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options, contract_address, contract_json) => {
-  console.log('submitInitTransaction');
-  console.log(_nonce, _hid, _side, _odds, _offchain, _value, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = contract_address;
@@ -67,7 +65,6 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
         });
       })
       .on('receipt', (receipt) => {
-        console.log(receipt);
       })
       .on('error', err => {
         console.log('submitInitTransaction Error');
@@ -526,7 +523,7 @@ const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, is
   return new Promise(async(resolve, reject) => {
     try {
       console.log('createMarketForShurikenUserTransaction');
-      console.log(_nonce, creator, fee, source, isGrantedPermission, closingTime, reportTime, dispute, offchain, contract_address, contract_json);
+      console.log(_nonce, creator, fee, source, isGrantedPermission, closingTime, reportTime, disputeTime, offchain, contract_address, contract_json);
       const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');
@@ -848,5 +845,6 @@ module.exports = {
   submitShakeTransaction,
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction,
-  uninitForTrial
+  uninitForTrial,
+  createMarketForShurikenUserTransaction
 };

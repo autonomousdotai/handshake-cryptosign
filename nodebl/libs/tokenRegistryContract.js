@@ -27,8 +27,6 @@ const tokenRegistryAbi = require('../contracts/TokenRegistry.json').abi;
 const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice, _options) => {
   return new Promise(async(resolve, reject) => {
     try {
-      console.log('----> addNewTokenTransaction');
-      console.log(_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice, _options);
       const contractAddress = tokenRegistryAddress;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toWei(gasPrice, 'gwei');

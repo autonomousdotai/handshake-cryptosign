@@ -16,24 +16,29 @@ def is_valid_email(email):
 		return True
 	return False
 
+
 def is_valid_password(password):
 	if len(password) >= 3:
 		return True
 	return False
+
 
 def is_valid_name(name):
 	if len(name.strip()) == 0:
 		return False
 	return True
 
+
 def is_valid_event(data):
 	if 'txId' in data and 'txStatus' in data and 'events' in data:
 		return True
 	return False
 
+
 def parse_date_to_int(input):
 	delta = input - datetime.now()
 	return delta.seconds
+
 
 def isnumber(s):
    try:
@@ -46,6 +51,7 @@ def isnumber(s):
 	 except ValueError: 
 	   return False
 
+
 def formalize_description(desc):
 	if desc is None or len(desc.strip()) == 0:
 		return desc
@@ -55,6 +61,7 @@ def formalize_description(desc):
 		desc = "{}.".format(desc)
 
 	return desc
+
 
 def parse_str_to_array(shake_user_ids):
 	if shake_user_ids is None:
@@ -68,6 +75,7 @@ def parse_str_to_array(shake_user_ids):
 		print str(ex)
 		return []
 
+
 def parse_shakers_array(shakers):
 	if shakers is None:
 		return []
@@ -79,22 +87,27 @@ def parse_shakers_array(shakers):
 	except Exception as ex:
 		print(str(ex))
 		return []
-		
+
+	
 def parse_date_string_to_timestamp(date_str):
 	dt_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ').strftime('%s')
 	return int(dt_obj)
+
 
 def local_to_utc(t):
 	secs = time.mktime(t)
 	return calendar.timegm(time.gmtime(secs))
 
+
 def utc_to_local(t):
 	secs = calendar.timegm(t)
 	return time.localtime(secs)
 
+
 def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p'):
     # '%Y-%m-%d %H:%M:%S'
 	return datetime.fromtimestamp(seconds).strftime(format)
+
 
 def is_equal(a, b):
 	if a is None or b is None:
@@ -106,12 +119,11 @@ def is_equal(a, b):
 
 	return False
 
+
 def render_unsubscribe_url(user_id, passphase):
 	code = hashlib.md5('{}{}'.format(user_id, passphase)).hexdigest()
 	return "ninja.org/unsubscribe?token={}&id={}".format(code, user_id)
 
-def render_generate_link(match_id, outcome_id, uid):
-	outcome = ""
-	if outcome_id is not None:
-		outcome = "&outcome={}".format(outcome_id)
-	return "?match={}{}&ref={}".format(match_id, outcome, uid)
+def render_generate_link(match_id, uid):
+	return "?match={}&ref={}".format(match_id, uid)
+

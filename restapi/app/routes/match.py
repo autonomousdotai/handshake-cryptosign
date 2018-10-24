@@ -50,15 +50,14 @@ def matches():
 		for match in matches:
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None:
+				if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
 					arr_outcomes.append(outcome.to_json())
 
 			if len(arr_outcomes) > 0:
 				match_json = match.to_json()
 
 				if match.source is not None:
-					source_json = match.source.to_json()
-					source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+					source_json = match_bl.handle_source_data(match.source)
 					match_json["source"] = source_json
 
 				if match.category is not None:
@@ -160,7 +159,6 @@ def add_match():
 				source_id=None if source is None else source.id,
 				category_id=None if category is None else category.id,
 				grant_permission=int(item.get('grant_permission', 0)),
-				approved=0,
 				creator_wallet_address=item.get('creator_wallet_address')
 			)
 			matches.append(match)
@@ -176,7 +174,8 @@ def add_match():
 						modified_user_id=uid,
 						created_user_id=uid,
 						token_id=token_id,
-						from_request=from_request
+						from_request=from_request,
+						approved=CONST.OUTCOME_STATUS['PENDING']
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -186,8 +185,7 @@ def add_match():
 			match_json['category_name'] = None if category is None else category.name
 
 			if source is not None:
-				source_json = source.to_json()
-				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				source_json = match_bl.handle_source_data(match.source)
 				match_json["source"] = source_json
 
 			if category is not None:
@@ -299,7 +297,7 @@ def match_need_user_report():
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.created_user_id == uid and outcome.hid >= 0:
+				if outcome.created_user_id == uid and outcome.hid >= 0 and outcome.approved == 1:
 					outcome_json = contract_bl.filter_contract_id_in_contracts(outcome.to_json(), contracts)
 					arr_outcomes.append(outcome_json)
 			
@@ -313,7 +311,7 @@ def match_need_user_report():
 
 @match_routes.route('/relevant-event', methods=['GET'])
 @login_required
-def relevant():
+def relevant_events():
 	try:
 		match_id = int(request.args.get('match')) if request.args.get('match') is not None else None
 		match = Match.find_match_by_id(match_id)
@@ -350,14 +348,13 @@ def relevant():
 			
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.hid is not None:
+				if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
 					arr_outcomes.append(outcome.to_json())
 
 			match_json["outcomes"] = arr_outcomes
 			
 			if match.source is not None:
-				source_json = match.source.to_json()
-				source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+				source_json = match_bl.handle_source_data(match.source)
 				match_json["source"] = source_json
 
 			if match.category is not None:
@@ -370,22 +367,21 @@ def relevant():
 
 
 @match_routes.route('/<int:match_id>', methods=['GET'])
+@login_required
 def match_detail(match_id):
 	try:
-		outcome_id = None
-		if request.args.get('outcome_id') is not None:
-			outcome_id = int(request.args.get('outcome_id'))
+		outcome_id = int(request.args.get('outcome_id', -1))
 
 		t = datetime.now().timetuple()
-		seconds = local_to_utc(t)
+		seconds = local_to_utc(t)		
 
 		match = db.session.query(Match)\
-				.filter(\
-					Match.id == match_id,\
-					Match.deleted == 0,\
-					Match.date > seconds,\
-					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
-				.first()
+			.filter(\
+				Match.id == match_id,\
+				Match.deleted == 0,\
+				Match.date > seconds,\
+				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
+			.first()
 
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
@@ -397,17 +393,18 @@ def match_detail(match_id):
 
 		arr_outcomes = []
 		for outcome in match.outcomes:
-			if outcome_id is not None:
+			if outcome_id != -1:
 				if outcome.id == outcome_id:
 					arr_outcomes.append(outcome.to_json())
+					break
 			else:
-				arr_outcomes.append(outcome.to_json())
+				if outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
+					arr_outcomes.append(outcome.to_json())
 
 		match_json["outcomes"] = arr_outcomes
 
 		if match.source is not None:
-			source_json = match.source.to_json()
-			source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(match_bl.get_domain(match.source.url))
+			source_json = match_bl.handle_source_data(match.source)
 			match_json["source"] = source_json
 
 		if match.category is not None:

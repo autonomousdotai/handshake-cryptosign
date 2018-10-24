@@ -65,13 +65,16 @@ def add(match_id):
 				modified_user_id=uid,
 				created_user_id=uid,
 				contract_id=contract.id,
-				from_request=from_request
+				from_request=from_request,
+				approved=CONST.OUTCOME_STATUS['PENDING']
 			)
 			db.session.add(outcome)
 			db.session.flush()
 			
 			outcomes.append(outcome)
 			outcome_json = outcome.to_json()
+			# Return match_id for client add outcome
+			outcome_json["match_id"] = match_id
 			outcome_json["contract"] = contract.to_json()
 
 			response_json.append(outcome_json)
@@ -113,17 +116,15 @@ def generate_link():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		outcome_id = data['outcome_id']
-		outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.created_user_id==uid)).first()
+		match_id = data.get("match_id")
+		match = db.session.query(Match).filter(and_(Match.id==match_id)).first()
 
-		if outcome is not None:
-			response = {
-				'slug': render_generate_link(outcome.match_id, outcome.id, uid)
-			}
-			return response_ok(response)
-			
-		else:
-			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		return response_ok({
+			'slug': render_generate_link(match_id, uid)
+		})
 
 	except Exception, ex:
 		return response_error(ex.message)

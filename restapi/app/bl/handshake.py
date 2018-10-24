@@ -847,7 +847,7 @@ def can_uninit(handshake):
 
 
 def get_total_real_bets():
-	chain_info_path = os.path.abspath(os.path.dirname(__file__)) + '/chain-info.json'
+	chain_info_path = os.path.abspath(os.path.dirname(__file__)) + '/user-info.json'
 	data = []
 	with open(chain_info_path, 'r') as f:
 		data = json.load(f)

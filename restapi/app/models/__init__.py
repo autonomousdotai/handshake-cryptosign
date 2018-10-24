@@ -11,3 +11,4 @@ from category import *
 from source import *
 from token import *
 from contract import *
+from redeem import *

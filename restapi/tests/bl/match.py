@@ -8,7 +8,7 @@ from tests.routes.base import BaseTestCase
 from mock import patch
 from datetime import datetime
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Contract
+from app.models import Handshake, User, Outcome, Match, Contract, Source
 from app.helpers.utils import local_to_utc
 
 import app.bl.match as match_bl
@@ -209,6 +209,43 @@ class TestMatchBl(BaseTestCase):
         actual = match_bl.clean_source_with_valid_format(data)
         expected = 'abc'
         self.assertEqual(actual, expected)
+
+    def test_clean_source_with_valid_format(self):
+        source1 = Source(
+            name = "Source Test",
+            url = "abc1.com",
+            approved = 1
+        )
+        db.session.add(source1)
+
+        source2 = Source(
+            url = "http://www.abc2.com",
+            approved = 1
+        )
+        db.session.add(source2)
+
+        source3 = Source(
+            name = "",
+            url = "abc3.com",
+            approved = 1
+        )
+        db.session.add(source3)
+        db.session.commit()
+
+        data1_json = match_bl.handle_source_data(Source.find_source_by_id(source1.id))
+        data2_json = match_bl.handle_source_data(Source.find_source_by_id(source2.id))
+        data3_json = match_bl.handle_source_data(Source.find_source_by_id(source3.id))
+
+        self.assertEqual(data1_json["url_icon"], CONST.SOURCE_URL_ICON.format(match_bl.get_domain(source1.url)))
+
+        self.assertEqual(data2_json["name"], 'www.abc2.com')
+
+        self.assertEqual(data3_json["name"], 'abc3.com')
+
+        db.session.delete(source1)
+        db.session.delete(source2)
+        db.session.delete(source3)
+        db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

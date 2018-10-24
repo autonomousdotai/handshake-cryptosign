@@ -6,6 +6,7 @@ import json
 import app.bl.user as user_bl
 import app.constants as CONST
 import app.bl.match as match_bl
+import app.bl.admin as admin_bl
 import app.bl.contract as contract_bl
 import logging
 
@@ -82,7 +83,8 @@ def create_market():
 						name=o.get('name', ''),
 						match_id=match.id,
 						contract_id=contract.id,
-						token_id=token_id
+						token_id=token_id,
+						approved=CONST.OUTCOME_STATUS['APPROVED']
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -113,34 +115,89 @@ def approve_market(market_id):
 	" Admin approve user market and create it then.
 	"""
 	try:
-		match = Match.find_match_by_id(market_id)
-		if match is not None:
-			if match.approved != 1:
-				match.approved = 1
+		data = request.json
+		outcome_id = data.get("outcome_id", -1)
+
+		match = None
+		if outcome_id == -1:
+			match = Match.find_match_by_id(market_id)
+			if match is not None:
+				for o in match.outcomes:
+					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
+						o.approved = CONST.OUTCOME_STATUS['APPROVED']
+						db.session.flush()
+
+				task = admin_bl.add_create_market_task(match)
+				if task is not None:				
+					db.session.add(task)
+					db.session.flush()
+			else:
+				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		else:
+			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.match_id==market_id)).first()
+			if outcome is None:
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
+				outcome.approved = CONST.OUTCOME_STATUS['APPROVED']
 				db.session.flush()
 
-				# get active contract
-				contract = contract_bl.get_active_smart_contract()
-				if contract is None:
-					return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+				match = outcome.match
+				task = admin_bl.add_create_market_task(match)
+				if task is not None:				
+					db.session.add(task)
+					db.session.flush()
 
-				# add task
-				task = Task(
-					task_type=CONST.TASK_TYPE['REAL_BET'],
-					data=json.dumps(match.to_json()),
-					action=CONST.TASK_ACTION['CREATE_MARKET'],
-					status=-1,
-					contract_address=contract.contract_address,
-					contract_json=contract.json_name
-				)
-				db.session.add(task)
-				db.session.flush()
-				
 			else:
 				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
-				
+
+		db.session.commit()
+		return response_ok(match.to_json())
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+
+@admin_routes.route('/reject_market/<int:market_id>', methods=['POST'])
+@admin_required
+def reject_market(market_id):
+	"""
+	" Admin reject user market.
+	"""
+	try:
+		data = request.json
+		outcome_id = data.get("outcome_id", -1)
+
+		match = None
+		if outcome_id == -1:
+			match = Match.find_match_by_id(market_id)
+			if match is not None:
+				for o in match.outcomes:
+					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
+						o.approved = CONST.OUTCOME_STATUS['REJECTED']
+						db.session.flush()
+
+				print 'send rejected email here!!!'
+
+			else:
+				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
 		else:
-			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.match_id==market_id)).first()
+			if outcome is None:
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
+				outcome.approved = CONST.OUTCOME_STATUS['REJECTED']
+				db.session.flush()
+
+				match = outcome.match
+				print 'send rejected email here!!!'
+
+			else:
+				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
 
 		db.session.commit()
 		return response_ok(match.to_json())
@@ -338,7 +395,7 @@ def approve_source(source_id):
 	try:
 		source = Source.find_source_by_id(source_id)
 		if source is not None:
-			if source.approved == -1:
+			if source.approved != 1:
 				source.approved = 1
 				db.session.flush()
 			else:

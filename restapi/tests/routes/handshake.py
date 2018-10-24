@@ -4,7 +4,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import Handshake, User, Outcome, Match, Shaker, Task, Contract, Token, Setting
+from app.models import Handshake, User, Outcome, Match, Shaker, Task, Contract, Token, Setting, Redeem
 from app.helpers.message import MESSAGE
 from io import BytesIO
 from datetime import datetime
@@ -1265,6 +1265,24 @@ class TestHandshakeBluePrint(BaseTestCase):
     def test_create_free_bet(self):
         self.clear_data_before_test()
         self.clear_all_bets_for_user(99)
+        arr_hs = []
+        # Make sure redeem_code added into "routes/redeem.txt"
+        # Add reddem code
+        redeem_code = "123abcd"
+        redeem_path = os.path.abspath(os.path.dirname(__file__)) + '/../../app/routes/redeem.txt'
+        with open(redeem_path, 'a') as file:
+            file.write('{}\n'.format(redeem_code))
+
+        redeem = Redeem.find_redeem_by_code(redeem_code)
+        if redeem is None:
+            redeem = Redeem(
+                code=redeem_code
+            )
+            db.session.add(redeem)
+        else:
+            redeem.used_user=None
+        db.session.commit()
+        arr_hs.append(redeem)
 
         user = User.find_user_with_id(99)
         old_free_bet = user.free_bet
@@ -1273,7 +1291,6 @@ class TestHandshakeBluePrint(BaseTestCase):
         outcome.result = -1
         db.session.commit()
 
-        arr_hs = []
         with self.client:
             Uid = 99
 
@@ -1286,7 +1303,8 @@ class TestHandshakeBluePrint(BaseTestCase):
                 "currency": "ETH",
                 "chain_id": 4,
                 "side": 2,
-                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03",
+                "redeem": redeem_code
             }
 
             response = self.client.post(
@@ -2025,7 +2043,19 @@ class TestHandshakeBluePrint(BaseTestCase):
         self.clear_data_before_test()
         arr_hs = []
         self.clear_all_bets_for_user(100)
-    
+
+        redeem_code = "123abcd"
+        redeem = Redeem.find_redeem_by_code(redeem_code)
+        if redeem is None:
+            redeem = Redeem(
+                code=redeem_code
+            )
+            db.session.add(redeem)
+        else:
+            redeem.used_user=None
+        db.session.commit()    
+        arr_hs.append(redeem)
+
         with self.client:
             Uid = 100
             setting = Setting.find_setting_by_name('FreeBet')
@@ -2062,7 +2092,8 @@ class TestHandshakeBluePrint(BaseTestCase):
                 "currency": "ETH",
                 "chain_id": 4,
                 "side": 2,
-                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03"
+                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03",
+                "redeem": redeem_code
             }
 
             response = self.client.post(

@@ -787,8 +787,8 @@ def check_free_bet():
 		r = Redeem.find_redeem_by_user(uid)
 		if r is None:
 			return response_ok({
-				"free_bet_available": CONST.MAXIMUM_FREE_BET,
-				"can_freebet": 1,
+				"free_bet_available": 1,
+				"can_freebet": True,
 			})
 
 		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)

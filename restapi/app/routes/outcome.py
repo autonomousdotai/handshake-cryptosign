@@ -66,7 +66,8 @@ def add(match_id):
 				created_user_id=uid,
 				contract_id=contract.id,
 				from_request=from_request,
-				approved=CONST.OUTCOME_STATUS['PENDING']
+				approved=CONST.OUTCOME_STATUS['APPROVED']
+				# approved=CONST.OUTCOME_STATUS['PENDING']
 			)
 			db.session.add(outcome)
 			db.session.flush()

@@ -17,7 +17,10 @@ class Redeem(BaseModel):
 	@classmethod
 	def find_redeem_by_code(cls, code):
 		return Redeem.query.filter(Redeem.code == func.binary(code)).first()
-		# return Redeem.query.filter_by(code=code).first()
+
+	@classmethod
+	def find_redeem_by_user(cls, user_id):
+		return Redeem.query.filter(Redeem.used_user == user_id).first()
 
 	def __repr__(self):
 		return '<redeem {}>'.format(self.id)

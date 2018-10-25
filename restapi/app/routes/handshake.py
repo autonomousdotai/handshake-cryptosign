@@ -774,6 +774,24 @@ def check_free_bet():
 		return response_error(ex.message)
 
 
+@handshake_routes.route('/check_redeem_code', methods=['GET'])
+@login_required
+def check_redeem_code():
+	"""
+	" User be able to use redeem code only 1 time
+	"""
+	try:
+		uid = int(request.headers['Uid'])
+		r = Redeem.find_redeem_by_user(uid)
+		if r is None:
+			return response_ok()			
+		
+		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
+
+	except Exception, ex:
+		return response_error(ex.message)
+
+
 @handshake_routes.route('/uninit', methods=['POST'])
 @login_required
 def uninit():

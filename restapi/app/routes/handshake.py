@@ -788,7 +788,7 @@ def check_free_bet():
 		if r is None:
 			return response_ok({
 				"free_bet_available": CONST.MAXIMUM_FREE_BET,
-				"can_freebet": true,
+				"can_freebet": 1,
 			})
 
 		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)

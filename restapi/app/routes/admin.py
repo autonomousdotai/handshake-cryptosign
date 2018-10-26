@@ -30,7 +30,7 @@ logfile = logging.getLogger('file')
 
 
 @admin_routes.route('/create_market', methods=['POST'])
-# @admin_required
+@admin_required
 def create_market():
 	"""
 	" Admin create new market
@@ -109,7 +109,7 @@ def create_market():
 
 
 @admin_routes.route('/approve_market/<int:market_id>', methods=['POST'])
-@admin_required
+# @admin_required
 def approve_market(market_id):
 	"""
 	" Admin approve user market and create it then.
@@ -161,7 +161,7 @@ def approve_market(market_id):
 
 
 @admin_routes.route('/reject_market/<int:market_id>', methods=['POST'])
-@admin_required
+# @admin_required
 def reject_market(market_id):
 	"""
 	" Admin reject user market.

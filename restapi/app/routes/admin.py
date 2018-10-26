@@ -30,7 +30,7 @@ logfile = logging.getLogger('file')
 
 
 @admin_routes.route('/create_market', methods=['POST'])
-@admin_required
+# @admin_required
 def create_market():
 	"""
 	" Admin create new market

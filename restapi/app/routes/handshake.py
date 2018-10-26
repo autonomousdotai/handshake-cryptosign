@@ -737,7 +737,7 @@ def refund_free_bet():
 		db.session.rollback()
 		return response_error(ex.message)
 
-'''
+
 @handshake_routes.route('/check_free_bet', methods=['GET'])
 @login_required
 def check_free_bet():
@@ -772,13 +772,11 @@ def check_free_bet():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
-'''
 
-# @handshake_routes.route('/check_redeem_code', methods=['GET'])
-@handshake_routes.route('/check_free_bet', methods=['GET'])
+
+@handshake_routes.route('/check_redeem_code', methods=['GET'])
 @login_required
-# def check_redeem_code():
-def check_free_bet():
+def check_redeem_code():
 	"""
 	" User be able to use redeem code only 1 time
 	"""
@@ -786,10 +784,7 @@ def check_free_bet():
 		uid = int(request.headers['Uid'])
 		r = Redeem.find_redeem_by_user(uid)
 		if r is None:
-			return response_ok({
-				"free_bet_available": 1,
-				"can_freebet": True,
-			})
+			return response_ok()
 
 		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 

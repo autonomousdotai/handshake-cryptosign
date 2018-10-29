@@ -1,6 +1,6 @@
 from flask import Flask
 from app.factory import make_celery
-from app.core import db, configure_app, firebase, dropbox_services, mail_services
+from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local, render_generate_link
 from app.helpers.mail_content import render_email_subscribe_content, new_market_mail_content
@@ -19,6 +19,7 @@ import requests
 import random
 import app.bl.task as task_bl
 import app.bl.user as user_bl
+import app.bl.storage as storage_bl
 
 app = Flask(__name__)
 # config app
@@ -434,3 +435,27 @@ def update_status_feed(_id, status):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def upload_file_google_storage(match_id, image_name, saved_path):
+	try:
+		match = Match.find_match_by_id(match_id)
+		if match is None:
+			return False
+
+		result_upload = gc_storage_client.upload_blob(app.config['GC_STORAGE_BUCKET'], saved_path, app.config['GC_STORAGE_FOLDER'], image_name)
+		if result_upload is False:
+			return None
+		
+		image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], app.config['GC_STORAGE_FOLDER'], image_name)
+		print image_url
+		match = Match.find_match_by_id(match_id)
+		match.image_url = image_url
+		db.session.flush()
+		db.session.commit()
+
+	except Exception as e:
+		db.session.rollback()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("upload_file_google_storage => ", exc_type, fname, exc_tb.tb_lineno)

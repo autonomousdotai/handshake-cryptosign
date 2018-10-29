@@ -414,9 +414,9 @@ def create_free_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(user)
-		if can_free_bet is not True:
-			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
+		# can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(user)
+		# if can_free_bet is not True:
+		# 	return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
 
 		redeem = data.get('redeem', '')
 		odds = Decimal(data.get('odds'))

@@ -103,6 +103,8 @@ def utc_to_local(t):
 	secs = calendar.timegm(t)
 	return time.localtime(secs)
 
+def current_milli():
+	return int(round(time.time() * 1000))
 
 def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p'):
     # '%Y-%m-%d %H:%M:%S'

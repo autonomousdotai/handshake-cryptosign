@@ -5,6 +5,7 @@ import hashlib
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
+import app.bl.storage as storage_bl
 
 from sqlalchemy import and_, or_, desc, func
 from flask_jwt_extended import jwt_required, decode_token
@@ -14,7 +15,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.tasks import send_email_create_market
+from app.tasks import send_email_create_market, upload_file_google_storage
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -453,4 +454,141 @@ def count_events_based_on_source():
 		return response_ok(response)
 
 	except Exception, ex:
+		return response_error(ex.message)
+
+@match_routes.route('/add2', methods=['POST'])
+@login_required
+def add_match2():
+	try:
+		from_request = request.headers.get('Request-From', 'mobile')
+		uid = int(request.headers['Uid'])
+		token_id = request.args.get('token_id')
+		file_name = None
+		saved_path = None
+
+		if request.form.get('data') is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		data = json.loads(request.form.get('data'))
+
+		if request.files and len(request.files) > 0 and request.files['image'] is not None:
+			file_name, saved_path = storage_bl.handle_upload_file(request.files['image'])
+
+		if token_id is None:
+			contract = contract_bl.get_active_smart_contract()
+			if contract is None:
+				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
+		else:
+			token = Token.find_token_by_id(token_id)
+			if token is None:
+				return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
+
+			token_id = token.id
+			# refresh erc20 contract
+			contract = contract_bl.get_active_smart_contract(contract_type=CONST.CONTRACT_TYPE['ERC20'])
+			if contract is None:
+				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+
+		matches = []
+		response_json = []
+		for item in data:
+			source = None
+			category = None
+
+			if match_bl.is_validate_match_time(item) == False:				
+				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
+
+			if "source_id" in item:
+				# TODO: check deleted and approved
+				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
+			else:
+				if "source" in item and "name" in item["source"] and "url" in item["source"]:
+					source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
+					if source is None:
+						source = Source(
+							name=item["source"]["name"],
+							url=item["source"]["url"],
+							created_user_id=uid
+						)
+						db.session.add(source)
+						db.session.flush()
+
+			if "category_id" in item:
+				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
+			else:
+				if "category" in item and "name" in item["category"]:
+					category = db.session.query(Category).filter(Category.name==item["category"]["name"]).first()
+					if category is None:
+						category = Category(
+							name=item["category"]["name"],
+							created_user_id=uid
+						)
+						db.session.add(category)
+						db.session.flush()
+
+			match = Match(
+				homeTeamName=item['homeTeamName'],
+				homeTeamCode=item['homeTeamCode'],
+				homeTeamFlag=item['homeTeamFlag'],
+				awayTeamName=item['awayTeamName'],
+				awayTeamCode=item['awayTeamCode'],
+				awayTeamFlag=item['awayTeamFlag'],
+				name=item['name'],
+				public=item['public'],
+				market_fee=int(item.get('market_fee', 0)),
+				date=item['date'],
+				reportTime=item['reportTime'],
+				disputeTime=item['disputeTime'],
+				created_user_id=uid,
+				source_id=None if source is None else source.id,
+				category_id=None if category is None else category.id,
+				grant_permission=int(item.get('grant_permission', 0)),
+				creator_wallet_address=item.get('creator_wallet_address')
+			)
+			matches.append(match)
+			db.session.add(match)
+			db.session.flush()
+
+			if 'outcomes' in item:
+				for outcome_data in item['outcomes']:
+					outcome = Outcome(
+						name=outcome_data['name'],
+						match_id=match.id,
+						contract_id=contract.id,
+						modified_user_id=uid,
+						created_user_id=uid,
+						token_id=token_id,
+						from_request=from_request,
+						approved=CONST.OUTCOME_STATUS['APPROVED']
+						# approved=CONST.OUTCOME_STATUS['PENDING']
+					)
+					db.session.add(outcome)
+					db.session.flush()
+			match_json = match.to_json()
+			match_json['contract'] = contract.to_json()
+			match_json['source_name'] = None if source is None else source.name
+			match_json['category_name'] = None if category is None else category.name
+
+			if source is not None:
+				source_json = match_bl.handle_source_data(match.source)
+				match_json["source"] = source_json
+
+			if category is not None:
+				match_json["category"] = category.to_json()
+
+			response_json.append(match_json)
+
+			# Send mail create market
+			send_email_create_market.delay(match.id, uid)
+
+		db.session.commit()
+
+		# Handle upload file to Google Storage
+		if file_name is not None and saved_path is not None:
+			upload_file_google_storage.delay(match.id, file_name, saved_path)
+
+		return response_ok(response_json)
+	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)

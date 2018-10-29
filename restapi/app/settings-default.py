@@ -59,7 +59,9 @@ class BaseConfig(object):
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')
 	FIREBASE_DATABASE_URL = ''
-	FIREBASE_PROJECT_NAME = ''
+	GC_STORAGE_PROJECT_NAME = ''
+	GC_STORAGE_BUCKET = ''
+	GC_STORAGE_FOLDER = ''
 
 	# Algolia
 	ALGOLIA_APPLICATION_ID = os.environ.get('ALGOLIA_APPLICATION_ID', '')
@@ -84,6 +86,9 @@ class StagingConfig(BaseConfig):
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
+	GC_STORAGE_PROJECT_NAME = ''
+	GC_STORAGE_BUCKET = ''
+	GC_STORAGE_FOLDER = ''
 
 class ProductionConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
@@ -94,3 +99,6 @@ class ProductionConfig(BaseConfig):
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
+	GC_STORAGE_PROJECT_NAME = ''
+	GC_STORAGE_BUCKET = ''
+	GC_STORAGE_FOLDER = ''

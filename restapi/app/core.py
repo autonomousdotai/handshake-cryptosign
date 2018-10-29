@@ -12,6 +12,7 @@ from app.extensions.firebase_db import FirebaseDatabase
 from app.extensions.dropbox_service import DropboxService
 from app.extensions.mail_service import MailService
 from app.extensions.algolia import Algolia
+from app.extensions.gc_storage import GoogleCloudStorage
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -24,6 +25,7 @@ firebase = FirebaseDatabase()
 dropbox_services = DropboxService()
 mail_services = MailService()
 algolia = Algolia()
+gc_storage_client = GoogleCloudStorage()
 
 
 # configure app from env + silent local settings.cfg

@@ -447,6 +447,8 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 		if result_upload is False:
 			return None
 		
+		storage_bl.delete_file(saved_path)
+
 		image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], app.config['GC_STORAGE_FOLDER'], image_name)
 		print image_url
 		match = Match.find_match_by_id(match_id)

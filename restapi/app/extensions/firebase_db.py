@@ -14,12 +14,13 @@ class FirebaseDatabase(object):
 		super(FirebaseDatabase, self).__init__()
 		if app:
 			self.app = app
-			config['databaseURL'] = app.config['FIREBASE_DATABASE_URL']
-			config['serviceAccount'] = dir_path + "/{}.json".format(app.config['FIREBASE_PROJECT_NAME'])
-			self.firebase = pyrebase.initialize_app(config)
+			self.init_firebase(app)
 			
 	def init_app(self, app):
 		self.app = app
+		self.init_firebase(app)
+		
+	def init_firebase(self, app):
 		config['databaseURL'] = app.config['FIREBASE_DATABASE_URL']
 		config['serviceAccount'] = dir_path + "/{}.json".format(app.config['FIREBASE_PROJECT_NAME'])
 		self.firebase = pyrebase.initialize_app(config)

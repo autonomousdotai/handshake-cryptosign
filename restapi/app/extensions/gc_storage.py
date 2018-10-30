@@ -34,12 +34,8 @@ class GoogleCloudStorage(object):
 		# return self.gc_storage_client.get_bucket(app.config['GC_STORAGE_BUCKET'])
 		return self.gc_storage_client.get_bucket(bucket_name)
 
-<<<<<<< Updated upstream
 
 	def upload_blob(self, bucket_name, source_file_name, blob_name, image_name):
-=======
-	def upload_blob(self, bucket_name, path_to_file_upload, blob_name, image_name):
->>>>>>> Stashed changes
 		try:
 			storage_client = self.gc_storage_client
 			bucket = storage_client.get_bucket(bucket_name)
@@ -63,34 +59,3 @@ class GoogleCloudStorage(object):
 			print err.message
 			print err.args
 			print("upload_data to Google Storage error: %s" % (err))
-<<<<<<< Updated upstream
-
-
-	'''KMS Key'''
-	def upload_blob_with_kms(self, bucket_name, source_file_name, destination_blob_name, kms_key_name):
-		# Uploads a file to the bucket, encrypting it with the given KMS key.
-		storage_client = self.gc_storage_client
-		bucket = storage_client.get_bucket(bucket_name)
-		blob = bucket.blob(destination_blob_name, kms_key_name=kms_key_name)
-		blob.upload_from_filename(source_file_name)
-
-		print('File {} uploaded to {} with encryption key {}.'.format(
-			source_file_name,
-			destination_blob_name,
-			kms_key_name))
-
-
-	def enable_default_kms_key(self, bucket_name, kms_key_name):
-		# Sets a bucket's default KMS key.
-		storage_client = self.gc_storage_client
-		bucket = storage_client.get_bucket(bucket_name)
-		bucket.default_kms_key_name = kms_key_name
-		bucket.patch()
-
-		print('Set default KMS key for bucket {} to {}.'.format(
-			bucket.name,
-			bucket.default_kms_key_name))
-		# [END storage_set_bucket_default_kms_key]
-
-=======
->>>>>>> Stashed changes

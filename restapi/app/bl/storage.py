@@ -1,11 +1,11 @@
 
 import os
 import re
+import app.constants as CONST
 
 from flask import g
-
-import app.constants as CONST
 from app.helpers.utils import current_milli
+
 
 def check_folder_exists_or_create(folder_dir):
     # "Path" begin at "/app/"

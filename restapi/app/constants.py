@@ -58,7 +58,7 @@ CRYPTOSIGN_MINIMUM_MONEY = Decimal('0.0005')
 CRYPTOSIGN_FREE_BET_AMOUNT = '0.03'
 MAXIMUM_FREE_BET = 3
 
-SOURCE_URL_ICON = 'https://api.statvoo.com/favicon/?url={}'
+SOURCE_URL_ICON = 'https://api.faviconkit.com/{}/32'
 SOURCE_GC_DOMAIN = 'https://storage.googleapis.com/{}/{}/{}'
 
 COMMUNITY_TYPE = {

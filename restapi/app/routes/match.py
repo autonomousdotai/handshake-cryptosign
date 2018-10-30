@@ -456,6 +456,7 @@ def count_events_based_on_source():
 	except Exception, ex:
 		return response_error(ex.message)
 
+
 @match_routes.route('/add2', methods=['POST'])
 @login_required
 def add_match2():

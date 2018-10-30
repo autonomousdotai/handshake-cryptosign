@@ -12,26 +12,28 @@ class GoogleCloudStorage(object):
 		super(GoogleCloudStorage, self).__init__()
 		if app:
 			self.app = app
+			self.init_gc_storage_client(app)
 
-			credentials = service_account.Credentials.from_service_account_file(dir_path + "/{}.json".format(app.config['GC_STORAGE_PROJECT_NAME']))
-			credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.full_control', 'https://www.googleapis.com/auth/devstorage.read_write'])
-
-			self.gc_storage_client = storage.Client(project= app.config['GC_STORAGE_PROJECT_NAME'], credentials=credentials)
 
 	def init_app(self, app):
 		self.app = app
+		self.init_gc_storage_client(app)
 
+
+	def init_gc_storage_client(self, app):
 		credentials = service_account.Credentials.from_service_account_file(dir_path + "/{}.json".format(app.config['GC_STORAGE_PROJECT_NAME']))
 		credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.full_control', 'https://www.googleapis.com/auth/devstorage.read_write'])
-
 		self.gc_storage_client = storage.Client(project= app.config['GC_STORAGE_PROJECT_NAME'], credentials=credentials)
+
 
 	def get_buckets(self):
 		return client.list_buckets()
 	
+
 	def get_bucket_by_name(self, app, bucket_name):
 		# return self.gc_storage_client.get_bucket(app.config['GC_STORAGE_BUCKET'])
 		return self.gc_storage_client.get_bucket(bucket_name)
+
 
 	def upload_blob(self, bucket_name, source_file_name, blob_name, image_name):
 		try:
@@ -71,6 +73,7 @@ class GoogleCloudStorage(object):
 			source_file_name,
 			destination_blob_name,
 			kms_key_name))
+
 
 	def enable_default_kms_key(self, bucket_name, kms_key_name):
 		# Sets a bucket's default KMS key.

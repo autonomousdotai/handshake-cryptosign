@@ -176,8 +176,7 @@ def add_match():
 						created_user_id=uid,
 						token_id=token_id,
 						from_request=from_request,
-						approved=CONST.OUTCOME_STATUS['APPROVED']
-						# approved=CONST.OUTCOME_STATUS['PENDING']
+						approved=CONST.OUTCOME_STATUS['PENDING']
 					)
 					db.session.add(outcome)
 					db.session.flush()
@@ -561,8 +560,7 @@ def add_match2():
 						created_user_id=uid,
 						token_id=token_id,
 						from_request=from_request,
-						approved=CONST.OUTCOME_STATUS['APPROVED']
-						# approved=CONST.OUTCOME_STATUS['PENDING']
+						approved=CONST.OUTCOME_STATUS['PENDING']
 					)
 					db.session.add(outcome)
 					db.session.flush()

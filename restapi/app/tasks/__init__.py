@@ -436,6 +436,7 @@ def update_status_feed(_id, status):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
 def upload_file_google_storage(match_id, image_name, saved_path):
 	try:

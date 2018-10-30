@@ -24,8 +24,7 @@ def handle_upload_file(file):
     # '/[^a-z0-9\_\-\.]/'
     file_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', file.filename)
     file_name = file_name.replace('.', '-' + str(current_milli()) + '.')
-    tmp_folder = 'files/tmp/'
-    path = check_folder_exists_or_create(tmp_folder)
-    saved_path = os.path.join(path, file_name)
+    root_path = os.path.abspath(os.path.dirname(__file__)) + '/../' + 'files/tmp/'
+    saved_path = os.path.join(root_path, file_name)
     file.save(saved_path)
     return file_name, saved_path

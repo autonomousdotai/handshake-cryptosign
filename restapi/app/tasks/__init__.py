@@ -444,7 +444,7 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 		if match is None:
 			return False
 
-		result_upload = gc_storage_client.upload_blob(app.config['GC_STORAGE_BUCKET'], saved_path, app.config['GC_STORAGE_FOLDER'], image_name)
+		result_upload = gc_storage_client.upload_to_storage(app.config['GC_STORAGE_BUCKET'], saved_path, app.config['GC_STORAGE_FOLDER'], image_name)
 		if result_upload is False:
 			return None
 		

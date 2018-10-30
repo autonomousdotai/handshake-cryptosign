@@ -34,7 +34,7 @@ class GoogleCloudStorage(object):
 		return self.gc_storage_client.get_bucket(bucket_name)
 
 
-	def upload_blob(self, bucket_name, path_to_file_upload, blob_name, image_name):
+	def upload_to_storage(self, bucket_name, path_to_file_upload, blob_name, image_name):
     		try:
 			storage_client = self.gc_storage_client
 			bucket = storage_client.get_bucket(bucket_name)

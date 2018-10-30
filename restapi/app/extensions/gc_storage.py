@@ -34,8 +34,12 @@ class GoogleCloudStorage(object):
 		# return self.gc_storage_client.get_bucket(app.config['GC_STORAGE_BUCKET'])
 		return self.gc_storage_client.get_bucket(bucket_name)
 
+<<<<<<< Updated upstream
 
 	def upload_blob(self, bucket_name, source_file_name, blob_name, image_name):
+=======
+	def upload_blob(self, bucket_name, path_to_file_upload, blob_name, image_name):
+>>>>>>> Stashed changes
 		try:
 			storage_client = self.gc_storage_client
 			bucket = storage_client.get_bucket(bucket_name)
@@ -48,7 +52,7 @@ class GoogleCloudStorage(object):
 				print "Blod is not exist: {}".format(blob_name)
 				return False
 
-			blob.upload_from_filename(source_file_name, content_type='image/jpeg')
+			blob.upload_from_filename(path_to_file_upload, content_type='image/jpeg')
 			# blob.make_public()
 			uri = "gs://%s/%s/%s" % (bucket_name, blob_name, image_name)
 			print "Upload load to Google Storage success: {}".format(uri)
@@ -59,6 +63,7 @@ class GoogleCloudStorage(object):
 			print err.message
 			print err.args
 			print("upload_data to Google Storage error: %s" % (err))
+<<<<<<< Updated upstream
 
 
 	'''KMS Key'''
@@ -87,3 +92,5 @@ class GoogleCloudStorage(object):
 			bucket.default_kms_key_name))
 		# [END storage_set_bucket_default_kms_key]
 
+=======
+>>>>>>> Stashed changes

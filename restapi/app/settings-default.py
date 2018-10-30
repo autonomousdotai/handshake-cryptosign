@@ -55,10 +55,18 @@ class BaseConfig(object):
 	ERC20_PREDICTION_SMART_CONTRACT = '0x123'
 	ERC20_PREDICTION_JSON = 'PredictionHandshakeWithToken'
 
+	# Services
 	FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY', '')
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')
+	MAIL_SERVICE = os.getenv('MAIL_SERVICE', '')
+	DISPATCHER_SERVICE_ENDPOINT = os.getenv('DISPATCHER_SERVICE_ENDPOINT', '')
+
+	# Firebase
 	FIREBASE_DATABASE_URL = ''
+	FIREBASE_PROJECT_NAME = ''
+
+	# GCloud
 	GC_STORAGE_PROJECT_NAME = ''
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''

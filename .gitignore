@@ -51,7 +51,7 @@ debug.log
 bin/
 include/
 lib/
-app/files/tmp/
+app/files/temp/
 pip-selfcheck.json
 
 # pdf

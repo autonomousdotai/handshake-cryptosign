@@ -15,6 +15,7 @@ class MESSAGE(object):
 	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
 	CANNOT_VERIFY_EMAIL = 'Cannot verification email!'
 	CANNOT_UNSUBSCRIBE_EMAIL = 'Cannot unsubscribe email!'
+	FILE_TOO_LARGE = 'File too large!'
 
 	# OUTCOME
 	OUTCOME_INVALID = 'Please check your outcome id'
@@ -121,7 +122,8 @@ class CODE(object):
 	MATCH_RESULT_EMPTY = '1012'												
 	MATCH_CANNOT_SET_RESULT = '1013'	
 	MATCH_INVALID_TIME = '1043'			
-	MATCH_HAS_BEEN_APPROVED = '1061'						
+	MATCH_HAS_BEEN_APPROVED = '1061'	
+	FILE_TOO_LARGE = '10614'
 
 	# USER
 	USER_INVALID_EMAIL = '1014'												

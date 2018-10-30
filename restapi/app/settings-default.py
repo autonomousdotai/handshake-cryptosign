@@ -70,6 +70,7 @@ class BaseConfig(object):
 	GC_STORAGE_PROJECT_NAME = ''
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''
+	MAX_CONTENT_LENGTH = 16 * 1024 * 1024 # limit max length of request
 
 	# Algolia
 	ALGOLIA_APPLICATION_ID = os.environ.get('ALGOLIA_APPLICATION_ID', '')

@@ -16,6 +16,7 @@ from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
 from app.tasks import send_email_create_market, upload_file_google_storage
+from app.bl.storage import handle_upload_file, validate_file_upload_size, validate_extension
 from app import db
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
@@ -472,7 +473,11 @@ def add_match2():
 		data = json.loads(request.form.get('data'))
 
 		if request.files and len(request.files) > 0 and request.files['image'] is not None:
-			file_name, saved_path = storage_bl.handle_upload_file(request.files['image'])
+			image = request.files['image']
+			if validate_file_upload_size(image) and validate_extension(image.filename):
+				file_name, saved_path = handle_upload_file(image)
+			else: 
+				return response_error(MESSAGE.FILE_TOO_LARGE, CODE.FILE_TOO_LARGE)
 
 		if token_id is None:
 			contract = contract_bl.get_active_smart_contract()

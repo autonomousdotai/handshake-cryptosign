@@ -24,7 +24,16 @@ def handle_upload_file(file):
     # '/[^a-z0-9\_\-\.]/'
     file_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', file.filename)
     file_name = file_name.replace('.', '-' + str(current_milli()) + '.')
-    root_path = os.path.abspath(os.path.dirname(__file__)) + '/../' + 'files/tmp/'
+    root_path = os.path.abspath(os.path.dirname(__file__)) + '/../' + 'files/temp/'
     saved_path = os.path.join(root_path, file_name)
     file.save(saved_path)
     return file_name, saved_path
+
+def validate_file_upload_size(file):
+    blob = file.read()
+    if len(blob) >= CONST.UPLOAD_MAX_FILE_SIZE:
+        return False
+    return True
+
+def validate_extension(filename):
+    return '.' in filename and filename.split('.')[1] in CONST.UPLOAD_ALLOWED_EXTENSIONS

@@ -167,20 +167,19 @@ def add_match():
 			db.session.add(match)
 			db.session.flush()
 
-			if 'outcomes' in item:
-				for outcome_data in item['outcomes']:
-					outcome = Outcome(
-						name=outcome_data['name'],
-						match_id=match.id,
-						contract_id=contract.id,
-						modified_user_id=uid,
-						created_user_id=uid,
-						token_id=token_id,
-						from_request=from_request,
-						approved=CONST.OUTCOME_STATUS['PENDING']
-					)
-					db.session.add(outcome)
-					db.session.flush()
+			outcome = Outcome(
+				name=CONST.OUTCOME_DEFAULT_NAME,
+				match_id=match.id,
+				contract_id=contract.id,
+				modified_user_id=uid,
+				created_user_id=uid,
+				token_id=token_id,
+				from_request=from_request,
+				approved=CONST.OUTCOME_STATUS['PENDING']
+			)
+			db.session.add(outcome)
+			db.session.flush()
+
 			match_json = match.to_json()
 			match_json['contract'] = contract.to_json()
 			match_json['source_name'] = None if source is None else source.name
@@ -555,20 +554,20 @@ def add_match2():
 			db.session.add(match)
 			db.session.flush()
 
-			if 'outcomes' in item:
-				for outcome_data in item['outcomes']:
-					outcome = Outcome(
-						name=outcome_data['name'],
-						match_id=match.id,
-						contract_id=contract.id,
-						modified_user_id=uid,
-						created_user_id=uid,
-						token_id=token_id,
-						from_request=from_request,
-						approved=CONST.OUTCOME_STATUS['PENDING']
-					)
-					db.session.add(outcome)
-					db.session.flush()
+			# Add default YES outcome
+			outcome = Outcome(
+				name=CONST.OUTCOME_DEFAULT_NAME,
+				match_id=match.id,
+				contract_id=contract.id,
+				modified_user_id=uid,
+				created_user_id=uid,
+				token_id=token_id,
+				from_request=from_request,
+				approved=CONST.OUTCOME_STATUS['PENDING']
+			)
+			db.session.add(outcome)
+			db.session.flush()
+
 			match_json = match.to_json()
 			match_json['contract'] = contract.to_json()
 			match_json['source_name'] = None if source is None else source.name

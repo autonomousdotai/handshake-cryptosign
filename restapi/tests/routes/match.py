@@ -697,6 +697,11 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
+            self.assertTrue(len(data['data']) == 1)
+            match_added = data['data'][0]
+            self.assertTrue(len(match_added['outcomes']) == 1)
+            self.assertTrue(match_added['outcomes'][0]['name'] == 'Yes')
+            
 
     def test_add_match_without_market_fee(self):
         self.clear_data_before_test()
@@ -722,15 +727,7 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
                     ]
 
@@ -773,15 +770,7 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
                     ]
 
@@ -833,15 +822,7 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Cate Existed"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
                     ]
 
@@ -1268,15 +1249,7 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
                     ]
 
@@ -1334,12 +1307,7 @@ class TestMatchBluePrint(BaseTestCase):
                             "source_id": 1,
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                }
-                            ]
+                            }
                         }
                     ]
 

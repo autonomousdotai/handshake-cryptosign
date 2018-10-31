@@ -44,20 +44,6 @@ def render_row_table_content(outcome_name, side, result):
     """.format(outcome_name, "Support" if side == 1 else "Oppose", text)
 
 
-def render_footer_email_content(app_config, user_id, free_bet_available):
-    passphase = app_config["PASSPHASE"]
-    html = ""
-
-    if free_bet_available > 0:
-        # html = "You've unlocked {} free bets!  <br/>".format(free_bet_available)
-        html += """Please go <a href="http://ninja.org/me">Ninja Prediction</a> on your mobile to claim them. <br/>"""
-
-    return html + """
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
-
-
 def render_email_notify_result_content(app_config, items, free_bet_available):
     content = """
     <html>
@@ -123,8 +109,15 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
                         else:
                             content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
 
-    content += "</table></body></html>"
-    content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
+    content += "</table>"
+
+    if free_bet_available > 0:
+        content += """Please go <a href="http://ninja.org/me">Ninja Prediction</a> on your mobile to claim them. <br/>"""
+
+    content += """<a href="http://ninja.org/prediction">PLAY NOW</a><br/>"""
+
+    content += "</body></html>"
+
     return content
 
 

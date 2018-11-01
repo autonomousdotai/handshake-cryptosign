@@ -6,6 +6,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
 import app.bl.storage as storage_bl
+import app.bl.outcome as outcome_bl
 
 from sqlalchemy import and_, or_, desc, func
 from flask_jwt_extended import jwt_required, decode_token
@@ -71,6 +72,10 @@ def matches():
 				match_json["total_users"] = total_user
 				match_json["total_bets"] = total_bets
 
+				match_json["bets_side"] = {
+					"support": outcome_bl.count_support_users_play_on_outcome(match.outcomes[0].id),
+					"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
+				}
 				response.append(match_json)
 
 

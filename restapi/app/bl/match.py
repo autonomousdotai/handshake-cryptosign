@@ -152,4 +152,3 @@ def algolia_search(text):
 				print(str(ex))
 
 	return arr
-	

@@ -50,3 +50,10 @@ def has_result(outcome):
 		return True
 
 	return False
+
+def check_outcome_valid(outcomes):
+	arr_outcomes = []
+	for outcome in outcomes:
+		if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
+			arr_outcomes.append(outcome.to_json())
+	return arr_outcomes

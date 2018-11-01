@@ -5,10 +5,13 @@ import json
 import hashlib
 import requests
 import app.bl.user as user_bl
+import app.bl.outcome as outcome_bl
+import app.bl.match as match_bl
+import app.constants as CONST
 
 from flask import Blueprint, request, g
 from app import db
-from app.models import User, Handshake, Shaker, Outcome
+from app.models import User, Handshake, Shaker, Outcome, Match
 from datetime import datetime
 
 from app.helpers.message import MESSAGE, CODE
@@ -60,5 +63,35 @@ def get_reputation_user(user_id):
 
 		return response_ok(data_response)
 
+	except Exception, ex:
+		return response_error(ex.message)
+
+
+@reputation_routes.route('/user/<int:user_id>/match', methods=['GET'])
+@login_required
+def get_created_event_by_user(user_id):
+	try:
+		response = []
+		matches = db.session.query(Match)\
+				.filter(\
+					Match.created_user_id == user_id,\
+					Match.deleted == 0,\
+					Match.public == 1,\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(Outcome.hid != None).group_by(Outcome.match_id)))\
+				.order_by(Match.date.asc())\
+				.all()
+		for match in matches:
+			arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)
+
+			if len(arr_outcomes) > 0:
+				match_json = match.to_json()
+				total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
+				match_json["total_users"] = total_user
+				match_json["total_bets"] = total_bets
+
+				response.append(match_json)
+
+
+		return response_ok(response)
 	except Exception, ex:
 		return response_error(ex.message)

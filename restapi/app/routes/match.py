@@ -51,11 +51,7 @@ def matches():
 				matches = sorted(matches, key=lambda m: m.id not in arr_ids)
 
 		for match in matches:
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
-					arr_outcomes.append(outcome.to_json())
-
+			arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)
 			if len(arr_outcomes) > 0:
 				match_json = match.to_json()
 
@@ -352,10 +348,7 @@ def relevant_events():
 			match_json["total_users"] = total_user
 			match_json["total_bets"] = total_bets
 			
-			arr_outcomes = []
-			for outcome in match.outcomes:
-				if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
-					arr_outcomes.append(outcome.to_json())
+			arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)
 
 			match_json["outcomes"] = arr_outcomes
 			

@@ -77,6 +77,10 @@ class BaseConfig(object):
 	ALGOLIA_API_KEY = os.environ.get('ALGOLIA_API_KEY', '')
 	ALGOLIA_INDEX_NAME = os.environ.get('ALGOLIA_INDEX_NAME', '')
 
+	# Recombee
+	RECOMBEE_DB = ""
+	RECOMBEE_KEY = ""
+
 class DevelopmentConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 
@@ -101,6 +105,9 @@ class StagingConfig(BaseConfig):
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''
 
+	RECOMBEE_DB = ""
+	RECOMBEE_KEY = ""
+
 class ProductionConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 	REDIS_HOST = ''
@@ -115,3 +122,6 @@ class ProductionConfig(BaseConfig):
 	GC_STORAGE_PROJECT_NAME = ''
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''
+
+	RECOMBEE_DB = ""
+	RECOMBEE_KEY = ""

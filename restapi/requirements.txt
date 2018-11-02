@@ -60,3 +60,4 @@ pyyaml==3.12
 dropbox==9.0.0
 algoliasearch==1.17.0
 google-cloud-storage==1.13.0
+recombee-api-client==2.2.0

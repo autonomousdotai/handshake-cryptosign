@@ -13,6 +13,7 @@ from app.extensions.dropbox_service import DropboxService
 from app.extensions.mail_service import MailService
 from app.extensions.algolia import Algolia
 from app.extensions.gc_storage import GoogleCloudStorage
+from app.extensions.recombee import Recombee
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -26,7 +27,7 @@ dropbox_services = DropboxService()
 mail_services = MailService()
 algolia = Algolia()
 gc_storage_client = GoogleCloudStorage()
-
+recombee_client = Recombee()
 
 # configure app from env + silent local settings.cfg
 def configure_app(app):

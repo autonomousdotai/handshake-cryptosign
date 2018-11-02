@@ -90,8 +90,6 @@ def get_created_event_by_user(user_id):
 				match_json["total_bets"] = total_bets
 
 				response.append(match_json)
-
-
 		return response_ok(response)
 	except Exception, ex:
 		return response_error(ex.message)

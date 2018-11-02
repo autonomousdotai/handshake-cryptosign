@@ -1,6 +1,6 @@
 from flask import Flask
 from app.factory import make_celery
-from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client
+from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local, render_generate_link
 from app.helpers.mail_content import render_email_subscribe_content, new_market_mail_content
@@ -461,3 +461,16 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("upload_file_google_storage => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def recombee_sync_user_data(user_id, match_id):
+	try:
+		match = Match.find_match_by_id(match_id)
+		if match is None:
+			return False
+		recombee_client.sync_user_data(user_id, [match])
+	except Exception as e:
+		print e.message
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("recombee_sync_user_data => ", exc_type, fname, exc_tb.tb_lineno)

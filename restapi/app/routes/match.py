@@ -16,9 +16,9 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc
-from app.tasks import send_email_create_market, upload_file_google_storage
+from app.tasks import send_email_create_market, upload_file_google_storage, recombee_sync_user_data
 from app.bl.storage import handle_upload_file, validate_file_upload_size, validate_extension
-from app import db
+from app import db, recombee_client
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Shaker, Source, Token
 from app.helpers.message import MESSAGE, CODE
 
@@ -153,6 +153,8 @@ def add_match():
 				awayTeamCode=item['awayTeamCode'],
 				awayTeamFlag=item['awayTeamFlag'],
 				name=item['name'],
+				outcome_name=item['outcome_name'],
+				event_name=item['event_name'],
 				public=item['public'],
 				market_fee=int(item.get('market_fee', 0)),
 				date=item['date'],
@@ -591,4 +593,25 @@ def add_match2():
 		return response_ok(response_json)
 	except Exception, ex:
 		db.session.rollback()
+		return response_error(ex.message)
+
+@match_routes.route('/user/habit/<int:match_id>', methods=['POST'])
+@login_required
+def match_user_habit(match_id):
+	try:
+		uid = int(request.headers['Uid'])
+		recombee_sync_user_data.delay(uid, match_id)
+		return response_ok()
+		
+	except Exception, ex:
+		return response_error(ex.message)
+
+@match_routes.route('/user/habit', methods=['POST'])
+@admin_required
+def user_habit_init():
+	try:
+		recombee_client.init_match_database()
+		return response_ok()
+		
+	except Exception, ex:
 		return response_error(ex.message)

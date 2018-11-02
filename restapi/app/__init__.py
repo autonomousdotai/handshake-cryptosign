@@ -1,5 +1,5 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services, mail_services, algolia, gc_storage_client
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services, mail_services, algolia, gc_storage_client, recombee_client
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
@@ -58,6 +58,8 @@ mail_services.init_app(app)
 algolia.init_app(app)
 # init google coud_storage
 gc_storage_client.init_app(app)
+# init google coud_storage
+recombee_client.init_app(app)
 
 @app.before_request
 def before_request():

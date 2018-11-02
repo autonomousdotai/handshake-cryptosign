@@ -459,6 +459,7 @@ def count_events_based_on_source():
 def add_match2():
 	try:
 		from_request = request.headers.get('Request-From', 'mobile')
+		request_size = request.headers.get('Content-length')
 		uid = int(request.headers['Uid'])
 		token_id = request.args.get('token_id')
 		file_name = None
@@ -468,11 +469,9 @@ def add_match2():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		data = json.loads(request.form.get('data'))
-
 		if request.files and len(request.files) > 0 and request.files['image'] is not None:
-			image = request.files['image']
-			if validate_file_upload_size(image) and validate_extension(image.filename):
-				file_name, saved_path = handle_upload_file(image)
+			if request_size >= CONST.UPLOAD_MAX_FILE_SIZE and validate_extension(request.files['image'].filename):
+				file_name, saved_path = handle_upload_file(request.files['image'])
 			else: 
 				return response_error(MESSAGE.FILE_TOO_LARGE, CODE.FILE_TOO_LARGE)
 

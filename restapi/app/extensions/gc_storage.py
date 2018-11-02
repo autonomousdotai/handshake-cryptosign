@@ -35,7 +35,7 @@ class GoogleCloudStorage(object):
 
 
 	def upload_to_storage(self, bucket_name, path_to_file_upload, blob_name, image_name):
-    		try:
+		try:
 			storage_client = self.gc_storage_client
 			bucket = storage_client.get_bucket(bucket_name)
 			if bucket.exists() is False:

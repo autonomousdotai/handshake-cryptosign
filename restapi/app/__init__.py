@@ -74,6 +74,7 @@ def before_request():
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
+	g.UPLOAD_DIR = app.config.get('UPLOAD_DIR')
 
 	# SmartContract
 	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')

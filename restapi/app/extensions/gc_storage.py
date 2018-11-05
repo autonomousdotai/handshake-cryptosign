@@ -25,15 +25,6 @@ class GoogleCloudStorage(object):
 		self.gc_storage_client = storage.Client(project= app.config['GC_STORAGE_PROJECT_NAME'], credentials=credentials)
 
 
-	def get_buckets(self):
-		return client.list_buckets()
-	
-
-	def get_bucket_by_name(self, app, bucket_name):
-		# return self.gc_storage_client.get_bucket(app.config['GC_STORAGE_BUCKET'])
-		return self.gc_storage_client.get_bucket(bucket_name)
-
-
 	def upload_to_storage(self, bucket_name, path_to_file_upload, blob_name, image_name):
 		try:
 			storage_client = self.gc_storage_client
@@ -41,10 +32,11 @@ class GoogleCloudStorage(object):
 			if bucket.exists() is False:
 				print "Bucket is not exist"
 				return False
+			
 			# print [b.name for b in bucket.list_blobs()]
 			blob = bucket.blob(blob_name + '/' + image_name)
 			if blob.exists() is True:
-				print "Blod is not exist: {}".format(blob_name)
+				print "Blod is exist: {}".format(blob_name)
 				return False
 
 			blob.upload_from_filename(path_to_file_upload, content_type='image/jpeg')

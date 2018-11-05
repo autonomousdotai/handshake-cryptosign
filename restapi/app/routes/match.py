@@ -595,6 +595,7 @@ def add_match2():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @match_routes.route('/user/habit/<int:match_id>', methods=['POST'])
 @login_required
 def match_user_habit(match_id):
@@ -605,6 +606,7 @@ def match_user_habit(match_id):
 		
 	except Exception, ex:
 		return response_error(ex.message)
+
 
 @match_routes.route('/user/habit', methods=['POST'])
 @admin_required

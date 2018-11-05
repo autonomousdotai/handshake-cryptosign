@@ -18,6 +18,7 @@ class Recombee(object):
 	def load_recombee(self):
 		self.recombee_client = RecombeeClient(self.app.config['RECOMBEE_DB'], self.app.config['RECOMBEE_KEY'])
 
+
 	def init_match_database(self):
 		self.recombee_client.send(ResetDatabase())
 
@@ -31,6 +32,7 @@ class Recombee(object):
 		self.recombee_client.send(AddItemProperty('tags', 'set'))
 		self.recombee_client.send(AddItemProperty('sourceID', 'int'))
 		self.recombee_client.send(AddItemProperty('categoryID', 'int'))
+
 
 	def sync_user_data(self, user_id, matches=[]):
 		requests = []

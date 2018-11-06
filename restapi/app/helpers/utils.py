@@ -110,6 +110,8 @@ def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p'):
     # '%Y-%m-%d %H:%M:%S'
 	return datetime.fromtimestamp(seconds).strftime(format)
 
+def now_to_strftime(format = '%b %d %Y %I:%M:%S %p'):
+	return datetime.now().strftime(format)
 
 def is_equal(a, b):
 	if a is None or b is None:

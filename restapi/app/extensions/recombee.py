@@ -18,6 +18,7 @@ class Recombee(object):
 	def load_recombee(self):
 		self.recombee_client = RecombeeClient(self.app.config['RECOMBEE_DB'], self.app.config['RECOMBEE_KEY'])
 
+
 	def init_match_database(self):
 		self.recombee_client.send(ResetDatabase())
 
@@ -32,17 +33,31 @@ class Recombee(object):
 		self.recombee_client.send(AddItemProperty('sourceID', 'int'))
 		self.recombee_client.send(AddItemProperty('categoryID', 'int'))
 
-	def sync_user_data(self, user_id, matches=[]):
+	def sync_user_data(self, user_id, match_ids=[], timestamp=""):
 		requests = []
-		for match in matches:
-			r = AddPurchase(match.id,
-							user_id,
-							match.name,
-							[],
-							match.source_id,
-							match.category_id)
+		for match_id in match_ids:
+			r = AddPurchase(user_id,
+							match_id,
+							timestamp=timestamp,
+							cascade_create=True)
 			requests.append(r)
 		br = Batch(requests)
 		result = self.recombee_client.send(br)
-		print "========"
 		print result
+
+	def sync_item_data(self, matches=[]):
+		requests = []
+		for match in matches:
+			r = SetItemValues(match["id"],
+				{
+					"name": match["name"],
+					"tags": [],
+					"sourceID": match["source_id"],
+					"categoryID": match["category_id"]
+				},
+				cascade_create=True
+			)
+			requests.append(r)
+
+		br = Batch(requests)
+		self.recombee_client.send(br)

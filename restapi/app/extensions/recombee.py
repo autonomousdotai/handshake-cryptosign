@@ -23,7 +23,6 @@ class Recombee(object):
 		self.recombee_client.send(ResetDatabase())
 
 		# Add properties of matches
-		self.recombee_client.send(AddItemProperty('matchID', 'int'))
 		self.recombee_client.send(AddItemProperty('name', 'string'))
 		"""
 			Example: "Will BTC exceed $6,600 USD by Nov 6th? [Guess before Nov 4rd]"

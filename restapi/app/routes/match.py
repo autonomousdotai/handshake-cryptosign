@@ -27,6 +27,7 @@ match_routes = Blueprint('match', __name__)
 @login_required
 def matches():
 	try:
+		uid = int(request.headers['Uid'])
 		source = request.args.get('source')
 		response = []
 		matches = []
@@ -34,14 +35,20 @@ def matches():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		
+		match_ids_recommended = match_bl.get_user_recommended_data(uid, 20, seconds)
+
 		matches = db.session.query(Match)\
 				.filter(\
 					Match.deleted == 0,\
 					Match.date > seconds,\
 					Match.public == 1,\
-					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
+					# Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
+					)\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
+
+		if match_ids_recommended is not None or len(match_ids_recommended) > 0:
+			matches = sorted(matches, key=lambda m: m.id not in match_ids_recommended)
 
 		# sort match if any
 		if source is not None:
@@ -469,7 +476,7 @@ def count_events_based_on_source():
 		return response_error(ex.message)
 
 
-@match_routes.route('/user/habit/<int:match_id>', methods=['POST'])
+@match_routes.route('/user/habit', methods=['POST'])
 @login_required
 def match_user_habit():
 	try:

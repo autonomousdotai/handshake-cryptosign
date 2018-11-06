@@ -1,5 +1,5 @@
 from recombee_api_client.api_client import RecombeeClient
-from recombee_api_client.api_requests import AddItemProperty, SetItemValues, AddPurchase, RecommendItemsToItem, Batch, ResetDatabase
+from recombee_api_client.api_requests import AddItemProperty, SetItemValues, AddPurchase, RecommendItemsToUser, Batch, ResetDatabase
 import json
 
 class Recombee(object):
@@ -32,6 +32,7 @@ class Recombee(object):
 		self.recombee_client.send(AddItemProperty('tags', 'set'))
 		self.recombee_client.send(AddItemProperty('sourceID', 'int'))
 		self.recombee_client.send(AddItemProperty('categoryID', 'int'))
+		self.recombee_client.send(AddItemProperty('closeTime', 'timestamp'))
 
 	def sync_user_data(self, user_id, match_ids=[], timestamp=""):
 		requests = []
@@ -53,7 +54,8 @@ class Recombee(object):
 					"name": match["name"],
 					"tags": [],
 					"sourceID": match["source_id"],
-					"categoryID": match["category_id"]
+					"categoryID": match["category_id"],
+					"closeTime": match["date"]
 				},
 				cascade_create=True
 			)
@@ -61,3 +63,18 @@ class Recombee(object):
 
 		br = Batch(requests)
 		self.recombee_client.send(br)
+
+	def user_recommended_data(self, user_id, count=5, optional=None):
+		return self.recombee_client.send(RecommendItemsToUser(user_id, count,
+			filter=optional["filter"] if optional is not None else None,
+			# booster=None,
+			# cascade_create=None,
+			# scenario=None,
+			# return_properties=None,
+			# included_properties=None,
+			# diversity=None,
+			# min_relevance=None,
+			# rotation_rate=None,
+			# rotation_time=None
+			)
+		)

@@ -48,6 +48,7 @@ func (s RecombeeService) ImportMatches(matches []models.Match) (err error) {
 		// jsonData["tags"] = []
 		jsonData["sourceID"] = m.SourceID
 		jsonData["categoryID"] = m.CategoryID
+		jsonData["closeTime"] = m.CloseTime
 		jsonData["!cascadeCreate"] = true
 		jsonValue, _ := json.Marshal(jsonData)
 

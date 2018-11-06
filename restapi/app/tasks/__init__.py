@@ -471,13 +471,3 @@ def recombee_sync_user_data(user_id, match_ids=[], timestamp=""):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("recombee_sync_user_data => ", exc_type, fname, exc_tb.tb_lineno)
-
-@celery.task()
-def recombee_sync_item_data(matches_json=[]):
-	try:
-		recombee_client.sync_item_data(matches_json)
-	except Exception as e:
-		print e.message
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("recombee_sync_item_data => ", exc_type, fname, exc_tb.tb_lineno)

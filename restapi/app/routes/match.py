@@ -15,8 +15,8 @@ from collections import OrderedDict
 from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
-from app.helpers.utils import local_to_utc
-from app.tasks import send_email_create_market, upload_file_google_storage, recombee_sync_user_data
+from app.helpers.utils import local_to_utc, now_to_strftime
+from app.tasks import send_email_create_market, upload_file_google_storage, recombee_sync_user_data, recombee_sync_item_data
 from app import db, recombee_client
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Token
 from app.helpers.message import MESSAGE, CODE
@@ -72,7 +72,6 @@ def matches():
 					"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
 				}
 				response.append(match_json)
-
 
 		return response_ok(response)
 	except Exception, ex:
@@ -206,6 +205,9 @@ def add_match():
 
 			# Send mail create market
 			send_email_create_market.delay(match.id, uid)
+
+		# Sync new matches to recombee
+		recombee_sync_item_data.delay(response_json)
 
 		db.session.commit()
 
@@ -472,17 +474,21 @@ def count_events_based_on_source():
 
 @match_routes.route('/user/habit/<int:match_id>', methods=['POST'])
 @login_required
-def match_user_habit(match_id):
+def match_user_habit():
 	try:
+		match_ids = request.json
+		if match_ids is None or len(match_ids) == 0:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
 		uid = int(request.headers['Uid'])
-		recombee_sync_user_data.delay(uid, match_id)
+		recombee_sync_user_data.delay(uid, match_ids, now_to_strftime())
 		return response_ok()
 		
 	except Exception, ex:
 		return response_error(ex.message)
 
 
-@match_routes.route('/user/habit', methods=['POST'])
+@match_routes.route('/user/habit-init', methods=['POST'])
 @admin_required
 def user_habit_init():
 	try:

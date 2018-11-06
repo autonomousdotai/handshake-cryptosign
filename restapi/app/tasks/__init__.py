@@ -463,14 +463,21 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 		print("upload_file_google_storage => ", exc_type, fname, exc_tb.tb_lineno)
 
 @celery.task()
-def recombee_sync_user_data(user_id, match_id):
+def recombee_sync_user_data(user_id, match_ids=[], timestamp=""):
 	try:
-		match = Match.find_match_by_id(match_id)
-		if match is None:
-			return False
-		recombee_client.sync_user_data(user_id, [match])
+		recombee_client.sync_user_data(user_id, match_ids, timestamp)
 	except Exception as e:
 		print e.message
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("recombee_sync_user_data => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def recombee_sync_item_data(matches_json=[]):
+	try:
+		recombee_client.sync_item_data(matches_json)
+	except Exception as e:
+		print e.message
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("recombee_sync_item_data => ", exc_type, fname, exc_tb.tb_lineno)

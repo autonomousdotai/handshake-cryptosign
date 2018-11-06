@@ -15,12 +15,13 @@ func (s Source) TableName() string {
 // Match : model
 type Match struct {
 	ID          int
-	CloseTime   int    `gorm:"column:date;" json:"date"`
-	ReportTime  int    `gorm:"column:reportTime;" json:"reportTime"`
-	DisputeTime int    `gorm:"column:disputeTime;" json:"disputeTime"`
-	Name        string `gorm:"column:name;" json:"name"`
-	Source      Source `gorm:"foreignkey:SourceID"`
-	SourceID    int    `gorm:"column:source_id;" json:"source_id"`
+	CloseTime   int       `gorm:"column:date;" json:"date"`
+	ReportTime  int       `gorm:"column:reportTime;" json:"reportTime"`
+	DisputeTime int       `gorm:"column:disputeTime;" json:"disputeTime"`
+	Name        string    `gorm:"column:name;" json:"name"`
+	Source      Source    `gorm:"foreignkey:SourceID"`
+	SourceID    int       `gorm:"column:source_id;" json:"source_id"`
+	Outcomes    []Outcome `gorm:"many2many:match_outcomes;"`
 }
 
 // TableName : match

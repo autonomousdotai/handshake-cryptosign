@@ -30,39 +30,38 @@ func (r *Remind) RemindUser() {
 		log.Println("Remind user error", err.Error())
 		return
 	}
-	if len(matches) == 0 {
-		log.Println("Remind user: don't have any matches")
-	} else {
-		log.Println("matches: ", len(matches))
-		for index := 0; index < len(matches); index++ {
-			log.Println("-- Match: ", matches[index].ID)
-			outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].ID)
-			fmt.Println(outcomes)
-			if err == nil {
-				m := make(map[int]bool)
-				for i := 0; i < len(outcomes); i++ {
-					o := outcomes[i]
-					if m[o.CreatedUserID] == false {
-						go r.fireNotification(o, matches[index])
-						m[o.CreatedUserID] = true
-					}
-				}
-			}
-		}
-	}
 
-	disputedOutcomes, err := outcomeDAO.GetAllOutcomesWithDisputeResult()
-	log.Println("disputedOutcomes: ", len(disputedOutcomes))
-	if err == nil {
-		for i := 0; i < len(disputedOutcomes); i++ {
-			o := disputedOutcomes[i]
-			match, err := matchDAO.GetMatchByOutcomeID(o.OutcomeID)
-			if err == nil {
-				go r.fireNotification(o, match)
-			}
-		}
-	}
+	fmt.Println("---->", matches)
+	// if len(matches) == 0 {
+	// 	log.Println("Remind user: don't have any matches")
+	// } else {
+	// 	for index := 0; index < len(matches); index++ {
+	// 		log.Println("-- Match: ", matches[index].ID)
+	// 		outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].ID)
+	// 		if err == nil {
+	// 			m := make(map[int]bool)
+	// 			for i := 0; i < len(outcomes); i++ {
+	// 				o := outcomes[i]
+	// 				if m[o.CreatedUserID] == false {
+	// 					go r.fireNotification(o, matches[index])
+	// 					m[o.CreatedUserID] = true
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 
+	// disputedOutcomes, err := outcomeDAO.GetAllOutcomesWithDisputeResult()
+	// log.Println("disputedOutcomes: ", len(disputedOutcomes))
+	// if err == nil {
+	// 	for i := 0; i < len(disputedOutcomes); i++ {
+	// 		o := disputedOutcomes[i]
+	// 		match, err := matchDAO.GetMatchByOutcomeID(o.ID)
+	// 		if err == nil {
+	// 			go r.fireNotification(o, match)
+	// 		}
+	// 	}
+	// }
 }
 
 func (r *Remind) fireNotification(outcome models.Outcome, match models.Match) {
@@ -97,7 +96,7 @@ func (r *Remind) fireNotification(outcome models.Outcome, match models.Match) {
 	}
 
 	chain := conf.GetInt("blockchainId")
-	if chain == 4 {
+	if chain != 1 /* mainnet */ {
 		h.PostSlack("[Stag] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your attention!")
 	} else {
 		h.PostSlack("[Production] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your attention!")

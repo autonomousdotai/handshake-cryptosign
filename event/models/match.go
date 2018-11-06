@@ -21,6 +21,7 @@ type Match struct {
 	Name        string `gorm:"column:name;" json:"name"`
 	Source      Source `gorm:"foreignkey:SourceID"`
 	SourceID    int    `gorm:"column:source_id;" json:"source_id"`
+	CategoryID  int    `gorm:"column:category_id;" json:"category_id"`
 }
 
 // TableName : match

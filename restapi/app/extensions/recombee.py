@@ -36,8 +36,8 @@ class Recombee(object):
 	def sync_user_data(self, user_id, match_ids=[], timestamp=""):
 		requests = []
 		for match_id in match_ids:
-			r = AddPurchase('user-{}'.format(user_id),
-							'match-{}'.format(match_id),
+			r = AddPurchase(user_id,
+							match_id,
 							timestamp=timestamp,
 							cascade_create=True)
 			requests.append(r)
@@ -48,9 +48,8 @@ class Recombee(object):
 	def sync_item_data(self, matches=[]):
 		requests = []
 		for match in matches:
-			r = SetItemValues('match-{}'.format(match["id"]),
+			r = SetItemValues(match["id"],
 				{
-					"matchID": match["id"],
 					"name": match["name"],
 					"tags": [],
 					"sourceID": match["source_id"],

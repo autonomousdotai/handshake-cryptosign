@@ -22,7 +22,7 @@ type Match struct {
 	Source      Source    `gorm:"foreignkey:SourceID"`
 	SourceID    int       `gorm:"column:source_id;" json:"source_id"`
 	CategoryID  int       `gorm:"column:category_id;" json:"category_id"`
-	Outcomes    []Outcome `gorm:"many2many:match_outcomes;"`
+	Outcomes    []Outcome `gorm:"foreignkey:MatchID"`
 }
 
 // TableName : match

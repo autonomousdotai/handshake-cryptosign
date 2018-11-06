@@ -8,6 +8,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.admin as admin_bl
 import app.bl.contract as contract_bl
+import app.bl.storage as storage_bl
 import logging
 
 from flask import Blueprint, request, g
@@ -22,7 +23,7 @@ from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
 from app.constants import Handshake as HandshakeStatus
 from flask_jwt_extended import jwt_required
-from app.tasks import update_status_feed
+from app.tasks import update_status_feed, upload_file_google_storage
 
 
 admin_routes = Blueprint('admin', __name__)
@@ -33,7 +34,9 @@ logfile = logging.getLogger('file')
 @admin_required
 def create_market():
 	"""
-	" Admin create new market
+	" Admin create new markets
+	"	- Based on fixtures.json
+	"	- image file should be stored at /files/temp
 	"""
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
@@ -41,7 +44,6 @@ def create_market():
 		with open(fixtures_path, 'r') as f:
 			data = json.load(f)
 
-		matches = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
@@ -75,9 +77,9 @@ def create_market():
 							reportTime=item['reportTime'],
 							disputeTime=item['disputeTime']
 						)
-				matches.append(match)
 				db.session.add(match)
 				db.session.flush()
+
 				for o in item['outcomes']:
 					outcome = Outcome(
 						name=o.get('name', ''),
@@ -100,6 +102,10 @@ def create_market():
 				)
 				db.session.add(task)
 				db.session.flush()
+
+				# Handle upload file to Google Storage
+				if item['image'] is not None and len(item['image']) > 0:
+					upload_file_google_storage.delay(match.id, storage_bl.formalize_filename(os.path.basename(item['image'])), item['image'])
 
 		db.session.commit()
 		return response_ok()

@@ -7,33 +7,26 @@ from flask import g
 from app.helpers.utils import current_milli
 
 
-def check_folder_exists_or_create(folder_dir):
-    # "Path" begin at "/app/"
-    root_path = os.path.abspath(os.path.dirname(__file__)) + '/../'
-    newpath = root_path + folder_dir
-    if not os.path.exists(newpath):
-        os.makedirs(newpath)
-    return newpath
-
 def delete_file(path_file):
-    root_path = os.path.abspath(os.path.dirname(__file__)) + '/../'
-    os.remove(os.path.join(root_path, path_file))
-    return True
+    try:
+        os.remove(path_file)    
+    except Exception as ex:
+        print(str(ex))
+
 
 def handle_upload_file(file):
-    # '/[^a-z0-9\_\-\.]/'
-    file_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', file.filename)
-    file_name = file_name.replace('.', '-' + str(current_milli()) + '.')
-    root_path = os.path.abspath(os.path.dirname(__file__)) + '/../' + 'files/temp/'
-    saved_path = os.path.join(root_path, file_name)
+    file_name = formalize_filename(file.filename)
+    saved_path = os.path.join(g.UPLOAD_DIR, file_name)
     file.save(saved_path)
     return file_name, saved_path
 
-def validate_file_upload_size(file):
-    blob = file.read()
-    if len(blob) >= CONST.UPLOAD_MAX_FILE_SIZE:
-        return False
-    return True
+
+def formalize_filename(filename):
+    # '/[^a-z0-9\_\-\.]/'
+    file_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', filename)
+    file_name = file_name.replace('.', '-' + str(current_milli()) + '.')
+    return file_name
+
 
 def validate_extension(filename):
     return '.' in filename and filename.split('.')[1] in CONST.UPLOAD_ALLOWED_EXTENSIONS

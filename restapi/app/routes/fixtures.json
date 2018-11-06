@@ -11,14 +11,17 @@
       "awayTeamCode": "",
       "awayTeamFlag": "",
       "public":1,
-      "name": "[LoL World Championship 2018] Will Fnatic win against Invictus?",
-      "source_id": 72,
-      "category_id": 9,
-      "market_fee": 0,
+      "name": "Will Vietnam qualify in Worlcup 2022 at Qatar?",
+      "source_id": 1,
+      "category_id": 4,
+      "market_fee": 1,
       "token_id": null,
+      "event_name": "Worlcup 2022 at Qatar",
+      "outcome_name": "Vietnam qualify",
+      "image": "/Users/trongdth/Autonomous/handshake-cryptosign/restapi/app/files/temp/dribbble-k33cryp7-iphonex.png",
       "outcomes": [
         {
-          "name": "Yes"
+          "name": "YES"
         }
       ]
     }

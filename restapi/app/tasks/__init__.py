@@ -464,9 +464,9 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 
 
 @celery.task()
-def recombee_sync_user_data(user_id, match_ids=[], timestamp=""):
+def recombee_sync_user_data(user_id, data=[], timestamp=""):
 	try:
-		recombee_client.sync_user_data(user_id, match_ids, timestamp)
+		recombee_client.sync_user_data(user_id, data, timestamp)
 	except Exception as e:
 		print e.message
 		exc_type, exc_obj, exc_tb = sys.exc_info()

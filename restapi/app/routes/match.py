@@ -42,7 +42,7 @@ def matches():
 					Match.deleted == 0,\
 					Match.date > seconds,\
 					Match.public == 1,\
-					# Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
 					)\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
@@ -479,15 +479,24 @@ def count_events_based_on_source():
 @match_routes.route('/user/habit', methods=['POST'])
 @login_required
 def match_user_habit():
+	"""
+	request body:
+	[{
+		"view_type": "", 
+		"ids": [1,2,3],
+		"options": {}
+	}]
+	"""
 	try:
-		match_ids = request.json
-		if match_ids is None or len(match_ids) == 0:
+		data = request.json
+
+		if data is None or len(data) == 0:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		uid = int(request.headers['Uid'])
-		recombee_sync_user_data.delay(uid, match_ids, now_to_strftime())
+		recombee_sync_user_data.delay(uid, data, now_to_strftime())
 		return response_ok()
-		
+
 	except Exception, ex:
 		return response_error(ex.message)
 

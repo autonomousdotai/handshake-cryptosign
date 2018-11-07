@@ -42,7 +42,7 @@ def matches():
 					Match.deleted == 0,\
 					Match.date > seconds,\
 					Match.public == 1,\
-					# Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
 					)\
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()

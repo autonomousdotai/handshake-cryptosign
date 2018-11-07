@@ -10,8 +10,7 @@ from app.models import User, Handshake, Match, Outcome, Contract, Shaker, Source
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
-from app.core import algolia
-from app.core import recombee_client
+from app.core import algolia, recombee_client
 
 import app.constants as CONST
 
@@ -135,12 +134,14 @@ def clean_source_with_valid_format(source):
 	result = result.split('.')
 	return result[0]
 
+
 def handle_source_data(source):
 	source_json = source.to_json()
 	source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(get_domain(source.url))
 	if source_json["name"] is None or source_json["name"] == "":
 		source_json["name"] = get_domain(source.url)    
 	return source_json
+
 
 def algolia_search(text):
 	arr = []
@@ -155,15 +156,22 @@ def algolia_search(text):
 
 	return arr
 
+
 def get_user_recommended_data(user_id, offset=10, timestamp=0):
 	options = {
 		"filter": "'closeTime' > {}".format(timestamp)
 	}
-	response = recombee_client.user_recommended_data(user_id, offset, options)
-	if response is None or "recomms" not in response or len(response['recomms']) == 0:
-		return None
-	ids = list(map(lambda x : int(x["id"]), response['recomms']))
-	return ids
+	response = None
+	try:
+		response = recombee_client.user_recommended_data(user_id, offset, options)	
+	except Exception as ex:
+		print(str(ex))
+	finally:
+		if response is None or "recomms" not in response or len(response['recomms']) == 0:
+			return []
+		
+		ids = list(map(lambda x : int(x["id"]), response['recomms']))
+		return ids
 
 
 	

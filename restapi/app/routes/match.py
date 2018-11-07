@@ -35,8 +35,6 @@ def matches():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 		
-		match_ids_recommended = match_bl.get_user_recommended_data(uid, 20, seconds)
-
 		matches = db.session.query(Match)\
 				.filter(\
 					Match.deleted == 0,\
@@ -47,14 +45,18 @@ def matches():
 				.order_by(Match.index.desc(), Match.date.asc())\
 				.all()
 
-		if match_ids_recommended is not None or len(match_ids_recommended) > 0:
-			matches = sorted(matches, key=lambda m: m.id not in match_ids_recommended)
+		# get suggested matches from recombee
+		match_ids_recommended = match_bl.get_user_recommended_data(user_id=uid, offset=20, timestamp=seconds)
 
-		# sort match if any
+		# get suggested matches from algolia
 		if source is not None:
 			arr_ids = match_bl.algolia_search(match_bl.clean_source_with_valid_format(source))
 			if arr_ids is not None:
-				matches = sorted(matches, key=lambda m: m.id not in arr_ids)
+				match_ids_recommended.extend(arr_ids)
+
+		# sort them
+		if len(match_ids_recommended) > 0:
+			matches = sorted(matches, key=lambda m: m.id not in match_ids_recommended)
 
 		for match in matches:
 			arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)

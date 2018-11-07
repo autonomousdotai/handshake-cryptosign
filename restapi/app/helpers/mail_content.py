@@ -6,21 +6,21 @@ import json
 import time
 import app.constants as CONST
 
+from app.models import Match
 from datetime import datetime
 from app.helpers.utils import render_unsubscribe_url, second_to_strftime
 from app.constants import Handshake as HandshakeStatus
 
 def render_email_subscribe_content(passphase, match_id, user_id):
     return """
-        Hey Ninja!<br/>
-        You’ve successfully made a prediction. Go you!<br/>
-        We’ll email you the result, the minute it comes in.
-        Enjoy daydreaming about all of the things you’ll (hopefully) do with your winnings.<br/>
-        Stay cool.
-        Ninja<br/>
-
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
+        Hey Ninja!<br/><br/>
+        You’ve successfully made a prediction: <br/><br/>
+        {}
+        Great work! We’ll email you the result as soon as it’s been reported.<br/><br/>
+        Enjoy daydreaming about all of the things you’ll (hopefully) do with your winnings.<br/><br/>
+        Stay cool.<br/><br/>
+        {}
+    """.format(render_match_content(match_id), render_signature_content())
 
 
 def render_row_table_content(outcome_name, side, result):
@@ -148,3 +148,34 @@ def new_market_mail_content(match, link):
         </div>
         If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.
     """.format(match.name, closing_time, report_time, dispute_time, link, link)
+
+
+def render_signature_content():
+    return """
+        Ninja.org<br/>
+        Join us on <a href="http://t.me/ninja_org">Telegram</a><br/>
+        <div>
+            <span style="">Find us on </span>
+            <a href="https://www.facebook.com/ninjadotorg"><img style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/facbook.png" alt="Facebook"></a>
+            <a href="https://twitter.com/ninjadotorg"><img style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/twitter.png" alt="Twitter"></a>
+        </div>
+    """
+
+
+def render_match_content(match_id):
+    match = Match.find_match_by_id(match_id)
+    closing_time = second_to_strftime(match.date) 
+    report_time = second_to_strftime(match.reportTime)
+    dispute_time = second_to_strftime(match.disputeTime)
+    return """
+        <div>
+            <blockquote style="margin:0 0 15px 15px;border:none;padding:0px">
+                <div>
+                    <b>Event name:</b> {}<br/>
+                    <b>Your event ends:</b> {} (UTC)<br/>
+                    <b>Report results before:</b> {} (UTC)<br/>
+                    <b>Event closes:</b> {} (UTC) (if there’s no dispute)<br/>
+                </div>
+            </blockquote>
+        </div>
+    """.format(match.name, closing_time, report_time, dispute_time)

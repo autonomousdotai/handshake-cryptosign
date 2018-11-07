@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -45,7 +44,6 @@ func (s RecombeeService) ImportMatches(matches []models.Match) (err error) {
 		m := matches[index]
 		jsonData := make(map[string]interface{})
 		jsonData["name"] = m.Name
-		// jsonData["tags"] = []
 		jsonData["sourceID"] = m.SourceID
 		jsonData["categoryID"] = m.CategoryID
 		jsonData["closeTime"] = m.CloseTime
@@ -63,24 +61,11 @@ func (s RecombeeService) ImportMatches(matches []models.Match) (err error) {
 		request.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{}
-		response, err := client.Do(request)
+		_, err := client.Do(request)
 		if err != nil {
 			fmt.Println(err.Error())
-			return nil
-		}
-
-		b, _ := ioutil.ReadAll(response.Body)
-
-		var data map[string]interface{}
-		json.Unmarshal(b, &data)
-		fmt.Println(data)
-		status, ok := data["status"]
-		message, _ := data["message"]
-
-		if ok && status.(string) == "1" {
-			fmt.Println("POST to Recombee success.")
 		} else {
-			fmt.Println(message)
+			fmt.Println("POST to Recombee success.")
 		}
 	}
 	return nil

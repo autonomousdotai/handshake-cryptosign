@@ -4,12 +4,14 @@ from urllib3 import util
 
 from sqlalchemy import func
 from algoliasearch import algoliasearch
+from recombee_api_client.api_requests import RecommendItemsToUser
 from app import db
 from app.models import User, Handshake, Match, Outcome, Contract, Shaker, Source
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
 from app.core import algolia
+from app.core import recombee_client
 
 import app.constants as CONST
 
@@ -152,3 +154,16 @@ def algolia_search(text):
 				print(str(ex))
 
 	return arr
+
+def get_user_recommended_data(user_id, offset=10, timestamp=0):
+	options = {
+		"filter": "'closeTime' > {}".format(timestamp)
+	}
+	response = recombee_client.user_recommended_data(user_id, offset, options)
+	if response is None or "recomms" not in response or len(response['recomms']) == 0:
+		return None
+	ids = list(map(lambda x : int(x["id"]), response['recomms']))
+	return ids
+
+
+	

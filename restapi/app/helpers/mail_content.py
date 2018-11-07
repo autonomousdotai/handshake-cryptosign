@@ -10,8 +10,7 @@ from datetime import datetime
 from app.helpers.utils import render_unsubscribe_url, second_to_strftime
 from app.constants import Handshake as HandshakeStatus
 
-def render_email_subscribe_content(app_config, user_id):
-    passphase = app_config["PASSPHASE"]
+def render_email_subscribe_content(passphase, match_id, user_id):
     return """
         Hey Ninja!<br/>
         You’ve successfully made a prediction. Go you!<br/>

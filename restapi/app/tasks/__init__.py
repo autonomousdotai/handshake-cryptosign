@@ -305,7 +305,7 @@ def log_responsed_time():
 
 
 @celery.task()
-def subscribe_email_dispatcher(email, fcm, payload, uid):
+def subscribe_email_dispatcher(email, match_id, fcm, payload, uid):
 	try:
 		# Call to Dispatcher endpoint verification email
 		endpoint = '{}/user/verification/email/start?email={}&isNeedEmail=0'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
@@ -328,8 +328,8 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 			return False
 
 		# Send email
-		email_body = render_email_subscribe_content(app, uid)
-		mail_services.send(email, app.config['FROM_EMAIL'], "Welcome to Ninja", email_body)
+		email_body = render_email_subscribe_content(app.config['PASSPHASE'], match_id, uid)
+		mail_services.send(email, app.config['FROM_EMAIL'], "You made a prediction", email_body)
 
 		return True
 
@@ -461,6 +461,7 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("upload_file_google_storage => ", exc_type, fname, exc_tb.tb_lineno)
+
 
 @celery.task()
 def recombee_sync_user_data(user_id, match_ids=[], timestamp=""):

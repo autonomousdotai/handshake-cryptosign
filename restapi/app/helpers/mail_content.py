@@ -153,7 +153,7 @@ def new_market_mail_content(match, link):
 def render_signature_content():
     return """
         Ninja.org<br/>
-        Join us on <a href="http://t.me/ninja_org">Telegram</a><br/>
+        Join us on Telegram: <a href="http://t.me/ninja_org">http://t.me/ninja_org</a><br/>
         <div>
             <span style="">Find us on </span>
             <a href="https://www.facebook.com/ninjadotorg"><img style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/facbook.png" alt="Facebook"></a>

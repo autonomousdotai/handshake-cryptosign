@@ -176,7 +176,9 @@ def add_match():
 				source_id=None if source is None else source.id,
 				category_id=None if category is None else category.id,
 				grant_permission=int(item.get('grant_permission', 0)),
-				creator_wallet_address=item.get('creator_wallet_address')
+				creator_wallet_address=item.get('creator_wallet_address'),
+				outcome_name=item.get('creator_wallet_address'),
+				event_name=item.get('event_name')
 			)
 			matches.append(match)
 			db.session.add(match)

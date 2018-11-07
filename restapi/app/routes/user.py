@@ -8,7 +8,7 @@ import app.bl.user as user_bl
 
 from flask import Blueprint, request, g
 from app import db
-from app.models import User, Token
+from app.models import User, Token, Match
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)
 
@@ -53,11 +53,20 @@ def auth():
 @user_routes.route('/subscribe', methods=['POST'])
 @login_required
 def user_subscribe():
+	"""
+	" Popup subscribe email will appear after user plays on match_id
+	"""
 	try:
 		data = request.json
-
-		if data is None or 'email' not in data or is_valid_email(data["email"]) is False:
+		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		if 'email' not in data or is_valid_email(data["email"]) is False:
+			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
+
+		match = Match.find_match_by_id(data['match_id'])
+		if match is None:
+			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 		email = data["email"]
 		uid = request.headers["Uid"]
@@ -66,8 +75,7 @@ def user_subscribe():
 		user.email = email
 		db.session.commit()
 
-		subscribe_email_dispatcher.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
-
+		subscribe_email_dispatcher.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 		return response_ok()
 
 	except Exception, ex:
@@ -76,7 +84,7 @@ def user_subscribe():
 
 
 @user_routes.route('/unsubscribe', methods=['GET'])
-def user_check_unsubscribe():
+def user_click_unsubscribe():
 	try:
 		token = request.args.get('token')
 		uid = request.args.get('id')
@@ -127,7 +135,7 @@ def user_approve_new_token():
 		if token not in user.tokens:
 			user.tokens.append(token)
 		else:
-			return response_error('121212', '121221')
+			return response_error(MESSAGE.TOKEN_APPROVED_ALREADY, CODE.TOKEN_APPROVED_ALREADY)
 		
 		db.session.commit()
 		return response_ok(user.to_json())

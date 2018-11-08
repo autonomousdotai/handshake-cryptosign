@@ -38,7 +38,7 @@ def get_reputation_user(user_id):
 			.all()
 
 		outcome_ids = list(map(lambda x: x.id, outcomes))
-		print outcome_ids
+		
 		# get all bet of outcome created by user_id
 		hs_all_bets = db.session.query(Handshake.user_id.label("user_id"), Handshake.status.label("status"), Handshake.amount)\
 			.filter(Handshake.outcome_id.in_(outcome_ids))

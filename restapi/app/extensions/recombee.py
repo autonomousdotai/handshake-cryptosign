@@ -19,20 +19,6 @@ class Recombee(object):
 		self.recombee_client = RecombeeClient(self.app.config['RECOMBEE_DB'], self.app.config['RECOMBEE_KEY'])
 
 
-	def init_match_database(self):
-		self.recombee_client.send(ResetDatabase())
-
-		# Add properties of matches
-		self.recombee_client.send(AddItemProperty('name', 'string'))
-		"""
-			Example: "Will BTC exceed $6,600 USD by Nov 6th? [Guess before Nov 4rd]"
-			-> "tags" is ["BTC", "USD", "Nov 6th"]
-		"""
-		self.recombee_client.send(AddItemProperty('tags', 'set'))
-		self.recombee_client.send(AddItemProperty('sourceID', 'int'))
-		self.recombee_client.send(AddItemProperty('categoryID', 'int'))
-		self.recombee_client.send(AddItemProperty('closeTime', 'timestamp'))
-
 	def sync_user_data(self, user_id, data=[], timestamp=""):
 		requests = []
 

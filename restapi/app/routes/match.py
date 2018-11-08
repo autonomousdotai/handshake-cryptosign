@@ -101,10 +101,11 @@ def add_match():
 		if request.form.get('data') is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		data = json.loads(request.form.get('data'))
+		item = json.loads(request.form.get('data'))
 		if request.files and len(request.files) > 0 and request.files['image'] is not None:
 			if request_size >= CONST.UPLOAD_MAX_FILE_SIZE and storage_bl.validate_extension(request.files['image'].filename):
 				file_name, saved_path = storage_bl.handle_upload_file(request.files['image'])
+				
 			else: 
 				return response_error(MESSAGE.FILE_TOO_LARGE, CODE.FILE_TOO_LARGE)
 
@@ -124,98 +125,95 @@ def add_match():
 			if contract is None:
 				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
 
-		matches = []
 		response_json = []
-		for item in data:
-			source = None
-			category = None
+		source = None
+		category = None
 
-			if match_bl.is_validate_match_time(item) == False:				
-				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
+		if match_bl.is_validate_match_time(item) == False:				
+			return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
-			if "source_id" in item:
-				# TODO: check deleted and approved
-				source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
-			else:
-				if "source" in item and "name" in item["source"] and "url" in item["source"]:
-					source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
-					if source is None:
-						source = Source(
-							name=item["source"]["name"],
-							url=item["source"]["url"],
-							created_user_id=uid
-						)
-						db.session.add(source)
-						db.session.flush()
+		if "source_id" in item:
+			# TODO: check deleted and approved
+			source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
+		else:
+			if "source" in item and "name" in item["source"] and "url" in item["source"]:
+				source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
+				if source is None:
+					source = Source(
+						name=item["source"]["name"],
+						url=item["source"]["url"],
+						created_user_id=uid
+					)
+					db.session.add(source)
+					db.session.flush()
 
-			if "category_id" in item:
-				category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
-			else:
-				if "category" in item and "name" in item["category"]:
-					category = db.session.query(Category).filter(Category.name==item["category"]["name"]).first()
-					if category is None:
-						category = Category(
-							name=item["category"]["name"],
-							created_user_id=uid
-						)
-						db.session.add(category)
-						db.session.flush()
+		if "category_id" in item:
+			category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()
+		else:
+			if "category" in item and "name" in item["category"]:
+				category = db.session.query(Category).filter(Category.name==item["category"]["name"]).first()
+				if category is None:
+					category = Category(
+						name=item["category"]["name"],
+						created_user_id=uid
+					)
+					db.session.add(category)
+					db.session.flush()
 
-			match = Match(
-				homeTeamName=item['homeTeamName'],
-				homeTeamCode=item['homeTeamCode'],
-				homeTeamFlag=item['homeTeamFlag'],
-				awayTeamName=item['awayTeamName'],
-				awayTeamCode=item['awayTeamCode'],
-				awayTeamFlag=item['awayTeamFlag'],
-				name=item['name'],
-				public=item['public'],
-				market_fee=int(item.get('market_fee', 0)),
-				date=item['date'],
-				reportTime=item['reportTime'],
-				disputeTime=item['disputeTime'],
-				created_user_id=uid,
-				source_id=None if source is None else source.id,
-				category_id=None if category is None else category.id,
-				grant_permission=int(item.get('grant_permission', 0)),
-				creator_wallet_address=item.get('creator_wallet_address'),
-				outcome_name=item.get('creator_wallet_address'),
-				event_name=item.get('event_name')
-			)
-			matches.append(match)
-			db.session.add(match)
-			db.session.flush()
+		match = Match(
+			homeTeamName=item['homeTeamName'],
+			homeTeamCode=item['homeTeamCode'],
+			homeTeamFlag=item['homeTeamFlag'],
+			awayTeamName=item['awayTeamName'],
+			awayTeamCode=item['awayTeamCode'],
+			awayTeamFlag=item['awayTeamFlag'],
+			name=item['name'],
+			public=item['public'],
+			market_fee=int(item.get('market_fee', 0)),
+			date=item['date'],
+			reportTime=item['reportTime'],
+			disputeTime=item['disputeTime'],
+			created_user_id=uid,
+			source_id=None if source is None else source.id,
+			category_id=None if category is None else category.id,
+			grant_permission=int(item.get('grant_permission', 0)),
+			creator_wallet_address=item.get('creator_wallet_address'),
+			outcome_name=item.get('creator_wallet_address'),
+			event_name=item.get('event_name')
+		)
+		db.session.add(match)
+		db.session.flush()
 
-			# Add default YES outcome
-			outcome = Outcome(
-				name=CONST.OUTCOME_DEFAULT_NAME,
-				match_id=match.id,
-				contract_id=contract.id,
-				modified_user_id=uid,
-				created_user_id=uid,
-				token_id=token_id,
-				from_request=from_request,
-				approved=CONST.OUTCOME_STATUS['PENDING']
-			)
-			db.session.add(outcome)
-			db.session.flush()
+		# Add default YES outcome
+		outcome = Outcome(
+			name=CONST.OUTCOME_DEFAULT_NAME,
+			match_id=match.id,
+			contract_id=contract.id,
+			modified_user_id=uid,
+			created_user_id=uid,
+			token_id=token_id,
+			from_request=from_request,
+			approved=CONST.OUTCOME_STATUS['PENDING']
+		)
+		db.session.add(outcome)
+		db.session.flush()
 
-			match_json = match.to_json()
-			match_json['contract'] = contract.to_json()
-			match_json['source_name'] = None if source is None else source.name
-			match_json['category_name'] = None if category is None else category.name
+		match_json = match.to_json()
+		match_json['contract'] = contract.to_json()
+		match_json['source_name'] = None if source is None else source.name
+		match_json['category_name'] = None if category is None else category.name
 
-			if source is not None:
-				source_json = match_bl.handle_source_data(match.source)
-				match_json["source"] = source_json
+		if source is not None:
+			source_json = match_bl.handle_source_data(match.source)
+			match_json["source"] = source_json
 
-			if category is not None:
-				match_json["category"] = category.to_json()
+		if category is not None:
+			match_json["category"] = category.to_json()
 
-			response_json.append(match_json)
+		response_json.append(match_json)
 
-			# Send mail create market
-			send_email_create_market.delay(match.id, uid)
+		# Send mail create market
+		send_email_create_market.delay(match.id, uid)
 
 		db.session.commit()
 

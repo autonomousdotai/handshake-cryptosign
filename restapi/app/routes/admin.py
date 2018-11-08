@@ -114,15 +114,16 @@ def create_market():
 		return response_error(ex.message)
 
 
-@admin_routes.route('/approve_market/<int:market_id>', methods=['POST'])
+@admin_routes.route('/review-market/<int:market_id>', methods=['POST'])
 @admin_required
-def approve_market(market_id):
+def review_market(market_id):
 	"""
-	" Admin approve user market and create it then.
+	" Admin approve/reject user market.
 	"""
 	try:
 		data = request.json
 		outcome_id = data.get("outcome_id", -1)
+		status = data.get("status", CONST.OUTCOME_STATUS['APPROVED'])
 
 		match = None
 		if outcome_id == -1:
@@ -130,62 +131,16 @@ def approve_market(market_id):
 			if match is not None:
 				for o in match.outcomes:
 					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
-						o.approved = CONST.OUTCOME_STATUS['APPROVED']
+						o.approved = status
 						db.session.flush()
 
-				task = admin_bl.add_create_market_task(match)
-				if task is not None:				
-					db.session.add(task)
-					db.session.flush()
-			else:
-				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
-
-		else:
-			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.match_id==market_id)).first()
-			if outcome is None:
-				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-
-			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
-				outcome.approved = CONST.OUTCOME_STATUS['APPROVED']
-				db.session.flush()
-
-				match = outcome.match
-				task = admin_bl.add_create_market_task(match)
-				if task is not None:				
-					db.session.add(task)
-					db.session.flush()
-
-			else:
-				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
-
-		db.session.commit()
-		return response_ok(match.to_json())
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
-
-@admin_routes.route('/reject_market/<int:market_id>', methods=['POST'])
-@admin_required
-def reject_market(market_id):
-	"""
-	" Admin reject user market.
-	"""
-	try:
-		data = request.json
-		outcome_id = data.get("outcome_id", -1)
-
-		match = None
-		if outcome_id == -1:
-			match = Match.find_match_by_id(market_id)
-			if match is not None:
-				for o in match.outcomes:
-					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
-						o.approved = CONST.OUTCOME_STATUS['REJECTED']
+				if status == CONST.OUTCOME_STATUS['APPROVED']:
+					task = admin_bl.add_create_market_task(match)
+					if task is not None:				
+						db.session.add(task)
 						db.session.flush()
-
-				print 'send rejected email here!!!'
+				else:
+					pass
 
 			else:
 				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
@@ -196,11 +151,18 @@ def reject_market(market_id):
 				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
-				outcome.approved = CONST.OUTCOME_STATUS['REJECTED']
+				outcome.approved = status
 				db.session.flush()
 
-				match = outcome.match
-				print 'send rejected email here!!!'
+				if status == CONST.OUTCOME_STATUS['APPROVED']:
+					match = outcome.match
+					task = admin_bl.add_create_market_task(match)
+					if task is not None:				
+						db.session.add(task)
+						db.session.flush()
+				else:
+					pass
+
 
 			else:
 				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)

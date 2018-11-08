@@ -2,8 +2,8 @@ from flask import Flask
 from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
-from app.helpers.utils import utc_to_local, render_generate_link
-from app.helpers.mail_content import render_email_subscribe_content, new_market_mail_content
+from app.helpers.utils import utc_to_local, render_generate_link, is_valid_email
+from app.helpers.mail_content import render_email_subscribe_content, render_create_new_market_mail_content
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -383,17 +383,15 @@ def send_email_create_market(match_id, uid):
 	try:
 		if uid is None:
 			return False
+
 		user = User.find_user_with_id(uid)
-		if user is None or user.is_subscribe == 0 or user.email is None or user.email == "":
+		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
 			print("User is invalid")
 			return False
 		
 		match = Match.find_match_by_id(match_id)
-		link = render_generate_link(match.id, uid)
-		body = new_market_mail_content(match, link)
-		subject = """Yout event "{}" has been successfully created.""".format(match.name)
-		# Send email
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, body)
+		subject = """Yout event "{}" was created successfully""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_create_new_market_mail_content(match_id))
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()

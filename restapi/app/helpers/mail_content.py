@@ -120,34 +120,18 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     return content
 
 
-def new_market_mail_content(match, link):
-    closing_time = second_to_strftime(match.date) 
-    report_time = second_to_strftime(match.reportTime)
-    dispute_time = second_to_strftime(match.disputeTime)
-
+def render_create_new_market_mail_content(match_id):
     return """
         Hey Ninja,<br/><br/>
-        Congrats! <br/>
-        You’ve successfully created an event. <br/>
-        Please review all your event info below: <br/>
-        <div>
-            <blockquote style="margin:0 0 0 40px;border:none;padding:0px">
-                <div>
-                    Event name: {}<br/>
-                    When your event ends: {} (UTC)<br/>
-                    Report event results before: {} (UTC)<br/>
-                    Event closes (if there’s no dispute): {} (UTC)<br/>
-                </div>
-            </blockquote>
-        </div>
-        Tell your friends: <a href="http://ninja.org/prediction{}">ninja.org/prediction{}</a><br/>
+        Congratulations; your event was created successfully!  <br/>
+        We’ll send you an email shortly to let you know if your market was approved, before adding it to the exchange. <br/>
+        <b>Note:</b> Due to the approval process, it can take up to one hour for new events to appear on the exchange. <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the meantime, please review the event details below: <br/>
+        {}
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.<br/><br/>
         Good luck!<br/>
-        <div>
-            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/facebook.svg" alt="FACEBOOK">
-            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/twitter.svg" alt="TWITTER">
-        </div>
-        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.
-    """.format(match.name, closing_time, report_time, dispute_time, link, link)
+        {}
+    """.format(render_match_content(match_id), render_signature_content())
 
 
 def render_signature_content():

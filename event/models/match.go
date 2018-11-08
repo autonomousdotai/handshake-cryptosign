@@ -7,6 +7,11 @@ type Source struct {
 	URL  string `gorm:"column:url;" json:"url"`
 }
 
+type Category struct {
+	ID   int
+	Name string `gorm:"column:name;" json:"name"`
+}
+
 // TableName : source
 func (s Source) TableName() string {
 	return "source"
@@ -21,7 +26,10 @@ type Match struct {
 	Name        string    `gorm:"column:name;" json:"name"`
 	Source      Source    `gorm:"foreignkey:SourceID"`
 	SourceID    int       `gorm:"column:source_id;" json:"source_id"`
+	Category    Category  `gorm:"foreignkey:CategoryID"`
 	CategoryID  int       `gorm:"column:category_id;" json:"category_id"`
+	OutcomeName string    `gorm:"column:name;" json:"outcome_name"`
+	EventName   string    `gorm:"column:name;" json:"event_name"`
 	Outcomes    []Outcome `gorm:"foreignkey:MatchID"`
 }
 

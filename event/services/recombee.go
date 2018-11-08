@@ -26,6 +26,7 @@ type Item struct {
 
 // ImportMatches : matches
 func (s RecombeeService) ImportMatches(matches []models.Match) (err error) {
+	fmt.Println("Sync mathes to Recombee.")
 	conf := config.GetConfig()
 
 	recombeeData := conf.GetStringMapString("recombee")
@@ -45,8 +46,12 @@ func (s RecombeeService) ImportMatches(matches []models.Match) (err error) {
 		jsonData := make(map[string]interface{})
 		jsonData["name"] = m.Name
 		jsonData["sourceID"] = m.SourceID
+		jsonData["sourceName"] = m.Source.Name
 		jsonData["categoryID"] = m.CategoryID
+		jsonData["categoryName"] = m.Category.Name
 		jsonData["closeTime"] = m.CloseTime
+		jsonData["OutcomeName"] = m.OutcomeName
+		jsonData["EventName"] = m.Category.Name
 		jsonData["!cascadeCreate"] = true
 		jsonValue, _ := json.Marshal(jsonData)
 

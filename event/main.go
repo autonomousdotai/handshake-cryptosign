@@ -74,8 +74,8 @@ func main() {
 	// Add algolia job
 	algoliaCron := cron.New()
 	algolia := cp.NewAlgoliaJob()
-	algoliaCron.AddFunc("@every 15m", func() {
-		fmt.Println("algolia run every 15m")
+	algoliaCron.AddFunc("@every 15s", func() {
+		fmt.Println("algolia run every 15s")
 		if !algolia.IsRunning {
 			algolia.IsRunning = true
 			algolia.ScanAllMatches()

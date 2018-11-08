@@ -478,28 +478,3 @@ def count_events_based_on_source():
 
 	except Exception, ex:
 		return response_error(ex.message)
-
-
-@match_routes.route('/user/habit', methods=['POST'])
-@login_required
-def match_user_habit():
-	"""
-	request body:
-	[{
-		"view_type": "", 
-		"ids": [1,2,3],
-		"options": {}
-	}]
-	"""
-	try:
-		data = request.json
-
-		if data is None or len(data) == 0:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		uid = int(request.headers['Uid'])
-		recombee_sync_user_data.delay(uid, data, now_to_strftime())
-		return response_ok()
-
-	except Exception, ex:
-		return response_error(ex.message)

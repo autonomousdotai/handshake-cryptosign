@@ -175,9 +175,12 @@ def user_habit():
 @login_required
 def get_reputation_user(user_id):
 	try:
-		user = User.find_user_with_id(user_id)
-		if user is None:
-			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
+		if user_id == 0:
+			user_id = None
+		else:
+			user = User.find_user_with_id(user_id)
+			if user is None:
+				return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
 
 		# get all outcome created by user_id
 		disputed_status = [HandshakeStatus['STATUS_DISPUTE_PENDING'], HandshakeStatus['STATUS_USER_DISPUTED'], HandshakeStatus['STATUS_DISPUTED']]
@@ -201,14 +204,14 @@ def get_reputation_user(user_id):
 		bets_result = hs_all_bets.union_all(s_all_bets).all()
 
 		data_response['total_events'] = len(outcome_ids)
-		data_response['total_bets'] = len(bets_result)
+		# data_response['total_bets'] = len(bets_result)
 		data_response['total_amount'] = sum(float(amount) for user_id,status,amount in bets_result)
 
 		disputed_bets = list(filter(lambda x: x.status in disputed_status, bets_result))
 
 		data_response['total_disputed_bets'] = len(disputed_bets)
-		data_response['total_disputed_events'] = len(list(filter(lambda x: x.result == -3, outcomes)))
-		data_response['total_disputed_amount'] = sum(float(amount) for user_id,status,amount in disputed_bets)
+		# data_response['total_disputed_events'] = len(list(filter(lambda x: x.result == -3, outcomes)))
+		# data_response['total_disputed_amount'] = sum(float(amount) for user_id,status,amount in disputed_bets)
 
 		matches = db.session.query(Match)\
 				.filter(\

@@ -29,6 +29,8 @@ from app.tasks import update_feed, run_bots
 from datetime import datetime
 from datetime import *
 from app.helpers.utils import local_to_utc
+from app.core import mail_services
+from app.helpers.mail_content import render_email_subscribe_content
 
 
 handshake_routes = Blueprint('handshake', __name__)
@@ -1024,3 +1026,12 @@ def dispute():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
+
+@handshake_routes.route('/test', methods=['POST'])
+def test():
+	try:
+		mail_services.send("trong@ninja.org", "admin@ninja.org", "You made a prediction", render_email_subscribe_content('123', 1, 1))
+		return response_ok()
+	except Exception, ex:
+		return response_error(ex.message)

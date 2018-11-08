@@ -25,10 +25,12 @@ def add():
 		if data is not None:
 			data = [x.strip() for x in data] 
 			for code in data:
-				r = Redeem(
-					code=code
-				)
-				db.session.add(r)
+				r = Redeem.find_redeem_by_code(code)
+				if r is None:
+					r = Redeem(
+						code=code
+					)
+					db.session.add(r)
 			db.session.commit()
 		
 		return response_ok(data)

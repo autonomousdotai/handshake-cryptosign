@@ -503,14 +503,3 @@ def match_user_habit():
 
 	except Exception, ex:
 		return response_error(ex.message)
-
-
-@match_routes.route('/user/habit-init', methods=['POST'])
-@admin_required
-def user_habit_init():
-	try:
-		recombee_client.init_match_database()
-		return response_ok()
-		
-	except Exception, ex:
-		return response_error(ex.message)

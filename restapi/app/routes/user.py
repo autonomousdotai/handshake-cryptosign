@@ -197,7 +197,7 @@ def get_reputation_user(user_id):
 			.filter(Handshake.outcome_id.in_(outcome_ids))
 
 		data_response = {}
-
+		match_response = []
 		bets_result = hs_all_bets.union_all(s_all_bets).all()
 
 		data_response['total_events'] = len(outcome_ids)
@@ -210,17 +210,6 @@ def get_reputation_user(user_id):
 		data_response['total_disputed_events'] = len(list(filter(lambda x: x.result == -3, outcomes)))
 		data_response['total_disputed_amount'] = sum(float(amount) for user_id,status,amount in disputed_bets)
 
-		return response_ok(data_response)
-
-	except Exception, ex:
-		return response_error(ex.message)
-
-
-@user_routes.route('/reputation/<int:user_id>/match', methods=['GET'])
-@login_required
-def get_created_event_by_user(user_id):
-	try:
-		response = []
 		matches = db.session.query(Match)\
 				.filter(\
 					Match.created_user_id == user_id,\
@@ -238,7 +227,10 @@ def get_created_event_by_user(user_id):
 				match_json["total_users"] = total_user
 				match_json["total_bets"] = total_bets
 
-				response.append(match_json)
-		return response_ok(response)
+				match_response.append(match_json)
+		
+		data_response['matches'] = match_response
+		return response_ok(data_response)
+
 	except Exception, ex:
 		return response_error(ex.message)

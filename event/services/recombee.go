@@ -26,7 +26,6 @@ type Item struct {
 
 // ImportMatches : matches
 func (s RecombeeService) ImportMatches(matches []models.Match) (err error) {
-	fmt.Println("Sync mathes to Recombee.")
 	conf := config.GetConfig()
 
 	recombeeData := conf.GetStringMapString("recombee")

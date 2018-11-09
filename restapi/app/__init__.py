@@ -75,6 +75,7 @@ def before_request():
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
 	g.UPLOAD_DIR = app.config.get('UPLOAD_DIR')
+	g.BASE_URL = app.config.get('BASE_URL')
 
 	# SmartContract
 	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')

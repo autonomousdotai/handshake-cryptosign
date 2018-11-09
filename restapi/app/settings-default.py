@@ -4,6 +4,7 @@ from datetime import timedelta
 
 class BaseConfig(object):
 	ENV = 'DEV'
+	BASE_URL = ''
 	BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 	UPLOAD_DIR = os.path.join(BASE_DIR, 'files', 'temp')
 
@@ -93,6 +94,7 @@ class TestingConfig(BaseConfig):
 
 
 class StagingConfig(BaseConfig):
+	BASE_URL = ''
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 	REDIS_HOST = ''
 	REDIS_PORT = 6379
@@ -112,6 +114,7 @@ class StagingConfig(BaseConfig):
 	RECOMBEE_KEY = ""
 
 class ProductionConfig(BaseConfig):
+	BASE_URL = ''
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 	REDIS_HOST = ''
 	REDIS_PORT = 6379

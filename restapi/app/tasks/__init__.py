@@ -2,7 +2,7 @@ from flask import Flask
 from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
-from app.helpers.utils import utc_to_local, render_generate_link, is_valid_email
+from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import render_email_subscribe_content, render_create_new_market_mail_content, render_verification_failed_mail_content
 from sqlalchemy import and_
 from decimal import *

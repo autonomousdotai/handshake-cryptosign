@@ -29,7 +29,7 @@ from app.tasks import update_feed
 from datetime import *
 from app.helpers.utils import local_to_utc
 from app.core import mail_services
-from app.helpers.mail_content import render_verification_failed_mail_content
+from app.helpers.mail_content import render_verification_success_mail_content
 
 
 handshake_routes = Blueprint('handshake', __name__)
@@ -417,9 +417,15 @@ def create_free_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		# can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(user)
-		# if can_free_bet is not True:
-		# 	return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
+		# check valid redeem or not
+		r = Redeem.find_redeem_by_code(redeem)
+		if r is None:
+			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
+		else:
+			if r.used_user > 0:
+				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
+			r.used_user = uid
+			db.session.flush()
 
 		redeem = data.get('redeem', '')
 		odds = Decimal(data.get('odds'))
@@ -433,16 +439,6 @@ def create_free_bet():
 
 		elif outcome.result != -1:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
-
-		# check valid redeem or not
-		r = Redeem.find_redeem_by_code(redeem)
-		if r is None:
-			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
-		else:
-			if r.used_user > 0:
-				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
-			r.used_user = uid
-			db.session.flush()
 
 		# check erc20 token or not
 		token = Token.find_token_by_id(outcome.token_id)
@@ -1033,7 +1029,7 @@ def dispute():
 def test():
 	try:
 		m = Match.find_match_by_id(1)
-		mail_services.send("trong@ninja.org", "admin@ninja.org", "Your event ‘{}‘ was rejected".format(m.name), render_verification_failed_mail_content(1))
+		mail_services.send("trong@ninja.org", "admin@ninja.org", "Your event ‘{}‘ was rejected".format(m.name), render_verification_success_mail_content(1, 1))
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

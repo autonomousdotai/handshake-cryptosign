@@ -6,6 +6,8 @@ import json
 import time
 import app.constants as CONST
 
+
+from flask import g
 from app.models import Match
 from datetime import datetime
 from app.helpers.utils import render_unsubscribe_url, second_to_strftime, render_generate_link
@@ -123,14 +125,14 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
 def render_verification_success_mail_content(match_id, uid):
     return """
         Hey Ninja,<br/><br/>
-        Good news; your event (below) has been verified and will now appear on the exchange! <br/>
+        Good news; your event (below) has been verified and will now appear on the exchange! <br/><br/>
         {}
         <b>Invite your friends to bet on this market by sharing the direct link below:</b><br/>
-        {}
+        {}<br/><br/>
         If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
         Good luck!<br/>
         {}
-    """.format(render_match_content(match_id), render_generate_link(match_id, uid), render_signature_content())
+    """.format(render_match_content(match_id), "{}prediction/{}".format(g.BASE_URL, render_generate_link(match_id, uid)), render_signature_content())
 
 
 def render_verification_failed_mail_content(match_id):
@@ -164,8 +166,8 @@ def render_signature_content():
         Join us on Telegram: <a href="http://t.me/ninja_org">http://t.me/ninja_org</a><br/>
         <div>
             <span style="">Find us on </span>
-            <a href="https://www.facebook.com/ninjadotorg"><img style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/facbook.png" alt="Facebook"></a>
-            <a href="https://twitter.com/ninjadotorg"><img style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/twitter.png" alt="Twitter"></a>
+            <a href="https://www.facebook.com/ninjadotorg"><img height="30" width="30" style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/facbook.png" alt="Facebook"></a>
+            <a href="https://twitter.com/ninjadotorg"><img height="30" width="30" style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/twitter.png" alt="Twitter"></a>
         </div>
     """
 

@@ -18,7 +18,7 @@ from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_result_notifcation
+from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local, local_to_utc
 
@@ -482,7 +482,7 @@ def save_handshake_for_event(event_name, inputs):
 			db.session.flush()
 
 			if outcome_bl.is_outcome_created_by_user(outcome):
-				pass
+				send_email_event_verification_success.delay(outcome.match_id, outcome.created_user_id)
 
 		return None, None
 
@@ -501,7 +501,7 @@ def save_handshake_for_event(event_name, inputs):
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			send_email_result_notifcation.delay(outcome.match_id, is_resolve=False)
+			send_result_email(outcome.outcome_id)
 			return handshakes, shakers
 
 		return None, None
@@ -690,7 +690,7 @@ def save_handshake_for_event(event_name, inputs):
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
-		send_email_result_notifcation.delay(outcome.match_id, is_resolve=True)
+		send_result_email(outcome.outcome_id)
 		return handshakes, shakers
 
 
@@ -875,3 +875,30 @@ def all_master_accounts():
 	with open(data_file_path, 'r') as f:
 		accounts = json.load(f)
 	return accounts
+
+
+def send_result_email(outcome_id):
+	"""
+	" Send result email to all users play in.
+	"""
+	total_users = all_users_play_in_outcome(outcome_id)
+	for item in total_users:
+		if hasattr(item, 'user_id') and item.user_id is not None:
+			send_email_match_result.delay(outcome_id, item.user_id, item.side, item.outcome_result)
+
+
+def all_users_play_in_outcome(outcome_id):
+	# get all users who played in ended outcome.
+	hs_user = db.session.query(Handshake.user_id.label('user_id'), Outcome.result.label('outcome_result'), Handshake.side.label('side'))\
+		.filter(Outcome.result > 0)\
+		.filter(Handshake.outcome_id == outcome_id)\
+		.group_by(Handshake.user_id, Outcome.result, Handshake.side)
+
+	s_user = db.session.query(Shaker.shaker_id.label("user_id"), Outcome.result.label('outcome_result'), Shaker.side.label('side'))\
+		.filter(Outcome.result > 0)\
+		.filter(Handshake.outcome_id == outcome_id)\
+		.filter(Shaker.handshake_id == Handshake.id)\
+		.group_by(Shaker.shaker_id, Outcome.result, Shaker.side)
+
+	total_users = hs_user.union_all(s_user).group_by('user_id', 'outcome_result', 'side').all()
+	return total_users

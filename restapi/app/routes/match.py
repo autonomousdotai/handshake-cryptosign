@@ -161,12 +161,12 @@ def add_match():
 					db.session.flush()
 
 		match = Match(
-			homeTeamName=item['homeTeamName'],
-			homeTeamCode=item['homeTeamCode'],
-			homeTeamFlag=item['homeTeamFlag'],
-			awayTeamName=item['awayTeamName'],
-			awayTeamCode=item['awayTeamCode'],
-			awayTeamFlag=item['awayTeamFlag'],
+			homeTeamName=item.get('homeTeamName', ''),
+			homeTeamCode=item.get('homeTeamCode', ''),
+			homeTeamFlag=item.get('homeTeamFlag', ''),
+			awayTeamName=item.get('awayTeamName', ''),
+			awayTeamCode=item.get('awayTeamCode', ''),
+			awayTeamFlag=item.get('awayTeamFlag', ''),
 			name=item['name'],
 			public=item['public'],
 			market_fee=int(item.get('market_fee', 0)),

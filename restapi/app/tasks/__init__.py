@@ -3,7 +3,7 @@ from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local, is_valid_email
-from app.helpers.mail_content import render_email_subscribe_content, render_create_new_market_mail_content, render_verification_failed_mail_content
+from app.helpers.mail_content import *
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -177,8 +177,9 @@ def send_dispute_email(outcome_id, outcome_name):
 		print 'Send mail result: {}'.format(res.json())
 
 	except Exception as e:
-		print("Send mail notification fail!")
-		print(str(e))
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("send_dispute_email=>",exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
@@ -230,41 +231,26 @@ def subscribe_email_dispatcher(email, match_id, fcm, payload, uid):
 
 
 @celery.task()
-def send_email_result_notifcation(match_id, is_resolve):
+def send_email_match_result(outcome_id, uid, user_choice, outcome_result):
+	"""
+	" We need pass outcome_result param 'cause it still not commit to database
+	"""
 	try:
-		# Check event's outcomes had reported 
-		outcomes = db.session.query(Outcome).filter(Outcome.match_id == match_id).all()
-		outcomes_reported = list(filter(lambda x: x.result > 0, outcomes))
-		if len(outcomes_reported) != len(outcomes):
-			print("Some of outcomes had not report")
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None:
+			print("send_email_match_result => Invalid outcome")
 			return False
 
-		match = Match.find_match_by_id(match_id)
-		if match is None:
-			print("send_email_result_notifcation => Invalid match")
-			return False
-
-		# Get users betted by event
-		hs_user = db.session.query(Handshake.user_id.label("user_id"))\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Outcome.match_id == match_id)\
-			.group_by(Handshake.user_id)
-
-		s_user = db.session.query(Shaker.shaker_id.label("user_id"))\
-			.filter(Shaker.handshake_id == Handshake.id)\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Outcome.match_id == match_id)\
-			.group_by(Shaker.shaker_id)
-
-		total_users = hs_user.union_all(s_user).group_by('user_id').all()
-		for item in total_users:
-			if hasattr(item, 'user_id') and item.user_id is not None:
-				user_bl.handle_mail_notif_by_user(app.config, CONST.MAXIMUM_FREE_BET, item.user_id, match)
+		user = User.find_user_with_id(uid)
+		if user is not None and is_valid_email(user.email):
+			# Send email
+			email_body = render_result_email_content(outcome.match.name, outcome_result, user_choice)
+			mail_services.send(user.email, app.config['FROM_EMAIL'], "The results of {} are in!".format(outcome.match.name), email_body)
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_mail_result_notify=>", exc_type, fname, exc_tb.tb_lineno)
+		print("send_email_match_result=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
@@ -301,7 +287,7 @@ def send_email_event_verification_failed(match_id, uid):
 
 		match = Match.find_match_by_id(match_id)
 		subject = """Yout event "{}" was rejected""".format(match.name)
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_contentuser(match_id))
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_content(match_id))
 		
 	except expression as identifier:
 		xc_type, exc_obj, exc_tb = sys.exc_info()
@@ -321,8 +307,8 @@ def send_email_event_verification_success(match_id, uid):
 			return False
 
 		match = Match.find_match_by_id(match_id)
-		subject = """Yout event "{}" was rejected""".format(match.name)
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_contentuser(match_id))
+		subject = """Yout event "{}" was verified""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(match.id, user.id))
 		
 	except expression as identifier:
 		xc_type, exc_obj, exc_tb = sys.exc_info()

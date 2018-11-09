@@ -12,8 +12,9 @@ from datetime import datetime
 from flask import g
 
 def is_valid_email(email):
-	if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email) != None:
-		return True
+	if email is not None:
+		if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email) != None:
+			return True
 	return False
 
 

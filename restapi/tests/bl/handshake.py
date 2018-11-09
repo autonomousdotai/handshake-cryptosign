@@ -1399,8 +1399,20 @@ class TestHandshakeBl(BaseTestCase):
                                     })
 
 			data = json.loads(response.data.decode()) 
-			print data
 			self.assertTrue(data['status'] == 1)
+
+
+	def test_send_result_email(self):
+		self.clear_data_before_test()
+
+		outcome_id = 88
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		
+		# handshake = Handshake(
+
+		# )
+		# handshake_bl.all_users_play_in_outcome(outcome_id)
+		self.assertTrue(False)
 
 if __name__ == '__main__':
 	unittest.main()

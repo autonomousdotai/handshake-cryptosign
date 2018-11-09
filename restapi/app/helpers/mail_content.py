@@ -25,101 +25,57 @@ def render_email_subscribe_content(passphase, match_id, user_id):
     """.format(render_match_content(match_id), render_signature_content())
 
 
-def render_row_table_content(outcome_name, side, result):
-    text = ""
-    if result == "DRAW":
-        text = "So... it’s a DRAW."
-    elif result == "WIN":
-        text = "You won! Please wait to withdraw your winnings."
-    elif result == "LOSE":
-        text = "You lost. Better luck next time."
-    else:
-        text = "Unfortunately, this time you weren't matched. "
-
+def render_result_email_content(match_name, outcome_result, user_choice):
     return """
-    <tr>
-        <td>{}</td>
-        <td>{}</td>
-        <td>{}</td>
-    </tr>
-    """.format(outcome_name, "Support" if side == 1 else "Oppose", text)
+        Hey Ninja,<br/><br/>
+        {}
+        <br/>
+        {}
+    """.format(render_event_result(match_name, outcome_result, user_choice), render_signature_content())
 
 
-def render_email_notify_result_content(app_config, items, free_bet_available):
-    content = """
-    <html>
-    <head>
-    <style>
-        #bet_result {
-            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
-            border-collapse: collapse;
-            width: 100%;
-        }
+def render_event_result(match_name, outcome_result, user_choice):
+    if outcome_result == CONST.RESULT_TYPE['DRAW']:
+        return render_event_not_happen_content(match_name)
+    
+    elif outcome_result == user_choice:
+        return render_choose_correct_side_content(match_name, user_choice)
+    
+    else:
+        return render_choose_wrong_side_content(match_name, user_choice)
 
-        #bet_result td, #bet_result th {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
 
-        #bet_result tr:nth-child(even){background-color: #f2f2f2;}
+def render_event_not_happen_content(match_name):
+    return """
+        <font style="font-size:20px"> Sorry... </font><br/>
+        The event {} did not go ahead as scheduled. Our apologies for this; we’ll make sure your wager is refunded and will appear on the ‘Me’ page.<br/><br/>
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Don’t worry, there are plenty of other predictions to make: <br/><br/>
+        Play NOW at <a href="http://www.ninja.org/pex">http://www.ninja.org/pex</a> on your mobile, <br/>
+        Or why not try your hand at creating a market? <a href="https://ninja.org/create-pex">https://ninja.org/create-pex</a><br/>
+    """.format(match_name, 'YES' if user_choice == 1 else 'NO')
 
-        #bet_result tr:hover {background-color: #ddd;}
 
-        #bet_result th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            text-align: left;
-        }
-    </style>
-    </head>
-    <body>
-    Hey Ninja!<br/>
-    The results are in!<br/>
-    Let’s see how you did?<br/>
+def render_choose_correct_side_content(match_name, user_choice):
+    return """
+        The results are in, so let’s see how you did… <br/><br/>
+        <font style="font-size:20px"> Congratulations! </font><br/>
+        You correctly predicted {} With the result being {}. <br/>
+        Nice work! You’re on a roll... what will you predict next? <br/>
+        Check out the available markets NOW at <a href="http://www.ninja.org/pex">http://www.ninja.org/pex</a> on your mobile!<br/>
+    """.format(match_name, 'YES' if user_choice == 1 else 'NO')
 
-    <table id="bet_result">
-        <tr>
-            <th>Outcome</th>
-            <th>Side</th>
-            <th>Result</th>
-        </tr>
-    """
 
-    for bet in items:
-        if bet.status != HandshakeStatus['STATUS_PENDING']:
-            if bet.free_bet == 1:
-                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
-                else:
-                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
-                    else:
-                        if bet.outcome_result == bet.side:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
-                        else:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
-            else:
-                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
-                else:
-                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
-                    else:
-                        if bet.outcome_result == bet.side:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
-                        else:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
+def render_choose_wrong_side_content(match_name, user_choice):
+    return """
+        The results are in, so let’s see how you did… <br/><br/>
+        <font style="font-size:20px"> Bad luck... </font><br/>
+        The event {} closed and the result was {}, but you predicted {}. Sorry but this time, your prediction was wrong.  <br/>
+        Don’t worry, there are plenty of other predictions to make: <br/><br/>
+        Play NOW at <a href="http://www.ninja.org/pex">http://www.ninja.org/pex</a> on your mobile, <br/>
+        Or why not try your hand at creating a market? <a href="https://ninja.org/create-pex">https://ninja.org/create-pex</a><br/>
 
-    content += "</table>"
-
-    if free_bet_available > 0:
-        content += """Please go <a href="http://ninja.org/me">Ninja Prediction</a> on your mobile to claim them. <br/>"""
-
-    content += """<a href="http://ninja.org/prediction">PLAY NOW</a><br/>"""
-
-    content += "</body></html>"
-
-    return content
+    """.format(match_name, 'YES' if user_choice == 2 else 'NO', 'YES' if user_choice == 1 else 'NO')
 
 
 def render_verification_success_mail_content(match_id, uid):

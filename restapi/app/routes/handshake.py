@@ -417,6 +417,11 @@ def create_free_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
+		redeem = data.get('redeem', '')
+		odds = Decimal(data.get('odds'))
+		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
+		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+
 		# check valid redeem or not
 		r = Redeem.find_redeem_by_code(redeem)
 		if r is None:
@@ -426,11 +431,6 @@ def create_free_bet():
 				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 			r.used_user = uid
 			db.session.flush()
-
-		redeem = data.get('redeem', '')
-		odds = Decimal(data.get('odds'))
-		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
-		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
 		outcome_id = data.get('outcome_id')
 		outcome = Outcome.find_outcome_by_id(outcome_id)

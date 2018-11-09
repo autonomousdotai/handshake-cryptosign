@@ -3,7 +3,7 @@ from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local, render_generate_link, is_valid_email
-from app.helpers.mail_content import render_email_subscribe_content, render_create_new_market_mail_content
+from app.helpers.mail_content import render_email_subscribe_content, render_create_new_market_mail_content, render_verification_failed_mail_content
 from sqlalchemy import and_
 from decimal import *
 from datetime import datetime
@@ -158,116 +158,6 @@ def add_shuriken(user_id, shuriken_type):
 
 
 @celery.task()
-def run_bots(outcome_id):
-	try:
-		# find all handshakes of this outcome on both 2 sides: support and oppose
-		# if there is a handshake which is not bot and amount < 0.1 then match it
-		# otherwise
-		# get last odds of this outcome and create handshake with that odds
-
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None or outcome.result != -1 or outcome.hid is None:
-			return
-		
-		contract = Contract.find_contract_by_id(outcome.contract_id)
-		print '---------------------------------'
-		print '--------- run bots --------------'
-		arr_support_hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0)).all()
-		arr_oppose_hs = db.session.query(Handshake).filter(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0).all()
-
-		support_odds = ['1.2', '1.5', '1.6']
-		oppose_odds = ['2.5', '2.6', '2.7']
-		o = {}
-
-		if task_bl.is_able_to_create_new_task(outcome_id):
-			# processing support side
-			if len(arr_support_hs) == 0:
-				hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
-				result = True
-
-				if hs is not None:
-					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(utc_to_local(hs.date_created.timetuple())) 
-					if n - ds <= 300: #5 minutes
-						result = False
-				if result:
-					if hs is not None:
-						odds = '{}'.format(hs.odds)
-					else:
-						odds = random.choice(support_odds)
-
-					match = Match.find_match_by_id(outcome.match_id)
-					o['odds'] = odds
-					o['side'] = CONST.SIDE_TYPE['SUPPORT']
-					o['outcome_id'] = outcome_id
-					o['hid'] = outcome.hid
-					o['match_date'] = match.date
-					o['match_name'] = match.name
-					o['outcome_name'] = outcome.name
-
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(o),
-						action=CONST.TASK_ACTION['INIT'],
-						status=-1,
-						contract_address=contract.contract_address,
-						contract_json=contract.json_name
-					)
-					db.session.add(task)
-					db.session.flush()
-
-					print 'Add support odds --> {}'.format(task.to_json())
-				
-
-			# processing against side
-			if len(arr_oppose_hs) == 0:
-				hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
-				result = True
-
-				if hs is not None:
-					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(utc_to_local(hs.date_created.timetuple()))
-					if n - ds <= 300: #5 minutes
-						result = False
-					
-				if result:
-					if hs is not None:
-						odds = '{}'.format(hs.odds)
-					else:
-						odds = random.choice(oppose_odds)
-
-					match = Match.find_match_by_id(outcome.match_id)
-					o['odds'] = odds
-					o['side'] = CONST.SIDE_TYPE['AGAINST']
-					o['outcome_id'] = outcome_id
-					o['hid'] = outcome.hid
-					o['match_date'] = match.date
-					o['match_name'] = match.name
-					o['outcome_name'] = outcome.name
-
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(o),
-						action=CONST.TASK_ACTION['INIT'],
-						status=-1,
-						contract_address=contract.contract_address,
-						contract_json=contract.json_name
-					)
-					db.session.add(task)
-					db.session.flush()
-
-					print 'Add against odds --> {}'.format(task.to_json())
-		print '---------------------------------'
-		db.session.commit()
-
-	except Exception as e:
-		db.session.rollback()
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
-
-
-@celery.task()
 def send_dispute_email(outcome_id, outcome_name):
 	try:
 		# Send mail to admin
@@ -342,7 +232,6 @@ def subscribe_email_dispatcher(email, match_id, fcm, payload, uid):
 @celery.task()
 def send_email_result_notifcation(match_id, is_resolve):
 	try:
-
 		# Check event's outcomes had reported 
 		outcomes = db.session.query(Outcome).filter(Outcome.match_id == match_id).all()
 		outcomes_reported = list(filter(lambda x: x.result > 0, outcomes))
@@ -380,10 +269,10 @@ def send_email_result_notifcation(match_id, is_resolve):
 
 @celery.task()
 def send_email_create_market(match_id, uid):
+	"""
+	" Inform to user the event is created and waiting for review.
+	"""
 	try:
-		if uid is None:
-			return False
-
 		user = User.find_user_with_id(uid)
 		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
 			print("User is invalid")
@@ -397,6 +286,48 @@ def send_email_create_market(match_id, uid):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_email_create_market=>", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_email_event_verification_failed(match_id, uid):
+	"""
+	" Inform to user the event was rejected by admin
+	"""
+	try:
+		user = User.find_user_with_id(uid)
+		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
+			print("User is invalid")
+			return False
+
+		match = Match.find_match_by_id(match_id)
+		subject = """Yout event "{}" was rejected""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_contentuser(match_id))
+		
+	except expression as identifier:
+		xc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_email_event_verification_success(match_id, uid):
+	"""
+	" Inform to user the event was approved and showed on feed.
+	"""
+	try:
+		user = User.find_user_with_id(uid)
+		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
+			print("User is invalid")
+			return False
+
+		match = Match.find_match_by_id(match_id)
+		subject = """Yout event "{}" was rejected""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_contentuser(match_id))
+		
+	except expression as identifier:
+		xc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
@@ -466,7 +397,6 @@ def recombee_sync_user_data(user_id, data=[], timestamp=""):
 	try:
 		recombee_client.sync_user_data(user_id, data, timestamp)
 	except Exception as e:
-		print e.message
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("recombee_sync_user_data => ", exc_type, fname, exc_tb.tb_lineno)

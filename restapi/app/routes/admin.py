@@ -14,16 +14,16 @@ import logging
 from flask import Blueprint, request, g
 from app import db, sg, s3
 from datetime import datetime
-from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
 from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source, Token
+from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
 from app.constants import Handshake as HandshakeStatus
 from flask_jwt_extended import jwt_required
-from app.tasks import update_status_feed, upload_file_google_storage
+from app.tasks import update_status_feed, upload_file_google_storage, send_email_event_verification_failed
 
 
 admin_routes = Blueprint('admin', __name__)
@@ -140,7 +140,7 @@ def review_market(market_id):
 						db.session.add(task)
 						db.session.flush()
 				else:
-					pass
+					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
 			else:
 				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
@@ -154,14 +154,14 @@ def review_market(market_id):
 				outcome.approved = status
 				db.session.flush()
 
+				match = outcome.match
 				if status == CONST.OUTCOME_STATUS['APPROVED']:
-					match = outcome.match
 					task = admin_bl.add_create_market_task(match)
 					if task is not None:				
 						db.session.add(task)
 						db.session.flush()
 				else:
-					pass
+					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
 
 			else:

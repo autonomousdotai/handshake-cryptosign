@@ -2063,6 +2063,7 @@ class TestEventBluePrint(BaseTestCase):
         outcome = Outcome.find_outcome_by_id(outcome.id)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['REPORT_FAILED'])
 
+
     # def test_reiceive_resolve_event_result_invalid (self):
     #     self.clear_data_before_test()
     #     # -----

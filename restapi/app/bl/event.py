@@ -10,3 +10,4 @@ import app.constants as CONST
 
 def erc20_save_success_event():
 	pass
+

@@ -23,6 +23,7 @@ def count_users_play_on_outcome(outcome_id):
 			.group_by(User.id).all()
 	return len(users)
 
+
 def count_support_users_play_on_outcome(outcome_id):
 	users = db.session.query(User)\
 			.filter(User.id.in_(db.session.query(Handshake.user_id)\
@@ -32,6 +33,7 @@ def count_support_users_play_on_outcome(outcome_id):
 																			.filter(Handshake.outcome_id==outcome_id)))))\
 			.group_by(User.id).all()
 	return len(users)
+
 
 def count_against_users_play_on_outcome(outcome_id):
 	users = db.session.query(User)\
@@ -43,6 +45,7 @@ def count_against_users_play_on_outcome(outcome_id):
 			.group_by(User.id).all()
 	return len(users)
 
+
 def has_result(outcome):
 	if outcome is not None and \
 		outcome.result is not None and \
@@ -51,9 +54,18 @@ def has_result(outcome):
 
 	return False
 
+
 def check_outcome_valid(outcomes):
 	arr_outcomes = []
 	for outcome in outcomes:
 		if outcome.hid is not None and outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
 			arr_outcomes.append(outcome.to_json())
 	return arr_outcomes
+
+
+def is_outcome_created_by_user(outcome):
+	if outcome is not None:
+		if outcome.created_user_id is not None and outcome.created_user_id > 0:
+			return True
+
+	return False

@@ -25,12 +25,12 @@ from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed, run_bots
+from app.tasks import update_feed
 from datetime import datetime
 from datetime import *
 from app.helpers.utils import local_to_utc
 from app.core import mail_services
-from app.helpers.mail_content import render_email_subscribe_content, render_create_new_market_mail_content
+from app.helpers.mail_content import render_verification_failed_mail_content
 
 
 handshake_routes = Blueprint('handshake', __name__)
@@ -159,12 +159,6 @@ def init():
 		if contract is None:
 			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
-
-		master_accounts = handshake_bl.all_master_accounts()
-		
-		# check bot is turned on or off
-		bot_setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['BOT'])
-
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
 		arr_hs = []
@@ -192,9 +186,6 @@ def init():
 			db.session.commit()
 
 			update_feed.delay(handshake.id)
-
-			if bot_setting is not None and bot_setting.status == 1 and from_address not in master_accounts:
-				run_bots.delay(outcome_id)
 
 			# response data
 			hs_json = handshake.to_json()
@@ -310,9 +301,6 @@ def init():
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
-
-			if bot_setting is not None and bot_setting.status == 1 and from_address not in master_accounts:
-				run_bots.delay(outcome_id)
 
 		# make response
 		response = {
@@ -1031,7 +1019,8 @@ def dispute():
 @handshake_routes.route('/test', methods=['POST'])
 def test():
 	try:
-		mail_services.send("trong@ninja.org", "admin@ninja.org", "You made a prediction", render_create_new_market_mail_content(1))
+		m = Match.find_match_by_id(1)
+		mail_services.send("trong@ninja.org", "admin@ninja.org", "Your event ‘{}‘ was rejected".format(m.name), render_verification_failed_mail_content(1))
 		return response_ok()
 	except Exception, ex:
 		return response_error(ex.message)

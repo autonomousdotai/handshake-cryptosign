@@ -32,10 +32,11 @@ class BaseConfig(object):
 	IPFS_REST_HOST = os.environ.get('IPFS_REST_HOST', 'localhost')
 	IPFS_REST_PORT = os.environ.get('IPFS_REST_PORT', '5001')
 
+	# ADMIN
 	PASSPHASE = ''
 	EMAIL = ''
-	AUTONOMOUS_WEB_PASSPHASE = ''
-	ENV = os.getenv('ENV', '')
+	FROM_EMAIL = ''
+	RESOLVER_EMAIL = ''
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'
 

@@ -8,6 +8,7 @@ import requests
 import json
 import app.constants as CONST
 import app.bl.match as match_bl
+import app.bl.outcome as outcome_bl
 
 from decimal import *
 from datetime import datetime
@@ -107,6 +108,7 @@ def save_refund_state_for_all(user_id, outcome_id):
 
 	return handshakes, shakers
 
+
 def save_disputed_state(outcome_id):
 	handshakes = []
 	shakers = []
@@ -124,6 +126,7 @@ def save_disputed_state(outcome_id):
 
 	db.session.flush()
 	return handshakes, shakers
+
 
 def save_resolve_state_for_outcome(outcome_id):
 	handshakes = []
@@ -145,13 +148,14 @@ def save_resolve_state_for_outcome(outcome_id):
 	db.session.flush()
 	return handshakes, shakers
 
+
 def save_user_disputed_state(handshake, user_id, side, outcome_result):
 	# Update STATUS_USER_DISPUTED
 	# No need to update bk_status
 
 	handshakes = []
 	shakers = []
-	side_arr = [side] if outcome_result != 3 else [1, 2]
+	side_arr = [side] if outcome_result != CONST.RESULT_TYPE['DRAW'] else [CONST.RESULT_TYPE['SUPPORT_WIN'], CONST.RESULT_TYPE['AGAINST_WIN']]
 
 	handshakes = db.session.query(Handshake).filter(Handshake.side.in_(side_arr), Handshake.user_id == user_id, Handshake.outcome_id == handshake.outcome_id).all()
 	for hs in handshakes:
@@ -477,6 +481,9 @@ def save_handshake_for_event(event_name, inputs):
 
 			db.session.flush()
 
+			if outcome_bl.is_outcome_created_by_user(outcome):
+				pass
+
 		return None, None
 
 	elif event_name == '__report':
@@ -494,7 +501,6 @@ def save_handshake_for_event(event_name, inputs):
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			db.session.commit()
 			send_email_result_notifcation.delay(outcome.match_id, is_resolve=False)
 			return handshakes, shakers
 
@@ -684,7 +690,6 @@ def save_handshake_for_event(event_name, inputs):
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
-		db.session.commit()
 		send_email_result_notifcation.delay(outcome.match_id, is_resolve=True)
 		return handshakes, shakers
 

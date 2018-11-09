@@ -8,7 +8,7 @@ import app.constants as CONST
 
 from app.models import Match
 from datetime import datetime
-from app.helpers.utils import render_unsubscribe_url, second_to_strftime
+from app.helpers.utils import render_unsubscribe_url, second_to_strftime, render_generate_link
 from app.constants import Handshake as HandshakeStatus
 
 def render_email_subscribe_content(passphase, match_id, user_id):
@@ -120,6 +120,30 @@ def render_email_notify_result_content(app_config, items, free_bet_available):
     return content
 
 
+def render_verification_success_mail_content(match_id, uid):
+    return """
+        Hey Ninja,<br/><br/>
+        Good news; your event (below) has been verified and will now appear on the exchange! <br/>
+        {}
+        <b>Invite your friends to bet on this market by sharing the direct link below:</b><br/>
+        {}
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Good luck!<br/>
+        {}
+    """.format(render_match_content(match_id), render_generate_link(match_id, uid), render_signature_content())
+
+
+def render_verification_failed_mail_content(match_id):
+    return """
+        Hey Ninja,<br/><br/>
+        There was an issue with the below event and we weren’t able to list it on the exchange. <br/>
+        {}
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Good luck!<br/>
+        {}
+    """.format(render_match_content(match_id), render_signature_content())
+
+
 def render_create_new_market_mail_content(match_id):
     return """
         Hey Ninja,<br/><br/>
@@ -128,7 +152,7 @@ def render_create_new_market_mail_content(match_id):
         <b>Note:</b> Due to the approval process, it can take up to one hour for new events to appear on the exchange. <br/>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the meantime, please review the event details below: <br/>
         {}
-        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.<br/><br/>
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
         Good luck!<br/>
         {}
     """.format(render_match_content(match_id), render_signature_content())

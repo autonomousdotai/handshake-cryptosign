@@ -26,7 +26,6 @@ from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed
-from datetime import datetime
 from datetime import *
 from app.helpers.utils import local_to_utc
 from app.core import mail_services
@@ -111,6 +110,9 @@ def detail(id):
 @handshake_routes.route('/init', methods=['POST'])
 @login_required
 def init():
+	"""
+	" User plays bet in binary event.
+	"""
 	try:
 		from_request = request.headers.get('Request-From', 'mobile')
 		uid = int(request.headers['Uid'])
@@ -124,8 +126,9 @@ def init():
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds')).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN)
+		outcome_id = data.get('outcome_id', -1)
+		match_id = data.get('match_id', -1)
+		odds = Decimal(data.get('odds', '2')).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN)
 		amount = Decimal(data.get('amount'))
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -139,14 +142,24 @@ def init():
 		if len(from_address) == 0:
 			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		# check valid outcome or not
+		outcome = None
+		if match_id == -1:
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+		else:
+			match = Match.find_match_by_id(match_id)
+			if match is not None and len(match.outcomes) > 0:
+				outcome = match.outcomes[0]
+
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
-		# make sure user cannot call free-bet in ETH
+		outcome_id = outcome.id
+
+		# make sure user cannot call free-bet in ERC20
 		if free_bet == 1:
 			token = Token.find_token_by_id(outcome.token_id)
 			if token is not None:

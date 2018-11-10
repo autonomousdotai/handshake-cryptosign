@@ -38,9 +38,9 @@ def count_support_users_play_on_outcome(outcome_id):
 def count_against_users_play_on_outcome(outcome_id):
 	users = db.session.query(User)\
 			.filter(User.id.in_(db.session.query(Handshake.user_id)\
-								.filter(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.status!=-1)) |\
+								.filter(Handshake.side==CONST.SIDE_TYPE['OPPOSE'], Handshake.outcome_id==outcome_id, Handshake.status!=-1)) |\
 					User.id.in_(db.session.query(Shaker.shaker_id)\
-							.filter(Shaker.side==CONST.SIDE_TYPE['AGAINST'], Shaker.status!=-1, Shaker.handshake_id.in_(db.session.query(Handshake.id)\
+							.filter(Shaker.side==CONST.SIDE_TYPE['OPPOSE'], Shaker.status!=-1, Shaker.handshake_id.in_(db.session.query(Handshake.id)\
 																			.filter(Handshake.outcome_id==outcome_id)))))\
 			.group_by(User.id).all()
 	return len(users)

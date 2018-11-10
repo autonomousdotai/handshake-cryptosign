@@ -91,7 +91,7 @@ RESULT_TYPE = {
 
 SIDE_TYPE = {
 	'SUPPORT': 1,
-	'AGAINST': 2
+	'OPPOSE': 2
 }
 
 SHURIKEN_TYPE = {

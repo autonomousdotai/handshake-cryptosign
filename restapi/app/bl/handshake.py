@@ -18,7 +18,7 @@ from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result
+from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result, run_bots
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local, local_to_utc
 
@@ -570,6 +570,9 @@ def save_handshake_for_event(event_name, inputs):
 			else:
 				add_shuriken.delay(handshake.user_id, CONST.SHURIKEN_TYPE['REAL'])
 
+			# Run bots
+			run_bots.delay(handshake.outcome_id)
+
 			return arr, None
 
 		return None, None
@@ -661,7 +664,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
 
 			# Send mail to admin
-			send_dispute_email.delay(outcome.id, outcome.name)
+			send_dispute_email.delay(outcome.match.name)
 
 		else:
 			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, side, outcome_result)
@@ -678,8 +681,6 @@ def save_handshake_for_event(event_name, inputs):
 		# 1: SUPPORT, 2: OPPOSE, 3: DRAW: It's depended on smart contract definition.
 		if len(result) == 0 or int(result) not in [1, 2, 3]:
 			return None, None
-
-		print 'outcome_id {}, result {}'.format(outcome_id, result)
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 
 		if outcome is None:
@@ -699,6 +700,7 @@ def verify_taker_odds(taker_odds, maker_odds):
 		return True
 
 	return False
+
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount, maker):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -757,7 +759,7 @@ def find_available_support_handshakes(outcome_id):
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['OPPOSE'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
 		return handshakes
 	return []
 
@@ -870,6 +872,9 @@ def get_total_real_bets():
 
 
 def all_master_accounts():
+	"""
+	" wallet addresses of admin
+	"""
 	data_file_path = os.path.abspath(os.path.dirname(__file__)) + '/master-accounts.json'
 	accounts = []
 	with open(data_file_path, 'r') as f:

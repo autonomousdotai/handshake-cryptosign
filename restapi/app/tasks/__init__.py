@@ -1,13 +1,12 @@
 from flask import Flask
+from sqlalchemy import and_
+from decimal import *
+from datetime import datetime
 from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
 from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
-from sqlalchemy import and_
-from decimal import *
-from datetime import datetime
-from requests_toolbelt.multipart.encoder import MultipartEncoder
 from app.constants import Handshake as HandshakeStatus
 
 import sys
@@ -158,23 +157,13 @@ def add_shuriken(user_id, shuriken_type):
 
 
 @celery.task()
-def send_dispute_email(outcome_id, outcome_name):
+def send_dispute_email(match_name):
+	"""
+	" Send email to admin in order to resolve this outcome
+	"""
 	try:
 		# Send mail to admin
-		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
-		multipart_form_data = MultipartEncoder(
-			fields= {
-				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
-				'subject': 'Dispute',
-				'to[]': app.config['RESOLVER_EMAIL'],
-				'from': app.config['FROM_EMAIL']
-			}
-		)
-		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})
-
-		if res.status_code > 400:
-			print('Send mail is failed.')
-		print 'Send mail result: {}'.format(res.json())
+		mail_services.send(app.config['RESOLVER_EMAIL'], app.config['FROM_EMAIL'], 'Event {} need your resolve!'.format(match_name), '' )
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -386,3 +375,93 @@ def recombee_sync_user_data(user_id, data=[], timestamp=""):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("recombee_sync_user_data => ", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def run_bots(outcome_id):
+	"""
+	" Run bots after user play bets
+	"""
+	try:
+		# get master accounts
+		data_file_path = os.path.join(app.config['BASE_DIR'], 'bl') + '/master-accounts.json'
+		accounts = []
+		with open(data_file_path, 'r') as f:
+			accounts = json.load(f)
+
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None or outcome.hid is None:
+			return False
+
+		contract = Contract.find_contract_by_id(outcome.contract_id)
+		if contract is None:
+			return False
+
+		# get all support handshakes need to be matched
+		support = db.session.query(func.sum(Handshake.remaining_amount).label('support_amount'))\
+									.filter(and_(Handshake.outcome_id==outcome_id,\
+												Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
+												Handshake.remaining_amount > 0, \
+												~Handshake.from_address.in_(accounts), \
+												Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+
+		# get all oppose handshakes need to be matched
+		oppose = db.session.query(func.sum(Handshake.remaining_amount).label('oppose_amount'))\
+									.filter(and_(Handshake.outcome_id==outcome_id,\
+												Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
+												Handshake.remaining_amount > 0, \
+												~Handshake.from_address.in_(accounts), \
+												Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+
+		# add bot task match with support side
+		o = {}
+		if 'support_amount' in support and support['support_amount'] > 0:
+			support_amount = str(support['support_amount'])
+			o['odds'] = '2.0'	
+			o['amount'] = support_amount
+			o['side'] = CONST.SIDE_TYPE['OPPOSE']	
+			o['outcome_id'] = outcome_id	
+			o['hid'] = outcome.hid	
+			o['match_date'] = outcome.match.date	
+			o['match_name'] = outcome.match.name	
+			o['outcome_name'] = outcome.name
+			task = Task(	
+				task_type=CONST.TASK_TYPE['REAL_BET'],	
+				data=json.dumps(o),	
+				action=CONST.TASK_ACTION['INIT'],	
+				status=-1,	
+				contract_address=contract.contract_address,	
+				contract_json=contract.json_name	
+			)	
+			db.session.add(task)	
+			db.session.flush()	
+
+
+		# add bot task match with oppose side
+		if 'oppose_amount' in oppose and oppose['oppose_amount'] > 0:
+			oppose_amount = str(oppose['oppose_amount'])
+			o['odds'] = '2.0'	
+			o['amount'] = oppose_amount
+			o['side'] = CONST.SIDE_TYPE['SUPPORT']	
+			o['outcome_id'] = outcome_id	
+			o['hid'] = outcome.hid	
+			o['match_date'] = outcome.match.date	
+			o['match_name'] = outcome.match.name	
+			o['outcome_name'] = outcome.name
+			task = Task(	
+				task_type=CONST.TASK_TYPE['REAL_BET'],	
+				data=json.dumps(o),	
+				action=CONST.TASK_ACTION['INIT'],	
+				status=-1,	
+				contract_address=contract.contract_address,	
+				contract_json=contract.json_name	
+			)	
+			db.session.add(task)	
+			db.session.flush()	
+
+		db.session.commit()
+	except Exception as e:
+		db.session.rollback()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("run_bots => ", exc_type, fname, exc_tb.tb_lineno)

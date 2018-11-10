@@ -29,7 +29,6 @@ from app.tasks import update_feed
 from datetime import *
 from app.helpers.utils import local_to_utc
 from app.core import mail_services
-from app.helpers.mail_content import render_verification_success_mail_content
 
 
 handshake_routes = Blueprint('handshake', __name__)
@@ -1021,15 +1020,4 @@ def dispute():
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
-		return response_error(ex.message)
-
-
-
-@handshake_routes.route('/test', methods=['POST'])
-def test():
-	try:
-		m = Match.find_match_by_id(1)
-		mail_services.send("trong@ninja.org", "admin@ninja.org", "Your event ‘{}‘ was rejected".format(m.name), render_verification_success_mail_content(1, 1))
-		return response_ok()
-	except Exception, ex:
 		return response_error(ex.message)

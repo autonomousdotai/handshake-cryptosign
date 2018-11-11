@@ -135,6 +135,11 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
+        match = Match.find_match_by_id(100)
+        if match is not None:
+            db.session.delete(match)
+            db.session.commit()
+
         Task.query.delete()
         db.session.commit()
 
@@ -2579,6 +2584,60 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 0)
+        
+        for handshake in arr_hs:
+            db.session.delete(handshake)
+            db.session.commit()
+
+
+    def test_init_handshake_with_binary_event(self):
+        """
+        "   No need odds, outcome_id
+        "   Required: match_id
+        """
+        self.clear_data_before_test()
+        arr_hs = []
+
+        match = Match.find_match_by_id(1)
+        outcome = match.outcomes.first()
+        outcome.result = -1
+        outcome.contract_id = 1
+        db.session.commit()
+        
+        # -----
+        with self.client:
+            Uid = 66
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "TESTING MODE",
+                "match_id": 1,
+                "amount": 1.25,
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            data_json = data['data']['handshakes']
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(len(data_json), 1)
+            self.assertEqual(response.status_code, 200)
+
+            hs = data_json[0]
+            self.assertEqual(hs['type'], 'init')
+            self.assertEqual(hs['amount'], 1.25)
         
         for handshake in arr_hs:
             db.session.delete(handshake)

@@ -147,7 +147,7 @@ def init():
 			outcome = Outcome.find_outcome_by_id(outcome_id)
 		else:
 			match = Match.find_match_by_id(match_id)
-			if match is not None and len(match.outcomes) > 0:
+			if match is not None and len(match.outcomes.all()) > 0:
 				outcome = match.outcomes[0]
 
 		if outcome is None:
@@ -278,7 +278,7 @@ def init():
 				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(shaker_json)
 
-			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
+			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > Decimal(CONST.CRYPTOSIGN_MINIMUM_MONEY):
 				handshake = Handshake(
 					hs_type=hs_type,
 					extra_data=extra_data,

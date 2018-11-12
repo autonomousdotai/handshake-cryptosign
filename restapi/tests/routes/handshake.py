@@ -2590,7 +2590,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.commit()
 
 
-    def test_init_handshake_with_binary_event(self):
+    def test_case_1_init_handshake_with_binary_event(self):
         """
         "   No need odds, outcome_id
         "   Required: match_id
@@ -2638,10 +2638,100 @@ class TestHandshakeBluePrint(BaseTestCase):
             hs = data_json[0]
             self.assertEqual(hs['type'], 'init')
             self.assertEqual(hs['amount'], 1.25)
+            arr_hs.append(Handshake.find_handshake_by_id(hs['id']))
         
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
+
+
+    def test_case_2_init_handshake_with_binary_event(self):
+        """
+        "   No need odds, outcome_id
+        "   Required: match_id
+        """
+        self.clear_data_before_test()
+        arr_hs = []
+
+        match = Match.find_match_by_id(1)
+        outcome = match.outcomes.first()
+        outcome.result = -1
+        outcome.contract_id = 1
+        db.session.commit()
+
+        # -----
+        handshake = Handshake(
+                            hs_type=3,
+                            chain_id=4,
+                            is_private=1,
+                            user_id=88,
+                            outcome_id=outcome.id,
+                            odds=2,
+                            amount=0.7,
+                            currency='ETH',
+                            side=1,
+                            remaining_amount=0.7,
+                            from_address='0x123',
+                            status=0,
+                            bk_status=0,
+                            free_bet=0
+                        )
+        arr_hs.append(handshake)
+        db.session.add(handshake)
+        db.session.commit()
+
+        # ----
+        original_handshake_id = handshake.id
+        
+        # -----
+        with self.client:
+            Uid = 66
+
+            params = {
+                "type": 3,
+                "extra_data": "",
+                "description": "TESTING MODE",
+                "match_id": 1,
+                "amount": 1.25,
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 2,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            data_json = data['data']['handshakes']
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(len(data_json), 2)
+            self.assertEqual(response.status_code, 200)
+
+            hs1 = data_json[0]
+            self.assertEqual(hs1['type'], 'shake')
+            self.assertEqual(hs1['amount'], 0.7)
+            arr_hs.append(Handshake.find_handshake_by_id(hs1['id']))
+
+            hs2 = data_json[1]
+            self.assertEqual(hs2['type'], 'init')
+            self.assertEqual(hs2['amount'], 0.55)
+            arr_hs.append(Handshake.find_handshake_by_id(hs2['id']))
+
+            # check remaining amount of original handshake
+            ori_hs = Handshake.find_handshake_by_id(original_handshake_id)
+            self.assertEqual(ori_hs.remaining_amount, 0)
+        
+        for handshake in arr_hs:
+            if handshake is not None:
+                db.session.delete(handshake)
+                db.session.commit()
 
 
 if __name__ == '__main__':

@@ -254,7 +254,7 @@ def send_email_create_market(match_id, uid):
 			return False
 		
 		match = Match.find_match_by_id(match_id)
-		subject = """Yout event "{}" was created successfully""".format(match.name)
+		subject = """Your event "{}" was created successfully""".format(match.name)
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_create_new_market_mail_content(match_id))
 
 	except Exception as e:
@@ -275,7 +275,7 @@ def send_email_event_verification_failed(match_id, uid):
 			return False
 
 		match = Match.find_match_by_id(match_id)
-		subject = """Yout event "{}" was rejected""".format(match.name)
+		subject = """Your event "{}" was rejected""".format(match.name)
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_content(match_id))
 		
 	except expression as identifier:
@@ -296,7 +296,7 @@ def send_email_event_verification_success(match_id, uid):
 			return False
 
 		match = Match.find_match_by_id(match_id)
-		subject = """Yout event "{}" was verified""".format(match.name)
+		subject = """Your event "{}" was verified""".format(match.name)
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(match.id, user.id))
 		
 	except expression as identifier:

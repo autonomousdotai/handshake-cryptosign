@@ -29,4 +29,9 @@ def formalize_filename(filename):
 
 
 def validate_extension(filename):
-    return '.' in filename and filename.split('.')[1] in CONST.UPLOAD_ALLOWED_EXTENSIONS
+    if filename is not None:
+        d = os.path.splitext(filename)
+        if len(d) > 0:
+            ext = d[len(d) - 1]
+            return ext in CONST.UPLOAD_ALLOWED_EXTENSIONS
+    return False

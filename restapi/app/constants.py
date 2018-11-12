@@ -62,7 +62,7 @@ MAXIMUM_FREE_BET = 3
 SOURCE_URL_ICON = 'https://api.faviconkit.com/{}/32'
 SOURCE_GC_DOMAIN = 'https://storage.googleapis.com/{}/{}/{}'
 
-UPLOAD_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif']
+UPLOAD_ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif']
 UPLOAD_MAX_FILE_SIZE = 2 * 1024 * 1024
 
 COMMUNITY_TYPE = {

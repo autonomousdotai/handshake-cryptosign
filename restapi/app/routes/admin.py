@@ -115,7 +115,7 @@ def create_market():
 
 
 @admin_routes.route('/review-market/<int:market_id>', methods=['POST'])
-@admin_required
+@jwt_required
 def review_market(market_id):
 	"""
 	" Admin approve/reject user market.

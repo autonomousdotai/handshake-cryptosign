@@ -16,8 +16,6 @@ import simplejson as json
 import os, hashlib
 import requests
 import random
-import app.bl.task as task_bl
-import app.bl.user as user_bl
 import app.bl.storage as storage_bl
 
 app = Flask(__name__)

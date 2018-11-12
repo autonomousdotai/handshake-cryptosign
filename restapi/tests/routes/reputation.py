@@ -546,7 +546,7 @@ class TestReputationBluePrint(BaseTestCase):
                 .filter(\
                     Match.created_user_id == user_id,\
                     Match.id.in_(db.session.query(Outcome.match_id).filter(Outcome.hid != None).group_by(Outcome.match_id)))\
-                .order_by(Match.index.desc(), Match.date.asc())\
+                .order_by(Match.date.asc(), Match.index.desc())\
                 .all()
 
         for item in matches:

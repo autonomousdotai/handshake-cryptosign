@@ -42,7 +42,7 @@ def matches():
 					Match.public == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
 					)\
-				.order_by(Match.index.desc(), Match.date.asc())\
+				.order_by(Match.date.asc(), Match.index.desc())\
 				.all()
 
 		# get suggested matches from recombee
@@ -353,7 +353,7 @@ def relevant_events():
 			Match.date > seconds,\
 			Match.public == 1,\
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
-		.order_by(Match.source_id, Match.category_id, Match.index.desc(), Match.date.asc())\
+		.order_by(Match.source_id, Match.category_id, Match.date.asc(), Match.index.desc())\
 		.all()
 
 		# Get all source_id

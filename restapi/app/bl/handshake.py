@@ -759,7 +759,7 @@ def find_available_support_handshakes(outcome_id):
 
 		default_handshake = Handshake(
 								amount=Decimal('0'),
-								odds='2.0'
+								odds=Decimal('2.0')
 							)
 		response = []
 		response.append(default_handshake)
@@ -777,7 +777,7 @@ def find_available_against_handshakes(outcome_id):
 
 		default_handshake = Handshake(
 								amount=Decimal('0'),
-								odds='2.0'
+								odds=Decimal('2.0')
 							)
 		response = []
 		response.append(default_handshake)

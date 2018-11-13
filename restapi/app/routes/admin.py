@@ -130,7 +130,7 @@ def review_market(market_id):
 			match = Match.find_match_by_id(market_id)
 			if match is not None:
 				for o in match.outcomes:
-					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
+					if o.approved == CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
 						o.approved = status
 						db.session.flush()
 
@@ -150,7 +150,7 @@ def review_market(market_id):
 			if outcome is None:
 				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
+			if outcome.approved == CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
 				outcome.approved = status
 				db.session.flush()
 

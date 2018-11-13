@@ -400,7 +400,7 @@ def match_detail(match_id):
 				Match.id == match_id,\
 				Match.deleted == 0,\
 				Match.date > seconds,\
-				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1)).group_by(Outcome.match_id)))\
+				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid > 0)).group_by(Outcome.match_id)))\
 			.first()
 
 		if match is None:

@@ -193,7 +193,7 @@ def get_reputation_user(user_id):
 
 		outcome_ids = list(map(lambda x: x.id, outcomes))
 		
-		# get all bet of outcome created by user_id
+		# get all bets of outcome created by user_id
 		hs_all_bets = db.session.query(Handshake.user_id.label("user_id"), Handshake.status.label("status"), Handshake.amount)\
 			.filter(Handshake.outcome_id.in_(outcome_ids))
 
@@ -204,25 +204,22 @@ def get_reputation_user(user_id):
 		data_response = {}
 		match_response = []
 		bets_result = hs_all_bets.union_all(s_all_bets).all()
-
-		data_response['total_events'] = len(outcome_ids)
-		# data_response['total_bets'] = len(bets_result)
-		data_response['total_amount'] = sum(float(amount) for user_id,status,amount in bets_result)
-
 		disputed_bets = list(filter(lambda x: x.status in disputed_status, bets_result))
 
+		data_response['total_events'] = len(outcome_ids)
+		data_response['total_amount'] = sum(float(amount) for user_id,status,amount in bets_result)
 		data_response['total_disputed_bets'] = len(disputed_bets)
-		# data_response['total_disputed_events'] = len(list(filter(lambda x: x.result == -3, outcomes)))
-		# data_response['total_disputed_amount'] = sum(float(amount) for user_id,status,amount in disputed_bets)
 
+		# all matches were created by user
 		matches = db.session.query(Match)\
 				.filter(\
 					Match.created_user_id == user_id,\
 					Match.deleted == 0,\
 					Match.public == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(Outcome.hid != None).group_by(Outcome.match_id)))\
-				.order_by(Match.date.asc())\
+				.order_by(Match.date.desc())\
 				.all()
+
 		for match in matches:
 			arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)
 

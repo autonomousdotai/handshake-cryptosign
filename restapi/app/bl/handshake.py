@@ -182,8 +182,6 @@ def has_valid_shaker(handshake):
 
 
 def data_need_set_result_for_outcome(outcome):
-	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
-
 	if outcome.result == -1:
 		return None, None
 
@@ -198,6 +196,7 @@ def data_need_set_result_for_outcome(outcome):
 			db.session.flush()
 
 	return handshakes, shakers
+
 
 # when time exceed report time and there is no result or outcome result is draw
 def can_refund(handshake, shaker=None):
@@ -224,6 +223,7 @@ def can_refund(handshake, shaker=None):
 			return True
 	return False
 
+
 def parse_inputs(inputs):
 	offchain = ''
 	hid = ''
@@ -244,6 +244,7 @@ def parse_inputs(inputs):
 
 	return offchain, hid, state, outcome_result
 
+
 def update_amount_for_outcome(outcome_id, user_id, side, outcome_result):
 	side_arr = ', '.join([str(x) for x in ([side] if outcome_result != 3 else [1, 2])])
 
@@ -258,6 +259,7 @@ def update_amount_for_outcome(outcome_id, user_id, side, outcome_result):
 	outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
 	outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
 	db.session.flush()
+
 
 def save_handshake_method_for_event(method, inputs):
 	offchain, hid, state, outcome_result = parse_inputs(inputs)
@@ -493,15 +495,14 @@ def save_handshake_for_event(event_name, inputs):
 		outcome_id, result = offchain.replace('report', '').split('_')
 		if outcome_id is None or result is None:
 			return None, None
-		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-
 		if len(result) > -1 and outcome is not None:
 			result = int(result)
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			send_result_email(outcome.outcome_id)
+			send_result_email(outcome.id)
 			return handshakes, shakers
 
 		return None, None
@@ -748,11 +749,22 @@ def find_all_joined_handshakes(side, outcome_id):
 		return handshakes
 	return []
 
+
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
-		return handshakes
+		if handshakes is not None and len(handshakes) > 0:
+			return handshakes
+
+		default_handshake = Handshake(
+								amount=Decimal('0'),
+								odds='2.0'
+							)
+		response = []
+		response.append(default_handshake)
+		return response	
+
 	return []
 
 
@@ -760,7 +772,17 @@ def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['OPPOSE'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
-		return handshakes
+		if handshakes is not None and len(handshakes) > 0:
+			return handshakes
+
+		default_handshake = Handshake(
+								amount=Decimal('0'),
+								odds='2.0'
+							)
+		response = []
+		response.append(default_handshake)
+		return response
+
 	return []
 
 

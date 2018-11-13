@@ -407,6 +407,40 @@ class TestHandshakeBl(BaseTestCase):
 		self.assertEqual(float(handshakes[0].odds), 1.2)
 		self.assertEqual(float(handshakes[1].odds), 1.2)
 
+
+	def test_find_available_support_handshakes_in_event_which_noone_play(self):
+		self.clear_data_before_test()
+
+		outcome = Outcome(
+						match_id=1,
+						hid=69,
+						contract_id=1
+					)
+		db.session.add(outcome)
+		db.session.commit()
+
+		handshakes = handshake_bl.find_available_support_handshakes(outcome.id)
+		self.assertEqual(len(handshakes), 1)
+		self.assertEqual(float(handshakes[0].amount), 0)
+		self.assertEqual(float(handshakes[0].odds), 2)
+
+
+	def test_find_available_against_handshakes_in_event_which_noone_play(self):
+		self.clear_data_before_test()
+		outcome = Outcome(
+						match_id=1,
+						hid=69,
+						contract_id=1
+					)
+		db.session.add(outcome)
+		db.session.commit()
+
+		handshakes = handshake_bl.find_available_against_handshakes(outcome.id)
+		self.assertEqual(len(handshakes), 1)
+		self.assertEqual(float(handshakes[0].amount), 0)
+		self.assertEqual(float(handshakes[0].odds), 2)
+
+	
 	def test_find_available_support_handshakes(self):
 		self.clear_data_before_test()
 		# -----
@@ -499,6 +533,7 @@ class TestHandshakeBl(BaseTestCase):
 		self.assertEqual(len(handshakes), 2)
 		self.assertEqual(float(handshakes[0].amount), 0.3125)
 		self.assertEqual(float(handshakes[1].amount), 0.21)
+
 
 	def test_find_available_against_handshakes(self):
 		self.clear_data_before_test()
@@ -640,6 +675,7 @@ class TestHandshakeBl(BaseTestCase):
 		self.assertEqual(h.status, 6)
 		self.assertEqual(s.status, 6)
 
+
 	def test_is_init_pending_status(self):
 		handshake = Handshake(
 			hs_type=3,
@@ -694,6 +730,7 @@ class TestHandshakeBl(BaseTestCase):
 		actual = handshake_bl.is_init_pending_status(handshake)
 		expected = True
 		self.assertEqual(actual, expected)
+
 
 	def test_can_uninit(self):
 		self.clear_data_before_test()
@@ -773,6 +810,7 @@ class TestHandshakeBl(BaseTestCase):
 		expected = False
 		self.assertEqual(actual, expected)
 
+
 	def test_rollback_shake_state(self):
 		self.clear_data_before_test()
 
@@ -814,6 +852,7 @@ class TestHandshakeBl(BaseTestCase):
 
 		self.assertEqual(h.remaining_amount, 1)
 		self.assertEqual(s.status, HandshakeStatus['STATUS_SHAKER_ROLLBACK'])
+
 
 	def test_can_withdraw(self):
 		self.clear_data_before_test()
@@ -932,6 +971,7 @@ class TestHandshakeBl(BaseTestCase):
 
 		actual = handshake_bl.can_withdraw(handshake, shaker=None)
 		self.assertEqual(actual, '')
+
 
 	def test_has_valid_shaker(self):
 		self.clear_data_before_test()
@@ -1095,6 +1135,7 @@ class TestHandshakeBl(BaseTestCase):
 			db.session.delete(item)
 			db.session.commit()
 
+
 	def test_can_refund_for_maker(self):
 		self.clear_data_before_test()
 
@@ -1157,6 +1198,7 @@ class TestHandshakeBl(BaseTestCase):
 		for item in arr_hs:
 			db.session.delete(item)
 			db.session.commit()
+
 
 	def test_can_refund_for_shaker(self):
 		self.clear_data_before_test()
@@ -1249,6 +1291,7 @@ class TestHandshakeBl(BaseTestCase):
 			db.session.delete(item)
 			db.session.commit()
 
+
 	def test_verify_taker_odds(self):
 		taker_odds = 1.6
 		maker_odds = 2.7
@@ -1278,7 +1321,8 @@ class TestHandshakeBl(BaseTestCase):
 		actual = handshake_bl.verify_taker_odds(taker_odds, maker_odds)
 		expected = False
 		self.assertEqual(actual, expected)
-		
+	
+
 	def test_send_email_result_notifcation(self):
 		user = User(
 			email="abcxyz@abcxyz.com",
@@ -1401,18 +1445,6 @@ class TestHandshakeBl(BaseTestCase):
 			data = json.loads(response.data.decode()) 
 			self.assertTrue(data['status'] == 1)
 
-
-	def test_send_result_email(self):
-		self.clear_data_before_test()
-
-		outcome_id = 88
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		
-		# handshake = Handshake(
-
-		# )
-		# handshake_bl.all_users_play_in_outcome(outcome_id)
-		self.assertTrue(False)
 
 if __name__ == '__main__':
 	unittest.main()

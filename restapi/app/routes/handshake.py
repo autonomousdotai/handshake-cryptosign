@@ -51,7 +51,7 @@ def handshakes():
 		
 		match = Match.find_match_by_id(outcome.match_id)
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
-		against = handshake_bl.find_available_against_handshakes(outcome_id)
+		againsts = handshake_bl.find_available_against_handshakes(outcome_id)
 
 		total = Decimal('0', 2)
 
@@ -62,15 +62,15 @@ def handshakes():
 		arr_supports = []
 		for support in supports:
 			data = {}
-			data['odds'] = support[0]
-			data['amount'] = support[1]
+			data['odds'] = support.odds
+			data['amount'] = support.amount
 			arr_supports.append(data)
 
 		arr_against = []
-		for against in against:
+		for against in againsts:
 			data = {}
-			data['odds'] = against[0]
-			data['amount'] = against[1]
+			data['odds'] = against.odds
+			data['amount'] = against.amount
 			arr_against.append(data)
 
 		response = {

@@ -147,6 +147,7 @@ def user_approve_new_token():
 		db.session.rollback()
 		return response_error(ex.message)
 
+
 @user_routes.route('/user/habit', methods=['POST'])
 @login_required
 def user_habit():
@@ -170,6 +171,7 @@ def user_habit():
 
 	except Exception, ex:
 		return response_error(ex.message)
+
 
 @user_routes.route('/reputation/<int:user_id>', methods=['GET'])
 @login_required

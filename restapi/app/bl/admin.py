@@ -1,5 +1,5 @@
 
-from app.models import Task
+from app.models import Task, Contract
 
 import json
 import app.constants as CONST
@@ -24,10 +24,28 @@ def add_create_market_task(match):
 	return task
 
 
+def is_contract_support_report_for_creator_method(name):
+	arr = name.split('v')
+	if len(arr) == 2:
+		nums = arr[1].split('_')
+		number = int('{}{}'.format(nums[0], nums[1]))
+		if number >= 14: #support version from 1.4
+			return True
+
+	return False
+
+
 def can_admin_report_this_outcome(outcome):
 	if outcome is None or outcome.result != CONST.RESULT_TYPE['PENDING'] or outcome.hid is None:
 		return False
 	
+	contract = Contract.find_contract_by_id(outcome.contract_id)
+	if contract is None:
+		return False
+
+	if is_contract_support_report_for_creator_method(contract.json_name) is False:
+		return False
+
 	if outcome.created_user_id is None:
 		return True
 

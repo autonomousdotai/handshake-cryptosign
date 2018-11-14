@@ -27,6 +27,7 @@ db.init_app(app)
 
 # init firebase database
 firebase.init_app(app)
+mail_services.init_app(app)
 
 # celery
 celery = make_celery(app)

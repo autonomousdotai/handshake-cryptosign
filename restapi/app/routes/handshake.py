@@ -27,8 +27,6 @@ from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, 
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed
 from datetime import *
-from app.helpers.utils import local_to_utc
-from app.core import mail_services
 
 
 handshake_routes = Blueprint('handshake', __name__)

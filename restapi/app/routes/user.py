@@ -76,6 +76,7 @@ def user_subscribe():
 
 		user = User.find_user_with_id(uid)
 		user.email = email
+		user.is_subscribe = 1
 		db.session.commit()
 
 		subscribe_email_dispatcher.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)

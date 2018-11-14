@@ -29,7 +29,7 @@ class MESSAGE(object):
 	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
 	MATCH_CANNOT_SET_RESULT = 'The report time is exceed!'
 	MATCH_INVALID_TIME = 'Please double check your closing time, report time and dispute time'
-	MATCH_HAS_BEEN_APPROVED = 'This event has been approved already!'
+	MATCH_HAS_BEEN_REVIEWED = 'This event has been reviewed already!'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
@@ -122,7 +122,7 @@ class CODE(object):
 	MATCH_RESULT_EMPTY = '1012'												
 	MATCH_CANNOT_SET_RESULT = '1013'	
 	MATCH_INVALID_TIME = '1043'			
-	MATCH_HAS_BEEN_APPROVED = '1061'	
+	MATCH_HAS_BEEN_REVIEWED = '1061'	
 	FILE_TOO_LARGE = '1064'
 
 	# USER

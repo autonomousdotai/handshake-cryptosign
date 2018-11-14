@@ -163,9 +163,8 @@ def review_market(market_id):
 				else:
 					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
-
 			else:
-				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
+				return response_error(MESSAGE.MATCH_HAS_BEEN_REVIEWED, CODE.MATCH_HAS_BEEN_REVIEWED)
 
 		db.session.commit()
 		return response_ok(match.to_json())

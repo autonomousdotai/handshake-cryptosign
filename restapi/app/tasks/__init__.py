@@ -184,7 +184,10 @@ def log_responsed_time():
 
 
 @celery.task()
-def subscribe_email_dispatcher(email, match_id, fcm, payload, uid):
+def subscribe_email(email, match_id, fcm, payload, uid):
+	"""
+	" send this email when user subscribe email. We need send to dispatcher in silent mode (isNeedEmail=0)
+	"""
 	try:
 		# Call to Dispatcher endpoint verification email
 		endpoint = '{}/user/verification/email/start?email={}&isNeedEmail=0'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
@@ -215,7 +218,40 @@ def subscribe_email_dispatcher(email, match_id, fcm, payload, uid):
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_subscribe_email_dispatcher_time=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_email_time=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def subscribe_notification_email(email, fcm, payload, uid):
+	"""
+	" send this email when user input email in notification section on create market page. We need send to dispatcher in normal mode
+	"""
+	try:
+		# Call to Dispatcher endpoint verification email
+		endpoint = '{}/user/verification/email/start?email={}'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
+		data_headers = {
+			"Fcm-Token": fcm,
+			"Payload": payload,
+			"Uid": uid
+		}
+
+		res = requests.post(endpoint, headers=data_headers, json={}, timeout=10) # timeout: 10s
+
+		if res.status_code > 400:
+			print "Verify email fail: {}".format(res)
+			return False
+
+		data = res.json()
+		if data['status'] == 0:
+			print "Verify email fail: {}".format(data)
+			return False
+
+		return True
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_subscribe_notification_email_time=>",exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

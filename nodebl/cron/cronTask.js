@@ -154,19 +154,32 @@ const resolveReport = (params) => {
 /**
  * @param {string} params.offchain
  * @param {number} params.hid
+ * @param {number} params.outcome_id
  * @param {number} params.outcome_result
- * @param {string} params.offchain
+ * @param {string} params.creator_wallet_address
+ * @param {number} params.grant_permission
  */
 
 const report = (params) => {
 	return new Promise((resolve, reject) => {
-		return resolve([{
-			contract_method: 'reportOutcomeTransaction',
-			hid: params.hid,
-			outcome_result: params.outcome_result,
-			outcome_id: params.outcome_id,
-			offchain: params.offchain
-		}])
+		if (params.creator_wallet_address !== null && params.creator_wallet_address !== '' && params.grant_permission == 1) {
+			return resolve([{
+				contract_method: 'reportOutcomeForCreatorTransaction',
+				hid: params.hid,
+				outcome_result: params.outcome_result,
+				outcome_id: params.outcome_id,
+				offchain: params.offchain
+			}])
+
+		} else {
+			return resolve([{
+				contract_method: 'reportOutcomeTransaction',
+				hid: params.hid,
+				outcome_result: params.outcome_result,
+				outcome_id: params.outcome_id,
+				offchain: params.offchain
+			}])
+		}
 	});
 };
 

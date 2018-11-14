@@ -18,7 +18,7 @@ from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.response import response_ok, response_error
 from app.helpers.utils import is_valid_email, now_to_strftime
-from app.tasks import subscribe_email_dispatcher, recombee_sync_user_data
+from app.tasks import subscribe_email, recombee_sync_user_data, subscribe_notification_email
 from app.constants import Handshake as HandshakeStatus
 
 user_routes = Blueprint('user', __name__)
@@ -79,7 +79,37 @@ def user_subscribe():
 		user.is_subscribe = 1
 		db.session.commit()
 
-		subscribe_email_dispatcher.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+		subscribe_email.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+		return response_ok()
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@user_routes.route('/subscribe-notification', methods=['POST'])
+@login_required
+def user_accept_notification():
+	"""
+	" user input their email in notification section on create market page.
+	"""
+	try:
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		if 'email' not in data or is_valid_email(data["email"]) is False:
+			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
+
+		email = data["email"]
+		uid = request.headers["Uid"]
+
+		user = User.find_user_with_id(uid)
+		user.email = email
+		user.is_subscribe = 1
+		db.session.commit()
+
+		subscribe_notification_email.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 		return response_ok()
 
 	except Exception, ex:

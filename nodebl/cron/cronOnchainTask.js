@@ -59,6 +59,9 @@ const asyncScanOnchainTask = () => {
 												case 'reportOutcomeTransaction':
 													smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
 												break;
+												case 'reportOutcomeForCreatorTransaction':
+													smartContractFunc = predictionContract.reportOutcomeForCreatorTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+												break;
 												case 'initTestDriveTransaction':
 													smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json);
 												break;

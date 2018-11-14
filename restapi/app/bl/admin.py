@@ -22,3 +22,18 @@ def add_create_market_task(match):
 		contract_json=contract.json_name
 	)
 	return task
+
+
+def can_admin_report_this_outcome(outcome):
+	if outcome is None or outcome.result != CONST.RESULT_TYPE['PENDING'] or outcome.hid is None:
+		return False
+	
+	if outcome.created_user_id is None:
+		return True
+
+	if outcome.match.grant_permission == 1 and \
+		outcome.match.creator_wallet_address is not None and \
+		len(outcome.match.creator_wallet_address) > 0:
+		return True
+
+	return False

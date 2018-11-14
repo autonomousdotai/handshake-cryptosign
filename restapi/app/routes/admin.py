@@ -233,13 +233,20 @@ def matches_need_report_by_admin():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 
-		matches_by_admin = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id.is_(None), Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc(), Match.index.desc()).all()
+		matches_by_admin = db.session.query(Match).filter(\
+														Match.date < seconds, \
+														Match.reportTime >= seconds, \
+														Match.id.in_(db.session.query(Outcome.match_id).filter(and_(\
+																													Outcome.result == -1, \
+																													Outcome.hid != None))\
+																										.group_by(Outcome.match_id))) \
+													.order_by(Match.date.asc(), Match.index.desc()).all()
 
 		for match in matches_by_admin:
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.created_user_id is None:
+				if admin_bl.can_admin_report_this_outcome(outcome):
 					arr_outcomes.append(outcome.to_json())
 
 			if len(arr_outcomes) > 0:
@@ -293,17 +300,20 @@ def report_match(match_id):
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
-		disputed = False
+
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
+		match = db.session.query(Match).filter(\
+											Match.date < seconds,
+											Match.id == match_id).first()
 		if match is not None:
 			result = data['result']
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 
+			disputed = False
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
@@ -311,7 +321,7 @@ def report_match(match_id):
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
-				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
+				outcome = db.session.query(Outcome).filter(Outcome.id==item['outcome_id'], Outcome.match_id==match.id).first()
 				if outcome is not None:
 					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
 					if message is not None and code is not None:
@@ -334,6 +344,8 @@ def report_match(match_id):
 				report['hid'] = outcome.hid
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
+				report['creator_wallet_address'] = match.creator_wallet_address
+				report['grant_permission'] = match.grant_permission
 
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],

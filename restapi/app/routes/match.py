@@ -352,9 +352,12 @@ def relevant_events():
 			Match.deleted == 0,\
 			Match.date > seconds,\
 			Match.public == 1,\
+			Match.id != match_id, \
 			Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id)))\
-		.order_by(Match.source_id, Match.category_id, Match.date.asc(), Match.index.desc())\
+		.order_by(Match.date.asc(), Match.index.desc())\
 		.all()
+
+		print matches
 
 		# Get all source_id
 		source_ids = list(OrderedDict.fromkeys(list(map(lambda x: x.source_id, matches))))

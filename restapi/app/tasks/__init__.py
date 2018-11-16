@@ -110,6 +110,7 @@ def update_feed(handshake_id):
 		#  add to solr
 		arr_handshakes = []
 		arr_handshakes.append(hs)
+		print 'DEBUG --> SOLR '
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 		data = {
 			"add": arr_handshakes

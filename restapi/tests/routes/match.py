@@ -895,6 +895,7 @@ class TestMatchBluePrint(BaseTestCase):
                 approved = 1
             )
             db.session.flush()
+
         cate = Category.find_category_by_id(2)
         if cate is None:
             cate = Category(
@@ -903,14 +904,15 @@ class TestMatchBluePrint(BaseTestCase):
                 approved = 1
             )
             db.session.flush()
+            
         # ----- 
         db.session.commit()
 
         match = Match.find_match_by_id(999)
         if match is not None:
-            match.date=seconds + 100
-            match.reportTime=seconds + 200
-            match.disputeTime=seconds + 300
+            match.date = seconds + 100
+            match.reportTime = seconds + 200
+            match.disputeTime = seconds + 300
             match.source_id = source_relevant.id
             match.category_id = cate.id
             db.session.flush()
@@ -929,9 +931,9 @@ class TestMatchBluePrint(BaseTestCase):
 
         match_source = Match.find_match_by_id(1000)
         if match_source is not None:
-            match_source.date=seconds + 100
-            match_source.reportTime=seconds + 200
-            match_source.disputeTime=seconds + 300
+            match_source.date = seconds + 100
+            match_source.reportTime = seconds + 200
+            match_source.disputeTime = seconds + 300
             match_source.source_id = source_relevant.id
             match_source.name = "Match same source "
             db.session.flush()
@@ -942,8 +944,8 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 200,
                 disputeTime=seconds + 300,
-                source_id = source_relevant.id,
-                name = "Match same source "
+                source_id=source_relevant.id,
+                name="Match same source "
             )
             arr_match.append(match_source)
             db.session.add(match_source)
@@ -951,9 +953,9 @@ class TestMatchBluePrint(BaseTestCase):
         # ----- 
         match_cate = Match.find_match_by_id(1001)
         if match_cate is not None:
-            match_cate.date=seconds + 100
-            match_cate.reportTime=seconds + 100
-            match_cate.disputeTime=seconds + 200
+            match_cate.date = seconds + 100
+            match_cate.reportTime = seconds + 100
+            match_cate.disputeTime = seconds + 200
             match_cate.category_id = cate.id
             match_cate.name = "Match same cate "
             db.session.flush()
@@ -964,8 +966,8 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 100,
                 disputeTime=seconds + 200,
-                category_id = cate.id,
-                name = "Match same cate "
+                category_id=cate.id,
+                name="Match same cate "
             )
             arr_match.append(match_cate)
             db.session.add(match_cate)
@@ -973,9 +975,9 @@ class TestMatchBluePrint(BaseTestCase):
         # ----- 
         match_invalid = Match.find_match_by_id(1002)
         if match_invalid is not None:
-            match_invalid.date=seconds + 100
-            match_invalid.reportTime=seconds + 100
-            match_invalid.disputeTime=seconds + 200
+            match_invalid.date = seconds + 100
+            match_invalid.reportTime = seconds + 100
+            match_invalid.disputeTime = seconds + 200
             match_invalid.name = "Match invalid "
             arr_match.append(match_invalid)
             db.session.flush()
@@ -985,7 +987,7 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 100,
                 disputeTime=seconds + 200,
-                name = "Match invalid "
+                name="Match invalid "
             )
             db.session.add(match_invalid)
             arr_match.append(match_invalid)

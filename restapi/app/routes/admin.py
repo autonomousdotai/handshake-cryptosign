@@ -139,6 +139,8 @@ def review_market(market_id):
 					if task is not None:				
 						db.session.add(task)
 						db.session.flush()
+					else:
+						return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
 				else:
 					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
@@ -160,6 +162,9 @@ def review_market(market_id):
 					if task is not None:				
 						db.session.add(task)
 						db.session.flush()
+					else:
+						return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+						
 				else:
 					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 

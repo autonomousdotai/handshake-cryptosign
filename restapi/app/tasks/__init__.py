@@ -119,6 +119,7 @@ def update_feed(handshake_id):
 		if res.status_code > 400 or \
 			res.content is None or \
 			(isinstance(res.content, str) and 'null' in res.content):
+			print res.content
 			print('SOLR service is failed. Save to task')
 			task = Task(
 						task_type=CONST.TASK_TYPE['NORMAL'],

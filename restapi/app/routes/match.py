@@ -72,14 +72,24 @@ def matches():
 
 				match_json["outcomes"] = arr_outcomes
 
-				total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
-				match_json["total_users"] = total_user
-				match_json["total_bets"] = total_bets
+				total_users, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
+				if total_users == 0 and total_bets == 0:
+					total_users, total_bets = match_bl.fake_users_and_bets()
+					support_users, oppose_users = match_bl.fake_support_and_oppose_users(total_users)
+					match_json["total_users"] = total_users
+					match_json["total_bets"] = total_bets
+					match_json["bets_side"] = {
+						"support": support_users,
+						"oppose": oppose_users
+					}
+				else:
+					match_json["total_users"] = total_users
+					match_json["total_bets"] = total_bets
 
-				match_json["bets_side"] = {
-					"support": outcome_bl.count_support_users_play_on_outcome(match.outcomes[0].id),
-					"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
-				}
+					match_json["bets_side"] = {
+						"support": outcome_bl.count_support_users_play_on_outcome(match.outcomes[0].id),
+						"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
+					}
 				response.append(match_json)
 
 		return response_ok(response)
@@ -357,8 +367,6 @@ def relevant_events():
 		.order_by(Match.date.asc(), Match.index.desc())\
 		.all()
 
-		print matches
-
 		# Get all source_id
 		source_ids = list(OrderedDict.fromkeys(list(map(lambda x: x.source_id, matches))))
 		sources = db.session.query(Source)\
@@ -368,21 +376,38 @@ def relevant_events():
 
 		for match in matches:
 			match_json = match.to_json()
-			total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
-			match_json["total_users"] = total_user
-			match_json["total_bets"] = total_bets
-			
 			arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)
+			if len(arr_outcomes) > 0:
+				match_json = match.to_json()
 
-			match_json["outcomes"] = arr_outcomes
-			
-			if match.source is not None:
-				source_json = match_bl.handle_source_data(match.source)
-				match_json["source"] = source_json
+				if match.source is not None:
+					source_json = match_bl.handle_source_data(match.source)
+					match_json["source"] = source_json
 
-			if match.category is not None:
-				match_json["category"] = match.category.to_json()
-			response.append(match_json)
+				if match.category is not None:
+					match_json["category"] = match.category.to_json()
+
+				match_json["outcomes"] = arr_outcomes
+
+				total_users, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
+				if total_users == 0 and total_bets == 0:
+					total_users, total_bets = match_bl.fake_users_and_bets()
+					support_users, oppose_users = match_bl.fake_support_and_oppose_users(total_users)
+					match_json["total_users"] = total_users
+					match_json["total_bets"] = total_bets
+					match_json["bets_side"] = {
+						"support": support_users,
+						"oppose": oppose_users
+					}
+				else:
+					match_json["total_users"] = total_users
+					match_json["total_bets"] = total_bets
+
+					match_json["bets_side"] = {
+						"support": outcome_bl.count_support_users_play_on_outcome(match.outcomes[0].id),
+						"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
+					}
+				response.append(match_json)
 
 		return response_ok(response)
 	except Exception, ex:

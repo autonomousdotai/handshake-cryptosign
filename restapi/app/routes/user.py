@@ -257,8 +257,13 @@ def get_reputation_user(user_id):
 			if len(arr_outcomes) > 0:
 				match_json = match.to_json()
 				total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
-				match_json["total_users"] = total_user
-				match_json["total_bets"] = total_bets
+				if total_bets == 0 and total_user == 0:
+					total_user, total_bets = match_bl.fake_users_and_bets()
+					match_json["total_users"] = total_user
+					match_json["total_bets"] = total_bets
+				else:
+					match_json["total_users"] = total_user
+					match_json["total_bets"] = total_bets
 
 				match_response.append(match_json)
 		

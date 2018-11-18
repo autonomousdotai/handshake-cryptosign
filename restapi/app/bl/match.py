@@ -12,6 +12,7 @@ from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
 from app.core import algolia, recombee_client
 
+import random
 import app.constants as CONST
 
 
@@ -119,7 +120,16 @@ def get_total_user_and_amount_by_match_id(match_id):
 	total_users = total_user if total_user is not None else 0			
 	total_bets = (total_amount.total_amount_hs if total_amount.total_amount_hs is not None else 0)  + (total_amount.total_amount_s if total_amount.total_amount_s is not None else 0)
 
+	if total_users == 0 and total_bets == 0:
+		return fake_users_and_bets()
+
 	return total_users, total_bets
+
+
+def fake_users_and_bets():
+	total_bets = [0.032, 0.512, 0.0345, 0.002]
+	total_users = [2, 4, 1]
+	return random.choice(total_users), random.choice(total_bets)
 
 
 def get_domain(source):

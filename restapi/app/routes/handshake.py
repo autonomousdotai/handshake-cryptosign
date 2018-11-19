@@ -781,7 +781,7 @@ def check_redeem_code():
 
 		result = user_bl.is_able_to_have_redeem_code(user)
 		response = {
-			"is_subscribe": 1 if user.email is not None and len(user.email) > 0 and user.is_subscribe is True else 0,
+			"is_subscribe": 1 if user.email is not None and len(user.email) > 0 and user.is_subscribe == 1 else 0,
 			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT,
 			"redeem": int(result)
 		}

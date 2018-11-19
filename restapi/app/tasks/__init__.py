@@ -1,5 +1,5 @@
 from flask import Flask
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from decimal import *
 from datetime import datetime
 from app.factory import make_celery
@@ -473,80 +473,69 @@ def run_bots(outcome_id):
 				return False
 
 			# get all support handshakes need to be matched
-			# support = db.session.query(func.sum(Handshake.remaining_amount).label('support_amount'))\
-			# 							.filter(and_(Handshake.outcome_id==outcome_id,\
-			# 										Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
-			# 										Handshake.remaining_amount > 0, \
-			# 										~Handshake.from_address.in_(accounts), \
-			# 										Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
-			support = db.session.query(func.sum(Handshake.remaining_amount).label('amount'))\
-							.filter(and_(Handshake.outcome_id==outcome_id,\
-										Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
-										Handshake.remaining_amount > 0, \
-										Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+			support = db.session.query(func.sum(Handshake.remaining_amount).label('support_amount'))\
+										.filter(and_(Handshake.outcome_id==outcome_id,\
+													Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
+													Handshake.remaining_amount > 0, \
+													~Handshake.from_address.in_(accounts), \
+													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
 
 			# get all oppose handshakes need to be matched
-			# oppose = db.session.query(func.sum(Handshake.remaining_amount).label('oppose_amount'))\
-			# 							.filter(and_(Handshake.outcome_id==outcome_id,\
-			# 										Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
-			# 										Handshake.remaining_amount > 0, \
-			# 										~Handshake.from_address.in_(accounts), \
-			# 										Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
-
-			oppose = db.session.query(func.sum(Handshake.remaining_amount).label('amount'))\
-							.filter(and_(Handshake.outcome_id==outcome_id,\
-										Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
-										Handshake.remaining_amount > 0, \
-										Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+			oppose = db.session.query(func.sum(Handshake.remaining_amount).label('oppose_amount'))\
+										.filter(and_(Handshake.outcome_id==outcome_id,\
+													Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
+													Handshake.remaining_amount > 0, \
+													~Handshake.from_address.in_(accounts), \
+													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
 
 			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
-			# # add bot task match with support side
-			# o = {}
-			# if 'support_amount' in support and support['support_amount'] > 0:
-			# 	support_amount = str(support['support_amount'])
-			# 	o['odds'] = '2.0'	
-			# 	o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
-			# 	o['side'] = CONST.SIDE_TYPE['OPPOSE']	
-			# 	o['outcome_id'] = outcome_id	
-			# 	o['hid'] = outcome.hid	
-			# 	o['match_date'] = outcome.match.date	
-			# 	o['match_name'] = outcome.match.name	
-			# 	o['outcome_name'] = outcome.name
-			# 	task = Task(	
-			# 		task_type=CONST.TASK_TYPE['REAL_BET'],	
-			# 		data=json.dumps(o),	
-			# 		action=CONST.TASK_ACTION['INIT'],	
-			# 		status=-1,	
-			# 		contract_address=contract.contract_address,	
-			# 		contract_json=contract.json_name	
-			# 	)	
-			# 	db.session.add(task)	
-			# 	db.session.flush()	
+			# add bot task match with support side
+			o = {}
+			if 'support_amount' in support and support['support_amount'] > 0:
+				support_amount = str(support['support_amount'])
+				o['odds'] = '2.0'	
+				o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
+				o['side'] = CONST.SIDE_TYPE['OPPOSE']	
+				o['outcome_id'] = outcome_id	
+				o['hid'] = outcome.hid	
+				o['match_date'] = outcome.match.date	
+				o['match_name'] = outcome.match.name	
+				o['outcome_name'] = outcome.name
+				task = Task(	
+					task_type=CONST.TASK_TYPE['REAL_BET'],	
+					data=json.dumps(o),	
+					action=CONST.TASK_ACTION['INIT'],	
+					status=-1,	
+					contract_address=contract.contract_address,	
+					contract_json=contract.json_name	
+				)	
+				db.session.add(task)	
+				db.session.flush()	
 
 
-			# # add bot task match with oppose side
-			# if 'oppose_amount' in oppose and oppose['oppose_amount'] > 0:
-			# 	oppose_amount = str(oppose['oppose_amount'])
-			# 	o['odds'] = '2.0'	
-			# 	o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
-			# 	o['side'] = CONST.SIDE_TYPE['SUPPORT']	
-			# 	o['outcome_id'] = outcome_id	
-			# 	o['hid'] = outcome.hid	
-			# 	o['match_date'] = outcome.match.date	
-			# 	o['match_name'] = outcome.match.name	
-			# 	o['outcome_name'] = outcome.name
-			# 	task = Task(	
-			# 		task_type=CONST.TASK_TYPE['REAL_BET'],	
-			# 		data=json.dumps(o),	
-			# 		action=CONST.TASK_ACTION['INIT'],	
-			# 		status=-1,	
-			# 		contract_address=contract.contract_address,	
-			# 		contract_json=contract.json_name	
-			# 	)	
-			# 	db.session.add(task)	
-			# 	db.session.flush()	
+			# add bot task match with oppose side
+			if 'oppose_amount' in oppose and oppose['oppose_amount'] > 0:
+				oppose_amount = str(oppose['oppose_amount'])
+				o['odds'] = '2.0'	
+				o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
+				o['side'] = CONST.SIDE_TYPE['SUPPORT']	
+				o['outcome_id'] = outcome_id	
+				o['hid'] = outcome.hid	
+				o['match_date'] = outcome.match.date	
+				o['match_name'] = outcome.match.name	
+				o['outcome_name'] = outcome.name
+				task = Task(	
+					task_type=CONST.TASK_TYPE['REAL_BET'],	
+					data=json.dumps(o),	
+					action=CONST.TASK_ACTION['INIT'],	
+					status=-1,	
+					contract_address=contract.contract_address,	
+					contract_json=contract.json_name	
+				)	
+				db.session.add(task)	
+				db.session.flush()	
 
-			# db.session.commit()
+			db.session.commit()
 	except Exception as e:
 		db.session.rollback()
 		exc_type, exc_obj, exc_tb = sys.exc_info()

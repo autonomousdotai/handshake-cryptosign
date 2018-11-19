@@ -515,8 +515,8 @@ def save_handshake_for_event(event_name, inputs):
 			print 'shaker = {}'.format(shaker)
 			shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 			shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
-
 			db.session.flush()
+
 			# Add shuriken
 			if shaker.free_bet == 1:
 				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['FREE'])
@@ -525,6 +525,10 @@ def save_handshake_for_event(event_name, inputs):
 
 			arr = []
 			arr.append(shaker)
+
+			# Run bots
+			run_bots.delay(handshake.outcome_id)
+
 			return None, arr
 
 		return None, None

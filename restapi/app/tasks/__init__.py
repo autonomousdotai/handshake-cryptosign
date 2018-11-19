@@ -488,6 +488,7 @@ def run_bots(outcome_id):
 													~Handshake.from_address.in_(accounts), \
 													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
 
+			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
 			# add bot task match with support side
 			o = {}
 			if 'support_amount' in support and support['support_amount'] > 0:

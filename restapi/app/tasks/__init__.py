@@ -479,7 +479,7 @@ def run_bots(outcome_id):
 			# 										Handshake.remaining_amount > 0, \
 			# 										~Handshake.from_address.in_(accounts), \
 			# 										Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
-			support = db.session.query(func.sum(Handshake.remaining_amount).label('support_amount'))\
+			support = db.session.query(func.sum(Handshake.remaining_amount).label('amount'))\
 							.filter(and_(Handshake.outcome_id==outcome_id,\
 										Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
 										Handshake.remaining_amount > 0, \
@@ -493,7 +493,7 @@ def run_bots(outcome_id):
 			# 										~Handshake.from_address.in_(accounts), \
 			# 										Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
 
-			oppose = db.session.query(func.sum(Handshake.remaining_amount).label('oppose_amount'))\
+			oppose = db.session.query(func.sum(Handshake.remaining_amount).label('amount'))\
 							.filter(and_(Handshake.outcome_id==outcome_id,\
 										Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
 										Handshake.remaining_amount > 0, \

@@ -13,7 +13,7 @@ from datetime import datetime
 from app.helpers.utils import render_unsubscribe_url, second_to_strftime, render_generate_link
 from app.constants import Handshake as HandshakeStatus
 
-def render_email_subscribe_content(passphase, match_id, user_id):
+def render_email_subscribe_content(match_id):
     return """
         Hey Ninja!<br/><br/>
         You’ve successfully made a prediction: <br/><br/>
@@ -23,6 +23,18 @@ def render_email_subscribe_content(passphase, match_id, user_id):
         Stay cool.<br/><br/>
         {}
     """.format(render_match_content(match_id), render_signature_content())
+
+
+def render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2):
+    return """
+        Hey Ninja!<br/><br/>
+        Please use the following redeem codes to claim your free bets: <br/><br/>
+        <b>Code 1:</b> {}  (0.03ETH)<br/>
+        <b>Code 2:</b> {}  (0.03ETH)<br/><br/>
+        Just redeem the code on the bet screen and you're good to go!.<br/><br/>
+        You look like a winner!<br/><br/>
+        {}
+    """.format(redeem_code_1, redeem_code_2, render_signature_content())
 
 
 def render_result_email_content(match_name, outcome_result, user_choice):

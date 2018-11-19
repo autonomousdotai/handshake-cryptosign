@@ -2,7 +2,7 @@ from flask import g
 from sqlalchemy import and_, func, cast, asc, desc, bindparam
 from datetime import date
 from app import db
-from app.models import User, Handshake, Shaker, Outcome
+from app.models import User, Handshake, Shaker, Outcome, Redeem
 from app.constants import Handshake as HandshakeStatus
 from datetime import datetime
 from app.helpers.utils import local_to_utc
@@ -47,6 +47,25 @@ def is_able_to_create_new_free_bet(user):
 			can_free_bet = False
 	
 	return can_free_bet, last_bet_status
+
+
+def is_able_to_have_redeem_code(user):
+	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id).all()
+	if redeems is not None and len(redeems) > 0:
+		return False
+
+	return True
+
+
+def claim_redeem_code_for_user(user):
+	if is_able_to_have_redeem_code(user):
+		redeems = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(2).all()
+		if redeems is not None and len(redeems) == 2:
+			for re in redeems:
+				re.reserved_id = user.id
+				db.session.flush()
+			return True, redeems[0].code, redeems[1].code
+	return False, None, None
 
 
 def check_email_existed_with_dispatcher(payload):

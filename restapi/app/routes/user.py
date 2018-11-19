@@ -18,7 +18,7 @@ from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.response import response_ok, response_error
 from app.helpers.utils import is_valid_email, now_to_strftime
-from app.tasks import subscribe_email, recombee_sync_user_data, subscribe_notification_email
+from app.tasks import subscribe_email, recombee_sync_user_data, subscribe_notification_email, subscribe_email_to_claim_redeem_code
 from app.constants import Handshake as HandshakeStatus
 
 user_routes = Blueprint('user', __name__)
@@ -57,7 +57,9 @@ def auth():
 @login_required
 def user_subscribe():
 	"""
-	" Popup subscribe email will appear after user plays on match_id
+	" 2 use cases:
+	" Popup subscribe email will appear after user plays on match_id.
+	" Popup subscribe email will appear at the first time.
 	"""
 	try:
 		data = request.json
@@ -67,19 +69,24 @@ def user_subscribe():
 		if 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
 
-		match = Match.find_match_by_id(data['match_id'])
-		if match is None:
-			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
-
+		match = Match.find_match_by_id(data.get('match_id', -1))
 		email = data["email"]
 		uid = request.headers["Uid"]
 
 		user = User.find_user_with_id(uid)
 		user.email = email
 		user.is_subscribe = 1
-		db.session.commit()
+		db.session.flush()
 
-		subscribe_email.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+		# send email
+		print '1'
+		result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
+		if result:
+			subscribe_email_to_claim_redeem_code.delay(email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+		elif match is not None:
+			subscribe_email.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
+		db.session.commit()
 		return response_ok()
 
 	except Exception, ex:
@@ -107,9 +114,17 @@ def user_accept_notification():
 		user = User.find_user_with_id(uid)
 		user.email = email
 		user.is_subscribe = 1
-		db.session.commit()
+		db.session.flush()
 
+		# claim redeem code
+		result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
+		if result:
+			subscribe_email_to_claim_redeem_code.delay(email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
+		# send email
 		subscribe_notification_email.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
+		db.session.commit()
 		return response_ok()
 
 	except Exception, ex:

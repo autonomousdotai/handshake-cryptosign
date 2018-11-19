@@ -766,7 +766,6 @@ def check_free_bet():
 		return response_ok(response)
 
 	except Exception, ex:
-		db.session.rollback()
 		return response_error(ex.message)
 
 
@@ -774,15 +773,20 @@ def check_free_bet():
 @login_required
 def check_redeem_code():
 	"""
-	" User be able to use redeem code only 1 time
+	" Check user be able to use redeem or not
 	"""
 	try:
 		uid = int(request.headers['Uid'])
-		r = Redeem.find_redeem_by_user(uid)
-		if r is None:
-			return response_ok()
+		user = User.find_user_with_id(uid)
 
-		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
+		result = user_bl.is_able_to_have_redeem_code(user)
+		response = {
+			"is_subscribe": 1 if user.email is not None and len(user.email) > 0 and user.is_subscribe is True else 0,
+			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT,
+			"redeem": int(result)
+		}
+
+		return response_ok(response)
 
 	except Exception, ex:
 		return response_error(ex.message)

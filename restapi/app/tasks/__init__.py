@@ -491,8 +491,8 @@ def run_bots(outcome_id):
 			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
 			# add bot task match with support side
 			o = {}
-			if support is not None and support.support_amount > 0:
-				support_amount = str(support.support_amount)
+			if support[0] is not None and support[0].support_amount > 0:
+				support_amount = str(support[0].support_amount)
 				o['odds'] = '2.0'	
 				o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['OPPOSE']	
@@ -514,8 +514,8 @@ def run_bots(outcome_id):
 
 
 			# add bot task match with oppose side
-			if oppose is not None and oppose.oppose_amount > 0:
-				oppose_amount = str(oppose.oppose_amount)
+			if oppose[0] is not None and oppose[0].oppose_amount > 0:
+				oppose_amount = str(oppose[0].oppose_amount)
 				o['odds'] = '2.0'	
 				o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['SUPPORT']	

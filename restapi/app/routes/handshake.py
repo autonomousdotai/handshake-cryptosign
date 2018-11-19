@@ -415,7 +415,7 @@ def create_free_bet():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		redeem = data.get('redeem', '')
-		odds = Decimal(data.get('odds'))
+		odds = Decimal(data.get('odds', Decimal('2')))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 

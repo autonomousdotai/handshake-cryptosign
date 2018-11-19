@@ -64,6 +64,8 @@ SOURCE_GC_DOMAIN = 'https://storage.googleapis.com/{}/{}/{}'
 
 UPLOAD_ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif']
 UPLOAD_MAX_FILE_SIZE = 2 * 1024 * 1024
+IMAGE_CROP_WIDTH = 320
+IMAGE_CROP_HEIGHT = 180
 
 COMMUNITY_TYPE = {
 	'PUBLIC': 0,

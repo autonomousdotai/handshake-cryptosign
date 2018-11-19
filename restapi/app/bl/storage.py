@@ -1,9 +1,11 @@
 
+from __future__ import division
 import os
 import re
 import app.constants as CONST
 
 from flask import g
+from PIL import Image
 from app.helpers.utils import current_milli
 
 
@@ -20,6 +22,25 @@ def handle_upload_file(file):
     file.save(saved_path)
     return file_name, saved_path
 
+def handle_crop_image(file):
+    file_name, saved_path = handle_upload_file(file)
+    im = Image.open(saved_path)
+
+    width, heigth = im.size
+    ratio = CONST.IMAGE_CROP_WIDTH / width
+    resize_img = im.resize((int(width * ratio), int(heigth * ratio)), Image.ANTIALIAS)
+
+    width, height = resize_img.size
+
+    crop_x = (width - CONST.IMAGE_CROP_WIDTH)/2
+    crop_y = (height - CONST.IMAGE_CROP_HEIGHT)/2
+    crop_w = (width + CONST.IMAGE_CROP_WIDTH)/2
+    crop_h = (height + CONST.IMAGE_CROP_HEIGHT)/2
+
+    crop_img = resize_img.crop((crop_x, crop_y, crop_w, crop_h))
+
+    crop_img.save(saved_path)
+    return file_name, saved_path
 
 def formalize_filename(filename):
     # '/[^a-z0-9\_\-\.]/'

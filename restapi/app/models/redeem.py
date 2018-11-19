@@ -10,20 +10,19 @@ class Redeem(BaseModel):
 	__json_public__ = ['id', 'used_user']
 	
 	code = db.Column(db.String(255), unique=True, nullable=False)
-	is_issued = db.Column(db.Integer,
+	reserved_id = db.Column(db.Integer,
 							server_default=str(0),
 							default=0)
 	used_user = db.Column(db.Integer,
 							server_default=str(0),
 							default=0)
-
 	@classmethod
 	def find_redeem_by_code(cls, code):
 		return Redeem.query.filter(Redeem.code == func.binary(code)).first()
 
 	@classmethod
 	def find_redeem_by_user(cls, user_id):
-		return Redeem.query.filter(Redeem.used_user == user_id).first()
+		return Redeem.query.filter(Redeem.reserved_id == user_id).all()
 
 	def __repr__(self):
 		return '<redeem {}>'.format(self.id)

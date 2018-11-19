@@ -1,5 +1,5 @@
 from flask import Flask
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from decimal import *
 from datetime import datetime
 from app.factory import make_celery
@@ -210,8 +210,46 @@ def subscribe_email(email, match_id, fcm, payload, uid):
 			return False
 
 		# Send email
-		email_body = render_email_subscribe_content(app.config['PASSPHASE'], match_id, uid)
+		email_body = render_email_subscribe_content(match_id)
 		mail_services.send(email, app.config['FROM_EMAIL'], "You made a prediction", email_body)
+
+		return True
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_subscribe_email_time=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def subscribe_email_to_claim_redeem_code(email, redeem_code_1, redeem_code_2, fcm, payload, uid):
+	"""
+	" send this email when user subscribe email. We need send to dispatcher in silent mode (isNeedEmail=0)
+	"""
+	try:
+		# Call to Dispatcher endpoint verification email
+		endpoint = '{}/user/verification/email/start?email={}&isNeedEmail=0'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
+		data_headers = {
+			"Fcm-Token": fcm,
+			"Payload": payload,
+			"Uid": uid
+		}
+
+		res = requests.post(endpoint, headers=data_headers, json={}, timeout=10) # timeout: 10s
+
+		if res.status_code > 400:
+			print "Verify email fail: {}".format(res)
+			return False
+
+		data = res.json()
+
+		if data['status'] == 0:
+			print "Verify email fail: {}".format(data)
+			return False
+
+		# Send email
+		email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Your free bets", email_body)
 
 		return True
 
@@ -450,10 +488,11 @@ def run_bots(outcome_id):
 													~Handshake.from_address.in_(accounts), \
 													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
 
+			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
 			# add bot task match with support side
 			o = {}
-			if 'support_amount' in support and support['support_amount'] > 0:
-				support_amount = str(support['support_amount'])
+			if support[0] is not None and support[0].support_amount > 0:
+				support_amount = str(support[0].support_amount)
 				o['odds'] = '2.0'	
 				o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['OPPOSE']	
@@ -475,8 +514,8 @@ def run_bots(outcome_id):
 
 
 			# add bot task match with oppose side
-			if 'oppose_amount' in oppose and oppose['oppose_amount'] > 0:
-				oppose_amount = str(oppose['oppose_amount'])
+			if oppose[0] is not None and oppose[0].oppose_amount > 0:
+				oppose_amount = str(oppose[0].oppose_amount)
 				o['odds'] = '2.0'	
 				o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['SUPPORT']	

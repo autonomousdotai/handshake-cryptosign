@@ -113,9 +113,8 @@ def add_match():
 
 		item = json.loads(request.form.get('data'))
 		if request.files and len(request.files) > 0 and request.files['image'] is not None:
-			if int(request_size) <= CONST.UPLOAD_MAX_FILE_SIZE and storage_bl.validate_extension(request.files['image'].filename):
+			if int(request_size) <= CONST.UPLOAD_MAX_FILE_SIZE and storage_bl.validate_extension(request.files['image'].filename, CONST.UPLOAD_ALLOWED_EXTENSIONS):
 				file_name, saved_path = storage_bl.handle_upload_file(request.files['image'])
-				
 			else: 
 				return response_error(MESSAGE.FILE_TOO_LARGE, CODE.FILE_TOO_LARGE)
 

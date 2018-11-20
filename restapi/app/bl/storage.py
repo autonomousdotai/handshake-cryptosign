@@ -16,14 +16,13 @@ def delete_file(path_file):
         print(str(ex))
 
 
-def handle_save_file(file):
+def handle_upload_file(file):
     file_name = formalize_filename(file.filename)
     saved_path = os.path.join(g.UPLOAD_DIR, file_name)
     file.save(saved_path)
     return file_name, saved_path
 
-def handle_crop_image(file):
-    file_name, saved_path = handle_save_file(file)
+def handle_crop_image(saved_path):
     im = Image.open(saved_path)
 
     width, heigth = im.size
@@ -40,7 +39,7 @@ def handle_crop_image(file):
     crop_img = resize_img.crop((crop_x, crop_y, crop_w, crop_h))
 
     crop_img.save(saved_path)
-    return file_name, saved_path
+    return saved_path
 
 def formalize_filename(filename):
     # '/[^a-z0-9\_\-\.]/'

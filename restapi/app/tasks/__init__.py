@@ -417,11 +417,9 @@ def update_status_feed(_id, status):
 @celery.task()
 def upload_file_google_storage(match_id, image_name, saved_path):
 	try:
-		print "{} {} {}".format(match_id, image_name, saved_path)
-		print app.config['GC_STORAGE_BUCKET']
-		print app.config['GC_STORAGE_FOLDER']
+		if storage_bl.validate_extension(image_name, CONST.CROP_ALLOWED_EXTENSIONS):
+			saved_path = storage_bl.handle_crop_image(saved_path)
 		match = Match.find_match_by_id(match_id)
-		print match
 		if match is None:
 			return False
 

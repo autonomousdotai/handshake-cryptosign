@@ -23,23 +23,27 @@ def handle_upload_file(file):
     return file_name, saved_path
 
 def handle_crop_image(saved_path):
-    im = Image.open(saved_path)
+    try:
+        im = Image.open(saved_path)
 
-    width, heigth = im.size
-    ratio = CONST.IMAGE_CROP_WIDTH / width
-    resize_img = im.resize((int(width * ratio), int(heigth * ratio)), Image.ANTIALIAS)
+        width, heigth = im.size
+        ratio = CONST.IMAGE_CROP_WIDTH / width
+        resize_img = im.resize((int(width * ratio), int(heigth * ratio)), Image.ANTIALIAS)
 
-    width, height = resize_img.size
+        width, height = resize_img.size
 
-    crop_x = (width - CONST.IMAGE_CROP_WIDTH)/2
-    crop_y = (height - CONST.IMAGE_CROP_HEIGHT)/2
-    crop_w = (width + CONST.IMAGE_CROP_WIDTH)/2
-    crop_h = (height + CONST.IMAGE_CROP_HEIGHT)/2
+        crop_x = (width - CONST.IMAGE_CROP_WIDTH)/2
+        crop_y = (height - CONST.IMAGE_CROP_HEIGHT)/2
+        crop_w = (width + CONST.IMAGE_CROP_WIDTH)/2
+        crop_h = (height + CONST.IMAGE_CROP_HEIGHT)/2
 
-    crop_img = resize_img.crop((crop_x, crop_y, crop_w, crop_h))
+        crop_img = resize_img.crop((crop_x, crop_y, crop_w, crop_h))
 
-    crop_img.save(saved_path)
-    return saved_path
+        crop_img.save(saved_path)
+        return saved_path
+    except Exception as ex:
+        print(str(ex))
+
 
 def formalize_filename(filename):
     # '/[^a-z0-9\_\-\.]/'

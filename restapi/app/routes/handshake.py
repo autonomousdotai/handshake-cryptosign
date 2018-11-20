@@ -424,7 +424,7 @@ def create_free_bet():
 		if r is None:
 			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
 		else:
-			if r.used_user > 0:
+			if r.used_user > 0 or r.reserved_id != uid:
 				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 			r.used_user = uid
 			db.session.flush()

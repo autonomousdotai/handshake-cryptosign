@@ -82,3 +82,13 @@ def check_email_existed_with_dispatcher(payload):
 	if data_response['data'] is None:
 		return False
 	return data_response['data']['email']
+
+
+def is_user_subscribed_but_still_not_have_redeem_code(user, be_able_to_have_redeem_code):
+	if user is None:
+		return False
+
+	if user.email is not None and len(user.email) > 0 and user.is_subscribe == 1 and be_able_to_have_redeem_code:
+		return True
+
+	return False

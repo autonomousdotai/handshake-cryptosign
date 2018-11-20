@@ -116,11 +116,6 @@ def user_accept_notification():
 		user.is_subscribe = 1
 		db.session.flush()
 
-		# claim redeem code
-		result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
-		if result:
-			subscribe_email_to_claim_redeem_code.delay(email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
-
 		# send email
 		subscribe_notification_email.delay(email, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 

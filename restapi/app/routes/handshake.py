@@ -415,6 +415,7 @@ def create_free_bet():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		redeem = data.get('redeem', '')
+		match_id = data.get('match_id', -1)
 		odds = Decimal(data.get('odds', Decimal('2')))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -430,12 +431,20 @@ def create_free_bet():
 			db.session.flush()
 
 		outcome_id = data.get('outcome_id')
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None:
-			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+		outcome = None
+		if match_id == -1:
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+			if outcome is None:
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+			elif outcome.result != -1:
+				return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
-		elif outcome.result != -1:
-			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
+		else:
+			match = Match.find_match_by_id(match_id)
+			if match is not None and len(match.outcomes.all()) > 0:
+				outcome = match.outcomes[0]
+			else:
+				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 		# check erc20 token or not
 		token = Token.find_token_by_id(outcome.token_id)
@@ -469,7 +478,7 @@ def create_free_bet():
 		db.session.commit()
 
 		# this is for frontend
-		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome.id, amount, uid)
 		response = {}
 		if len(handshakes) == 0:
 			response['match'] = 0

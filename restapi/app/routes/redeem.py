@@ -5,7 +5,7 @@ import app.constants as CONST
 from flask import Blueprint, request, current_app as app
 from sqlalchemy import and_
 from app.helpers.response import response_ok, response_error
-from app.helpers.decorators import admin_required
+from app.helpers.decorators import admin_required, login_required
 from app import db
 from app.models import Redeem
 from app.helpers.message import MESSAGE, CODE
@@ -36,4 +36,30 @@ def add():
 		return response_ok(data)
 	except Exception, ex:
 		db.session.rollback()
+		return response_error(ex.message)
+
+
+@redeem_routes.route('/check', methods=['POST'])
+@login_required
+def check_redeem():
+	try:
+		uid = int(request.headers['Uid'])
+		data = request.json
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		redeem = data['redeem']
+		if redeem is None:
+			return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
+
+		response = {
+			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT
+		}
+		r = db.session.query(Redeem).filter(Redeem.code==redeem, Redeem.reserved_id==uid).all()
+		if r is not None and len(r) > 0:
+			return response_ok(response)
+
+		
+		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
+	except Exception, ex:
 		return response_error(ex.message)

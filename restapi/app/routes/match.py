@@ -312,9 +312,6 @@ def match_need_user_report():
 	try:
 		uid = int(request.headers['Uid'])
 
-		if request.headers['Uid'] is None:
-			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
-
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 

@@ -522,9 +522,6 @@ def save_handshake_for_event(event_name, inputs):
 			arr = []
 			arr.append(shaker)
 
-			# Run bots
-			run_bots.delay(handshake.outcome_id)
-
 			return None, arr
 
 		return None, None

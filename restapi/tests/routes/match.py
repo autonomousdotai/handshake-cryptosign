@@ -391,7 +391,6 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
@@ -738,8 +737,7 @@ class TestMatchBluePrint(BaseTestCase):
                 fields= {
                     'data': json.dumps(params),
                 }
-            )
-            print json.dumps(params)
+            )            
             response = self.client.post(
                                     '/match/add',
                                     data=multipart_form_data,

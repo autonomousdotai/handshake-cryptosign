@@ -79,7 +79,6 @@ def user_subscribe():
 		db.session.flush()
 
 		# send email
-		print '1'
 		result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
 		if result:
 			subscribe_email_to_claim_redeem_code.delay(email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)

@@ -612,7 +612,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			user_id = handshake.user_id
 		
-		if handshake is None:
+		if handshake is None or user_id is None:
 			return None, None
 		
 		return save_refund_state_for_all(user_id, handshake.outcome_id)
@@ -646,11 +646,10 @@ def save_handshake_for_event(event_name, inputs):
 			user_id = handshake.user_id
 			side = handshake.side
 
-		if handshake is None:
+		if handshake is None or user_id is None:
 			return None, None
 
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-
 		if outcome is None:
 			return None, None
 

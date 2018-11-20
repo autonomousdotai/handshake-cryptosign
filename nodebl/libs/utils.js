@@ -61,8 +61,7 @@ const getGaspriceEtherscan = () => {
  * 
  * @param {number} options.type
  * @param {JSON string} options.extra_data
- * @param {number} options.outcome_id
- * @param {number} options.odds
+ * @param {number} options.match_id
  * @param {number} options.amount
  * @param {string} options.currency
  * @param {number} options.side
@@ -75,8 +74,7 @@ const submitInitAPI = (options) => {
             type: options.type,
             extra_data: options.extra_data,
             description: 'init from task cron',
-            outcome_id: options.outcome_id,
-            odds: options.odds,
+            match_id: options.match_id,
             amount: (options.amount || amountDefaultValue) + '',
             currency: options.currency,
             chain_id: network_id,

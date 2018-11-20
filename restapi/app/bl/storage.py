@@ -22,10 +22,9 @@ def handle_upload_file(file):
     file.save(saved_path)
     return file_name, saved_path
 
-def handle_crop_image(saved_path):
+def handle_crop_image(image_name, saved_path):
     try:
         im = Image.open(saved_path)
-
         width, heigth = im.size
         ratio = CONST.IMAGE_CROP_WIDTH / width
         resize_img = im.resize((int(width * ratio), int(heigth * ratio)), Image.ANTIALIAS)
@@ -39,10 +38,12 @@ def handle_crop_image(saved_path):
 
         crop_img = resize_img.crop((crop_x, crop_y, crop_w, crop_h))
 
-        crop_img.save(saved_path)
-        return saved_path
+        crop_saved_path = saved_path.replace(image_name, "crop_{}".format(image_name))
+        crop_img.save(crop_saved_path)
+        return saved_path, crop_saved_path
     except Exception as ex:
         print(str(ex))
+        return ex
 
 
 def formalize_filename(filename):

@@ -418,16 +418,17 @@ def update_status_feed(_id, status):
 def upload_file_google_storage(match_id, image_name, saved_path):
 	try:
 		if storage_bl.validate_extension(image_name, CONST.CROP_ALLOWED_EXTENSIONS):
-			saved_path = storage_bl.handle_crop_image(saved_path)
+			saved_path, crop_saved_path = storage_bl.handle_crop_image(image_name, saved_path)
 		match = Match.find_match_by_id(match_id)
 		if match is None:
 			return False
 
-		result_upload = gc_storage_client.upload_to_storage(app.config['GC_STORAGE_BUCKET'], saved_path, app.config['GC_STORAGE_FOLDER'], image_name)
+		result_upload = gc_storage_client.upload_to_storage(app.config['GC_STORAGE_BUCKET'], crop_saved_path, app.config['GC_STORAGE_FOLDER'], image_name)
 		if result_upload is False:
 			return None
 		
 		storage_bl.delete_file(saved_path)
+		storage_bl.delete_file(crop_saved_path)
 
 		image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], app.config['GC_STORAGE_FOLDER'], image_name)
 		match = Match.find_match_by_id(match_id)

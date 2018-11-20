@@ -55,7 +55,7 @@ class Recombee(object):
 
 		br = Batch(requests)
 		result = self.recombee_client.send(br)
-		print result
+
 
 	def sync_item_data(self, matches=[]):
 		requests = []

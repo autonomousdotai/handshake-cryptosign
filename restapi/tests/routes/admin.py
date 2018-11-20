@@ -256,7 +256,6 @@ class TestAdminBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 0)
 
 

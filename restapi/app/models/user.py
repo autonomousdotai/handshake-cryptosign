@@ -7,7 +7,7 @@ user_token = db.Table('user_token',
                         )
 class User(BaseModel):
 	__tablename__ = 'user'
-	__json_public__ = ['id', 'fcm_token', 'email']
+	__json_public__ = ['id', 'email']
 
 	fcm_token = db.Column(db.Text)
 	payload = db.Column(db.Text)
@@ -18,6 +18,9 @@ class User(BaseModel):
 	is_subscribe = db.Column(db.Integer,
 						server_default=str(0),
 						default=0)
+	is_user_disable_popup = db.Column(db.Integer,
+								server_default=str(0),
+								default=0)
 	tokens = db.relationship(
 						"Token",
 						secondary=user_token,

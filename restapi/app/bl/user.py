@@ -51,8 +51,7 @@ def is_able_to_create_new_free_bet(user):
 
 def is_able_to_have_redeem_code(user):
 	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.used_user==user.id).all()
-	if redeems is not None:
-		if len(redeems) > 0:
+	if redeems is not None and len(redeems) >= 2:
 		return False
 
 	return True

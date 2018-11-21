@@ -16,7 +16,7 @@ class MESSAGE(object):
 	CANNOT_VERIFY_EMAIL = 'Cannot verification email!'
 	CANNOT_UNSUBSCRIBE_EMAIL = 'Cannot unsubscribe email!'
 	FILE_TOO_LARGE = 'File too large!'
-	EMAIL_ALREADY_SUBSCRIBED = 'This email has been subscribed already!'
+	EMAIL_ALREADY_SUBSCRIBED = 'Your email is already registered!'
 
 	# OUTCOME
 	OUTCOME_INVALID = 'Please check your outcome id'

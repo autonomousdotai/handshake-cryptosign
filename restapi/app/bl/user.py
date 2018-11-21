@@ -92,3 +92,11 @@ def is_user_subscribed_but_still_not_have_redeem_code(user, be_able_to_have_rede
 		return True
 
 	return False
+
+
+def is_email_subscribed(email):
+	user = db.session.query(User).filter(User.email==email).first()
+	if user is not None:
+		return True
+
+	return False

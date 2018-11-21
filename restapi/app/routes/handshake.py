@@ -782,7 +782,7 @@ def check_free_bet():
 @login_required
 def check_redeem_code():
 	"""
-	" Check user be able to use redeem or not
+	" At the first time, check user be able to use redeem or not
 	"""
 	try:
 		uid = int(request.headers['Uid'])

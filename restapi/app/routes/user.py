@@ -69,6 +69,9 @@ def user_subscribe():
 		if 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
 
+		if user_bl.is_email_subscribed(data['email']):
+			return response_error(MESSAGE.EMAIL_ALREADY_SUBSCRIBED, CODE.EMAIL_ALREADY_SUBSCRIBED)
+
 		match = Match.find_match_by_id(data.get('match_id', -1))
 		email = data["email"]
 		uid = request.headers["Uid"]

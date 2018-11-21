@@ -413,6 +413,9 @@ def relevant_events():
 @match_routes.route('/<int:match_id>', methods=['GET'])
 @login_required
 def match_detail(match_id):
+	"""
+	" This endpoint will be called when user shares link to his/her friends
+	"""
 	try:
 		outcome_id = int(request.args.get('outcome_id', -1))
 
@@ -429,32 +432,42 @@ def match_detail(match_id):
 
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
-		
-		match_json = match.to_json()
-		total_user, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
-		match_json["total_users"] = total_user
-		match_json["total_bets"] = total_bets
 
-		arr_outcomes = []
-		for outcome in match.outcomes:
-			if outcome_id != -1:
-				if outcome.id == outcome_id:
-					arr_outcomes.append(outcome.to_json())
-					break
+		arr_outcomes = outcome_bl.check_outcome_valid(match.outcomes)
+		if len(arr_outcomes) > 0:
+			match_json = match.to_json()
+
+			if match.source is not None:
+				source_json = match_bl.handle_source_data(match.source)
+				match_json["source"] = source_json
+
+			if match.category is not None:
+				match_json["category"] = match.category.to_json()
+
+			match_json["outcomes"] = arr_outcomes
+
+			total_users, total_bets = match_bl.get_total_user_and_amount_by_match_id(match.id)
+			if total_users == 0 and total_bets == 0:
+				total_users, total_bets = match_bl.fake_users_and_bets()
+				support_users, oppose_users = match_bl.fake_support_and_oppose_users(total_users)
+				match_json["total_users"] = total_users
+				match_json["total_bets"] = total_bets
+
+				match_json["bets_side"] = {
+					"support": support_users,
+					"oppose": oppose_users
+				}
 			else:
-				if outcome.approved == CONST.OUTCOME_STATUS['APPROVED']:
-					arr_outcomes.append(outcome.to_json())
+				match_json["total_users"] = total_users
+				match_json["total_bets"] = total_bets
 
-		match_json["outcomes"] = arr_outcomes
+				match_json["bets_side"] = {
+					"support": outcome_bl.count_support_users_play_on_outcome(match.outcomes[0].id),
+					"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
+				}
+			return response_ok(match_json)
 
-		if match.source is not None:
-			source_json = match_bl.handle_source_data(match.source)
-			match_json["source"] = source_json
-
-		if match.category is not None:
-			match_json["category"] = match.category.to_json()
-
-		return response_ok(match_json)
+		return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 	except Exception, ex:
 		return response_error(ex.message)

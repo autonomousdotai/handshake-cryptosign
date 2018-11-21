@@ -798,6 +798,7 @@ def check_redeem_code():
 				subscribe_email_to_claim_redeem_code.delay(user.email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
 		response = {
+			"is_user_disable_popup": user.is_user_disable_popup,
 			"is_subscribe": is_subscribe,
 			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT,
 			"redeem": int(result)

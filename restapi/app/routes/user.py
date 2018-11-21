@@ -78,6 +78,7 @@ def user_subscribe():
 
 		user = User.find_user_with_id(uid)
 		user.email = email
+		user.is_user_disable_popup = 0
 		user.is_subscribe = 1
 		db.session.flush()
 
@@ -135,6 +136,7 @@ def user_accept_notification():
 		user = User.find_user_with_id(uid)
 		user.email = email
 		user.is_subscribe = 1
+		user.is_user_disable_popup = 0
 		db.session.flush()
 
 		# send email

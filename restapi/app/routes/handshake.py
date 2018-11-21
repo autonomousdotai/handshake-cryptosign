@@ -25,7 +25,7 @@ from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed
+from app.tasks import update_feed, subscribe_email_to_claim_redeem_code
 from datetime import *
 
 

@@ -4,18 +4,20 @@ from urllib3 import util
 
 from sqlalchemy import func
 from algoliasearch import algoliasearch
+from recombee_api_client.api_requests import RecommendItemsToUser
 from app import db
 from app.models import User, Handshake, Match, Outcome, Contract, Shaker, Source
 from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
-from app.core import algolia
+from app.core import algolia, recombee_client
 
+import random
 import app.constants as CONST
 
 
 def find_best_odds_which_match_support_side(outcome_id):
-	handshake = db.session.query(Handshake).filter(Handshake.outcome_id==outcome_id, Handshake.side==CONST.SIDE_TYPE['AGAINST']).order_by(Handshake.odds.asc()).first()
+	handshake = db.session.query(Handshake).filter(Handshake.outcome_id==outcome_id, Handshake.side==CONST.SIDE_TYPE['OPPOSE']).order_by(Handshake.odds.asc()).first()
 	if handshake is not None:
 		win_value = handshake.amount * handshake.odds
 		best_odds = win_value/(win_value-handshake.amount)
@@ -121,6 +123,19 @@ def get_total_user_and_amount_by_match_id(match_id):
 	return total_users, total_bets
 
 
+def fake_users_and_bets():
+	total_bets = [0.032, 0.512, 0.0345, 0.002]
+	total_users = [2, 4, 1]
+	return random.choice(total_users), random.choice(total_bets)
+
+
+def fake_support_and_oppose_users(total_users):
+	n = [2, 1, 3]
+	support_users = total_users / random.choice(n)
+	oppose_users = total_users - support_users
+	return support_users, oppose_users
+
+
 def get_domain(source):
 	parsed_uri = util.parse_url(source)
 	result = '{uri.netloc}'.format(uri=parsed_uri)
@@ -133,12 +148,14 @@ def clean_source_with_valid_format(source):
 	result = result.split('.')
 	return result[0]
 
+
 def handle_source_data(source):
 	source_json = source.to_json()
 	source_json["url_icon"] = CONST.SOURCE_URL_ICON.format(get_domain(source.url))
 	if source_json["name"] is None or source_json["name"] == "":
 		source_json["name"] = get_domain(source.url)    
 	return source_json
+
 
 def algolia_search(text):
 	arr = []
@@ -152,3 +169,23 @@ def algolia_search(text):
 				print(str(ex))
 
 	return arr
+
+
+def get_user_recommended_data(user_id, offset=10, timestamp=0):
+	options = {
+		"filter": "'closeTime' > {}".format(timestamp)
+	}
+	response = None
+	try:
+		response = recombee_client.user_recommended_data(user_id, offset, options)	
+	except Exception as ex:
+		print(str(ex))
+	finally:
+		if response is None or "recomms" not in response or len(response['recomms']) == 0:
+			return []
+		
+		ids = list(map(lambda x : int(x["id"]), response['recomms']))
+		return ids
+
+
+	

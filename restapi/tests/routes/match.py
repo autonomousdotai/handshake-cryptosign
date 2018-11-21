@@ -7,6 +7,7 @@ from app import app
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)
 from sqlalchemy import or_
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 import mock
 import json
@@ -390,7 +391,6 @@ class TestMatchBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
             data_json = data['data']
             self.assertTrue(data['status'] == 1)
@@ -654,8 +654,7 @@ class TestMatchBluePrint(BaseTestCase):
         seconds = local_to_utc(t)
 
         with self.client:
-            params = [
-                        {
+            params = {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
                             "date": seconds + 100,
@@ -684,64 +683,69 @@ class TestMatchBluePrint(BaseTestCase):
                                 }
                             ]
                         }
-                    ]
 
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
             response = self.client.post(
                                     '/match/add',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
+                                    data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
                                     })
+
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
+            self.assertTrue(len(data['data']) == 1)
+            match_added = data['data'][0]
+            self.assertTrue(len(match_added['outcomes']) == 1)
+            self.assertTrue(match_added['outcomes'][0]['name'] == 'Yes')
+            
 
     def test_add_match_without_market_fee(self):
         self.clear_data_before_test()
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
         with self.client:
-            params = [
-                        {
-                            "homeTeamName": "Nigeria",
-                            "awayTeamName": "Iceland",
-                            "date": seconds + 100,
-                            "reportTime": seconds + 200,
-                            "disputeTime": seconds + 300,
-                            "homeTeamCode": "",
-                            "homeTeamFlag": "",
-                            "awayTeamCode": "",
-                            "awayTeamFlag": "",
-                            "name": "Nigeria - Iceland - Sangunji",
-                            "public": 1,
-                            "source": {
-                                "name": "{}".format(seconds),
-                                "url": "{}".format(seconds),
-                            },
-                            "category": {
-                                "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+            params = {
+                        "homeTeamName": "Nigeria",
+                        "awayTeamName": "Iceland",
+                        "date": seconds + 100,
+                        "reportTime": seconds + 200,
+                        "disputeTime": seconds + 300,
+                        "homeTeamCode": "",
+                        "homeTeamFlag": "",
+                        "awayTeamCode": "",
+                        "awayTeamFlag": "",
+                        "name": "Nigeria - Iceland - Sangunji",
+                        "public": 1,
+                        "source": {
+                            "name": "{}".format(seconds),
+                            "url": "{}".format(seconds),
+                        },
+                        "category": {
+                            "name": "Worlcup Russia 2018"
                         }
-                    ]
+                    }
 
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )            
             response = self.client.post(
                                     '/match/add',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
+                                    data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type
                                     })
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
@@ -754,8 +758,7 @@ class TestMatchBluePrint(BaseTestCase):
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
         with self.client:
-            params = [
-                        {
+            params = {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
                             "date": seconds + 100,
@@ -773,26 +776,22 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
-                    ]
 
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
             response = self.client.post(
                                     '/match/add',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
+                                    data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
                                     })
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
@@ -814,8 +813,7 @@ class TestMatchBluePrint(BaseTestCase):
         db.session.flush()
         db.session.commit()
         with self.client:
-            params = [
-                        {
+            params = {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
                             "date": seconds + 100,
@@ -833,27 +831,26 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Cate Existed"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
-                    ]
 
+
+
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
             response = self.client.post(
                                     '/match/add',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
+                                    data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
                                     })
+
             data = json.loads(response.data.decode())
             self.assertTrue(data['status'] == 1)
             self.assertTrue(len(data['data']) > 0)
@@ -896,6 +893,7 @@ class TestMatchBluePrint(BaseTestCase):
                 approved = 1
             )
             db.session.flush()
+
         cate = Category.find_category_by_id(2)
         if cate is None:
             cate = Category(
@@ -904,14 +902,15 @@ class TestMatchBluePrint(BaseTestCase):
                 approved = 1
             )
             db.session.flush()
+            
         # ----- 
         db.session.commit()
 
         match = Match.find_match_by_id(999)
         if match is not None:
-            match.date=seconds + 100
-            match.reportTime=seconds + 200
-            match.disputeTime=seconds + 300
+            match.date = seconds + 100
+            match.reportTime = seconds + 200
+            match.disputeTime = seconds + 300
             match.source_id = source_relevant.id
             match.category_id = cate.id
             db.session.flush()
@@ -930,9 +929,9 @@ class TestMatchBluePrint(BaseTestCase):
 
         match_source = Match.find_match_by_id(1000)
         if match_source is not None:
-            match_source.date=seconds + 100
-            match_source.reportTime=seconds + 200
-            match_source.disputeTime=seconds + 300
+            match_source.date = seconds + 100
+            match_source.reportTime = seconds + 200
+            match_source.disputeTime = seconds + 300
             match_source.source_id = source_relevant.id
             match_source.name = "Match same source "
             db.session.flush()
@@ -943,8 +942,8 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 200,
                 disputeTime=seconds + 300,
-                source_id = source_relevant.id,
-                name = "Match same source "
+                source_id=source_relevant.id,
+                name="Match same source "
             )
             arr_match.append(match_source)
             db.session.add(match_source)
@@ -952,9 +951,9 @@ class TestMatchBluePrint(BaseTestCase):
         # ----- 
         match_cate = Match.find_match_by_id(1001)
         if match_cate is not None:
-            match_cate.date=seconds + 100
-            match_cate.reportTime=seconds + 100
-            match_cate.disputeTime=seconds + 200
+            match_cate.date = seconds + 100
+            match_cate.reportTime = seconds + 100
+            match_cate.disputeTime = seconds + 200
             match_cate.category_id = cate.id
             match_cate.name = "Match same cate "
             db.session.flush()
@@ -965,8 +964,8 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 100,
                 disputeTime=seconds + 200,
-                category_id = cate.id,
-                name = "Match same cate "
+                category_id=cate.id,
+                name="Match same cate "
             )
             arr_match.append(match_cate)
             db.session.add(match_cate)
@@ -974,9 +973,9 @@ class TestMatchBluePrint(BaseTestCase):
         # ----- 
         match_invalid = Match.find_match_by_id(1002)
         if match_invalid is not None:
-            match_invalid.date=seconds + 100
-            match_invalid.reportTime=seconds + 100
-            match_invalid.disputeTime=seconds + 200
+            match_invalid.date = seconds + 100
+            match_invalid.reportTime = seconds + 100
+            match_invalid.disputeTime = seconds + 200
             match_invalid.name = "Match invalid "
             arr_match.append(match_invalid)
             db.session.flush()
@@ -986,7 +985,7 @@ class TestMatchBluePrint(BaseTestCase):
                 date=seconds + 100,
                 reportTime=seconds + 100,
                 disputeTime=seconds + 200,
-                name = "Match invalid "
+                name="Match invalid "
             )
             db.session.add(match_invalid)
             arr_match.append(match_invalid)
@@ -1249,8 +1248,7 @@ class TestMatchBluePrint(BaseTestCase):
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
         with self.client:
-            params = [
-                        {
+            params = {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
                             "date": seconds + 100,
@@ -1268,29 +1266,24 @@ class TestMatchBluePrint(BaseTestCase):
                             },
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                },
-                                {
-                                    "name": "Iceland wins"
-                                }
-                            ]
+                            }
                         }
-                    ]
 
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
             response = self.client.post(
                                     '/match/add?token_id=1',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
+                                    data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(88),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
                                     })
             data = json.loads(response.data.decode())
-            print data
             self.assertTrue(data['status'] == 1)
             contract = data['data'][0]['contract']
             self.assertEqual(contract['json_name'], app.config['ERC20_PREDICTION_JSON'])
@@ -1302,7 +1295,9 @@ class TestMatchBluePrint(BaseTestCase):
 
     def test_add_private_event_and_send_mail(self):
         self.clear_data_before_test()
-        
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+
         email = "abc1234567890@xyz0987.com"
         user = db.session.query(User).filter_by(email=email).first()
 
@@ -1317,13 +1312,12 @@ class TestMatchBluePrint(BaseTestCase):
             user.is_subscribe=1
         db.session.commit()
         with self.client:
-            params = [
-                        {
+            params = {
                             "homeTeamName": "Nigeria",
                             "awayTeamName": "Iceland",
-                            "date": 2539913910,
-                            "reportTime": 2539923910,
-                            "disputeTime": 2539933910,
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
                             "homeTeamCode": "",
                             "homeTeamFlag": "",
                             "awayTeamCode": "",
@@ -1334,23 +1328,22 @@ class TestMatchBluePrint(BaseTestCase):
                             "source_id": 1,
                             "category": {
                                 "name": "Worlcup Russia 2018"
-                            },
-                            "outcomes": [
-                                {
-                                    "name": "Nigeria wins"
-                                }
-                            ]
+                            }
                         }
-                    ]
 
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
             response = self.client.post(
                                     '/match/add',
-                                    data=json.dumps(params), 
-                                    content_type='application/json',
+                                    data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(user.id),
                                         "Fcm-Token": "{}".format(123),
                                         "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
                                     })
             data = json.loads(response.data.decode())
             print data

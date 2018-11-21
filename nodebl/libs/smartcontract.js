@@ -120,7 +120,6 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
           'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.initTestDrive(_hid, _side, _odds, _maker, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
@@ -200,7 +199,6 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
           'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shake(_hid, _side, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
@@ -281,7 +279,6 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
           'gasPrice': web3.utils.toHex(gasPriceWei),
           'gasLimit': web3.utils.toHex(gasLimit),
           'to'      : contractAddress,
-          // 'value'   : web3.utils.toHex(web3.utils.toWei(amount + '', 'ether')),
           'value'   : web3.utils.toHex(amount),
           'data'    : contract.methods.shakeTestDrive(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
@@ -614,12 +611,92 @@ const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offch
 
       const txParams = {
         gasPrice: gasPriceWei,
-        gasLimit: 350000,
+        gasLimit: web3.utils.toHex(gasLimit),
         to: contractAddress,
         from: ownerAddress,
         nonce: '0x' + nonce.toString(16),
         chainId: network_id,
         data: contract.methods.report(hid, outcome_result, web3.utils.fromUtf8(offchain)).encodeABI()
+      };
+
+      const tx = new ethTx(txParams);
+      let tnxHash = -1;
+      tx.sign(privKey);
+
+      const serializedTx = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+
+        txDAO.create(tnxHash, contract_address, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        .catch(console.error);
+
+        return resolve({
+          raw: txParams,
+          hash: hash,
+          task: _options.task
+        });
+      })
+      .on('receipt', (receipt) => {
+        console.log('report tnxHash: ', receipt);
+      })
+      .on('error', err => {
+        console.log('reportOutcomeTransaction Error');
+        console.log(err);
+        // Fail at offchain
+        if (tnxHash == -1) {
+          txDAO.create(-1, contract_address, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          .catch(console.error);
+        } else {
+          if (!(err.message || err).includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at reportOutcomeTransaction');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
+        }
+        return reject({
+          err_type: constants.TASK_STATUS.REPORT_TNX_FAIL,
+          error: err,
+          options_data: {
+            task: _options.task
+          }
+        });
+      });
+    } catch (e) {
+      reject({
+        err_type: constants.TASK_STATUS.REPORT_TNX_EXCEPTION,
+        error: e,
+        options_data: {
+          task: _options.task
+        }
+      });
+    }
+  });
+};
+
+
+const reportOutcomeForCreatorTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      const offchain = _offchain || ('cryptosign_report' + outcome_id + '_' + outcome_result);
+      console.log('reportOutcomeForCreatorTransaction');
+      console.log(hid, outcome_result, nonce, _offchain, gasPrice, contract_address, contract_json);
+
+      const contractAddress = contract_address;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
+          from: ownerAddress
+      });
+
+      const txParams = {
+        gasPrice: gasPriceWei,
+        gasLimit: web3.utils.toHex(gasLimit),
+        to: contractAddress,
+        from: ownerAddress,
+        nonce: '0x' + nonce.toString(16),
+        chainId: network_id,
+        data: contract.methods.reportForCreator(hid, outcome_result, web3.utils.fromUtf8(offchain)).encodeABI()
       };
 
       const tx = new ethTx(txParams);
@@ -693,7 +770,7 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
 
       const txParams = {
         gasPrice: gasPriceWei,
-        gasLimit: 350000,
+        gasLimit: web3.utils.toHex(gasLimit),
         to: contractAddress,
         from: ownerAddress,
         nonce: '0x' + nonce.toString(16),
@@ -772,7 +849,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
 
       const txParams = {
         gasPrice: gasPriceWei,
-        gasLimit: 350000,
+        gasLimit: web3.utils.toHex(gasLimit),
         to: contractAddress,
         from: ownerAddress,
         nonce: '0x' + _nonce.toString(16),
@@ -841,6 +918,7 @@ module.exports = {
   submitInitTestDriveTransaction,
   getNonce,
   reportOutcomeTransaction,
+  reportOutcomeForCreatorTransaction,
   resolveOutcomeTransaction,
   submitShakeTransaction,
   submitShakeTestDriveTransaction,

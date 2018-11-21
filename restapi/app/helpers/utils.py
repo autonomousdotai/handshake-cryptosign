@@ -12,8 +12,10 @@ from datetime import datetime
 from flask import g
 
 def is_valid_email(email):
-	if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email) != None:
-		return True
+	if email is not None:
+		email = email.lower()
+		if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email) != None:
+			return True
 	return False
 
 
@@ -104,9 +106,17 @@ def utc_to_local(t):
 	return time.localtime(secs)
 
 
+def current_milli():
+	return int(round(time.time() * 1000))
+
+
 def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p'):
     # '%Y-%m-%d %H:%M:%S'
 	return datetime.fromtimestamp(seconds).strftime(format)
+
+
+def now_to_strftime(format = '%b %d %Y %I:%M:%S %p'):
+	return datetime.now().strftime(format)
 
 
 def is_equal(a, b):
@@ -124,6 +134,6 @@ def render_unsubscribe_url(user_id, passphase):
 	code = hashlib.md5('{}{}'.format(user_id, passphase)).hexdigest()
 	return "ninja.org/unsubscribe?token={}&id={}".format(code, user_id)
 
+
 def render_generate_link(match_id, uid):
 	return "?match={}&ref={}".format(match_id, uid)
-

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 class BaseConfig(object):
 	ENV = 'DEV'
+	BASE_URL = ''
 	BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 	UPLOAD_DIR = os.path.join(BASE_DIR, 'files', 'temp')
 
@@ -32,10 +33,11 @@ class BaseConfig(object):
 	IPFS_REST_HOST = os.environ.get('IPFS_REST_HOST', 'localhost')
 	IPFS_REST_PORT = os.environ.get('IPFS_REST_PORT', '5001')
 
+	# ADMIN
 	PASSPHASE = ''
 	EMAIL = ''
-	AUTONOMOUS_WEB_PASSPHASE = ''
-	ENV = os.getenv('ENV', '')
+	FROM_EMAIL = ''
+	RESOLVER_EMAIL = ''
 
 	FILE_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '/files'
 
@@ -55,16 +57,33 @@ class BaseConfig(object):
 	ERC20_PREDICTION_SMART_CONTRACT = '0x123'
 	ERC20_PREDICTION_JSON = 'PredictionHandshakeWithToken'
 
+	ERC20_TOKEN_REGISTRY_SMART_CONTRACT = '0x123'
+	ERC20_TOKEN_REGISTRY_JSON = 'TokenRegistry'
+
+	# Services
 	FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY', '')
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
 	FCM_SERVICE = os.getenv('FCM_SERVICE', 'http://localhost:8082')
+	MAIL_SERVICE = os.getenv('MAIL_SERVICE', '')
+
+	# Firebase
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
+
+	# GCloud
+	GC_STORAGE_PROJECT_NAME = ''
+	GC_STORAGE_BUCKET = ''
+	GC_STORAGE_FOLDER = ''
+	MAX_CONTENT_LENGTH = 16 * 1024 * 1024 # limit max length of request
 
 	# Algolia
 	ALGOLIA_APPLICATION_ID = os.environ.get('ALGOLIA_APPLICATION_ID', '')
 	ALGOLIA_API_KEY = os.environ.get('ALGOLIA_API_KEY', '')
 	ALGOLIA_INDEX_NAME = os.environ.get('ALGOLIA_INDEX_NAME', '')
+
+	# Recombee
+	RECOMBEE_DB = ""
+	RECOMBEE_KEY = ""
 
 class DevelopmentConfig(BaseConfig):
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
@@ -75,6 +94,7 @@ class TestingConfig(BaseConfig):
 
 
 class StagingConfig(BaseConfig):
+	BASE_URL = ''
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 	REDIS_HOST = ''
 	REDIS_PORT = 6379
@@ -82,15 +102,32 @@ class StagingConfig(BaseConfig):
 	CELERY_BROKER_URL = 'redis://:%s@%s:%s/0' % (REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
 	CELERY_RESULT_BACKEND = 'redis://:%s@%s:%s/0' % (REDIS_PASSWORD, REDIS_HOST, REDIS_PORT)
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
+	
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
 
+	GC_STORAGE_PROJECT_NAME = ''
+	GC_STORAGE_BUCKET = ''
+	GC_STORAGE_FOLDER = ''
+
+	RECOMBEE_DB = ""
+	RECOMBEE_KEY = ""
+
 class ProductionConfig(BaseConfig):
+	BASE_URL = ''
 	SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/cryptosign?charset=utf8'
 	REDIS_HOST = ''
 	REDIS_PORT = 6379
 	CELERY_BROKER_URL = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	CELERY_RESULT_BACKEND = 'redis://%s:%s/0' % (REDIS_HOST, REDIS_PORT)
 	SOLR_SERVICE = os.getenv('SOLR_SERVICE', '')
+
 	FIREBASE_DATABASE_URL = ''
 	FIREBASE_PROJECT_NAME = ''
+
+	GC_STORAGE_PROJECT_NAME = ''
+	GC_STORAGE_BUCKET = ''
+	GC_STORAGE_FOLDER = ''
+
+	RECOMBEE_DB = ""
+	RECOMBEE_KEY = ""

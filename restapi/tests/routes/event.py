@@ -1137,7 +1137,6 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
@@ -1463,7 +1462,6 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
 
         hs = Handshake.find_handshake_by_id(handshake.id)
@@ -1628,7 +1626,6 @@ class TestEventBluePrint(BaseTestCase):
         self.assertEqual(hs1.status, HandshakeStatus['STATUS_DISPUTED'])
 
         hs2 = Handshake.find_handshake_by_id(handshake2.id)
-        print hs2.status
         self.assertEqual(hs2.status, HandshakeStatus['STATUS_INITED'])
 
         s = Shaker.find_shaker_by_id(shaker.id)
@@ -1878,7 +1875,6 @@ class TestEventBluePrint(BaseTestCase):
 
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==outcome.id).all()
         for hs in handshakes:
-            print hs.status
             self.assertEqual(hs.status, HandshakeStatus['STATUS_RESOLVED'])
             shakers = db.session.query(Shaker).filter(Shaker.handshake_id==hs.id).all()
             for shaker in shakers:
@@ -2007,7 +2003,6 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
 
         hs_user88_side1 = Handshake.find_handshake_by_id(handshake_user88_side1.id)
@@ -2017,7 +2012,6 @@ class TestEventBluePrint(BaseTestCase):
         self.assertEqual(hs_user88_side2.status, HandshakeStatus['STATUS_USER_DISPUTED'])
 
         hs_user99 = Handshake.find_handshake_by_id(handshake_user99.id)
-        print hs_user99.status
         self.assertEqual(hs_user99.status, HandshakeStatus['STATUS_INITED'])
 
         s_user88_side2 = Shaker.find_shaker_by_id(shaker_user88_side2.id)
@@ -2057,11 +2051,11 @@ class TestEventBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode())
-            print data
             self.assertTrue(data['status'] == 1)
 
         outcome = Outcome.find_outcome_by_id(outcome.id)
         self.assertEqual(outcome.result, CONST.RESULT_TYPE['REPORT_FAILED'])
+
 
     # def test_reiceive_resolve_event_result_invalid (self):
     #     self.clear_data_before_test()

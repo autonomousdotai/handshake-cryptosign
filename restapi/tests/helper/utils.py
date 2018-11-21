@@ -23,7 +23,7 @@ class TestUtils(BaseTestCase):
         self.assertEqual(actual, result)
 
         actual = is_valid_email('CTHANH@autonomous.nyc')
-        result = False
+        result = True
         self.assertEqual(actual, result)
 
         actual = is_valid_email('phuong1@autonomous.nyc')

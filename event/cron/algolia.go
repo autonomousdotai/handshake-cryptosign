@@ -7,6 +7,7 @@ import (
 )
 
 var algoliaService = &services.AlgoliaService{}
+var recombeeService = &services.RecombeeService{}
 
 // Algolia : struct to handle pushing data
 type Algolia struct {
@@ -34,4 +35,5 @@ func (al *Algolia) ScanAllMatches() {
 
 	// push data to algolia
 	algoliaService.ImportMatches(matches)
+	recombeeService.ImportMatches(matches)
 }

@@ -8,6 +8,7 @@ import requests
 import json
 import app.constants as CONST
 import app.bl.match as match_bl
+import app.bl.outcome as outcome_bl
 
 from decimal import *
 from datetime import datetime
@@ -17,7 +18,7 @@ from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_result_notifcation
+from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result, run_bots
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local, local_to_utc
 
@@ -28,13 +29,10 @@ def save_status_all_bet_which_user_win(user_id, outcome):
 	handshakes = []
 	shakers = []
 	if outcome.result == CONST.RESULT_TYPE['DRAW'] or outcome.result == CONST.RESULT_TYPE['PENDING']:
-		print 'outcome result is {}'.format(outcome.result)
 		return None, None
 
 	handshakes = db.session.query(Handshake).filter(or_(and_(Handshake.status==HandshakeStatus['STATUS_COLLECT_FAILED'], Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result), and_(Handshake.status==HandshakeStatus['STATUS_INITED'], Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result), and_(Handshake.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Handshake.user_id==user_id, Handshake.outcome_id==outcome.id, Handshake.side==outcome.result))).all()
-	print 'handshakes {}'.format(handshakes)
 	shakers = db.session.query(Shaker).filter(or_(and_(Shaker.status==HandshakeStatus['STATUS_COLLECT_FAILED'], Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))), and_(Shaker.status==HandshakeStatus['STATUS_COLLECT_PENDING'], Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))), and_(Shaker.status==HandshakeStatus['STATUS_SHAKER_SHAKED'], Shaker.shaker_id==user_id, Shaker.side==outcome.result, Shaker.handshake_id.in_(db.session.query(Handshake.id).filter(Handshake.outcome_id==outcome.id))))).all()
-	print 'shakers {}'.format(shakers)
 
 	for handshake in handshakes:
 		handshake.bk_status = handshake.status
@@ -107,6 +105,7 @@ def save_refund_state_for_all(user_id, outcome_id):
 
 	return handshakes, shakers
 
+
 def save_disputed_state(outcome_id):
 	handshakes = []
 	shakers = []
@@ -124,6 +123,7 @@ def save_disputed_state(outcome_id):
 
 	db.session.flush()
 	return handshakes, shakers
+
 
 def save_resolve_state_for_outcome(outcome_id):
 	handshakes = []
@@ -145,13 +145,14 @@ def save_resolve_state_for_outcome(outcome_id):
 	db.session.flush()
 	return handshakes, shakers
 
+
 def save_user_disputed_state(handshake, user_id, side, outcome_result):
 	# Update STATUS_USER_DISPUTED
 	# No need to update bk_status
 
 	handshakes = []
 	shakers = []
-	side_arr = [side] if outcome_result != 3 else [1, 2]
+	side_arr = [side] if outcome_result != CONST.RESULT_TYPE['DRAW'] else [CONST.RESULT_TYPE['SUPPORT_WIN'], CONST.RESULT_TYPE['AGAINST_WIN']]
 
 	handshakes = db.session.query(Handshake).filter(Handshake.side.in_(side_arr), Handshake.user_id == user_id, Handshake.outcome_id == handshake.outcome_id).all()
 	for hs in handshakes:
@@ -178,8 +179,6 @@ def has_valid_shaker(handshake):
 
 
 def data_need_set_result_for_outcome(outcome):
-	print 'data_need_set_result_for_outcome --> {}, {}'.format(outcome.id, outcome.result)
-
 	if outcome.result == -1:
 		return None, None
 
@@ -194,6 +193,7 @@ def data_need_set_result_for_outcome(outcome):
 			db.session.flush()
 
 	return handshakes, shakers
+
 
 # when time exceed report time and there is no result or outcome result is draw
 def can_refund(handshake, shaker=None):
@@ -220,6 +220,7 @@ def can_refund(handshake, shaker=None):
 			return True
 	return False
 
+
 def parse_inputs(inputs):
 	offchain = ''
 	hid = ''
@@ -240,6 +241,7 @@ def parse_inputs(inputs):
 
 	return offchain, hid, state, outcome_result
 
+
 def update_amount_for_outcome(outcome_id, user_id, side, outcome_result):
 	side_arr = ', '.join([str(x) for x in ([side] if outcome_result != 3 else [1, 2])])
 
@@ -254,6 +256,7 @@ def update_amount_for_outcome(outcome_id, user_id, side, outcome_result):
 	outcome.total_dispute_amount = (total_amount['total_dispute_amount_m'] if total_amount['total_dispute_amount_m'] is not None else 0) + (total_amount['total_dispute_amount_s'] if total_amount['total_dispute_amount_s'] is not None else 0)
 	outcome.total_amount = (total_amount['total_amount_m'] if total_amount['total_amount_m'] is not None else 0) + (total_amount['total_amount_s'] if total_amount['total_amount_s'] is not None else 0)
 	db.session.flush()
+
 
 def save_handshake_method_for_event(method, inputs):
 	offchain, hid, state, outcome_result = parse_inputs(inputs)
@@ -477,6 +480,9 @@ def save_handshake_for_event(event_name, inputs):
 
 			db.session.flush()
 
+			if outcome_bl.is_outcome_created_by_user(outcome):
+				send_email_event_verification_success.delay(outcome.match_id, outcome.created_user_id)
+
 		return None, None
 
 	elif event_name == '__report':
@@ -486,16 +492,14 @@ def save_handshake_for_event(event_name, inputs):
 		outcome_id, result = offchain.replace('report', '').split('_')
 		if outcome_id is None or result is None:
 			return None, None
-		print 'outcome_id {}, result {}'.format(outcome_id, result)
+		
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-
 		if len(result) > -1 and outcome is not None:
 			result = int(result)
 			outcome.result = result
 			db.session.flush()
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			db.session.commit()
-			send_email_result_notifcation.delay(outcome.match_id, is_resolve=False)
+			send_result_email(outcome.id)
 			return handshakes, shakers
 
 		return None, None
@@ -505,11 +509,10 @@ def save_handshake_for_event(event_name, inputs):
 		offchain = offchain.replace('s', '')
 		shaker = Shaker.find_shaker_by_id(int(offchain))
 		if shaker is not None:
-			print 'shaker = {}'.format(shaker)
 			shaker.status = HandshakeStatus['STATUS_SHAKER_SHAKED']
 			shaker.bk_status = HandshakeStatus['STATUS_SHAKER_SHAKED']
-
 			db.session.flush()
+
 			# Add shuriken
 			if shaker.free_bet == 1:
 				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['FREE'])
@@ -518,6 +521,7 @@ def save_handshake_for_event(event_name, inputs):
 
 			arr = []
 			arr.append(shaker)
+
 			return None, arr
 
 		return None, None
@@ -564,6 +568,9 @@ def save_handshake_for_event(event_name, inputs):
 			else:
 				add_shuriken.delay(handshake.user_id, CONST.SHURIKEN_TYPE['REAL'])
 
+			# Run bots
+			run_bots.delay(handshake.outcome_id)
+
 			return arr, None
 
 		return None, None
@@ -605,7 +612,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			user_id = handshake.user_id
 		
-		if handshake is None:
+		if handshake is None or user_id is None:
 			return None, None
 		
 		return save_refund_state_for_all(user_id, handshake.outcome_id)
@@ -639,11 +646,10 @@ def save_handshake_for_event(event_name, inputs):
 			user_id = handshake.user_id
 			side = handshake.side
 
-		if handshake is None:
+		if handshake is None or user_id is None:
 			return None, None
 
 		outcome = Outcome.find_outcome_by_id(handshake.outcome_id)
-
 		if outcome is None:
 			return None, None
 
@@ -655,7 +661,7 @@ def save_handshake_for_event(event_name, inputs):
 			handshake_dispute, shaker_dispute = save_disputed_state(outcome.id)
 
 			# Send mail to admin
-			send_dispute_email.delay(outcome.id, outcome.name)
+			send_dispute_email.delay(outcome.match.name)
 
 		else:
 			handshake_dispute, shaker_dispute = save_user_disputed_state(handshake, user_id, side, outcome_result)
@@ -672,8 +678,6 @@ def save_handshake_for_event(event_name, inputs):
 		# 1: SUPPORT, 2: OPPOSE, 3: DRAW: It's depended on smart contract definition.
 		if len(result) == 0 or int(result) not in [1, 2, 3]:
 			return None, None
-
-		print 'outcome_id {}, result {}'.format(outcome_id, result)
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 
 		if outcome is None:
@@ -684,8 +688,7 @@ def save_handshake_for_event(event_name, inputs):
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
-		db.session.commit()
-		send_email_result_notifcation.delay(outcome.match_id, is_resolve=True)
+		send_result_email(outcome.outcome_id)
 		return handshakes, shakers
 
 
@@ -694,6 +697,7 @@ def verify_taker_odds(taker_odds, maker_odds):
 		return True
 
 	return False
+
 
 def find_all_matched_handshakes(side, odds, outcome_id, amount, maker):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
@@ -741,19 +745,40 @@ def find_all_joined_handshakes(side, outcome_id):
 		return handshakes
 	return []
 
+
 def find_available_support_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
 		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
-		return handshakes
+		if handshakes is not None and len(handshakes) > 0:
+			return handshakes
+
+		default_handshake = Handshake(
+								amount=Decimal('0'),
+								odds=Decimal('2.0')
+							)
+		response = []
+		response.append(default_handshake)
+		return response	
+
 	return []
 
 
 def find_available_against_handshakes(outcome_id):
 	outcome = db.session.query(Outcome).filter(and_(Outcome.result==CONST.RESULT_TYPE['PENDING'], Outcome.id==outcome_id)).first()
 	if outcome is not None:
-		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
-		return handshakes
+		handshakes = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('amount')).filter(and_(Handshake.side==CONST.SIDE_TYPE['OPPOSE'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0, Handshake.status==CONST.Handshake['STATUS_INITED'])).group_by(Handshake.odds).order_by(Handshake.odds.desc()).all()
+		if handshakes is not None and len(handshakes) > 0:
+			return handshakes
+
+		default_handshake = Handshake(
+								amount=Decimal('0'),
+								odds=Decimal('2.0')
+							)
+		response = []
+		response.append(default_handshake)
+		return response
+
 	return []
 
 
@@ -865,8 +890,38 @@ def get_total_real_bets():
 
 
 def all_master_accounts():
+	"""
+	" wallet addresses of admin
+	"""
 	data_file_path = os.path.abspath(os.path.dirname(__file__)) + '/master-accounts.json'
 	accounts = []
 	with open(data_file_path, 'r') as f:
 		accounts = json.load(f)
 	return accounts
+
+
+def send_result_email(outcome_id):
+	"""
+	" Send result email to all users play in.
+	"""
+	total_users = all_users_play_in_outcome(outcome_id)
+	for item in total_users:
+		if hasattr(item, 'user_id') and item.user_id is not None:
+			send_email_match_result.delay(outcome_id, item.user_id, item.side, item.outcome_result)
+
+
+def all_users_play_in_outcome(outcome_id):
+	# get all users who played in ended outcome.
+	hs_user = db.session.query(Handshake.user_id.label('user_id'), Outcome.result.label('outcome_result'), Handshake.side.label('side'))\
+		.filter(Outcome.result > 0)\
+		.filter(Handshake.outcome_id == outcome_id)\
+		.group_by(Handshake.user_id, Outcome.result, Handshake.side)
+
+	s_user = db.session.query(Shaker.shaker_id.label("user_id"), Outcome.result.label('outcome_result'), Shaker.side.label('side'))\
+		.filter(Outcome.result > 0)\
+		.filter(Handshake.outcome_id == outcome_id)\
+		.filter(Shaker.handshake_id == Handshake.id)\
+		.group_by(Shaker.shaker_id, Outcome.result, Shaker.side)
+
+	total_users = hs_user.union_all(s_user).group_by('user_id', 'outcome_result', 'side').all()
+	return total_users

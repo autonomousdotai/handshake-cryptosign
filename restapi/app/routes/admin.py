@@ -8,21 +8,22 @@ import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.admin as admin_bl
 import app.bl.contract as contract_bl
+import app.bl.storage as storage_bl
 import logging
 
 from flask import Blueprint, request, g
 from app import db, sg, s3
 from datetime import datetime
-from app.helpers.utils import local_to_utc
 from sqlalchemy import and_
 
 from app.models import Match, Outcome, Task, Handshake, Shaker, Contract, Source, Token
+from app.helpers.utils import local_to_utc
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import admin_required, dev_required
 from app.helpers.response import response_ok, response_error
 from app.constants import Handshake as HandshakeStatus
 from flask_jwt_extended import jwt_required
-from app.tasks import update_status_feed
+from app.tasks import update_status_feed, upload_file_google_storage, send_email_event_verification_failed
 
 
 admin_routes = Blueprint('admin', __name__)
@@ -33,7 +34,9 @@ logfile = logging.getLogger('file')
 @admin_required
 def create_market():
 	"""
-	" Admin create new market
+	" Admin create new markets
+	"	- Based on fixtures.json
+	"	- image file should be stored at /files/temp
 	"""
 	try:
 		fixtures_path = os.path.abspath(os.path.dirname(__file__)) + '/fixtures.json'
@@ -41,7 +44,6 @@ def create_market():
 		with open(fixtures_path, 'r') as f:
 			data = json.load(f)
 
-		matches = []
 		if 'fixtures' in data:
 			fixtures = data['fixtures']
 			for item in fixtures:
@@ -75,9 +77,9 @@ def create_market():
 							reportTime=item['reportTime'],
 							disputeTime=item['disputeTime']
 						)
-				matches.append(match)
 				db.session.add(match)
 				db.session.flush()
+
 				for o in item['outcomes']:
 					outcome = Outcome(
 						name=o.get('name', ''),
@@ -101,6 +103,10 @@ def create_market():
 				db.session.add(task)
 				db.session.flush()
 
+				# Handle upload file to Google Storage
+				if item['image'] is not None and len(item['image']) > 0:
+					upload_file_google_storage.delay(match.id, storage_bl.formalize_filename(os.path.basename(item['image'])), item['image'])
+
 		db.session.commit()
 		return response_ok()
 	except Exception, ex:
@@ -108,78 +114,35 @@ def create_market():
 		return response_error(ex.message)
 
 
-@admin_routes.route('/approve_market/<int:market_id>', methods=['POST'])
-@admin_required
-def approve_market(market_id):
+@admin_routes.route('/review-market/<int:market_id>', methods=['POST'])
+@jwt_required
+def review_market(market_id):
 	"""
-	" Admin approve user market and create it then.
+	" Admin approve/reject user market.
 	"""
 	try:
 		data = request.json
 		outcome_id = data.get("outcome_id", -1)
+		status = data.get("status", CONST.OUTCOME_STATUS['APPROVED'])
 
 		match = None
 		if outcome_id == -1:
 			match = Match.find_match_by_id(market_id)
 			if match is not None:
 				for o in match.outcomes:
-					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
-						o.approved = CONST.OUTCOME_STATUS['APPROVED']
+					if o.approved == CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
+						o.approved = status
 						db.session.flush()
 
-				task = admin_bl.add_create_market_task(match)
-				if task is not None:				
-					db.session.add(task)
-					db.session.flush()
-			else:
-				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
-
-		else:
-			outcome = db.session.query(Outcome).filter(and_(Outcome.id==outcome_id, Outcome.match_id==market_id)).first()
-			if outcome is None:
-				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-
-			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
-				outcome.approved = CONST.OUTCOME_STATUS['APPROVED']
-				db.session.flush()
-
-				match = outcome.match
-				task = admin_bl.add_create_market_task(match)
-				if task is not None:				
-					db.session.add(task)
-					db.session.flush()
-
-			else:
-				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
-
-		db.session.commit()
-		return response_ok(match.to_json())
-	except Exception, ex:
-		db.session.rollback()
-		return response_error(ex.message)
-
-
-
-@admin_routes.route('/reject_market/<int:market_id>', methods=['POST'])
-@admin_required
-def reject_market(market_id):
-	"""
-	" Admin reject user market.
-	"""
-	try:
-		data = request.json
-		outcome_id = data.get("outcome_id", -1)
-
-		match = None
-		if outcome_id == -1:
-			match = Match.find_match_by_id(market_id)
-			if match is not None:
-				for o in match.outcomes:
-					if o.approved != CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
-						o.approved = CONST.OUTCOME_STATUS['REJECTED']
+				if status == CONST.OUTCOME_STATUS['APPROVED']:
+					task = admin_bl.add_create_market_task(match)
+					if task is not None:				
+						db.session.add(task)
 						db.session.flush()
-
-				print 'send rejected email here!!!'
+					else:
+						return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+				else:
+					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
 			else:
 				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
@@ -189,15 +152,24 @@ def reject_market(market_id):
 			if outcome is None:
 				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
-			if outcome.approved != CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
-				outcome.approved = CONST.OUTCOME_STATUS['REJECTED']
+			if outcome.approved == CONST.OUTCOME_STATUS['PENDING'] and outcome.hid is None:
+				outcome.approved = status
 				db.session.flush()
 
 				match = outcome.match
-				print 'send rejected email here!!!'
+				if status == CONST.OUTCOME_STATUS['APPROVED']:
+					task = admin_bl.add_create_market_task(match)
+					if task is not None:				
+						db.session.add(task)
+						db.session.flush()
+					else:
+						return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+						
+				else:
+					send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
 			else:
-				return response_error(MESSAGE.MATCH_HAS_BEEN_APPROVED, CODE.MATCH_HAS_BEEN_APPROVED)
+				return response_error(MESSAGE.MATCH_HAS_BEEN_REVIEWED, CODE.MATCH_HAS_BEEN_REVIEWED)
 
 		db.session.commit()
 		return response_ok(match.to_json())
@@ -266,13 +238,20 @@ def matches_need_report_by_admin():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 
-		matches_by_admin = db.session.query(Match).filter(Match.date < seconds, Match.reportTime >= seconds, Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.created_user_id.is_(None), Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+		matches_by_admin = db.session.query(Match).filter(\
+														Match.date < seconds, \
+														Match.reportTime >= seconds, \
+														Match.id.in_(db.session.query(Outcome.match_id).filter(and_(\
+																													Outcome.result == -1, \
+																													Outcome.hid != None))\
+																										.group_by(Outcome.match_id))) \
+													.order_by(Match.date.asc(), Match.index.desc()).all()
 
 		for match in matches_by_admin:
 			match_json = match.to_json()
 			arr_outcomes = []
 			for outcome in match.outcomes:
-				if outcome.created_user_id is None:
+				if admin_bl.can_admin_report_this_outcome(outcome):
 					arr_outcomes.append(outcome.to_json())
 
 			if len(arr_outcomes) > 0:
@@ -294,7 +273,7 @@ def matches_need_resolve_by_admin():
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
 
-		matches_disputed = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['DISPUTED'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.index.desc(), Match.date.asc()).all()
+		matches_disputed = db.session.query(Match).filter(Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == CONST.RESULT_TYPE['DISPUTED'], Outcome.hid != None)).group_by(Outcome.match_id))).order_by(Match.date.asc(), Match.index.desc()).all()
 
 		for match in matches_disputed:
 			match_json = match.to_json()
@@ -326,17 +305,20 @@ def report_match(match_id):
 	try:
 		t = datetime.now().timetuple()
 		seconds = local_to_utc(t)
-		disputed = False
+
 		data = request.json
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		match = db.session.query(Match).filter(Match.date < seconds, Match.id == match_id).first()
+		match = db.session.query(Match).filter(\
+											Match.date < seconds,
+											Match.id == match_id).first()
 		if match is not None:
 			result = data['result']
 			if result is None:
 				return response_error(MESSAGE.MATCH_RESULT_EMPTY)
 
+			disputed = False
 			for item in result:
 				if 'side' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID_RESULT)
@@ -344,7 +326,7 @@ def report_match(match_id):
 				if 'outcome_id' not in item:
 					return response_error(MESSAGE.OUTCOME_INVALID)
 
-				outcome = Outcome.find_outcome_by_id(item['outcome_id'])
+				outcome = db.session.query(Outcome).filter(Outcome.id==item['outcome_id'], Outcome.match_id==match.id).first()
 				if outcome is not None:
 					message, code = match_bl.is_able_to_set_result_for_outcome(outcome)
 					if message is not None and code is not None:
@@ -367,6 +349,8 @@ def report_match(match_id):
 				report['hid'] = outcome.hid
 				report['outcome_id'] = outcome.id
 				report['outcome_result'] = item['side']
+				report['creator_wallet_address'] = match.creator_wallet_address
+				report['grant_permission'] = match.grant_permission
 
 				task = Task(
 					task_type=CONST.TASK_TYPE['REAL_BET'],

@@ -1,5 +1,5 @@
 from flask import Flask, g, redirect, request
-from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services, mail_services, algolia
+from app.core import db, jwt, sg, s3, configure_app, wm, fcm, ipfs, firebase, dropbox_services, mail_services, algolia, gc_storage_client, recombee_client
 from flask_cors import CORS
 from models import User
 from app.helpers.response import response_error
@@ -56,6 +56,10 @@ dropbox_services.init_app(app)
 mail_services.init_app(app)
 # init algolia
 algolia.init_app(app)
+# init google coud_storage
+gc_storage_client.init_app(app)
+# init google coud_storage
+recombee_client.init_app(app)
 
 @app.before_request
 def before_request():
@@ -70,6 +74,8 @@ def before_request():
 	g.EMAIL = app.config.get('EMAIL')
 	g.PASSPHASE = app.config.get('PASSPHASE')
 	g.ENV = app.config.get('ENV')
+	g.UPLOAD_DIR = app.config.get('UPLOAD_DIR')
+	g.BASE_URL = app.config.get('BASE_URL')
 
 	# SmartContract
 	g.PREDICTION_SMART_CONTRACT = app.config.get('PREDICTION_SMART_CONTRACT')

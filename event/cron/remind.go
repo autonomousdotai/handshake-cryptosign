@@ -1,12 +1,10 @@
 package cron
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 
 	"github.com/ninjadotorg/handshake-cryptosign/event/config"
-	"github.com/ninjadotorg/handshake-cryptosign/event/daos"
 	"github.com/ninjadotorg/handshake-cryptosign/event/models"
 	"github.com/ninjadotorg/handshake-cryptosign/event/services"
 )
@@ -30,39 +28,23 @@ func (r *Remind) RemindUser() {
 		log.Println("Remind user error", err.Error())
 		return
 	}
+
 	if len(matches) == 0 {
 		log.Println("Remind user: don't have any matches")
 	} else {
-		log.Println("matches: ", len(matches))
 		for index := 0; index < len(matches); index++ {
 			log.Println("-- Match: ", matches[index].ID)
-			outcomes, err := outcomeDAO.GetAllOutcomesWithNoResult(matches[index].ID)
-			fmt.Println(outcomes)
-			if err == nil {
-				m := make(map[int]bool)
-				for i := 0; i < len(outcomes); i++ {
-					o := outcomes[i]
-					if m[o.CreatedUserID] == false {
-						go r.fireNotification(o, matches[index])
-						m[o.CreatedUserID] = true
-					}
+			outcomes := matches[index].Outcomes
+			m := make(map[int]bool)
+			for i := 0; i < len(outcomes); i++ {
+				o := outcomes[i]
+				if m[o.CreatedUserID] == false {
+					go r.fireNotification(o, matches[index])
+					m[o.CreatedUserID] = true
 				}
 			}
 		}
 	}
-
-	disputedOutcomes, err := outcomeDAO.GetAllOutcomesWithDisputeResult()
-	log.Println("disputedOutcomes: ", len(disputedOutcomes))
-	if err == nil {
-		for i := 0; i < len(disputedOutcomes); i++ {
-			o := disputedOutcomes[i]
-			match, err := matchDAO.GetMatchByOutcomeID(o.OutcomeID)
-			if err == nil {
-				go r.fireNotification(o, match)
-			}
-		}
-	}
-
 }
 
 func (r *Remind) fireNotification(outcome models.Outcome, match models.Match) {
@@ -70,39 +52,24 @@ func (r *Remind) fireNotification(outcome models.Outcome, match models.Match) {
 	var h services.HookService
 
 	conf := config.GetConfig()
-	var email string
-	if outcome.CreatedUserID == 0 || outcome.Result == -3 {
-		email = conf.GetString("email")
-	} else {
-		var d services.DispatcherService
-		var u daos.UserDAO
-		user, err := u.FindUserByID(outcome.CreatedUserID)
-		if err != nil {
-			fmt.Println("cannot find user")
-			return
-		}
-		result, data := d.UserInfo(user.Payload)
-		if result {
-			email = data["email"].(string)
-		} else {
-			fmt.Println("cannot get user info")
-			return
-		}
-	}
+	email := conf.GetString("email")
+	chain := conf.GetInt("blockchainId")
 
 	if outcome.Result == -3 {
 		m.SendEmailForDisputeOutcome(email, match, outcome.Name)
+		if chain != 1 /* mainnet */ {
+			h.PostSlack("[Stag] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your resolve!")
+		} else {
+			h.PostSlack("[Production] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your resolve!")
+		}
 	} else {
 		m.SendEmailForReportingOutcome(email, match, outcome.Name)
+		if chain != 1 /* mainnet */ {
+			h.PostSlack("[Stag] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your report!")
+		} else {
+			h.PostSlack("[Production] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your report!")
+		}
 	}
-
-	chain := conf.GetInt("blockchainId")
-	if chain == 4 {
-		h.PostSlack("[Stag] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your attention!")
-	} else {
-		h.PostSlack("[Production] Match: " + match.Name + ", Outcome: \"" + outcome.Name + "\" need your attention!")
-	}
-
 }
 
 func inArray(val interface{}, array interface{}) (exists bool, index int) {

@@ -13,3 +13,11 @@ hookEndpoint: http://localhost:5000
 email: abc@ninja.org
 slack_channel: xxx
 slack_token: xxx
+algolia:
+  application_id: xxxx
+  api_key: xxxx
+  index_name: xxx
+recombee:
+  endpoint: https://rapi.recombee.com
+  db_name: abc
+  key: abc123

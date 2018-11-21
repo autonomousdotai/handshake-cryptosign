@@ -3,24 +3,28 @@
     {
       "homeTeamName": "",
       "awayTeamName": "",
-      "date": 1535788800,
-      "reportTime": 1535875200,
-      "disputeTime": 1535877000,
+      "date": 1541232000,
+      "reportTime": 1541318400,
+      "disputeTime": 1541320200,
       "homeTeamCode": "",
       "homeTeamFlag": "",
       "awayTeamCode": "",
       "awayTeamFlag": "",
       "public":1,
-      "name": "[Asiad 2018] Viet Nam vs UAE",
+      "name": "Will Vietnam qualify in Worlcup 2022 at Qatar?",
       "source_id": 1,
       "category_id": 4,
       "market_fee": 1,
       "token_id": null,
+      "event_name": "Worlcup 2022 at Qatar",
+      "outcome_name": "Vietnam qualify",
+      "image": "/Users/trongdth/Autonomous/handshake-cryptosign/restapi/app/files/temp/dribbble-k33cryp7-iphonex.png",
       "outcomes": [
         {
-          "name": "Viet Nam wins"
+          "name": "YES"
         }
       ]
     }
   ]
 }
+

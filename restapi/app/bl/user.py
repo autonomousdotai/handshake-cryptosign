@@ -2,17 +2,15 @@ from flask import g
 from sqlalchemy import and_, func, cast, asc, desc, bindparam
 from datetime import date
 from app import db
-from app.models import User, Handshake, Shaker, Outcome
+from app.models import User, Handshake, Shaker, Outcome, Redeem
 from app.constants import Handshake as HandshakeStatus
-from app.core import mail_services
 from datetime import datetime
 from app.helpers.utils import local_to_utc
-from app.helpers.mail_content import render_email_notify_result_content
 
-import app.constants as CONST
-import app.bl.outcome as outcome_bl
 import time
 import requests
+import app.constants as CONST
+import app.bl.outcome as outcome_bl
 
 
 def get_last_user_free_bet(user_id):
@@ -51,65 +49,54 @@ def is_able_to_create_new_free_bet(user):
 	return can_free_bet, last_bet_status
 
 
-def check_email_existed_with_dispatcher(app_config, payload):
-	# Subscribe email
-	endpoint = '{}/user/profile'.format(app_config["DISPATCHER_SERVICE_ENDPOINT"])
+def is_able_to_have_redeem_code(user):
+	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id).all()
+	if redeems is not None and len(redeems) > 0:
+		return False
+
+	return True
+
+
+def claim_redeem_code_for_user(user):
+	if is_able_to_have_redeem_code(user):
+		redeems = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(2).all()
+		if redeems is not None and len(redeems) == 2:
+			for re in redeems:
+				re.reserved_id = user.id
+				db.session.flush()
+			return True, redeems[0].code, redeems[1].code
+	return False, None, None
+
+
+def check_email_existed_with_dispatcher(payload):
+	endpoint = '{}/user/profile'.format(g.DISPATCHER_SERVICE_ENDPOINT)
 	data_headers = {
 		"Payload": payload
 	}
 	res = requests.get(endpoint, headers=data_headers)
 	if res.status_code > 400:
-		print "Subscribe email fail: {}".format(res)
 		return False
 	data_response = res.json()
 	if data_response['status'] == 0:
-		print "Subscribe email fail with status: 0"
 		return False
 	if data_response['data'] is None:
-		print "Subscribe email fail with data is none"
 		return False
 	return data_response['data']['email']
 
 
-def handle_mail_notif_by_user(app_config, MAXIMUM_FREE_BET, user_id, match):
-	# Get all bets by outcome and user_id
-	# bindparam("is_hs", 0)
-	hs_bets = db.session.query(Handshake.user_id.label("user_id"), Handshake.free_bet, Handshake.status, Handshake.side, Handshake.from_address, Outcome.id.label("outcome_id"), Outcome.name.label("outcome_name"), Outcome.result.label("outcome_result"))\
-		.filter(Handshake.outcome_id == Outcome.id)\
-		.filter(Outcome.match_id == match.id)\
-		.filter(Handshake.user_id == user_id)
-	s_bets = db.session.query(Shaker.shaker_id.label("user_id"), Shaker.free_bet, Shaker.status, Shaker.side, Shaker.from_address, Outcome.id.label("outcome_id"), Outcome.name.label("outcome_name"), Outcome.result.label("outcome_result"))\
-		.filter(Shaker.handshake_id == Handshake.id)\
-		.filter(Handshake.outcome_id == Outcome.id)\
-		.filter(Outcome.match_id == match.id)\
-		.filter(Shaker.shaker_id == user_id)
-	bets = s_bets.union_all(hs_bets).order_by(Outcome.id.desc()).all()
-
-	if bets is None or len(bets) == 0:
-		return False
-
-	user = User.find_user_with_id(user_id)
+def is_user_subscribed_but_still_not_have_redeem_code(user, be_able_to_have_redeem_code):
 	if user is None:
 		return False
-	email = user.email
-	free_bet_available = MAXIMUM_FREE_BET - user.free_bet
-	if user.email is None:
-		email_exist = check_email_existed_with_dispatcher(app_config, user.payload)
-		if email_exist is False:
-			return False
-		user.email = email_exist
-		email = email_exist
-		db.session.commit()
-	if user.is_subscribe == 1:
-		email_body = render_email_notify_result_content(app_config, bets, free_bet_available)
-		if email_body is None or email_body is False or email_body == "":
-			return False
-		mail_services.send(email, app_config['FROM_EMAIL'], "The results of [{}] are live!".format(match.name), email_body) 
-	else:
-		print("send_email_result_notifcation => User did not subscribe: {}", user)
-		return False
-	return True
+
+	if user.email is not None and len(user.email) > 0 and user.is_subscribe == 1 and be_able_to_have_redeem_code:
+		return True
+
+	return False
 
 
+def is_email_subscribed(email):
+	user = db.session.query(User).filter(User.email==email).first()
+	if user is not None:
+		return True
 
-
+	return False

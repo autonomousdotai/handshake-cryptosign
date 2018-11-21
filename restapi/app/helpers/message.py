@@ -15,6 +15,8 @@ class MESSAGE(object):
 	CANNOT_ROLLBACK = 'Cannot rollback this handshake!'
 	CANNOT_VERIFY_EMAIL = 'Cannot verification email!'
 	CANNOT_UNSUBSCRIBE_EMAIL = 'Cannot unsubscribe email!'
+	FILE_TOO_LARGE = 'File too large!'
+	EMAIL_ALREADY_SUBSCRIBED = 'This email has been subscribed already!'
 
 	# OUTCOME
 	OUTCOME_INVALID = 'Please check your outcome id'
@@ -28,7 +30,7 @@ class MESSAGE(object):
 	MATCH_RESULT_EMPTY = 'Match result is empty. Please try again.'
 	MATCH_CANNOT_SET_RESULT = 'The report time is exceed!'
 	MATCH_INVALID_TIME = 'Please double check your closing time, report time and dispute time'
-	MATCH_HAS_BEEN_APPROVED = 'This event has been approved already!'
+	MATCH_HAS_BEEN_REVIEWED = 'This event has been reviewed already!'
 
 	# USER
 	USER_INVALID_EMAIL = 'Please enter a valid email address.'
@@ -108,6 +110,8 @@ class CODE(object):
 	WATTING_TIME_FREE_BET = '1053'
 	CANNOT_VERIFY_EMAIL = '1054'
 	CANNOT_UNSUBSCRIBE_EMAIL = '1055'
+	FILE_TOO_LARGE = '1064'
+	EMAIL_ALREADY_SUBSCRIBED = '1065'
 
 	# OUTCOME
 	OUTCOME_INVALID = '1008'												
@@ -121,7 +125,7 @@ class CODE(object):
 	MATCH_RESULT_EMPTY = '1012'												
 	MATCH_CANNOT_SET_RESULT = '1013'	
 	MATCH_INVALID_TIME = '1043'			
-	MATCH_HAS_BEEN_APPROVED = '1061'						
+	MATCH_HAS_BEEN_REVIEWED = '1061'	
 
 	# USER
 	USER_INVALID_EMAIL = '1014'												

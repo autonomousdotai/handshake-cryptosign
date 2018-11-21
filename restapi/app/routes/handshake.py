@@ -25,10 +25,8 @@ from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed, run_bots
-from datetime import datetime
+from app.tasks import update_feed
 from datetime import *
-from app.helpers.utils import local_to_utc
 
 
 handshake_routes = Blueprint('handshake', __name__)
@@ -51,7 +49,7 @@ def handshakes():
 		
 		match = Match.find_match_by_id(outcome.match_id)
 		supports = handshake_bl.find_available_support_handshakes(outcome_id)
-		against = handshake_bl.find_available_against_handshakes(outcome_id)
+		againsts = handshake_bl.find_available_against_handshakes(outcome_id)
 
 		total = Decimal('0', 2)
 
@@ -62,15 +60,15 @@ def handshakes():
 		arr_supports = []
 		for support in supports:
 			data = {}
-			data['odds'] = support[0]
-			data['amount'] = support[1]
+			data['odds'] = support.odds
+			data['amount'] = support.amount
 			arr_supports.append(data)
 
 		arr_against = []
-		for against in against:
+		for against in againsts:
 			data = {}
-			data['odds'] = against[0]
-			data['amount'] = against[1]
+			data['odds'] = against.odds
+			data['amount'] = against.amount
 			arr_against.append(data)
 
 		response = {
@@ -109,6 +107,9 @@ def detail(id):
 @handshake_routes.route('/init', methods=['POST'])
 @login_required
 def init():
+	"""
+	" User plays bet in binary event.
+	"""
 	try:
 		from_request = request.headers.get('Request-From', 'mobile')
 		uid = int(request.headers['Uid'])
@@ -122,8 +123,9 @@ def init():
 		hs_type = data.get('type', -1)
 		extra_data = data.get('extra_data', '')
 		description = data.get('description', '')
-		outcome_id = data.get('outcome_id')
-		odds = Decimal(data.get('odds')).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN)
+		outcome_id = data.get('outcome_id', -1)
+		match_id = data.get('match_id', -1)
+		odds = Decimal(data.get('odds', '2')).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN)
 		amount = Decimal(data.get('amount'))
 		currency = data.get('currency', 'ETH')
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
@@ -137,14 +139,24 @@ def init():
 		if len(from_address) == 0:
 			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
-		outcome = Outcome.find_outcome_by_id(outcome_id)
+		# check valid outcome or not
+		outcome = None
+		if match_id == -1:
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+		else:
+			match = Match.find_match_by_id(match_id)
+			if match is not None and len(match.outcomes.all()) > 0:
+				outcome = match.outcomes[0]
+
 		if outcome is None:
 			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		if outcome.result != CONST.RESULT_TYPE['PENDING']:
 			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
-		# make sure user cannot call free-bet in ETH
+		outcome_id = outcome.id
+
+		# make sure user cannot call free-bet in ERC20
 		if free_bet == 1:
 			token = Token.find_token_by_id(outcome.token_id)
 			if token is not None:
@@ -156,12 +168,6 @@ def init():
 		contract = Contract.find_contract_by_id(outcome.contract_id)
 		if contract is None:
 			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
-
-
-		master_accounts = handshake_bl.all_master_accounts()
-		
-		# check bot is turned on or off
-		bot_setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['BOT'])
 
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
@@ -190,9 +196,6 @@ def init():
 			db.session.commit()
 
 			update_feed.delay(handshake.id)
-
-			if bot_setting is not None and bot_setting.status == 1 and from_address not in master_accounts:
-				run_bots.delay(outcome_id)
 
 			# response data
 			hs_json = handshake.to_json()
@@ -273,7 +276,7 @@ def init():
 				shaker_json['offchain'] = CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 's' + str(shaker.id)
 				arr_hs.append(shaker_json)
 
-			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > CONST.CRYPTOSIGN_MINIMUM_MONEY:
+			if shaker_amount.quantize(Decimal('.00000000000000001'), rounding=ROUND_DOWN) > Decimal(CONST.CRYPTOSIGN_MINIMUM_MONEY):
 				handshake = Handshake(
 					hs_type=hs_type,
 					extra_data=extra_data,
@@ -308,9 +311,6 @@ def init():
 			logfile.debug("Uid -> {}, json --> {}".format(uid, arr_hs))
 
 			handshake_bl.update_handshakes_feed(hs_feed, sk_feed)
-
-			if bot_setting is not None and bot_setting.status == 1 and from_address not in master_accounts:
-				run_bots.delay(outcome_id)
 
 		# make response
 		response = {
@@ -414,32 +414,37 @@ def create_free_bet():
 		if data is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		can_free_bet, _ = user_bl.is_able_to_create_new_free_bet(user)
-		if can_free_bet is not True:
-			return response_error(MESSAGE.USER_RECEIVED_FREE_BET_ALREADY, CODE.USER_RECEIVED_FREE_BET_ALREADY)
-
 		redeem = data.get('redeem', '')
-		odds = Decimal(data.get('odds'))
+		match_id = data.get('match_id', -1)
+		odds = Decimal(data.get('odds', Decimal('2')))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-
-		outcome_id = data.get('outcome_id')
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None:
-			return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-
-		elif outcome.result != -1:
-			return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
 
 		# check valid redeem or not
 		r = Redeem.find_redeem_by_code(redeem)
 		if r is None:
 			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
 		else:
-			if r.used_user > 0:
+			if r.used_user > 0 or r.reserved_id != uid:
 				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 			r.used_user = uid
 			db.session.flush()
+
+		outcome_id = data.get('outcome_id')
+		outcome = None
+		if match_id == -1:
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+			if outcome is None:
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+			elif outcome.result != -1:
+				return response_error(MESSAGE.OUTCOME_HAS_RESULT, CODE.OUTCOME_HAS_RESULT)
+
+		else:
+			match = Match.find_match_by_id(match_id)
+			if match is not None and len(match.outcomes.all()) > 0:
+				outcome = match.outcomes[0]
+			else:
+				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
 
 		# check erc20 token or not
 		token = Token.find_token_by_id(outcome.token_id)
@@ -473,7 +478,7 @@ def create_free_bet():
 		db.session.commit()
 
 		# this is for frontend
-		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
+		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome.id, amount, uid)
 		response = {}
 		if len(handshakes) == 0:
 			response['match'] = 0
@@ -770,7 +775,6 @@ def check_free_bet():
 		return response_ok(response)
 
 	except Exception, ex:
-		db.session.rollback()
 		return response_error(ex.message)
 
 
@@ -778,17 +782,32 @@ def check_free_bet():
 @login_required
 def check_redeem_code():
 	"""
-	" User be able to use redeem code only 1 time
+	" At the first time, check user be able to use redeem or not
 	"""
 	try:
 		uid = int(request.headers['Uid'])
-		r = Redeem.find_redeem_by_user(uid)
-		if r is None:
-			return response_ok()
+		user = User.find_user_with_id(uid)
 
-		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
+		result = user_bl.is_able_to_have_redeem_code(user)
+
+		is_subscribe = 1 if user.email is not None and len(user.email) > 0 and user.is_subscribe == 1 else 0
+		if user_bl.is_user_subscribed_but_still_not_have_redeem_code(user, result):
+			# claim redeem code
+			result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
+			if result:
+				subscribe_email_to_claim_redeem_code.delay(user.email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
+		response = {
+			"is_subscribe": is_subscribe,
+			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT,
+			"redeem": int(result)
+		}
+
+		db.session.commit()
+		return response_ok(response)
 
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)
 
 
@@ -1023,4 +1042,3 @@ def dispute():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
-

@@ -72,9 +72,7 @@ const unInitFreeBet = (params) => {
 };
 
 /**
- * 
- * @param {number} params.odds
- * @param {number} params.outcome_id
+ * @param {number} params.match_id
  * @param {number} params.side
  * @param {number} params.hid
  * @param {number} params.match_date
@@ -103,8 +101,7 @@ const initBet = (params, task, isFreeBet) => {
 			const dataRequest = {
 				type: params.type || 3,
 				extra_data: utils.gennerateExtraData(params.match_date, params.match_name, params.outcome_name),
-				outcome_id: params.outcome_id,
-				odds: params.odds, // TODO: check value 
+				match_id: params.match_id,
 				amount: betAmount,
 				currency: 'ETH',
 				side: params.side,
@@ -154,19 +151,32 @@ const resolveReport = (params) => {
 /**
  * @param {string} params.offchain
  * @param {number} params.hid
+ * @param {number} params.outcome_id
  * @param {number} params.outcome_result
- * @param {string} params.offchain
+ * @param {string} params.creator_wallet_address
+ * @param {number} params.grant_permission
  */
 
 const report = (params) => {
 	return new Promise((resolve, reject) => {
-		return resolve([{
-			contract_method: 'reportOutcomeTransaction',
-			hid: params.hid,
-			outcome_result: params.outcome_result,
-			outcome_id: params.outcome_id,
-			offchain: params.offchain
-		}])
+		if (params.creator_wallet_address !== null && params.creator_wallet_address !== '' && params.grant_permission == 1) {
+			return resolve([{
+				contract_method: 'reportOutcomeForCreatorTransaction',
+				hid: params.hid,
+				outcome_result: params.outcome_result,
+				outcome_id: params.outcome_id,
+				offchain: params.offchain
+			}])
+
+		} else {
+			return resolve([{
+				contract_method: 'reportOutcomeTransaction',
+				hid: params.hid,
+				outcome_result: params.outcome_result,
+				outcome_id: params.outcome_id,
+				offchain: params.offchain
+			}])
+		}
 	});
 };
 

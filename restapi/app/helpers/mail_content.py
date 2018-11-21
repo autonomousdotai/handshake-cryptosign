@@ -6,153 +6,154 @@ import json
 import time
 import app.constants as CONST
 
+
+from flask import g
+from app.models import Match
 from datetime import datetime
-from app.helpers.utils import render_unsubscribe_url, second_to_strftime
+from app.helpers.utils import render_unsubscribe_url, second_to_strftime, render_generate_link
 from app.constants import Handshake as HandshakeStatus
 
-def render_email_subscribe_content(app_config, user_id):
-    passphase = app_config["PASSPHASE"]
+def render_email_subscribe_content(match_id):
     return """
-        Hey Ninja!<br/>
-        You’ve successfully made a prediction. Go you!<br/>
-        We’ll email you the result, the minute it comes in.
-        Enjoy daydreaming about all of the things you’ll (hopefully) do with your winnings.<br/>
-        Stay cool.
-        Ninja<br/>
+        Hey Ninja!<br/><br/>
+        You’ve successfully made a prediction: <br/><br/>
+        {}
+        Great work! We’ll email you the result as soon as it’s been reported.<br/><br/>
+        Enjoy daydreaming about all of the things you’ll (hopefully) do with your winnings.<br/><br/>
+        Stay cool.<br/><br/>
+        {}
+    """.format(render_match_content(match_id), render_signature_content())
 
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
+
+def render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2):
+    return """
+        Hey Ninja!<br/><br/>
+        Please use the following redeem codes to claim your free bets: <br/><br/>
+        <b>Code 1:</b> {}  (0.03ETH)<br/>
+        <b>Code 2:</b> {}  (0.03ETH)<br/><br/>
+        Just redeem the code on the bet screen and you're good to go!.<br/><br/>
+        You look like a winner!<br/><br/>
+        {}
+    """.format(redeem_code_1, redeem_code_2, render_signature_content())
 
 
-def render_row_table_content(outcome_name, side, result):
-    text = ""
-    if result == "DRAW":
-        text = "So... it’s a DRAW."
-    elif result == "WIN":
-        text = "You won! Please wait to withdraw your winnings."
-    elif result == "LOSE":
-        text = "You lost. Better luck next time."
+def render_result_email_content(match_name, outcome_result, user_choice):
+    return """
+        Hey Ninja,<br/><br/>
+        {}
+        <br/>
+        {}
+    """.format(render_event_result(match_name, outcome_result, user_choice), render_signature_content())
+
+
+def render_event_result(match_name, outcome_result, user_choice):
+    if outcome_result == CONST.RESULT_TYPE['DRAW']:
+        return render_event_not_happen_content(match_name)
+    
+    elif outcome_result == user_choice:
+        return render_choose_correct_side_content(match_name, user_choice)
+    
     else:
-        text = "Unfortunately, this time you weren't matched. "
+        return render_choose_wrong_side_content(match_name, user_choice)
 
+
+def render_event_not_happen_content(match_name):
     return """
-    <tr>
-        <td>{}</td>
-        <td>{}</td>
-        <td>{}</td>
-    </tr>
-    """.format(outcome_name, "Support" if side == 1 else "Oppose", text)
+        <font style="font-size:20px"> Sorry... </font><br/>
+        The event {} did not go ahead as scheduled. Our apologies for this; we’ll make sure your wager is refunded and will appear on the ‘Me’ page.<br/><br/>
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Don’t worry, there are plenty of other predictions to make: <br/><br/>
+        Play NOW at <a href="http://www.ninja.org/pex">http://www.ninja.org/pex</a> on your mobile, <br/>
+        Or why not try your hand at creating a market? <a href="https://ninja.org/create-pex">https://ninja.org/create-pex</a><br/>
+    """.format(match_name, 'YES' if user_choice == 1 else 'NO')
 
 
-def render_footer_email_content(app_config, user_id, free_bet_available):
-    passphase = app_config["PASSPHASE"]
-    html = ""
-
-    if free_bet_available > 0:
-        # html = "You've unlocked {} free bets!  <br/>".format(free_bet_available)
-        html += """Please go <a href="http://ninja.org/me">Ninja Prediction</a> on your mobile to claim them. <br/>"""
-
-    return html + """
-        <a href="http://ninja.org/prediction">PLAY NOW</a><br/>
-        <br> Don't like these emails? <a href="{}">Unsubscribe</a>.
-    """.format(render_unsubscribe_url(user_id, passphase))
+def render_choose_correct_side_content(match_name, user_choice):
+    return """
+        The results are in, so let’s see how you did… <br/><br/>
+        <font style="font-size:20px"> Congratulations! </font><br/>
+        You correctly predicted {} With the result being {}. <br/>
+        Nice work! You’re on a roll... what will you predict next? <br/>
+        Check out the available markets NOW at <a href="http://www.ninja.org/pex">http://www.ninja.org/pex</a> on your mobile!<br/>
+    """.format(match_name, 'YES' if user_choice == 1 else 'NO')
 
 
-def render_email_notify_result_content(app_config, items, free_bet_available):
-    content = """
-    <html>
-    <head>
-    <style>
-        #bet_result {
-            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
-            border-collapse: collapse;
-            width: 100%;
-        }
+def render_choose_wrong_side_content(match_name, user_choice):
+    return """
+        The results are in, so let’s see how you did… <br/><br/>
+        <font style="font-size:20px"> Bad luck... </font><br/>
+        The event {} closed and the result was {}, but you predicted {}. Sorry but this time, your prediction was wrong.  <br/>
+        Don’t worry, there are plenty of other predictions to make: <br/><br/>
+        Play NOW at <a href="http://www.ninja.org/pex">http://www.ninja.org/pex</a> on your mobile, <br/>
+        Or why not try your hand at creating a market? <a href="https://ninja.org/create-pex">https://ninja.org/create-pex</a><br/>
 
-        #bet_result td, #bet_result th {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
+    """.format(match_name, 'YES' if user_choice == 2 else 'NO', 'YES' if user_choice == 1 else 'NO')
 
-        #bet_result tr:nth-child(even){background-color: #f2f2f2;}
 
-        #bet_result tr:hover {background-color: #ddd;}
+def render_verification_success_mail_content(match_id, uid):
+    return """
+        Hey Ninja,<br/><br/>
+        Good news; your event (below) has been verified and will now appear on the exchange! <br/><br/>
+        {}
+        <b>Invite your friends to bet on this market by sharing the direct link below:</b><br/>
+        {}<br/><br/>
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Good luck!<br/>
+        {}
+    """.format(render_match_content(match_id), "{}prediction/{}".format(g.BASE_URL, render_generate_link(match_id, uid)), render_signature_content())
 
-        #bet_result th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            text-align: left;
-        }
-    </style>
-    </head>
-    <body>
-    Hey Ninja!<br/>
-    The results are in!<br/>
-    Let’s see how you did?<br/>
 
-    <table id="bet_result">
-        <tr>
-            <th>Outcome</th>
-            <th>Side</th>
-            <th>Result</th>
-        </tr>
+def render_verification_failed_mail_content(match_id):
+    return """
+        Hey Ninja,<br/><br/>
+        There was an issue with the below event and we weren’t able to list it on the exchange. <br/>
+        {}
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Good luck!<br/>
+        {}
+    """.format(render_match_content(match_id), render_signature_content())
+
+
+def render_create_new_market_mail_content(match_id):
+    return """
+        Hey Ninja,<br/><br/>
+        Congratulations; your event was created successfully!  <br/>
+        We’ll send you an email shortly to let you know if your market was approved, before adding it to the exchange. <br/>
+        <b>Note:</b> Due to the approval process, it can take up to one hour for new events to appear on the exchange. <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the meantime, please review the event details below: <br/>
+        {}
+        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
+        Good luck!<br/>
+        {}
+    """.format(render_match_content(match_id), render_signature_content())
+
+
+def render_signature_content():
+    return """
+        Ninja.org<br/>
+        Join us on Telegram: <a href="http://t.me/ninja_org">http://t.me/ninja_org</a><br/>
+        <div>
+            <span style="">Find us on </span>
+            <a href="https://www.facebook.com/ninjadotorg"><img height="30" width="30" style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/facbook.png" alt="Facebook"></a>
+            <a href="https://twitter.com/ninjadotorg"><img height="30" width="30" style="vertical-align:middle" src="https://storage.googleapis.com/cryptosign/images/email_flows/twitter.png" alt="Twitter"></a>
+        </div>
     """
 
-    for bet in items:
-        if bet.status != HandshakeStatus['STATUS_PENDING']:
-            if bet.free_bet == 1:
-                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
-                else:
-                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
-                    else:
-                        if bet.outcome_result == bet.side:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
-                        else:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
-            else:
-                if bet.status == HandshakeStatus['STATUS_MAKER_SHOULD_UNINIT']:
-                    content += render_row_table_content(bet.outcome_name, bet.side, "NOT_MATCH")
-                else:
-                    if bet.outcome_result == CONST.RESULT_TYPE["DRAW"]:
-                        content += render_row_table_content(bet.outcome_name, bet.side, "DRAW")
-                    else:
-                        if bet.outcome_result == bet.side:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "WIN")
-                        else:
-                            content += render_row_table_content(bet.outcome_name, bet.side, "LOSE")
 
-    content += "</table></body></html>"
-    content += render_footer_email_content(app_config, items[0].user_id, free_bet_available)
-    return content
-
-
-def new_market_mail_content(match, link):
+def render_match_content(match_id):
+    match = Match.find_match_by_id(match_id)
     closing_time = second_to_strftime(match.date) 
     report_time = second_to_strftime(match.reportTime)
     dispute_time = second_to_strftime(match.disputeTime)
-
     return """
-        Hey Ninja,<br/><br/>
-        Congrats! <br/>
-        You’ve successfully created an event. <br/>
-        Please review all your event info below: <br/>
         <div>
-            <blockquote style="margin:0 0 0 40px;border:none;padding:0px">
+            <blockquote style="margin:0 0 15px 15px;border:none;padding:0px">
                 <div>
-                    Event name: {}<br/>
-                    When your event ends: {} (UTC)<br/>
-                    Report event results before: {} (UTC)<br/>
-                    Event closes (if there’s no dispute): {} (UTC)<br/>
+                    <b>Event name:</b> {}<br/>
+                    <b>Your event ends:</b> {} (UTC)<br/>
+                    <b>Report results before:</b> {} (UTC)<br/>
+                    <b>Event closes:</b> {} (UTC) (if there’s no dispute)<br/>
                 </div>
             </blockquote>
         </div>
-        Tell your friends: <a href="http://ninja.org/prediction{}">ninja.org/prediction{}</a><br/>
-        Good luck!<br/>
-        <div>
-            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/facebook.svg" alt="FACEBOOK">
-            <img src="https://d2q7nqismduvva.cloudfront.net/static/images/icon-svg/common/share/twitter.svg" alt="TWITTER">
-        </div>
-        If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact support@ninja.org.
-    """.format(match.name, closing_time, report_time, dispute_time, link, link)
+    """.format(match.name, closing_time, report_time, dispute_time)

@@ -14,7 +14,7 @@ type MatchDAO struct{}
 func (m MatchDAO) GetAllIncomingMatches() ([]models.Match, error) {
 	matches := []models.Match{}
 	sec := time.Now().Unix()
-	err := models.Database().Where("match.date < ? and ? < match.date", sec+(60*15), sec).Find(&matches).Error
+	err := models.Database().Preload("Outcomes").Where("match.date < ? and ? < match.date and id in ?", sec+(60*15), sec, models.Database().Table("outcome").Select("match_id").Where("outcome.hid >= 0").SubQuery()).Find(&matches).Error
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

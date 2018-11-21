@@ -1,13 +1,12 @@
 from flask import Flask
-from app.factory import make_celery
-from app.core import db, configure_app, firebase, dropbox_services, mail_services
-from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User
-from app.helpers.utils import utc_to_local, render_generate_link
-from app.helpers.mail_content import render_email_subscribe_content, new_market_mail_content
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from decimal import *
 from datetime import datetime
-from requests_toolbelt.multipart.encoder import MultipartEncoder
+from app.factory import make_celery
+from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
+from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User, Setting
+from app.helpers.utils import utc_to_local, is_valid_email
+from app.helpers.mail_content import *
 from app.constants import Handshake as HandshakeStatus
 
 import sys
@@ -17,8 +16,7 @@ import simplejson as json
 import os, hashlib
 import requests
 import random
-import app.bl.task as task_bl
-import app.bl.user as user_bl
+import app.bl.storage as storage_bl
 
 app = Flask(__name__)
 # config app
@@ -29,6 +27,7 @@ db.init_app(app)
 
 # init firebase database
 firebase.init_app(app)
+mail_services.init_app(app)
 
 # celery
 celery = make_celery(app)
@@ -157,137 +156,18 @@ def add_shuriken(user_id, shuriken_type):
 
 
 @celery.task()
-def run_bots(outcome_id):
-	try:
-		# find all handshakes of this outcome on both 2 sides: support and oppose
-		# if there is a handshake which is not bot and amount < 0.1 then match it
-		# otherwise
-		# get last odds of this outcome and create handshake with that odds
-
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome is None or outcome.result != -1 or outcome.hid is None:
-			return
-		
-		contract = Contract.find_contract_by_id(outcome.contract_id)
-		print '---------------------------------'
-		print '--------- run bots --------------'
-		arr_support_hs = db.session.query(Handshake).filter(and_(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0)).all()
-		arr_oppose_hs = db.session.query(Handshake).filter(Handshake.status==CONST.Handshake['STATUS_INITED'], Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id, Handshake.remaining_amount>0).all()
-
-		support_odds = ['1.2', '1.5', '1.6']
-		oppose_odds = ['2.5', '2.6', '2.7']
-		o = {}
-
-		if task_bl.is_able_to_create_new_task(outcome_id):
-			# processing support side
-			if len(arr_support_hs) == 0:
-				hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['SUPPORT'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
-				result = True
-
-				if hs is not None:
-					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(utc_to_local(hs.date_created.timetuple())) 
-					if n - ds <= 300: #5 minutes
-						result = False
-				if result:
-					if hs is not None:
-						odds = '{}'.format(hs.odds)
-					else:
-						odds = random.choice(support_odds)
-
-					match = Match.find_match_by_id(outcome.match_id)
-					o['odds'] = odds
-					o['side'] = CONST.SIDE_TYPE['SUPPORT']
-					o['outcome_id'] = outcome_id
-					o['hid'] = outcome.hid
-					o['match_date'] = match.date
-					o['match_name'] = match.name
-					o['outcome_name'] = outcome.name
-
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(o),
-						action=CONST.TASK_ACTION['INIT'],
-						status=-1,
-						contract_address=contract.contract_address,
-						contract_json=contract.json_name
-					)
-					db.session.add(task)
-					db.session.flush()
-
-					print 'Add support odds --> {}'.format(task.to_json())
-				
-
-			# processing against side
-			if len(arr_oppose_hs) == 0:
-				hs = db.session.query(Handshake).filter(and_(Handshake.side==CONST.SIDE_TYPE['AGAINST'], Handshake.outcome_id==outcome_id)).order_by(Handshake.date_created.desc()).first()
-				result = True
-
-				if hs is not None:
-					n = time.mktime(datetime.now().timetuple())
-					ds = time.mktime(utc_to_local(hs.date_created.timetuple()))
-					if n - ds <= 300: #5 minutes
-						result = False
-					
-				if result:
-					if hs is not None:
-						odds = '{}'.format(hs.odds)
-					else:
-						odds = random.choice(oppose_odds)
-
-					match = Match.find_match_by_id(outcome.match_id)
-					o['odds'] = odds
-					o['side'] = CONST.SIDE_TYPE['AGAINST']
-					o['outcome_id'] = outcome_id
-					o['hid'] = outcome.hid
-					o['match_date'] = match.date
-					o['match_name'] = match.name
-					o['outcome_name'] = outcome.name
-
-					task = Task(
-						task_type=CONST.TASK_TYPE['REAL_BET'],
-						data=json.dumps(o),
-						action=CONST.TASK_ACTION['INIT'],
-						status=-1,
-						contract_address=contract.contract_address,
-						contract_json=contract.json_name
-					)
-					db.session.add(task)
-					db.session.flush()
-
-					print 'Add against odds --> {}'.format(task.to_json())
-		print '---------------------------------'
-		db.session.commit()
-
-	except Exception as e:
-		db.session.rollback()
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("run_bots=>",exc_type, fname, exc_tb.tb_lineno)
-
-
-@celery.task()
-def send_dispute_email(outcome_id, outcome_name):
+def send_dispute_email(match_name):
+	"""
+	" Send email to admin in order to resolve this outcome
+	"""
 	try:
 		# Send mail to admin
-		endpoint = '{}'.format(app.config['MAIL_SERVICE'])
-		multipart_form_data = MultipartEncoder(
-			fields= {
-				'body': 'Outcome name: {}. Outcome id: {}'.format(outcome_name, outcome_id),
-				'subject': 'Dispute',
-				'to[]': app.config['RESOLVER_EMAIL'],
-				'from': app.config['FROM_EMAIL']
-			}
-		)
-		res = requests.post(endpoint, data=multipart_form_data, headers={'Content-Type': multipart_form_data.content_type})
-
-		if res.status_code > 400:
-			print('Send mail is failed.')
-		print 'Send mail result: {}'.format(res.json())
+		mail_services.send(app.config['RESOLVER_EMAIL'], app.config['FROM_EMAIL'], 'Event {} need your resolve!'.format(match_name), '' )
 
 	except Exception as e:
-		print("Send mail notification fail!")
-		print(str(e))
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("send_dispute_email=>",exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
@@ -304,7 +184,10 @@ def log_responsed_time():
 
 
 @celery.task()
-def subscribe_email_dispatcher(email, fcm, payload, uid):
+def subscribe_email(email, match_id, fcm, payload, uid):
+	"""
+	" send this email when user subscribe email. We need send to dispatcher in silent mode (isNeedEmail=0)
+	"""
 	try:
 		# Call to Dispatcher endpoint verification email
 		endpoint = '{}/user/verification/email/start?email={}&isNeedEmail=0'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
@@ -327,77 +210,172 @@ def subscribe_email_dispatcher(email, fcm, payload, uid):
 			return False
 
 		# Send email
-		email_body = render_email_subscribe_content(app, uid)
-		mail_services.send(email, app.config['FROM_EMAIL'], "Welcome to Ninja", email_body)
+		email_body = render_email_subscribe_content(match_id)
+		mail_services.send(email, app.config['FROM_EMAIL'], "You made a prediction", email_body)
 
 		return True
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_subscribe_email_dispatcher_time=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_email_time=>",exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
-def send_email_result_notifcation(match_id, is_resolve):
+def subscribe_email_to_claim_redeem_code(email, redeem_code_1, redeem_code_2, fcm, payload, uid):
+	"""
+	" send this email when user subscribe email. We need send to dispatcher in silent mode (isNeedEmail=0)
+	"""
 	try:
+		# Call to Dispatcher endpoint verification email
+		endpoint = '{}/user/verification/email/start?email={}&isNeedEmail=0'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
+		data_headers = {
+			"Fcm-Token": fcm,
+			"Payload": payload,
+			"Uid": uid
+		}
 
-		# Check event's outcomes had reported 
-		outcomes = db.session.query(Outcome).filter(Outcome.match_id == match_id).all()
-		outcomes_reported = list(filter(lambda x: x.result > 0, outcomes))
-		if len(outcomes_reported) != len(outcomes):
-			print("Some of outcomes had not report")
+		res = requests.post(endpoint, headers=data_headers, json={}, timeout=10) # timeout: 10s
+
+		if res.status_code > 400:
+			print "Verify email fail: {}".format(res)
 			return False
 
-		match = Match.find_match_by_id(match_id)
-		if match is None:
-			print("send_email_result_notifcation => Invalid match")
+		data = res.json()
+
+		if data['status'] == 0:
+			print "Verify email fail: {}".format(data)
 			return False
 
-		# Get users betted by event
-		hs_user = db.session.query(Handshake.user_id.label("user_id"))\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Outcome.match_id == match_id)\
-			.group_by(Handshake.user_id)
+		# Send email
+		email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Your free bets", email_body)
 
-		s_user = db.session.query(Shaker.shaker_id.label("user_id"))\
-			.filter(Shaker.handshake_id == Handshake.id)\
-			.filter(Handshake.outcome_id == Outcome.id)\
-			.filter(Outcome.match_id == match_id)\
-			.group_by(Shaker.shaker_id)
-
-		total_users = hs_user.union_all(s_user).group_by('user_id').all()
-		for item in total_users:
-			if hasattr(item, 'user_id') and item.user_id is not None:
-				user_bl.handle_mail_notif_by_user(app.config, CONST.MAXIMUM_FREE_BET, item.user_id, match)
+		return True
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_mail_result_notify=>", exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_email_time=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def subscribe_notification_email(email, fcm, payload, uid):
+	"""
+	" send this email when user input email in notification section on create market page. We need send to dispatcher in normal mode
+	"""
+	try:
+		# Call to Dispatcher endpoint verification email
+		endpoint = '{}/user/verification/email/start?email={}'.format(app.config["DISPATCHER_SERVICE_ENDPOINT"], email)
+		data_headers = {
+			"Fcm-Token": fcm,
+			"Payload": payload,
+			"Uid": uid
+		}
+
+		res = requests.post(endpoint, headers=data_headers, json={}, timeout=10) # timeout: 10s
+
+		if res.status_code > 400:
+			print "Verify email fail: {}".format(res)
+			return False
+
+		data = res.json()
+		if data['status'] == 0:
+			print "Verify email fail: {}".format(data)
+			return False
+
+		return True
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_subscribe_notification_email_time=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_email_match_result(outcome_id, uid, user_choice, outcome_result):
+	"""
+	" We need pass outcome_result param 'cause it still not commit to database
+	"""
+	try:
+		outcome = Outcome.find_outcome_by_id(outcome_id)
+		if outcome is None:
+			print("send_email_match_result => Invalid outcome")
+			return False
+
+		user = User.find_user_with_id(uid)
+		if user is not None and is_valid_email(user.email):
+			# Send email
+			email_body = render_result_email_content(outcome.match.name, outcome_result, user_choice)
+			mail_services.send(user.email, app.config['FROM_EMAIL'], "The results of {} are in!".format(outcome.match.name), email_body)
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("send_email_match_result=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
 def send_email_create_market(match_id, uid):
+	"""
+	" Inform to user the event is created and waiting for review.
+	"""
 	try:
-		if uid is None:
-			return False
 		user = User.find_user_with_id(uid)
-		if user is None or user.is_subscribe == 0 or user.email is None or user.email == "":
+		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
 			print("User is invalid")
 			return False
 		
 		match = Match.find_match_by_id(match_id)
-		link = render_generate_link(match.id, uid)
-		body = new_market_mail_content(match, link)
-		subject = """Yout event "{}" has been successfully created.""".format(match.name)
-		# Send email
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, body)
+		subject = """Your event "{}" was created successfully""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_create_new_market_mail_content(match_id))
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_email_create_market=>", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_email_event_verification_failed(match_id, uid):
+	"""
+	" Inform to user the event was rejected by admin
+	"""
+	try:
+		user = User.find_user_with_id(uid)
+		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
+			print("User is invalid")
+			return False
+
+		match = Match.find_match_by_id(match_id)
+		subject = """Your event "{}" was rejected""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_content(match_id))
+		
+	except expression as identifier:
+		xc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_email_event_verification_success(match_id, uid):
+	"""
+	" Inform to user the event was approved and showed on feed.
+	"""
+	try:
+		user = User.find_user_with_id(uid)
+		if user is None or user.is_subscribe == 0 or is_valid_email(user.email) is False:
+			print("User is invalid")
+			return False
+
+		match = Match.find_match_by_id(match_id)
+		subject = """Your event "{}" was verified""".format(match.name)
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(match.id, user.id))
+		
+	except expression as identifier:
+		xc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()
@@ -434,3 +412,139 @@ def update_status_feed(_id, status):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def upload_file_google_storage(match_id, image_name, saved_path):
+	try:
+		image_crop_path = None
+		image_source_path = saved_path
+		if storage_bl.validate_extension(image_name, CONST.CROP_ALLOWED_EXTENSIONS):
+			image_source_path, image_crop_path = storage_bl.handle_crop_image(image_name, saved_path)
+
+		match = Match.find_match_by_id(match_id)
+		if match is None:
+			return False
+
+		result_upload = gc_storage_client.upload_to_storage(app.config['GC_STORAGE_BUCKET'], image_crop_path if image_crop_path is not None else image_source_path, app.config['GC_STORAGE_FOLDER'], image_name)
+		if result_upload is False:
+			return None
+		
+		storage_bl.delete_file(image_source_path)
+		if image_crop_path is not None:
+			storage_bl.delete_file(image_crop_path)
+
+		image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], app.config['GC_STORAGE_FOLDER'], image_name)
+		match = Match.find_match_by_id(match_id)
+		match.image_url = image_url
+		db.session.flush()
+		db.session.commit()
+
+	except Exception as e:
+		db.session.rollback()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("upload_file_google_storage => ", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def recombee_sync_user_data(user_id, data=[], timestamp=""):
+	try:
+		recombee_client.sync_user_data(user_id, data, timestamp)
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("recombee_sync_user_data => ", exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def run_bots(outcome_id):
+	"""
+	" Run bots after user play bets
+	"""
+	try:
+		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['BOT'])
+		if setting is not None and setting.status == 1:
+			# get master accounts
+			data_file_path = os.path.join(app.config['BASE_DIR'], 'bl') + '/master-accounts.json'
+			accounts = []
+			with open(data_file_path, 'r') as f:
+				accounts = json.load(f)
+
+			outcome = Outcome.find_outcome_by_id(outcome_id)
+			if outcome is None or outcome.hid is None:
+				return False
+
+			contract = Contract.find_contract_by_id(outcome.contract_id)
+			if contract is None:
+				return False
+
+			# get all support handshakes need to be matched
+			support = db.session.query(func.sum(Handshake.remaining_amount).label('support_amount'))\
+										.filter(and_(Handshake.outcome_id==outcome_id,\
+													Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
+													Handshake.remaining_amount > 0, \
+													~Handshake.from_address.in_(accounts), \
+													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+
+			# get all oppose handshakes need to be matched
+			oppose = db.session.query(func.sum(Handshake.remaining_amount).label('oppose_amount'))\
+										.filter(and_(Handshake.outcome_id==outcome_id,\
+													Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
+													Handshake.remaining_amount > 0, \
+													~Handshake.from_address.in_(accounts), \
+													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+
+			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
+			# add bot task match with support side
+			o = {}
+			if support[0] is not None and support[0].support_amount > 0:
+				support_amount = str(support[0].support_amount)
+				o['odds'] = '2.0'	
+				o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
+				o['side'] = CONST.SIDE_TYPE['OPPOSE']	
+				o['outcome_id'] = outcome_id	
+				o['hid'] = outcome.hid	
+				o['match_date'] = outcome.match.date	
+				o['match_name'] = outcome.match.name	
+				o['outcome_name'] = outcome.name
+				task = Task(	
+					task_type=CONST.TASK_TYPE['REAL_BET'],	
+					data=json.dumps(o),	
+					action=CONST.TASK_ACTION['INIT'],	
+					status=-1,	
+					contract_address=contract.contract_address,	
+					contract_json=contract.json_name	
+				)	
+				db.session.add(task)	
+				db.session.flush()	
+
+
+			# add bot task match with oppose side
+			if oppose[0] is not None and oppose[0].oppose_amount > 0:
+				oppose_amount = str(oppose[0].oppose_amount)
+				o['odds'] = '2.0'	
+				o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
+				o['side'] = CONST.SIDE_TYPE['SUPPORT']	
+				o['outcome_id'] = outcome_id	
+				o['hid'] = outcome.hid	
+				o['match_date'] = outcome.match.date	
+				o['match_name'] = outcome.match.name	
+				o['outcome_name'] = outcome.name
+				task = Task(	
+					task_type=CONST.TASK_TYPE['REAL_BET'],	
+					data=json.dumps(o),	
+					action=CONST.TASK_ACTION['INIT'],	
+					status=-1,	
+					contract_address=contract.contract_address,	
+					contract_json=contract.json_name	
+				)	
+				db.session.add(task)	
+				db.session.flush()	
+
+			db.session.commit()
+	except Exception as e:
+		db.session.rollback()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("run_bots => ", exc_type, fname, exc_tb.tb_lineno)

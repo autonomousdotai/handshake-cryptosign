@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from sqlalchemy.event import listen
 from app import db
+from app.core import slack_service
 from app.models.base import BaseModel
 
 class Match(BaseModel):
@@ -50,3 +52,11 @@ class Match(BaseModel):
 
 	def __repr__(self):
 		return '<match {}, {}, {}>'.format(self.id, self.homeTeamName, self.awayTeamName)
+
+
+def remind_review_market(mapper, connection, target):
+	if target.created_user_id is not None and target.created_user_id > 0:
+		message = '{} - match id: {}'.format(target.name, target.id)
+		slack_service.send_message(message)
+
+listen(Match, 'after_insert', remind_review_market)

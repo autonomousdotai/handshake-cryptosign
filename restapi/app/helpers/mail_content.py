@@ -120,7 +120,7 @@ def render_create_new_market_mail_content(match_id):
         Congratulations; your event was created successfully!  <br/>
         We’ll send you an email shortly to let you know if your market was approved, before adding it to the exchange. <br/>
         <b>Note:</b> Due to the approval process, it can take up to one hour for new events to appear on the exchange. <br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the meantime, please review the event details below: <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the meantime, please review the event details below: <br/><br/>
         {}
         If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
         Good luck!<br/>

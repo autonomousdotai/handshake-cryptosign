@@ -25,7 +25,7 @@ from app.helpers.utils import is_equal, local_to_utc
 from app import db
 from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
 from app.constants import Handshake as HandshakeStatus
-from app.tasks import update_feed
+from app.tasks import update_feed, subscribe_email_to_claim_redeem_code
 from datetime import *
 
 
@@ -798,6 +798,7 @@ def check_redeem_code():
 				subscribe_email_to_claim_redeem_code.delay(user.email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
 		response = {
+			"is_user_disable_popup": user.is_user_disable_popup,
 			"is_subscribe": is_subscribe,
 			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT,
 			"redeem": int(result)

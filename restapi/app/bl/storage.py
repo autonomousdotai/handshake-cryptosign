@@ -22,6 +22,7 @@ def handle_upload_file(file):
     file.save(saved_path)
     return file_name, saved_path
 
+
 def handle_crop_image(image_name, saved_path):
     try:
         im = Image.open(saved_path)
@@ -41,6 +42,7 @@ def handle_crop_image(image_name, saved_path):
         crop_saved_path = saved_path.replace(image_name, "crop_{}".format(image_name))
         crop_img.save(crop_saved_path)
         return saved_path, crop_saved_path
+        
     except Exception as ex:
         print(str(ex))
         return ex

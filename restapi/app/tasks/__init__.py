@@ -351,7 +351,7 @@ def send_email_event_verification_failed(match_id, uid):
 		subject = """Your event "{}" was rejected""".format(match.name)
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_content(match_id))
 		
-	except expression as identifier:
+	except Exception as identifier:
 		xc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
@@ -372,7 +372,7 @@ def send_email_event_verification_success(match_id, uid):
 		subject = """Your event "{}" was verified""".format(match.name)
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(match.id, user.id))
 		
-	except expression as identifier:
+	except Exception as identifier:
 		xc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
@@ -435,9 +435,7 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 			storage_bl.delete_file(image_crop_path)
 
 		image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], app.config['GC_STORAGE_FOLDER'], image_name)
-		match = Match.find_match_by_id(match_id)
 		match.image_url = image_url
-		db.session.flush()
 		db.session.commit()
 
 	except Exception as e:

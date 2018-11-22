@@ -42,6 +42,9 @@ def add():
 @redeem_routes.route('/check', methods=['POST'])
 @login_required
 def check_redeem():
+	"""
+	" Check the redeem code is valid or not
+	"""
 	try:
 		uid = int(request.headers['Uid'])
 		data = request.json
@@ -55,10 +58,9 @@ def check_redeem():
 		response = {
 			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT
 		}
-		r = db.session.query(Redeem).filter(Redeem.code==redeem, Redeem.reserved_id==uid).all()
+		r = db.session.query(Redeem).filter(Redeem.code==redeem, Redeem.reserved_id==uid, Redeem.used_user==0).all()
 		if r is not None and len(r) > 0:
 			return response_ok(response)
-
 		
 		return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 	except Exception, ex:

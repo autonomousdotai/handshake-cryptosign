@@ -69,12 +69,16 @@ def user_subscribe():
 		if 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
 
+		if user_bl.is_email_subscribed(data['email']):
+			return response_error(MESSAGE.EMAIL_ALREADY_SUBSCRIBED, CODE.EMAIL_ALREADY_SUBSCRIBED)
+
 		match = Match.find_match_by_id(data.get('match_id', -1))
 		email = data["email"]
 		uid = request.headers["Uid"]
 
 		user = User.find_user_with_id(uid)
 		user.email = email
+		user.is_user_disable_popup = 0
 		user.is_subscribe = 1
 		db.session.flush()
 
@@ -85,6 +89,25 @@ def user_subscribe():
 		elif match is not None:
 			subscribe_email.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
+		db.session.commit()
+		return response_ok()
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@user_routes.route('/cancel-subscribe-popup', methods=['GET'])
+@login_required
+def user_cancel_subscribe_popup():
+	"""
+	" User clicks cancel button when subscribe email's popup appears
+	"""
+	try:
+		uid = int(request.headers['Uid'])
+		user = User.find_user_with_id(uid)
+
+		user.is_user_disable_popup = 1
 		db.session.commit()
 		return response_ok()
 
@@ -113,6 +136,7 @@ def user_accept_notification():
 		user = User.find_user_with_id(uid)
 		user.email = email
 		user.is_subscribe = 1
+		user.is_user_disable_popup = 0
 		db.session.flush()
 
 		# send email

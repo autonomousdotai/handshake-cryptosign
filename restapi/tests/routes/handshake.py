@@ -112,6 +112,14 @@ class TestHandshakeBluePrint(BaseTestCase):
             outcome.contract_id=contract.id
             db.session.commit()
 
+        r = Redeem.find_redeem_by_code('123abcd')
+        if r is None:
+            r = Redeem(
+                code='123abcd'
+            )
+            db.session.add(r)
+            db.session.commit()
+
 
     def clear_data_before_test(self):
         # delete master user
@@ -1285,7 +1293,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             )
             db.session.add(redeem)
         else:
-            redeem.used_user=None
+            redeem.used_user = None
+            redeem.reserved_id = 99
+        
         db.session.commit()
         arr_hs.append(redeem)
 
@@ -2057,7 +2067,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             )
             db.session.add(redeem)
         else:
-            redeem.used_user=None
+            redeem.reserved_id = 100
+            redeem.used_user = None
+        
         db.session.commit()    
         arr_hs.append(redeem)
 

@@ -50,8 +50,8 @@ def is_able_to_create_new_free_bet(user):
 
 
 def is_able_to_have_redeem_code(user):
-	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id).all()
-	if redeems is not None and len(redeems) > 0:
+	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.used_user==user.id).all()
+	if redeems is not None and len(redeems) >= 2:
 		return False
 
 	return True
@@ -89,6 +89,17 @@ def is_user_subscribed_but_still_not_have_redeem_code(user, be_able_to_have_rede
 		return False
 
 	if user.email is not None and len(user.email) > 0 and user.is_subscribe == 1 and be_able_to_have_redeem_code:
+		return True
+
+	return False
+
+
+def is_email_subscribed(email):
+	if email is None:
+		return False
+		
+	user = db.session.query(User).filter(User.email==email).first()
+	if user is not None:
 		return True
 
 	return False

@@ -14,6 +14,7 @@ from app.extensions.mail_service import MailService
 from app.extensions.algolia import Algolia
 from app.extensions.gc_storage import GoogleCloudStorage
 from app.extensions.recombee import Recombee
+from app.extensions.slack import SlackService
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -28,6 +29,7 @@ mail_services = MailService()
 algolia = Algolia()
 gc_storage_client = GoogleCloudStorage()
 recombee_client = Recombee()
+slack_service = SlackService()
 
 # configure app from env + silent local settings.cfg
 def configure_app(app):

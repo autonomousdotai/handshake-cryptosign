@@ -6,8 +6,6 @@ import json
 import time
 import app.constants as CONST
 
-
-from flask import g
 from app.models import Match
 from datetime import datetime
 from app.helpers.utils import render_unsubscribe_url, second_to_strftime, render_generate_link
@@ -90,7 +88,7 @@ def render_choose_wrong_side_content(match_name, user_choice):
     """.format(match_name, 'YES' if user_choice == 2 else 'NO', 'YES' if user_choice == 1 else 'NO')
 
 
-def render_verification_success_mail_content(match_id, uid):
+def render_verification_success_mail_content(base_url, match_id, uid):
     return """
         Hey Ninja,<br/><br/>
         Good news; your event (below) has been verified and will now appear on the exchange! <br/><br/>
@@ -100,7 +98,7 @@ def render_verification_success_mail_content(match_id, uid):
         If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
         Good luck!<br/>
         {}
-    """.format(render_match_content(match_id), "{}prediction/{}".format(g.BASE_URL, render_generate_link(match_id, uid)), render_signature_content())
+    """.format(render_match_content(match_id), "{}prediction/{}".format(base_url, render_generate_link(match_id, uid)), render_signature_content())
 
 
 def render_verification_failed_mail_content(match_id):

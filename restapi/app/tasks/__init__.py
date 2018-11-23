@@ -377,7 +377,7 @@ def send_email_event_verification_success(match_id, uid):
 
 		match = Match.find_match_by_id(match_id)
 		subject = """Your event "{}" was verified""".format(match.name)
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(match.id, user.id))
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(app.config['BASE_URL'], match.id, user.id))
 		
 	except Exception as identifier:
 		exc_type, exc_obj, exc_tb = sys.exc_info()

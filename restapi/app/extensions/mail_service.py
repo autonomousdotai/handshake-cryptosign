@@ -17,7 +17,7 @@ class MailService(object):
 			endpoint = '{}'.format(self.app.config['MAIL_SERVICE'])
 			multipart_form_data = MultipartEncoder(
 				fields= {
-					'body': _body.encode(encoding='UTF-8', errors='strict'),
+					'body': _body,
 					'subject': _subject,
 					'to[]': _to_arr,
 					'from': _from

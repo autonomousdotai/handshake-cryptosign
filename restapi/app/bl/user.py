@@ -49,8 +49,8 @@ def is_able_to_create_new_free_bet(user):
 	return can_free_bet, last_bet_status
 
 
-def is_able_to_have_redeem_code(user):
-	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.used_user==user.id).all()
+def is_able_to_claim_redeem_code(user):
+	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id).all()
 	if redeems is not None and len(redeems) >= 2:
 		return False
 
@@ -58,9 +58,12 @@ def is_able_to_have_redeem_code(user):
 
 
 def claim_redeem_code_for_user(user):
-	if is_able_to_have_redeem_code(user):
+	if is_able_to_claim_redeem_code(user):
+		
 		redeems = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(2).all()
+		print 'DEEWEW {}'.format(redeems)
 		if redeems is not None and len(redeems) == 2:
+			
 			for re in redeems:
 				re.reserved_id = user.id
 				db.session.flush()

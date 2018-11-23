@@ -10,7 +10,7 @@ import app.bl.match as match_bl
 
 from flask import Blueprint, request, g
 from app import db
-from app.models import User, Token, Match, Handshake, Shaker, Outcome
+from app.models import User, Token, Match, Handshake, Shaker, Outcome, Referral
 from datetime import datetime
 from flask_jwt_extended import (create_access_token)
 
@@ -74,12 +74,19 @@ def user_subscribe():
 
 		match = Match.find_match_by_id(data.get('match_id', -1))
 		email = data["email"]
-		uid = request.headers["Uid"]
+		uid = int(request.headers["Uid"])
+		referral_code = data.get('referral_code', None)
 
 		user = User.find_user_with_id(uid)
 		user.email = email
 		user.is_user_disable_popup = 0
 		user.is_subscribe = 1
+
+		if referral_code is not None:
+			r = Referral.find_referral_by_code(referral_code)
+			if r is not None:
+				user.invited_by_user = r.user_id
+
 		db.session.commit()
 
 		# send email
@@ -130,7 +137,7 @@ def user_accept_notification():
 			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
 
 		email = data["email"]
-		uid = request.headers["Uid"]
+		uid = int(request.headers["Uid"])
 
 		user = User.find_user_with_id(uid)
 		user.email = email

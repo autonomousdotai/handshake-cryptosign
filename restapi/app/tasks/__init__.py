@@ -328,8 +328,11 @@ def send_email_create_market(match_id, uid):
 			return False
 		
 		match = Match.find_match_by_id(match_id)
-		subject = """Your event "{}" was created successfully""".format(match.name)
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_create_new_market_mail_content(match_id))
+		if match is not None:
+			subject = """Your event "{}" was created successfully""".format(match.name)
+			mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_create_new_market_mail_content(match_id))
+		else:
+			print 'Match: {} is None'.format(match_id)
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -349,11 +352,14 @@ def send_email_event_verification_failed(match_id, uid):
 			return False
 
 		match = Match.find_match_by_id(match_id)
-		subject = """Your event "{}" was rejected""".format(match.name)
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_content(match_id))
+		if match is not None:
+			subject = """Your event "{}" was rejected""".format(match.name)
+			mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_failed_mail_content(match_id))
+		else:
+			print 'Match: {} is None'.format(match_id)
 		
 	except Exception as identifier:
-		xc_type, exc_obj, exc_tb = sys.exc_info()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
 
@@ -374,9 +380,9 @@ def send_email_event_verification_success(match_id, uid):
 		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(match.id, user.id))
 		
 	except Exception as identifier:
-		xc_type, exc_obj, exc_tb = sys.exc_info()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_send_email_event_verification_failed=>", exc_type, fname, exc_tb.tb_lineno)
+		print("log_send_email_event_verification_success=>", exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

@@ -59,9 +59,7 @@ def is_able_to_claim_redeem_code(user):
 
 def claim_redeem_code_for_user(user):
 	if is_able_to_claim_redeem_code(user):
-		
 		redeems = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(2).all()
-		print 'DEEWEW {}'.format(redeems)
 		if redeems is not None and len(redeems) == 2:
 			
 			for re in redeems:

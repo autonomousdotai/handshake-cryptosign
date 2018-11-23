@@ -80,7 +80,7 @@ def user_subscribe():
 		user.email = email
 		user.is_user_disable_popup = 0
 		user.is_subscribe = 1
-		db.session.flush()
+		db.session.commit()
 
 		# send email
 		result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
@@ -89,7 +89,6 @@ def user_subscribe():
 		elif match is not None:
 			subscribe_email.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
-		db.session.commit()
 		return response_ok()
 
 	except Exception, ex:

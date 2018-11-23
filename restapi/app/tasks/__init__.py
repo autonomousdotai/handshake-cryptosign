@@ -242,13 +242,14 @@ def subscribe_email_to_claim_redeem_code(email, redeem_code_1, redeem_code_2, fc
 			return False
 
 		data = res.json()
-
 		if data['status'] == 0:
 			print "Verify email fail: {}".format(data)
 			return False
 
 		# Send email
 		email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2)
+
+		print '------- send redeem code to user {}-------'.format(email)
 		mail_services.send(email, app.config['FROM_EMAIL'], "Your free bets", email_body)
 
 		return True

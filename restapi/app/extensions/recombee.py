@@ -76,6 +76,7 @@ class Recombee(object):
 		br = Batch(requests)
 		self.recombee_client.send(br)
 
+
 	def user_recommended_data(self, user_id, count=5, options=None):
 		return self.recombee_client.send(
 			RecommendItemsToUser(

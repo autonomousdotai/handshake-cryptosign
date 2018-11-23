@@ -95,6 +95,9 @@ class MESSAGE(object):
 	REDEEM_NOT_FOUND = 'Redeem is not found!'
 	REDEEM_INVALID = 'Redeem is invalid!'
 
+	# REFERRAL
+	REFERRAL_USER_JOINED_ALREADY = 'User has joined referral program already!'
+
 
 class CODE(object):
 	# ERROR
@@ -189,3 +192,6 @@ class CODE(object):
 	# REDEEM
 	REDEEM_NOT_FOUND = '1062'
 	REDEEM_INVALID = '1063'
+
+	# REFERRAL
+	REFERRAL_USER_JOINED_ALREADY = '1066'

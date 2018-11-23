@@ -20,6 +20,7 @@ from app.routes.token import token_routes
 from app.routes.contract import contract_routes
 from app.routes.hook import hook_routes
 from app.routes.redeem import redeem_routes
+from app.routes.referral import referral_routes
 from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
                                 get_jwt_identity, jwt_refresh_token_required)
 
@@ -42,4 +43,5 @@ def init_routes(app):
     app.register_blueprint(contract_routes, url_prefix='/contract')
     app.register_blueprint(hook_routes, url_prefix='/hook')
     app.register_blueprint(redeem_routes, url_prefix='/redeem')
+    app.register_blueprint(referral_routes, url_prefix='/referral')
     app.register_blueprint(user_routes)

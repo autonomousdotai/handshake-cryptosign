@@ -16,11 +16,14 @@ class User(BaseModel):
 						server_default=str(0),
 						default=0)
 	is_subscribe = db.Column(db.Integer,
-						server_default=str(0),
-						default=0)
+							server_default=str(0),
+							default=0)
 	is_user_disable_popup = db.Column(db.Integer,
-								server_default=str(0),
-								default=0)
+									server_default=str(0),
+									default=0)
+	invited_by_user = db.Column(db.Integer,
+							server_default=str(0),
+							default=0)
 	tokens = db.relationship(
 						"Token",
 						secondary=user_token,
@@ -29,7 +32,9 @@ class User(BaseModel):
 						backref=db.backref('back_tokens', lazy='dynamic'),
 						lazy='dynamic')
 	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
-	                             lazy='dynamic')
+	                            lazy='dynamic')
+	referral = db.relationship('Referral', backref='user', primaryjoin="User.id == Referral.user_id", 
+								uselist=False)
 
 	@classmethod
 	def find_user_with_id(cls, user_id):

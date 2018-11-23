@@ -9,6 +9,7 @@ import json
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.outcome as outcome_bl
+import app.bl.referral as referral_bl
 
 from decimal import *
 from datetime import datetime
@@ -519,6 +520,9 @@ def save_handshake_for_event(event_name, inputs):
 			else:
 				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['REAL'])
 
+			# Give redeem code for referral user
+			referral_bl.give_redeem_code_for_referred_user(shaker.shaker_id)
+
 			arr = []
 			arr.append(shaker)
 
@@ -570,6 +574,9 @@ def save_handshake_for_event(event_name, inputs):
 
 			# Run bots
 			run_bots.delay(handshake.outcome_id)
+
+			# Give redeem code for referral user
+			referral_bl.give_redeem_code_for_referred_user(handshake.user_id)
 
 			return arr, None
 

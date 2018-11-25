@@ -12,9 +12,9 @@ def generate_referral_code(user_id):
 
 
 def issue_referral_code_for_user(user):
-	code = generate_referral_code(user.id)
 	r = Referral.find_referral_by_uid(user.id)
 	if r is None:
+		code = generate_referral_code(user.id)
 		r = Referral(
 			code=code,
 			user_id=user.id

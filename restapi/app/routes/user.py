@@ -94,7 +94,7 @@ def user_subscribe():
 		referral_bl.issue_referral_code_for_user(user)
 
 		db.session.commit()
-		
+
 		# send email
 		result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
 		if result:

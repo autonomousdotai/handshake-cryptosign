@@ -56,4 +56,5 @@ def join_referral_program():
 
 		return response_error(MESSAGE.REFERRAL_USER_JOINED_ALREADY, CODE.REFERRAL_USER_JOINED_ALREADY)
 	except Exception, ex:
+		db.session.rollback()
 		return response_error(ex.message)

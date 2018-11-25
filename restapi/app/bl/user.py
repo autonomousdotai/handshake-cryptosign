@@ -57,6 +57,14 @@ def is_able_to_claim_redeem_code(user):
 	return True
 
 
+def is_able_to_use_redeem_code(user):
+	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.used_user==0).all()
+	if redeems is not None and len(redeems) > 0:
+		return True
+
+	return False
+
+
 def claim_redeem_code_for_user(user):
 	if is_able_to_claim_redeem_code(user):
 		redeems = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(2).all()

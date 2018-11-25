@@ -43,11 +43,12 @@ def can_admin_report_this_outcome(outcome):
 	if contract is None:
 		return False
 
-	if is_contract_support_report_for_creator_method(contract.json_name) is False:
-		return False
-
+	# created by admin
 	if outcome.created_user_id is None:
 		return True
+
+	if is_contract_support_report_for_creator_method(contract.json_name) is False:
+		return False
 
 	if outcome.match.grant_permission == 1 and \
 		outcome.match.creator_wallet_address is not None and \

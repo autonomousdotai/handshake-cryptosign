@@ -788,16 +788,19 @@ def check_redeem_code():
 		uid = int(request.headers['Uid'])
 		user = User.find_user_with_id(uid)
 
+		# check user be able to claim redeem code or not
 		result = user_bl.is_able_to_claim_redeem_code(user)
-		if result == False:
-			result = user_bl.is_able_to_use_redeem_code(user)
 
 		is_subscribe = 1 if user.email is not None and len(user.email) > 0 and user.is_subscribe == 1 else 0
-		if user_bl.is_user_subscribed_but_still_not_have_redeem_code(user, result):
+		if user_bl.is_user_subscribed_but_still_not_receive_redeem_code(user, result):
 			# claim redeem code
 			result, code_1, code_2 = user_bl.claim_redeem_code_for_user(user)
 			if result:
 				subscribe_email_to_claim_redeem_code.delay(user.email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
+
+		# check user be ablt to use redeem code or not
+		if result == False:
+			result = user_bl.is_able_to_use_redeem_code(user)
 
 		response = {
 			"is_user_disable_popup": user.is_user_disable_popup,

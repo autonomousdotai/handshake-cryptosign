@@ -93,7 +93,7 @@ def check_email_existed_with_dispatcher(payload):
 	return data_response['data']['email']
 
 
-def is_user_subscribed_but_still_not_have_redeem_code(user, be_able_to_have_redeem_code):
+def is_user_subscribed_but_still_not_receive_redeem_code(user, be_able_to_have_redeem_code):
 	if user is None:
 		return False
 

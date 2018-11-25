@@ -7,6 +7,7 @@ import requests
 import app.bl.user as user_bl
 import app.bl.outcome as outcome_bl
 import app.bl.match as match_bl
+import app.bl.referral as referral_bl
 
 from flask import Blueprint, request, g
 from app import db
@@ -86,6 +87,11 @@ def user_subscribe():
 			r = Referral.find_referral_by_code(referral_code)
 			if r is not None:
 				user.invited_by_user = r.user_id
+
+		db.session.flush()
+
+		# issue referral code for user if any
+		referral_bl.issue_referral_code_for_user(user)
 
 		db.session.commit()
 

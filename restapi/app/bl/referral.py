@@ -2,13 +2,25 @@ import string
 import random
 
 from app import db
-from app.models import User, Redeem
+from app.models import User, Redeem, Referral
 
 
 def generate_referral_code(user_id):
 	chars = string.ascii_uppercase + string.ascii_lowercase
 	code = '{}{}{}'.format(user_id, string_generator(2), string_num_generator(2))
 	return code
+
+
+def issue_referral_code_for_user(user):
+	r = Referral.find_referral_by_uid(user.id)
+	if r is None:
+		code = generate_referral_code(user.id)
+		r = Referral(
+			code=code,
+			user_id=user.id
+		)
+		db.session.add(r)
+		db.session.flush()
 
 
 def string_generator(size):

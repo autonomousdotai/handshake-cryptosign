@@ -798,7 +798,7 @@ def check_redeem_code():
 			if result:
 				subscribe_email_to_claim_redeem_code.delay(user.email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
-		# check user be ablt to use redeem code or not
+		# check user be able to use redeem code or not
 		if result == False:
 			result = user_bl.is_able_to_use_redeem_code(user)
 

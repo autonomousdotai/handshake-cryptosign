@@ -20,107 +20,6 @@ import app.bl.handshake as handshake_bl
 
 class TestHandshakeBluePrint(BaseTestCase):   
 
-    def setUp(self):
-        # create token
-        token = Token.find_token_by_id(1)
-        if token is None:
-            token = Token(
-                id=1,
-                name="SHURIKEN",
-                symbol="SHURI",
-                decimal=18
-            )
-            db.session.add(token)
-            db.session.commit()
-
-        # create contract
-        contract = Contract.find_contract_by_id(1)
-        if contract is None:
-            contract = Contract(
-                id=1,
-                contract_name="contract1",
-                contract_address="0x123",
-                json_name="name1"
-            )
-            db.session.add(contract)
-            db.session.commit()
-
-        # create match
-        match = Match.find_match_by_id(1)
-        if match is None:
-            match = Match(
-                id=1
-            )
-            db.session.add(match)
-            db.session.commit()
-
-        # create user
-        user = User.find_user_with_id(88)
-        if user is None:
-            user = User(
-                id=88
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        user = User.find_user_with_id(99)
-        if user is None:
-            user = User(
-                id=99
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        user = User.find_user_with_id(100)
-        if user is None:
-            user = User(
-                id=100
-            )
-            db.session.add(user)
-            db.session.commit() 
-        
-        user = User.find_user_with_id(109)
-        if user is None:
-            user = User(
-                id=109
-            )
-            db.session.add(user)
-            db.session.commit()
-
-
-        user = User.find_user_with_id(66)
-        if user is None:
-            user = User(
-                id=66
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        # create outcome
-        outcome = Outcome.find_outcome_by_id(88)
-        if outcome is None:
-            outcome = Outcome(
-                id=88,
-                match_id=1,
-                hid=88,
-                contract_id=contract.id
-            )
-            db.session.add(outcome)
-            db.session.commit()
-        else:
-            outcome.result = -1
-            outcome.contract_id=contract.id
-            db.session.commit()
-
-        r = Redeem.find_redeem_by_code('123abcd')
-        if r is None:
-            r = Redeem(
-                code='123abcd'
-            )
-            db.session.add(r)
-            db.session.commit()
-
-
     def clear_data_before_test(self):
         # delete master user
         user = User.find_user_with_id(1)
@@ -138,6 +37,9 @@ class TestHandshakeBluePrint(BaseTestCase):
             outcome.token_id = None
             db.session.commit()
 
+        redeems = db.session.query(Redeem).filter(
+			Redeem.reserved_id == 88).all()
+
         handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
         for handshake in handshakes:
             db.session.delete(handshake)
@@ -151,10 +53,17 @@ class TestHandshakeBluePrint(BaseTestCase):
         Task.query.delete()
         db.session.commit()
 
+        for r in redeems:
+			r.reserved_id = 0
+			r.used_user = 0
+			db.session.commit()
+
+
     def clear_all_bets_for_user(self, user_id):
         user = User.find_user_with_id(user_id)
         user.free_bet = 0
         db.session.commit()
+
 
     def test_list_of_handshakes(self):
         self.clear_data_before_test()
@@ -1275,30 +1184,18 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
+
     def test_create_free_bet(self):
         self.clear_data_before_test()
         self.clear_all_bets_for_user(99)
-        arr_hs = []
-        # Make sure redeem_code added into "routes/redeem.txt"
-        # Add reddem code
-        redeem_code = "123abcd"
-        redeem_path = os.path.abspath(os.path.dirname(__file__)) + '/../../app/routes/redeem.txt'
-        with open(redeem_path, 'a') as file:
-            file.write('{}\n'.format(redeem_code))
 
-        redeem = Redeem.find_redeem_by_code(redeem_code)
-        if redeem is None:
-            redeem = Redeem(
-                code=redeem_code
-            )
-            db.session.add(redeem)
-        else:
-            redeem.used_user = None
-            redeem.reserved_id = 99
-        
-        db.session.commit()
-        arr_hs.append(redeem)
+        r = db.session.query(Redeem).filter(Redeem.reserved_id==0).limit(1).first()
+        if r is not None:
+            r.used_user = 0
+            r.reserved_id = 99
+            db.session.commit()
 
+        redeem_code = r.code
         user = User.find_user_with_id(99)
         old_free_bet = user.free_bet
 
@@ -1358,7 +1255,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                             bk_status=0,
                             free_bet=1
                         )
-            arr_hs.append(handshake)
             db.session.add(handshake)
             db.session.commit()
 
@@ -1410,6 +1306,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             d = data['data']
             self.assertEqual(d['free_bet_available'], 2)
+
 
     def test_collect_real_bet(self):
         self.clear_data_before_test()
@@ -2054,24 +1951,20 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.delete(handshake)
             db.session.commit()
 
+
     def test_check_free_bet(self):
         self.clear_data_before_test()
         arr_hs = []
         self.clear_all_bets_for_user(100)
 
-        redeem_code = "123abcd"
-        redeem = Redeem.find_redeem_by_code(redeem_code)
-        if redeem is None:
-            redeem = Redeem(
-                code=redeem_code
-            )
-            db.session.add(redeem)
-        else:
-            redeem.reserved_id = 100
-            redeem.used_user = None
+        r = db.session.query(Redeem).filter(Redeem.reserved_id==0).limit(1).first()
+        if r is not None:
+            r.used_user = 0
+            r.reserved_id = 100
+            db.session.commit()
         
-        db.session.commit()    
-        arr_hs.append(redeem)
+        redeem_code = r.code 
+        arr_hs.append(r)
 
         with self.client:
             Uid = 100
@@ -2202,6 +2095,7 @@ class TestHandshakeBluePrint(BaseTestCase):
             setting = Setting.find_setting_by_name('FreeBet')
             setting.status = 1
             db.session.commit()
+
 
     def test_refund_free_bet(self):
         self.clear_data_before_test()
@@ -2744,6 +2638,10 @@ class TestHandshakeBluePrint(BaseTestCase):
             if handshake is not None:
                 db.session.delete(handshake)
                 db.session.commit()
+
+
+    def test_check_redeem_code(self):
+        pass
 
 
 if __name__ == '__main__':

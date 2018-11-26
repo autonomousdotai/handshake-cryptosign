@@ -19,58 +19,6 @@ import time
 import app.bl.user as user_bl
 
 class TestUser(BaseTestCase):
-
-	def setUp(self):
-		# create contract
-		contract = Contract.find_contract_by_id(1)
-		if contract is None:
-			contract = Contract(
-				id=1,
-				contract_name="contract1",
-				contract_address="0x123",
-				json_name="name1"
-			)
-			db.session.add(contract)
-			db.session.commit()
-
-		# create user
-		user = User.find_user_with_id(88)
-		if user is None:
-			user = User(
-				id=88
-			)
-			db.session.add(user)
-			db.session.commit()
-
-		# create outcome
-		outcome = Outcome.find_outcome_by_id(88)
-		if outcome is None:
-			outcome = Outcome(
-				id=88,
-				match_id=1,
-				hid=88,
-				contract_id=contract.id
-			)
-			db.session.add(outcome)
-			db.session.commit()
-		else:
-			outcome.result = -1
-			outcome.contract_id=contract.id
-			db.session.commit()
-
-		# add redeem
-		try:
-			for i in range(1, 3):
-				chars = string.ascii_uppercase + string.ascii_lowercase
-				code = ''.join(random.choice(chars) for _ in range(i))
-				if Redeem.find_redeem_by_code(code) is None:
-					r = Redeem(
-						code=code
-					)
-					db.session.add(r)
-					db.session.commit()	
-		except Exception as ex:
-			db.session.rollback()
 		
 	def clear_data_before_test(self):
 		handshakes = db.session.query(Handshake).filter(

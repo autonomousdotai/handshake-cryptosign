@@ -58,9 +58,10 @@ def auth():
 @login_required
 def user_subscribe():
 	"""
-	" 2 use cases:
+	" 3 use cases:
 	" Popup subscribe email will appear after user plays on match_id.
 	" Popup subscribe email will appear at the first time.
+	" Popup subscribe email will apear when user click on referral link.
 	"""
 	try:
 		data = request.json
@@ -85,7 +86,7 @@ def user_subscribe():
 
 		if referral_code is not None:
 			r = Referral.find_referral_by_code(referral_code)
-			if r is not None:
+			if r is not None and r.user_id != uid:
 				user.invited_by_user = r.user_id
 
 		db.session.flush()
@@ -102,7 +103,7 @@ def user_subscribe():
 		elif match is not None:
 			subscribe_email.delay(email, match.id, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
-		return response_ok()
+		return response_ok(user.to_json())
 
 	except Exception, ex:
 		db.session.rollback()

@@ -2640,8 +2640,154 @@ class TestHandshakeBluePrint(BaseTestCase):
                 db.session.commit()
 
 
-    def test_check_redeem_code(self):
-        pass
+    def test_case_1_check_redeem_code_with_user_still_not_subscribe_email(self):
+        self.clear_data_before_test()
+
+        # reset user
+        user = User.find_user_with_id(88)
+        user.email = None
+        user.is_subscribe = 0
+        db.session.commit()
+
+        # reset redeem code
+        redeems = db.session.query(Redeem).filter(Redeem.reserved_id==88).all()
+        for r in redeems:
+            r.reserved_id = 0
+            r.used_user = 0
+            db.session.commit()
+
+        with self.client:
+            Uid = 88
+            response = self.client.get(
+                                    '/handshake/check_redeem_code',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            self.assertEqual(data['data']['is_user_disable_popup'], 0)
+            self.assertEqual(data['data']['amount'], '0.03')
+            self.assertEqual(data['data']['redeem'], 1)
+            self.assertEqual(data['data']['is_subscribe'], 0)
+
+
+    def test_case_2_check_redeem_code_with_user_already_subscribe_email_but_still_not_have_redeem_code(self):
+        self.clear_data_before_test()
+
+        # user subscribed
+        user = User.find_user_with_id(88)
+        user.email = 'a@gmail.com'
+        user.is_subscribe = 1
+        db.session.commit()
+
+        # reset redeem code
+        redeems = db.session.query(Redeem).filter(Redeem.reserved_id==88).all()
+        for r in redeems:
+            r.reserved_id = 0
+            r.used_user = 0
+            db.session.commit()
+
+        with self.client:
+            Uid = 88
+            response = self.client.get(
+                                    '/handshake/check_redeem_code',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            self.assertEqual(data['data']['is_user_disable_popup'], 0)
+            self.assertEqual(data['data']['amount'], '0.03')
+            self.assertEqual(data['data']['redeem'], 1)
+            self.assertEqual(data['data']['is_subscribe'], 1)
+
+
+    def test_case_3_check_redeem_code_with_user_already_subscribe_email_and_use_redeem_code(self):
+        self.clear_data_before_test()
+
+        # user subscribed
+        user = User.find_user_with_id(88)
+        user.email = 'a@gmail.com'
+        user.is_subscribe = 1
+        db.session.commit()
+
+        # reset redeem code
+        redeems = db.session.query(Redeem).filter(Redeem.reserved_id==0).limit(2).all()
+        for r in redeems:
+            r.reserved_id = 88
+            db.session.commit()
+
+        with self.client:
+            Uid = 88
+            response = self.client.get(
+                                    '/handshake/check_redeem_code',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            self.assertEqual(data['data']['is_user_disable_popup'], 0)
+            self.assertEqual(data['data']['amount'], '0.03')
+            self.assertEqual(data['data']['redeem'], 1)
+            self.assertEqual(data['data']['is_subscribe'], 1)
+
+            # use redeem #1
+            redeem = db.session.query(Redeem).filter(Redeem.reserved_id==88, Redeem.used_user==0).first()
+            if redeem is not None:
+                redeem.used_user = 88
+                db.session.commit()
+
+            # call again
+            response = self.client.get(
+                                    '/handshake/check_redeem_code',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            self.assertEqual(data['data']['is_user_disable_popup'], 0)
+            self.assertEqual(data['data']['amount'], '0.03')
+            self.assertEqual(data['data']['redeem'], 1)
+            self.assertEqual(data['data']['is_subscribe'], 1)
+
+            # use redeem #2
+            redeem = db.session.query(Redeem).filter(Redeem.reserved_id==88, Redeem.used_user==0).first()
+            if redeem is not None:
+                redeem.used_user = 88
+                db.session.commit()
+
+            # call again
+            response = self.client.get(
+                                    '/handshake/check_redeem_code',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            self.assertEqual(data['data']['is_user_disable_popup'], 0)
+            self.assertEqual(data['data']['amount'], '0.03')
+            self.assertEqual(data['data']['redeem'], 0)
+            self.assertEqual(data['data']['is_subscribe'], 1)
 
 
 if __name__ == '__main__':

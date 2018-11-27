@@ -24,6 +24,9 @@ class User(BaseModel):
 	invited_by_user = db.Column(db.Integer,
 							server_default=str(0),
 							default=0)
+	played_bet = db.Column(db.Integer,
+							server_default=str(0),
+							default=0)
 	tokens = db.relationship(
 						"Token",
 						secondary=user_token,

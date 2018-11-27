@@ -23,16 +23,19 @@ def render_email_subscribe_content(match_id):
     """.format(render_match_content(match_id), render_signature_content())
 
 
-def render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2):
+def render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2, referral_link):
     return """
         Hey Ninja!<br/><br/>
-        Please use the following redeem codes to claim your free bets: <br/><br/>
+        Welcome to our platform, it’s great to see you!<br/>
+        Please use the following redeem codes to claim your free predictions: <br/><br/>
         <b>Code 1:</b> {}  (0.03ETH)<br/>
         <b>Code 2:</b> {}  (0.03ETH)<br/><br/>
         Just redeem the code on the bet screen and you're good to go!.<br/><br/>
+        You can earn additional free predictions for every friend you refer to our platform.<br/>
+        How? It’s easy, just share this link with them (<a>{}</a>)!<br/><br/>
         You look like a winner!<br/><br/>
         {}
-    """.format(redeem_code_1, redeem_code_2, render_signature_content())
+    """.format(redeem_code_1, redeem_code_2, referral_link, render_signature_content())
 
 
 def render_result_email_content(match_name, outcome_result, user_choice):

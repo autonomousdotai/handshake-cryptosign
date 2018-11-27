@@ -294,7 +294,25 @@ def subscribe_notification_email(email, fcm, payload, uid):
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_subscribe_notification_email_time=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_notification_email=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_reward_redeem(email, redeem_code, referral_link):
+	"""
+	" Reward user who invites friend play bet
+	"""
+	try:
+		# Send email
+		email_body = render_reward_email_content(redeem_code, referral_link)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Your Referral Reward", email_body)
+
+		return True
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_reward_redeem=>",exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

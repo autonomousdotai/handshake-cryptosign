@@ -1,8 +1,11 @@
 import string
 import random
 
+from flask import g
 from app import db
 from app.models import User, Redeem, Referral
+from app.tasks import send_reward_redeem
+from app.helpers.utils import is_valid_email
 
 
 def generate_referral_code(user_id):
@@ -22,6 +25,8 @@ def issue_referral_code_for_user(user):
 		db.session.add(r)
 		db.session.flush()
 
+	return r.code
+
 
 def string_generator(size):
 	chars = string.ascii_uppercase + string.ascii_lowercase
@@ -34,6 +39,9 @@ def string_num_generator(size):
 
 
 def give_redeem_code_for_referred_user(user_id):
+	"""
+	" Give redeem code for user who invites user_id
+	"""
 	u = User.find_user_with_id(user_id)
 	if u is not None and u.invited_by_user is not None and u.invited_by_user > 0:
 		redeem = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(1).all()
@@ -41,4 +49,11 @@ def give_redeem_code_for_referred_user(user_id):
 			redeem.reserved_id = u.invited_by_user
 			db.session.flush()
 			
-			# TODO: send mail here
+			# send mail to invited user to inform new redeem code
+			reward_user_redeem_code(u.invited_by_user, redeem.code)		
+
+
+def reward_user_redeem_code(user_id, code):
+	u = User.find_user_with_id(user_id)
+	if u is not None and is_valid_email(u.email):
+		return send_reward_redeem.delay(u.email, code, '{}pex?refer={}'.format(g.BASE_URL, code))

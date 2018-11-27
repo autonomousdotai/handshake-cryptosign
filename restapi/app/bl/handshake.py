@@ -521,7 +521,11 @@ def save_handshake_for_event(event_name, inputs):
 				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['REAL'])
 
 			# Give redeem code for referral user
-			referral_bl.give_redeem_code_for_referred_user(shaker.shaker_id)
+			u = User.find_user_with_id(shaker.shaker_id)
+			if u is not None and u.played_bet == 0:
+				referral_bl.give_redeem_code_for_referred_user(shaker.shaker_id)
+				u.played_bet = 1
+				db.session.flush()
 
 			arr = []
 			arr.append(shaker)
@@ -576,7 +580,11 @@ def save_handshake_for_event(event_name, inputs):
 			run_bots.delay(handshake.outcome_id)
 
 			# Give redeem code for referral user
-			referral_bl.give_redeem_code_for_referred_user(handshake.user_id)
+			u = User.find_user_with_id(handshake.user_id)
+			if u is not None and u.played_bet == 0:
+				referral_bl.give_redeem_code_for_referred_user(handshake.user_id)
+				u.played_bet = 1
+				db.session.flush()
 
 			return arr, None
 

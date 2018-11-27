@@ -12,27 +12,6 @@ import app.bl.admin as admin_bl
 
 class TestAdminBaseTestCase(BaseTestCase):
 
-	def setUp(self):
-		match = Match.find_match_by_id(1)
-		if match is None:
-			match = Match(
-				id=1,
-				name='test1-2-3'
-			)
-			db.session.add(match)
-			db.session.commit()
-
-
-		# add contract
-		contract = Contract.find_contract_by_id(1)
-		if contract is None:
-			contract = Contract(
-				id=1
-			)
-			db.session.add(contract)
-			db.session.commit()
-
-
 	def clear_data_before_test(self):
 		pass
 
@@ -130,6 +109,15 @@ class TestAdminBaseTestCase(BaseTestCase):
 		actual = admin_bl.is_contract_support_report_for_creator_method(name)
 		expected = False
 		self.assertEqual(actual, expected)
+
+
+		# ----------------
+		name = ''
+
+		actual = admin_bl.is_contract_support_report_for_creator_method(name)
+		expected = False
+		self.assertEqual(actual, expected)
+
 
 if __name__ == '__main__':
 	unittest.main()

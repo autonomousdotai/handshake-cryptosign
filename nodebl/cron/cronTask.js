@@ -73,6 +73,7 @@ const unInitFreeBet = (params) => {
 
 /**
  * @param {number} params.match_id
+ * @param {number} params.outcome_id
  * @param {number} params.side
  * @param {number} params.hid
  * @param {number} params.match_date
@@ -102,6 +103,7 @@ const initBet = (params, task, isFreeBet) => {
 				type: params.type || 3,
 				extra_data: utils.gennerateExtraData(params.match_date, params.match_name, params.outcome_name),
 				match_id: params.match_id,
+				outcome_id: params.outcome_id,
 				amount: betAmount,
 				currency: 'ETH',
 				side: params.side,

@@ -4,7 +4,7 @@ from decimal import *
 from datetime import datetime
 from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
-from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User, Setting
+from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User, Setting, Referral
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
 from app.constants import Handshake as HandshakeStatus
@@ -247,12 +247,16 @@ def subscribe_email_to_claim_redeem_code(email, redeem_code_1, redeem_code_2, fc
 			return False
 
 		# Send email
-		email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2)
+		r = Referral.find_referral_by_uid(uid)
+		if r is not None:
+			email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2, '{}pex?refer={}'.format(app.config['BASE_URL'], r.code))
 
-		print '------- send redeem code to user {}-------'.format(email)
-		mail_services.send(email, app.config['FROM_EMAIL'], "Your free bets", email_body)
+			print '------- send redeem code to user {}-------'.format(email)
+			mail_services.send(email, app.config['FROM_EMAIL'], "Your free predictions", email_body)
 
-		return True
+			return True
+		
+		return False
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -290,7 +294,25 @@ def subscribe_notification_email(email, fcm, payload, uid):
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("log_subscribe_notification_email_time=>",exc_type, fname, exc_tb.tb_lineno)
+		print("log_subscribe_notification_email=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
+def send_reward_redeem(email, redeem_code, referral_link):
+	"""
+	" Reward user who invites friend play bet
+	"""
+	try:
+		# Send email
+		email_body = render_reward_email_content(redeem_code, referral_link)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Your Referral Reward", email_body)
+
+		return True
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_reward_redeem=>",exc_type, fname, exc_tb.tb_lineno)
 
 
 @celery.task()

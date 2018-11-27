@@ -3,7 +3,7 @@ import json
 import app.constants as CONST
 import app.bl.referral as referral_bl
 
-from flask import Blueprint, request, current_app as app
+from flask import Blueprint, request, g
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required
 from app import db
@@ -23,12 +23,14 @@ def check_referral():
 		r = Referral.find_referral_by_uid(uid)
 
 		response = {
-			"code": None
+			"code": None,
+			"referral_link": None
 		}
 		if r is None:
 			return response_error(response)
 
 		response['code'] = r.code
+		response['referral_link'] = '{}pex?refer={}'.format(g.BASE_URL, r.code)
 		return response_ok(response)
 	except Exception, ex:
 		return response_error(ex.message)
@@ -51,6 +53,9 @@ def join_referral_program():
 			)
 			db.session.add(r)
 			db.session.commit()
+
+			response = r.to_json()
+			response['referral_link'] = '{}pex?refer={}'.format(g.BASE_URL, r.code)
 
 			return response_ok(r.to_json())
 

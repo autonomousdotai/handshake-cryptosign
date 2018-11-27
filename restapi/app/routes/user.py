@@ -93,7 +93,6 @@ def user_subscribe():
 
 		# issue referral code for user if any
 		referral_bl.issue_referral_code_for_user(user)
-
 		db.session.commit()
 
 		# send email

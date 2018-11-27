@@ -14,81 +14,6 @@ import app.constants as CONST
 
 class TestAdminBluePrint(BaseTestCase):
 
-    def setUp(self):
-        # create contract
-        contract = Contract.find_contract_by_id(1)
-        if contract is None:
-            contract = Contract(
-                id=1,
-                contract_name="contract1",
-                contract_address="0x123",
-                json_name="name1"
-            )
-            db.session.add(contract)
-            db.session.commit()
-
-        # create match
-
-        match = Match.find_match_by_id(1)
-        if match is None:
-            match = Match(
-                id=1
-            )
-            db.session.add(match)
-            db.session.commit()
-
-        # create user
-        user = User.find_user_with_id(88)
-        if user is None:
-            user = User(
-                id=88
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        user = User.find_user_with_id(99)
-        if user is None:
-            user = User(
-                id=99
-            )
-            db.session.add(user)
-            db.session.commit()
-
-
-        user = User.find_user_with_id(109)
-        if user is None:
-            user = User(
-                id=109
-            )
-            db.session.add(user)
-            db.session.commit()
-
-
-        user = User.find_user_with_id(66)
-        if user is None:
-            user = User(
-                id=66
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        # create outcome
-        outcome = Outcome.find_outcome_by_id(88)
-        if outcome is None:
-            outcome = Outcome(
-                id=88,
-                match_id=1,
-                hid=88,
-                contract_id=contract.id
-            )
-            db.session.add(outcome)
-            db.session.commit()
-        else:
-            outcome.result = -1
-            outcome.contract_id=contract.id
-            db.session.commit()
-
-
     def clear_data_before_test(self):
         # delete master user
         user = User.find_user_with_id(1)
@@ -101,16 +26,6 @@ class TestAdminBluePrint(BaseTestCase):
             user.free_bet = 0
             db.session.commit()
 
-        handshakes = db.session.query(Handshake).filter(Handshake.outcome_id==88).all()
-        for handshake in handshakes:
-            db.session.delete(handshake)
-            db.session.commit()
-
-        matches = db.session.query(Match).filter(or_(Match.created_user_id==88, Match.created_user_id==99)).all()
-        for m in matches:
-            db.session.delete(m)
-            db.session.commit()
-
         outcomes = db.session.query(Outcome).filter(or_(Outcome.created_user_id==88, Outcome.created_user_id==99, Outcome.created_user_id==None)).all()
         for oc in outcomes:
             db.session.delete(oc)
@@ -120,13 +35,16 @@ class TestAdminBluePrint(BaseTestCase):
         db.session.commit()
 
 
-    def test_get_list_match_report_with_admin(self):
+    def test_get_list_match_report_by_admin(self):
         self.clear_data_before_test()
         arr_hs = []
+
         t = datetime.now().timetuple()
         seconds = local_to_utc(t)
+
         # ----- 
         match = Match(
+            name='DEBUG 123',
             date=seconds - 200,
             reportTime=seconds + 100,
             disputeTime=seconds + 300
@@ -138,7 +56,8 @@ class TestAdminBluePrint(BaseTestCase):
         outcome = Outcome(
             match_id=match.id,
             hid=0,
-            result=CONST.RESULT_TYPE['PENDING']
+            result=CONST.RESULT_TYPE['PENDING'],
+            contract_id=1
         )
         db.session.add(outcome)
         db.session.commit()
@@ -164,7 +83,7 @@ class TestAdminBluePrint(BaseTestCase):
             self.assertNotEqual(tmp, None)
 
 
-    def test_get_list_match_resolve_with_admin(self):
+    def test_get_list_match_resolve_by_admin(self):
         self.clear_data_before_test()
         arr_hs = []
         t = datetime.now().timetuple()
@@ -186,7 +105,8 @@ class TestAdminBluePrint(BaseTestCase):
         outcome1 = Outcome(
             match_id=match2.id,
             hid=1,
-            result=CONST.RESULT_TYPE['DISPUTED']
+            result=CONST.RESULT_TYPE['DISPUTED'],
+            contract_id=1
         )
         db.session.add(outcome1)
         db.session.commit()        
@@ -226,10 +146,6 @@ class TestAdminBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
-
-
-    def test_all_matches_need_report_by_admin(self):
-        self.clear_data_before_test()
 
     
     def test_report_match(self):

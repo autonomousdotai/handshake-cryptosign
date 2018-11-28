@@ -249,9 +249,9 @@ def user_habit():
 		return response_error(ex.message)
 
 
-@user_routes.route('/reputation/<int:user_id>', methods=['GET'])
+@user_routes.route('/reputation/<int:user_id>/<int:page>', methods=['GET'])
 @login_required
-def get_reputation_user(user_id):
+def get_reputation_user(user_id, page):
 	try:
 		if user_id == 0:
 			user_id = None
@@ -294,6 +294,8 @@ def get_reputation_user(user_id):
 					Match.public == 1,\
 					Match.id.in_(db.session.query(Outcome.match_id).filter(Outcome.hid != None).group_by(Outcome.match_id)))\
 				.order_by(Match.date.desc())\
+				.limit(10) \
+				.offset(page*10) \
 				.all()
 
 		for match in matches:

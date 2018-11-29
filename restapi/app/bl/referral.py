@@ -43,9 +43,12 @@ def give_redeem_code_for_referred_user(user_id):
 	" Give redeem code for user who invites user_id
 	"""
 	u = User.find_user_with_id(user_id)
+	print '1'
 	if u is not None and u.invited_by_user is not None and u.invited_by_user > 0:
+		print '2'
 		redeem = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(1).all()
 		if redeem is not None:
+			print '3'
 			redeem.reserved_id = u.invited_by_user
 			db.session.flush()
 			

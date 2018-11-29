@@ -3,7 +3,7 @@ import json
 import app.constants as CONST
 
 from flask import Blueprint, request, current_app as app
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import admin_required, login_required
 from app import db
@@ -58,7 +58,7 @@ def check_redeem():
 		response = {
 			"amount": CONST.CRYPTOSIGN_FREE_BET_AMOUNT
 		}
-		r = db.session.query(Redeem).filter(Redeem.code==redeem, Redeem.reserved_id==uid, Redeem.used_user==0).all()
+		r = db.session.query(Redeem).filter(Redeem.code==func.binary(redeem), Redeem.reserved_id==uid, Redeem.used_user==0).all()
 		if r is not None and len(r) > 0:
 			return response_ok(response)
 		

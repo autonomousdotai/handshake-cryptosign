@@ -7,7 +7,7 @@ from flask import Blueprint, request, g
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required
 from app import db
-from app.models import Referral
+from app.models import Referral, User
 from app.helpers.message import MESSAGE, CODE
 
 referral_routes = Blueprint('referral', __name__)
@@ -44,9 +44,7 @@ def join_referral_program():
 	"""
 	try:
 		uid = int(request.headers['Uid'])
-		r = Referral.find_referral_by_uid(uid)
-
-		if r is None:
+		if referral_bl.is_user_can_join_referral_program(User.find_user_with_id(uid)):
 			r = Referral(
 				code=referral_bl.generate_referral_code(uid),
 				user_id=uid
@@ -57,7 +55,7 @@ def join_referral_program():
 			response = r.to_json()
 			response['referral_link'] = '{}pex?refer={}'.format(g.BASE_URL, r.code)
 
-			return response_ok(r.to_json())
+			return response_ok(response)
 
 		return response_error(MESSAGE.REFERRAL_USER_JOINED_ALREADY, CODE.REFERRAL_USER_JOINED_ALREADY)
 	except Exception, ex:

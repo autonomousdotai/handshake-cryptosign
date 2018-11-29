@@ -64,6 +64,10 @@ class TestReferralBluePrint(BaseTestCase):
     def test_user_join_referral_program(self):
         self.clear_data_before_test()
 
+        u = User.find_user_with_id(88)
+        u.email = None
+        db.session.commit()
+
         with self.client:
             Uid = 88
             response = self.client.get(
@@ -75,7 +79,11 @@ class TestReferralBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
+            self.assertTrue(data['status'] == 0)
+
+            # user should have email address
+            u.email = 'a@gmail.com'
+            db.session.commit()
 
             # call again
             response = self.client.get(
@@ -87,8 +95,20 @@ class TestReferralBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
+            self.assertTrue(data['status'] == 1)
 
+
+            # one more
+            response = self.client.get(
+                                    '/referral/join',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
     
 
 if __name__ == '__main__':

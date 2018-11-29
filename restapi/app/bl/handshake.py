@@ -580,11 +580,14 @@ def save_handshake_for_event(event_name, inputs):
 			run_bots.delay(handshake.outcome_id)
 
 			# Give redeem code for referral user
+			print '__init DEBUG offchain {}'.format(offchain)
 			u = User.find_user_with_id(handshake.user_id)
 			if u is not None and u.played_bet == 0:
+				print '[1] __init DEBUG offchain {}'.format(offchain)
 				referral_bl.give_redeem_code_for_referred_user(handshake.user_id)
 				u.played_bet = 1
 				db.session.flush()
+				print '[2] __init DEBUG offchain {}'.format(offchain)
 
 			return arr, None
 

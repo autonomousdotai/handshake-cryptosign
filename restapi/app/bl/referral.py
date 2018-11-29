@@ -61,7 +61,8 @@ def reward_user_redeem_code(user_id, code):
 
 def is_user_can_join_referral_program(user):
 	r = Referral.find_referral_by_uid(user.id)
-	if is_valid_email(user.email) and r is None:
+	# we remove is_valid_email(user.email) temporary
+	if r is None:
 		return True
 
 	return False

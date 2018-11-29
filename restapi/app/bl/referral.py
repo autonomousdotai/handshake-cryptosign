@@ -50,7 +50,9 @@ def give_redeem_code_for_referred_user(user_id):
 			db.session.flush()
 			
 			# send mail to invited user to inform new redeem code
+			print 'BEGIN'
 			reward_user_redeem_code(u.invited_by_user, redeem.code)		
+			print 'END'
 
 
 def reward_user_redeem_code(user_id, code):

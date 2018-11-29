@@ -55,7 +55,7 @@ def join_referral_program():
 			response = r.to_json()
 			response['referral_link'] = '{}pex?refer={}'.format(g.BASE_URL, r.code)
 
-			return response_ok(r.to_json())
+			return response_ok(response)
 
 		return response_error(MESSAGE.REFERRAL_USER_JOINED_ALREADY, CODE.REFERRAL_USER_JOINED_ALREADY)
 	except Exception, ex:

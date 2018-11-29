@@ -249,7 +249,7 @@ def subscribe_email_to_claim_redeem_code(email, redeem_code_1, redeem_code_2, fc
 		# Send email
 		r = Referral.find_referral_by_uid(uid)
 		if r is not None:
-			email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2, '{}pex?refer={}'.format(app.config['BASE_URL'], r.code))
+			email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2, '{}prediction?refer={}'.format(app.config['BASE_URL'], r.code))
 
 			print '------- send redeem code to user {}-------'.format(email)
 			mail_services.send(email, app.config['FROM_EMAIL'], "Your free predictions", email_body)

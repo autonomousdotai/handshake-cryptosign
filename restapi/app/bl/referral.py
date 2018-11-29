@@ -43,28 +43,21 @@ def give_redeem_code_for_referred_user(user_id):
 	" Give redeem code for user who invites user_id
 	"""
 	u = User.find_user_with_id(user_id)
-	print '1'
 	if u is not None and u.invited_by_user is not None and u.invited_by_user > 0:
-		print '2'
-		redeem = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(1).all()
+		redeem = db.session.query(Redeem).filter(Redeem.reserved_id==0, Redeem.used_user==0).limit(1).first()
 		if redeem is not None:
-			print '3'
 			redeem.reserved_id = u.invited_by_user
 			db.session.flush()
 			
 			# send mail to invited user to inform new redeem code
-			print 'BEGIN'
 			reward_user_redeem_code(u.invited_by_user, redeem.code)		
-			print 'END'
 
 
 def reward_user_redeem_code(user_id, code):
-	print 'DEBUG 1'
 	u = User.find_user_with_id(user_id)
 	if u is not None and is_valid_email(u.email):
-		print 'DEBUG {} {}'.format(g.BASE_URL, code)
 		send_reward_redeem.delay(u.email, code, '{}prediction?refer={}'.format(g.BASE_URL, code))
-		print 'DEBUG 3'
+
 
 def is_user_can_join_referral_program(user):
 	r = Referral.find_referral_by_uid(user.id)

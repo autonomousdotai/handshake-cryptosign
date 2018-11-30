@@ -520,6 +520,12 @@ def save_handshake_for_event(event_name, inputs):
 			else:
 				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['REAL'])
 
+
+			# Run bots
+			h = Handshake.find_handshake_by_id(shaker.handshake_id)
+			if h is not None:
+				run_bots.delay(h.outcome_id)
+
 			# Give redeem code for referral user
 			u = User.find_user_with_id(shaker.shaker_id)
 			if u is not None and u.played_bet == 0:

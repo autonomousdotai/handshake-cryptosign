@@ -10,6 +10,7 @@ import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.outcome as outcome_bl
 import app.bl.referral as referral_bl
+import app.bl.redeem as redeem_bl
 
 from decimal import *
 from datetime import datetime
@@ -624,22 +625,29 @@ def save_handshake_for_event(event_name, inputs):
 		print '__refund'
 		handshake = None
 		user_id = None
+		free_bet = False
 		if 's' in offchain:
 			offchain = offchain.replace('s', '')
 			shaker = Shaker.find_shaker_by_id(int(offchain))
 			if shaker is None:
 				return None, None
+
 			user_id = shaker.shaker_id
+			free_bet = shaker.free_bet
 			handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
 
 		elif 'm' in offchain:
 			offchain = offchain.replace('m', '')
 			handshake = Handshake.find_handshake_by_id(int(offchain))
 			user_id = handshake.user_id
+			free_bet = handshake.free_bet
 		
 		if handshake is None or user_id is None:
 			return None, None
 		
+		if free_bet is True:
+			redeem_bl.issue_new_redeem_code_for_user(user_id)
+			
 		return save_refund_state_for_all(user_id, handshake.outcome_id)
 
 	elif event_name == '__dispute':

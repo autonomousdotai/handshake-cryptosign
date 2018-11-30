@@ -61,6 +61,19 @@ def render_reward_email_content(redeem_code, referral_link):
     """.format(redeem_code, referral_link, render_signature_content())
 
 
+def render_renew_redeem_email_content(redeem_code, referral_link):
+    return """
+        Hey Ninja!<br/><br/>
+        Here’s your new redeem code: <br/><br/>
+        <b>Code:</b> {}  (0.03ETH)<br/><br/>
+        Just redeem the code on the bet screen and you're good to go!.<br/><br/>
+        Remember; you can earn additional free predictions for every friend you refer to our platform.<br/>
+        How? It’s easy, just share this link with them (<a>{}</a>)!<br/><br/>
+        You look like a winner!<br/><br/>
+        {}
+    """.format(redeem_code, referral_link, render_signature_content())
+
+
 def render_event_result(match_name, outcome_result, user_choice):
     if outcome_result == CONST.RESULT_TYPE['DRAW']:
         return render_event_not_happen_content(match_name)

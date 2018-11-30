@@ -421,11 +421,11 @@ def create_free_bet():
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
 		# check valid redeem or not
-		r = Redeem.find_redeem_by_code(redeem)
+		r = Redeem.find_redeem_by_code_and_user(redeem, uid)
 		if r is None:
 			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
 		else:
-			if r.used_user > 0 or r.reserved_id != uid:
+			if r.used_user > 0:
 				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 			r.used_user = uid
 			db.session.flush()

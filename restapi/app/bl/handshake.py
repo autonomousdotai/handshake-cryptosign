@@ -499,8 +499,12 @@ def save_handshake_for_event(event_name, inputs):
 			result = int(result)
 			outcome.result = result
 			db.session.flush()
+
 			handshakes, shakers = data_need_set_result_for_outcome(outcome)
-			send_result_email(outcome.id)
+
+			# send result email to users who play in
+			send_result_email(outcome.id, result)
+
 			return handshakes, shakers
 
 		return None, None
@@ -700,16 +704,18 @@ def save_handshake_for_event(event_name, inputs):
 		if len(result) == 0 or int(result) not in [1, 2, 3]:
 			return None, None
 		outcome = Outcome.find_outcome_by_id(outcome_id)
-
 		if outcome is None:
 			return None, None
 
+		result = int(result)
 		outcome.total_dispute_amount = 0
-		outcome.result = int(result)
+		outcome.result = result
 		db.session.flush()
 		
 		handshakes, shakers = save_resolve_state_for_outcome(outcome.id)
-		send_result_email(outcome.outcome_id)
+
+		# send result email to users who play in
+		send_result_email(outcome.id, result)
 		return handshakes, shakers
 
 
@@ -921,28 +927,28 @@ def all_master_accounts():
 	return accounts
 
 
-def send_result_email(outcome_id):
+def send_result_email(outcome_id, outcome_result):
 	"""
 	" Send result email to all users play in.
 	"""
 	total_users = all_users_play_in_outcome(outcome_id)
 	for item in total_users:
 		if hasattr(item, 'user_id') and item.user_id is not None:
-			send_email_match_result.delay(outcome_id, item.user_id, item.side, item.outcome_result)
+			send_email_match_result.delay(outcome_id, item.user_id, item.side, outcome_result)
 
 
 def all_users_play_in_outcome(outcome_id):
 	# get all users who played in ended outcome.
-	hs_user = db.session.query(Handshake.user_id.label('user_id'), Outcome.result.label('outcome_result'), Handshake.side.label('side'))\
+	hs_user = db.session.query(Handshake.user_id.label('user_id'), Handshake.side.label('side'))\
 		.filter(Outcome.result > 0)\
 		.filter(Handshake.outcome_id == outcome_id)\
 		.group_by(Handshake.user_id, Outcome.result, Handshake.side)
 
-	s_user = db.session.query(Shaker.shaker_id.label("user_id"), Outcome.result.label('outcome_result'), Shaker.side.label('side'))\
+	s_user = db.session.query(Shaker.shaker_id.label("user_id"),Shaker.side.label('side'))\
 		.filter(Outcome.result > 0)\
 		.filter(Handshake.outcome_id == outcome_id)\
 		.filter(Shaker.handshake_id == Handshake.id)\
 		.group_by(Shaker.shaker_id, Outcome.result, Shaker.side)
 
-	total_users = hs_user.union_all(s_user).group_by('user_id', 'outcome_result', 'side').all()
+	total_users = hs_user.union_all(s_user).group_by('user_id', 'side').all()
 	return total_users

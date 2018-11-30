@@ -316,6 +316,24 @@ def send_reward_redeem(email, redeem_code, referral_link):
 
 
 @celery.task()
+def send_renew_redeem_code(email, redeem_code, referral_link):
+	"""
+	" Renew redeem code when user clicks on refund bet
+	"""
+	try:
+		# Send email
+		email_body = render_renew_redeem_email_content(redeem_code, referral_link)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Your New Redeem Code", email_body)
+
+		return True
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("log_send_renew_redeem_code=>",exc_type, fname, exc_tb.tb_lineno)
+
+
+@celery.task()
 def send_email_match_result(outcome_id, uid, user_choice, outcome_result):
 	"""
 	" We need pass outcome_result param 'cause it still not commit to database

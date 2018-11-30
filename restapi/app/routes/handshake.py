@@ -800,6 +800,18 @@ def check_redeem_code():
 
 		# check user be able to use redeem code or not
 		if result == False:
+			# gift to producthunt user
+			gift = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.code==func.binary('DOJO')).first()
+			if gift is None:
+				r = Redeem(
+					code='DOJO',
+					reserved_id=user.id
+				)
+				db.session.add(r)
+				db.session.flush()
+				result = True
+			
+		if result == False:
 			result = user_bl.is_able_to_use_redeem_code(user)
 
 		response = {

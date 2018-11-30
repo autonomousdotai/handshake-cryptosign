@@ -9,7 +9,7 @@ class Redeem(BaseModel):
 	__tablename__ = 'redeem'
 	__json_public__ = ['id', 'used_user']
 	
-	code = db.Column(db.String(255), unique=True, nullable=False)
+	code = db.Column(db.String(255), unique=False, nullable=False)
 	reserved_id = db.Column(db.Integer,
 							server_default=str(0),
 							default=0)

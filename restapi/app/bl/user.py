@@ -50,7 +50,7 @@ def is_able_to_create_new_free_bet(user):
 
 
 def is_able_to_claim_redeem_code(user):
-	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id).all()
+	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.code!=func.binary('DOJO')).all()
 	if redeems is not None and len(redeems) > 0:
 		return False
 

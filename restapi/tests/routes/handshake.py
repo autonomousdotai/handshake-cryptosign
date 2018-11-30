@@ -2786,7 +2786,7 @@ class TestHandshakeBluePrint(BaseTestCase):
 
             self.assertEqual(data['data']['is_user_disable_popup'], 0)
             self.assertEqual(data['data']['amount'], '0.03')
-            self.assertEqual(data['data']['redeem'], 0)
+            self.assertEqual(data['data']['redeem'], 1)
             self.assertEqual(data['data']['is_subscribe'], 1)
 
 

@@ -525,27 +525,35 @@ def run_bots(outcome_id):
 				return False
 
 			# get all support handshakes need to be matched
-			support = db.session.query(func.sum(Handshake.remaining_amount).label('support_amount'))\
-										.filter(and_(Handshake.outcome_id==outcome_id,\
-													Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
-													Handshake.remaining_amount > 0, \
-													~Handshake.from_address.in_(accounts), \
-													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+			support = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('support_amount'))\
+									.filter(and_(Handshake.outcome_id==outcome_id,\
+												Handshake.side==CONST.SIDE_TYPE['SUPPORT'], \
+												Handshake.remaining_amount > 0, \
+												~Handshake.from_address.in_(accounts), \
+												Handshake.status == CONST.Handshake['STATUS_INITED'])) \
+									.group_by(Handshake.odds) \
+									.all()
 
 			# get all oppose handshakes need to be matched
-			oppose = db.session.query(func.sum(Handshake.remaining_amount).label('oppose_amount'))\
-										.filter(and_(Handshake.outcome_id==outcome_id,\
-													Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
-													Handshake.remaining_amount > 0, \
-													~Handshake.from_address.in_(accounts), \
-													Handshake.status == CONST.Handshake['STATUS_INITED'])).all()
+			oppose = db.session.query(Handshake.odds, func.sum(Handshake.remaining_amount).label('oppose_amount'))\
+									.filter(and_(Handshake.outcome_id==outcome_id,\
+												Handshake.side==CONST.SIDE_TYPE['OPPOSE'], \
+												Handshake.remaining_amount > 0, \
+												~Handshake.from_address.in_(accounts), \
+												Handshake.status == CONST.Handshake['STATUS_INITED'])) \
+									.group_by(Handshake.odds) \
+									.all()
 
 			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
 			# add bot task match with support side
 			o = {}
 			if support[0] is not None and support[0].support_amount > 0:
+				odds = support[0].odds
+				v = odds/(odds-1)
+				v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))
+
 				support_amount = str(support[0].support_amount)
-				o['odds'] = '2.0'	
+				o['odds'] = str(v)
 				o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['OPPOSE']	
 				o['outcome_id'] = outcome_id	
@@ -567,8 +575,12 @@ def run_bots(outcome_id):
 
 			# add bot task match with oppose side
 			if oppose[0] is not None and oppose[0].oppose_amount > 0:
+				odds = oppose[0].odds
+				v = odds/(odds-1)
+				v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))
+
 				oppose_amount = str(oppose[0].oppose_amount)
-				o['odds'] = '2.0'	
+				o['odds'] = v
 				o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['SUPPORT']	
 				o['outcome_id'] = outcome_id	

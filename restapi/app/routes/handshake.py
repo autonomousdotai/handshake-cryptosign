@@ -421,11 +421,11 @@ def create_free_bet():
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
 
 		# check valid redeem or not
-		r = Redeem.find_redeem_by_code(redeem)
+		r = Redeem.find_redeem_by_code_and_user(redeem, uid)
 		if r is None:
 			return response_error(MESSAGE.REDEEM_NOT_FOUND, CODE.REDEEM_NOT_FOUND)
 		else:
-			if r.used_user > 0 or r.reserved_id != uid:
+			if r.used_user > 0:
 				return response_error(MESSAGE.REDEEM_INVALID, CODE.REDEEM_INVALID)
 			r.used_user = uid
 			db.session.flush()
@@ -799,6 +799,18 @@ def check_redeem_code():
 				subscribe_email_to_claim_redeem_code.delay(user.email, code_1, code_2, request.headers["Fcm-Token"], request.headers["Payload"], uid)
 
 		# check user be able to use redeem code or not
+		if result == False:
+			# gift to producthunt user
+			gift = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.code==func.binary('DOJO')).first()
+			if gift is None:
+				r = Redeem(
+					code='DOJO',
+					reserved_id=user.id
+				)
+				db.session.add(r)
+				db.session.flush()
+				result = True
+			
 		if result == False:
 			result = user_bl.is_able_to_use_redeem_code(user)
 

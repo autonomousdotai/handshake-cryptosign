@@ -3,6 +3,7 @@
 # Copyright (C) 2017 Autonomous Inc. All rights reserved.
 #
 
+from sqlalchemy import func
 from flask_testing import TestCase
 from datetime import datetime, timedelta
 from mock import patch
@@ -87,6 +88,16 @@ class TestUser(BaseTestCase):
 			db.session.commit()
 
 		actual = user_bl.is_able_to_use_redeem_code(user)
+		expected = True
+
+		# use producthunt code
+		r = db.session.query(Redeem).filter(Redeem.reserved_id==88, Redeem.code==func.binary('DOJO')).first()
+		if r is not None:
+			r.used_user = 88
+			db.session.flush()
+			db.session.commit()
+
+		actual = user_bl.is_able_to_use_redeem_code(user)
 		expected = False
 
 		self.assertEqual(actual, expected)
@@ -103,7 +114,6 @@ class TestUser(BaseTestCase):
 
 		actual, _, _ = user_bl.claim_redeem_code_for_user(user)
 		expected = False
-
 		self.assertEqual(actual, expected)
 
 if __name__ == '__main__':

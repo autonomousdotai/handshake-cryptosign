@@ -1349,6 +1349,90 @@ class TestMatchBluePrint(BaseTestCase):
             print data
             self.assertTrue(data['status'] == 1)
 
+    def test_add_match_private(self):
+        self.clear_data_before_test()
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+
+        # Private event has not source
+        with self.client:
+            params = {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "public": 0,
+                            "category": {
+                                "name": "Worlcup Russia 2018"
+                            }
+                        }
+
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
+            response = self.client.post(
+                                    '/match/add',
+                                    data=multipart_form_data,
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
+                                    })
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['status'] == 1)
+            match = Match.find_match_by_id(data['data'][0]['id'])
+            self.assertTrue(match.source == None)
+
+            # Private event has source
+            params = {
+                            "homeTeamName": "Nigeria",
+                            "awayTeamName": "Iceland",
+                            "date": seconds + 100,
+                            "reportTime": seconds + 200,
+                            "disputeTime": seconds + 300,
+                            "homeTeamCode": "",
+                            "homeTeamFlag": "",
+                            "awayTeamCode": "",
+                            "awayTeamFlag": "",
+                            "name": "Nigeria - Iceland - Sangunji",
+                            "public": 0,
+                            "source": {
+                                "name": "Worlcup Russia 2018_{}".format(seconds),
+                                "url": "google.com_{}".format(seconds),
+                            },
+                            "category": {
+                                "name": "Worlcup Russia 2018"
+                            }
+                        }
+
+            multipart_form_data = MultipartEncoder(
+                fields= {
+                    'data': json.dumps(params),
+                }
+            )
+            response = self.client.post(
+                                    '/match/add',
+                                    data=multipart_form_data,
+                                    headers={
+                                        "Uid": "{}".format(88),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                        "Content-Type": multipart_form_data.content_type #application/json
+                                    })
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['status'] == 1)
+            match = Match.find_match_by_id(data['data'][0]['id'])
+            self.assertTrue(match.source != None)
+        
 
 if __name__ == '__main__':
     unittest.main()

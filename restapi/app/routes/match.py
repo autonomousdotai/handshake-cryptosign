@@ -144,17 +144,19 @@ def add_match():
 		if "source_id" in item:
 			# TODO: check deleted and approved
 			source = db.session.query(Source).filter(Source.id == int(item['source_id'])).first()
+		elif "source" in item and "name" in item["source"] and "url" in item["source"]:
+			source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
+			if source is None:
+				source = Source(
+					name=item["source"]["name"],
+					url=item["source"]["url"],
+					created_user_id=uid
+				)
+				db.session.add(source)
+				db.session.flush()
 		else:
-			if "source" in item and "name" in item["source"] and "url" in item["source"]:
-				source = db.session.query(Source).filter(and_(Source.name==item["source"]["name"], Source.url==item["source"]["url"])).first()
-				if source is None:
-					source = Source(
-						name=item["source"]["name"],
-						url=item["source"]["url"],
-						created_user_id=uid
-					)
-					db.session.add(source)
-					db.session.flush()
+			if item['public'] == 1:
+				return response_error(MESSAGE.MATCH_SOURCE_EMPTY, CODE.MATCH_SOURCE_EMPTY)
 
 		if "category_id" in item:
 			category = db.session.query(Category).filter(Category.id == int(item['category_id'])).first()

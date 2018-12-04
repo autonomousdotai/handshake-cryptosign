@@ -56,7 +56,7 @@ class Match(BaseModel):
 
 def remind_review_market(mapper, connection, target):
 	if target.created_user_id is not None and target.created_user_id > 0:
-		message = '{} - match id: {}'.format(target.name, target.id)
+		message = '{} - match id: {}, closing time: {}'.format(target.name, target.id, target.date)
 		slack_service.send_message(message)
 
 listen(Match, 'after_insert', remind_review_market)

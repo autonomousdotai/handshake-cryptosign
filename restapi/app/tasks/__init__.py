@@ -4,7 +4,7 @@ from decimal import *
 from datetime import datetime
 from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
-from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User, Setting, Referral
+from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User, Setting, Referral, Source
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
 from app.constants import Handshake as HandshakeStatus
@@ -605,3 +605,27 @@ def run_bots(outcome_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("run_bots => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def event_image_default(match_id):
+	try:
+		match = Match.find_match_by_id(match_id)
+		if match is None or match.source_id is None:
+			return False
+
+		source = Source.find_source_by_id(match.source_id)
+		if source is None:
+			return False;
+
+		image_name = '{}_{}'.format(source.id, source.name).lower()
+		image_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', image_name);
+		image_name = '{}.jpg'.format(image_name)
+
+		match.image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], '{}/{}'.format(app.config['GC_STORAGE_FOLDER'], app.config['GC_DEFAULT_FOLDER']), image_name)
+		db.session.commit()		
+
+	except Exception as e:
+		db.session.rollback()
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("event_image_default => ", exc_type, fname, exc_tb.tb_lineno)

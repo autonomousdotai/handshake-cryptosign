@@ -74,6 +74,7 @@ class BaseConfig(object):
 	GC_STORAGE_PROJECT_NAME = ''
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''
+	GC_DEFAULT_FOLDER = ''
 	MAX_CONTENT_LENGTH = 16 * 1024 * 1024 # limit max length of request
 
 	# Algolia
@@ -109,6 +110,7 @@ class StagingConfig(BaseConfig):
 	GC_STORAGE_PROJECT_NAME = ''
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''
+	GC_DEFAULT_FOLDER = ''
 
 	RECOMBEE_DB = ""
 	RECOMBEE_KEY = ""
@@ -128,6 +130,7 @@ class ProductionConfig(BaseConfig):
 	GC_STORAGE_PROJECT_NAME = ''
 	GC_STORAGE_BUCKET = ''
 	GC_STORAGE_FOLDER = ''
+	GC_DEFAULT_FOLDER = ''
 
 	RECOMBEE_DB = ""
 	RECOMBEE_KEY = ""

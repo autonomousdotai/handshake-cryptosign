@@ -16,8 +16,9 @@ def delete_file(path_file):
         print(str(ex))
 
 
-def handle_upload_file(file):
-    file_name = formalize_filename(file.filename)
+def handle_upload_file(file, file_name=None):
+    if file_name is None:
+        file_name = formalize_filename(file.filename)
     saved_path = os.path.join(g.UPLOAD_DIR, file_name)
     file.save(saved_path)
     return file_name, saved_path

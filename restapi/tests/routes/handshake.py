@@ -1106,9 +1106,6 @@ class TestHandshakeBluePrint(BaseTestCase):
             self.assertNotEqual(handshake['status'], handshake['bk_status'])
             self.assertEqual(handshake['status'], HandshakeStatus['STATUS_MAKER_INIT_ROLLBACK'])
 
-            user = User.find_user_with_id(88)
-            self.assertEqual(user.free_bet, 0)
-
         for handshake in arr_hs:
             db.session.delete(handshake)
             db.session.commit()
@@ -1281,31 +1278,6 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 0)
-            
-            # call check-free-bet
-            setting = Setting.find_setting_by_name('FreeBet')
-            if setting is None:
-                setting = Setting(
-                    name="FreeBet",
-                    status=1
-                )
-                db.session.add(setting)
-            else:
-                setting.status = 1
-            db.session.commit()
-            response = self.client.get(
-                                    '/handshake/check_free_bet',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-            d = data['data']
-            self.assertEqual(d['free_bet_available'], 2)
 
 
     def test_collect_real_bet(self):
@@ -1949,151 +1921,6 @@ class TestHandshakeBluePrint(BaseTestCase):
         
         for handshake in arr_hs:
             db.session.delete(handshake)
-            db.session.commit()
-
-
-    def test_check_free_bet(self):
-        self.clear_data_before_test()
-        arr_hs = []
-        self.clear_all_bets_for_user(100)
-
-        r = db.session.query(Redeem).filter(Redeem.reserved_id==0).limit(1).first()
-        if r is not None:
-            r.used_user = 0
-            r.reserved_id = 100
-            db.session.commit()
-        
-        redeem_code = r.code 
-        arr_hs.append(r)
-
-        with self.client:
-            Uid = 100
-            setting = Setting.find_setting_by_name('FreeBet')
-            if setting is None:
-                setting = Setting(
-                    name="FreeBet",
-                    status=1
-                )
-                db.session.add(setting)
-            else:
-                setting.status = 1
-            db.session.commit()
-            response = self.client.get(
-                                    '/handshake/check_free_bet',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-            d = data['data']
-            self.assertEqual(d['free_bet_available'], 3)
-
-            # create a free-bet
-            params = {
-                "type": 3,
-                "extra_data": "",
-                "description": "DTHTRONG",
-                "outcome_id": 88,
-                "odds": "1.7",
-                "currency": "ETH",
-                "chain_id": 4,
-                "side": 2,
-                "from_address": "0x4f94a1392a6b48dda8f41347b15af7b80f3c5f03",
-                "redeem": redeem_code
-            }
-
-            response = self.client.post(
-                                    '/handshake/create_free_bet',
-                                    content_type='application/json',
-                                    data=json.dumps(params),
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-
-            # call check free bet again
-            setting = Setting.find_setting_by_name('FreeBet')
-            if setting is None:
-                setting = Setting(
-                    name="FreeBet",
-                    status=1
-                )
-                db.session.add(setting)
-            else:
-                setting.status = 1
-            db.session.commit()
-            response = self.client.get(
-                                    '/handshake/check_free_bet',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            d = data['data']
-            self.assertEqual(d['free_bet_available'], 2)
-
-
-            # call check-free-bet with extension
-            setting = Setting.find_setting_by_name('FreeBet')
-            if setting is None:
-                setting = Setting(
-                    name="FreeBet",
-                    status=0
-                )
-                db.session.add(setting)
-            else:
-                setting.status = 0
-            db.session.commit()
-
-            response = self.client.get(
-                                    '/handshake/check_free_bet',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                    })
-
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-            response = self.client.get(
-                                    '/handshake/check_free_bet',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                        "Request-From": 'extension'
-                                    })
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 1)
-            self.assertEqual(response.status_code, 200)
-
-            response = self.client.get(
-                                    '/handshake/check_free_bet',
-                                    headers={
-                                        "Uid": "{}".format(Uid),
-                                        "Fcm-Token": "{}".format(123),
-                                        "Payload": "{}".format(123),
-                                        "Request-From": 'mobile'
-                                    })
-            data = json.loads(response.data.decode()) 
-            self.assertTrue(data['status'] == 0)
-            self.assertEqual(response.status_code, 200)
-
-            setting = Setting.find_setting_by_name('FreeBet')
-            setting.status = 1
             db.session.commit()
 
 

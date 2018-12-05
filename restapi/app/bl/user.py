@@ -13,41 +13,6 @@ import app.constants as CONST
 import app.bl.outcome as outcome_bl
 
 
-def get_last_user_free_bet(user_id):
-	# Lastest handshake query
-	hs_last = db.session.query(Handshake.date_created.label("created_time"), Outcome.id, Handshake.side)\
-	.filter(Handshake.outcome_id == Outcome.id)\
-	.filter(Handshake.status != HandshakeStatus['STATUS_PENDING'])\
-	.filter(Handshake.user_id == user_id, Handshake.free_bet == 1)
-
-	# Lastest shaker query
-	s_last = db.session.query(Shaker.date_created.label("created_time"), Outcome.id, Shaker.side)\
-	.filter(Shaker.handshake_id == Handshake.id)\
-	.filter(Handshake.outcome_id == Outcome.id)\
-	.filter(Shaker.status != HandshakeStatus['STATUS_PENDING'])\
-	.filter(Shaker.shaker_id == user_id, Shaker.free_bet == 1)
-
-	# Execute query
-	item = hs_last.union_all(s_last).order_by(desc('created_time')).first()
-	return item
-
-
-def is_able_to_create_new_free_bet(user):
-	item = get_last_user_free_bet(user.id)
-	can_free_bet = True
-	last_bet_status = None
-	if item is not None:
-		outcome_id = item[1]
-		user_side = item[2]
-		outcome = Outcome.find_outcome_by_id(outcome_id)
-		if outcome_bl.has_result(outcome):
-			can_free_bet = (CONST.MAXIMUM_FREE_BET - user.free_bet) > 0
-			last_bet_status = outcome.result == user_side
-		else:
-			can_free_bet = False
-	
-	return can_free_bet, last_bet_status
-
 
 def is_able_to_claim_redeem_code(user):
 	redeems = db.session.query(Redeem).filter(Redeem.reserved_id==user.id, Redeem.code!=func.binary('DOJO')).all()

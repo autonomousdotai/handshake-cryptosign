@@ -355,9 +355,6 @@ def rollback():
 			if handshake is not None:	
 				if handshake_bl.is_init_pending_status(handshake): # rollback maker init state
 					handshake.status = HandshakeStatus['STATUS_MAKER_INIT_ROLLBACK']
-					if handshake.free_bet == 1 and user.free_bet > 0:
-						user.free_bet -= 1
-					
 					db.session.flush()
 					handshakes.append(handshake)
 
@@ -376,9 +373,6 @@ def rollback():
 			if shaker is not None:
 				if shaker.status == HandshakeStatus['STATUS_PENDING']:
 					shaker = handshake_bl.rollback_shake_state(shaker)
-					if shaker.free_bet == 1 and user.free_bet > 0:
-						user.free_bet -= 1
-
 					shakers.append(shaker)
 
 				else:
@@ -701,9 +695,6 @@ def refund_free_bet():
 			offchain = int(offchain.replace('s', ''))
 			shaker = db.session.query(Shaker).filter(and_(Shaker.id==offchain, Shaker.shaker_id==user.id)).first()
 			if handshake_bl.can_refund(None, shaker=shaker):
-				if user.free_bet > 0:
-					user.free_bet -= 1
-
 				shaker.bk_status = shaker.status
 				shaker.status = HandshakeStatus['STATUS_REFUNDED']
 				db.session.merge(shaker)
@@ -717,9 +708,6 @@ def refund_free_bet():
 			offchain = int(offchain.replace('m', ''))
 			handshake = db.session.query(Handshake).filter(and_(Handshake.id==offchain, Handshake.user_id==user.id)).first()
 			if handshake_bl.can_refund(handshake):
-				if user.free_bet > 0:
-					user.free_bet -= 1
-
 				handshake.bk_status = handshake.status
 				handshake.status = HandshakeStatus['STATUS_REFUNDED']
 				db.session.merge(handshake)
@@ -740,41 +728,6 @@ def refund_free_bet():
 		return response_ok()
 	except Exception, ex:
 		db.session.rollback()
-		return response_error(ex.message)
-
-
-@handshake_routes.route('/check_free_bet', methods=['GET'])
-@login_required
-def check_free_bet():
-	"""
-	" Check user be able to create free bet or not
-	"	The maxium free-bet is 3
-	"""
-	try:
-		uid = int(request.headers['Uid'])
-		user = User.find_user_with_id(uid)
-		request_from = request.headers.get('Request-From', 'mobile')
-
-		if user is None:
-			return response_error(MESSAGE.USER_INVALID, CODE.USER_INVALID)
-
-		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
-		if setting is not None:
-			if setting.status == 0 and request_from != 'extension':
-				return response_error(MESSAGE.FREE_BET_UNABLE, CODE.FREE_BET_UNABLE)
-
-		item = user_bl.get_last_user_free_bet(uid)
-		can_free_bet, last_bet_status = user_bl.is_able_to_create_new_free_bet(user)
-
-		response = {
-			"free_bet_available": CONST.MAXIMUM_FREE_BET - user.free_bet,
-			"can_freebet": can_free_bet,
-			"is_win": last_bet_status
-		}
-
-		return response_ok(response)
-
-	except Exception, ex:
 		return response_error(ex.message)
 
 

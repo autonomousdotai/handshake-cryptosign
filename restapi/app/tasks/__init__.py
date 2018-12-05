@@ -426,7 +426,7 @@ def send_email_event_verification_success(match_id, uid):
 
 
 @celery.task()
-def update_status_feed(_id, status):
+def update_status_feed(_id, status, amount=None, remaining_amount=None):
 	try:
 		endpoint = "{}/handshake/update".format(app.config['SOLR_SERVICE'])
 
@@ -440,15 +440,22 @@ def update_status_feed(_id, status):
 				shake_user_ids.append(s.shaker_id)	
 				shake_user_infos.append(s.to_json())
 
-		data = {
-			"add": [{
-				"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
-				"shake_user_ids_is": {"set":shake_user_ids},
-				"status_i": {"set":status},
-				"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
-			}]
+		add_data = {
+			"id": CONST.CRYPTOSIGN_OFFCHAIN_PREFIX + 'm' + str(_id),
+			"shake_user_ids_is": {"set":shake_user_ids},
+			"status_i": {"set":status},
+			"shakers_s": {"set":json.dumps(shake_user_infos, use_decimal=True)}
 		}
 
+		if amount is not None:
+			add_data['amount'] = {"set":amount}
+
+		if remaining_amount is not None:
+			add_data['remaining_amount'] = {"set":remaining_amount}
+		data = {
+			"add": [add_data]
+		}
+		print data
 		res = requests.post(endpoint, json=data)
 		if res.status_code > 400 or \
 			res.content is None or \

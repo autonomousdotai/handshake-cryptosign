@@ -116,5 +116,27 @@ class TestUser(BaseTestCase):
 		expected = False
 		self.assertEqual(actual, expected)
 
+
+	def test_is_email_subscribed(self):
+		self.clear_data_before_test()
+
+		user = User.find_user_with_id(88)
+		user.email = None
+		db.session.commit()
+
+		email = 'abc123@gmail.com'
+		actual = user_bl.is_email_subscribed(email)
+		expected = False
+
+		self.assertEqual(actual, expected)
+
+		user.email = email
+		db.session.commit()
+		actual = user_bl.is_email_subscribed(email)
+		expected = True
+
+		self.assertEqual(actual, expected)
+
+
 if __name__ == '__main__':
 	unittest.main()

@@ -143,6 +143,9 @@ def user_accept_notification():
 			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
 
 		email = data["email"]
+		if user_bl.is_email_subscribed(email):
+			return response_error(MESSAGE.EMAIL_ALREADY_SUBSCRIBED, CODE.EMAIL_ALREADY_SUBSCRIBED)
+		
 		uid = int(request.headers["Uid"])
 
 		user = User.find_user_with_id(uid)

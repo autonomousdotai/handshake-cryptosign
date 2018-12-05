@@ -403,6 +403,8 @@ def update_feed_status():
 		is_maker = int(data.get('is_maker', -1))
 		item_id = int(data.get('id', -1))
 		status = int(data.get('status', -1))
+		amount = data.get('amount') # string
+		remaining_amount = data.get('remaining_amount') # string
 
 		if is_maker == -1 or status == -1 or item_id == -1:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
@@ -413,16 +415,26 @@ def update_feed_status():
 			handshake = Handshake.find_handshake_by_id(item_id)
 			if handshake is not None:
 				handshake.status = status
+				if amount is not None:
+					handshake.amount = amount
+				if remaining_amount is not None:
+					handshake.remaining_amount = remaining_amount
 		else:
 			shaker = Shaker.find_shaker_by_id(item_id)
 			if shaker is not None:
 				shaker.status = status
 				handshake = Handshake.find_handshake_by_id(shaker.handshake_id)
-				status = handshake.status
+				if handshake is not None:
+					status = handshake.status
+
+					if amount is not None:
+						handshake.amount = amount
+					if remaining_amount is not None:
+						handshake.remaining_amount = remaining_amount
 
 		db.session.flush()
 		db.session.commit()
-		update_status_feed.delay(handshake.id, status)
+		update_status_feed.delay(handshake.id, status, amount=amount, remaining_amount=remaining_amount)
 		return response_ok()
 
 	except Exception, ex:

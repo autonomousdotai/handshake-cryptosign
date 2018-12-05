@@ -271,12 +271,6 @@ def save_handshake_method_for_event(method, inputs):
 			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
 			db.session.flush()
 
-			if 'maker' in inputs: # free-bet
-				user = User.find_user_with_id(handshake.user_id)
-				if user is not None and user.free_bet > 0:
-					user.free_bet -= 1
-					db.session.flush()
-
 			arr = []
 			arr.append(handshake)
 			return arr, None
@@ -293,12 +287,6 @@ def save_handshake_method_for_event(method, inputs):
 			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
 			db.session.flush()
 
-			if 'taker' in inputs: # free-bet
-				user = User.find_user_with_id(shaker.shaker_id)
-				if user is not None and user.free_bet > 0:
-					user.free_bet -= 1
-					db.session.flush()
-
 			arr = []
 			arr.append(shaker)
 			return None, arr
@@ -311,12 +299,6 @@ def save_handshake_method_for_event(method, inputs):
 			handshake.bk_status = handshake.status
 			handshake.status = HandshakeStatus['STATUS_MAKER_UNINIT_FAILED']
 			db.session.flush()
-
-			if method == 'uninitTestDrive':
-				user = User.find_user_with_id(handshake.user_id)
-				if user is not None:
-					user.free_bet = 0
-					db.session.flush()
 
 			arr = []
 			arr.append(handshake)
@@ -409,12 +391,6 @@ def save_failed_handshake_method_for_event(method, tx):
 		if handshake is not None:
 			handshake.status = HandshakeStatus['STATUS_INIT_FAILED']
 			db.session.flush()
-	
-			if method == 'initTestDrive': # free-bet
-				user = User.find_user_with_id(handshake.user_id)
-				if user is not None and user.free_bet > 0:
-					user.free_bet -= 1
-					db.session.flush()
 
 			arr = []
 			arr.append(handshake)
@@ -430,12 +406,6 @@ def save_failed_handshake_method_for_event(method, tx):
 
 			shaker.status = HandshakeStatus['STATUS_SHAKE_FAILED']
 			db.session.flush()
-
-			if method == 'shakeTestDrive': # free-bet
-				user = User.find_user_with_id(shaker.shaker_id)
-				if user is not None and user.free_bet > 0:
-					user.free_bet -= 1
-					db.session.flush()
 
 			arr = []
 			arr.append(shaker)
@@ -531,6 +501,7 @@ def save_handshake_for_event(event_name, inputs):
 			if h is not None:
 				run_bots.delay(h.outcome_id)
 
+
 			# Give redeem code for referral user
 			u = User.find_user_with_id(shaker.shaker_id)
 			if u is not None and u.played_bet == 0:
@@ -607,13 +578,7 @@ def save_handshake_for_event(event_name, inputs):
 		handshake = Handshake.find_handshake_by_id(int(offchain))
 		if handshake is not None:
 			handshake.status = HandshakeStatus['STATUS_MAKER_UNINITED']
-			handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']
-
-			if handshake.free_bet != 0:
-				user = User.find_user_with_id(handshake.user_id)
-				if user is not None and user.free_bet > 1:
-					user.free_bet -= 1
-    				
+			handshake.bk_status = HandshakeStatus['STATUS_MAKER_UNINITED']		
 			db.session.flush()
 
 			arr = []

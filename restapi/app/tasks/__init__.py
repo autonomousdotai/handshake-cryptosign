@@ -448,10 +448,10 @@ def update_status_feed(_id, status, amount=None, remaining_amount=None):
 		}
 
 		if amount is not None:
-			add_data['amount'] = {"set":amount}
+			add_data['amount_s'] = {"set":amount}
 
 		if remaining_amount is not None:
-			add_data['remaining_amount'] = {"set":remaining_amount}
+			add_data['remaining_amount_s'] = {"set":remaining_amount}
 		data = {
 			"add": [add_data]
 		}

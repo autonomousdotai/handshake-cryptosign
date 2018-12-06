@@ -29,15 +29,23 @@ def user_hook():
 		user_id = data.get('user_id', None)
 		email = data.get('email', None)
 		meta_data = data.get('meta_data', None)
+		name = data.get('name', None)
 
 		if type_change == "Update":
 			user = User.find_user_with_id(user_id)
 			
-			if user is not None and user.email != email and email is not None and email != "":
-				print "Update email: {}".format(email)
-				user.email = email
-				db.session.commit()
+			if user is not None:
+				if user.email != email and email is not None and email != "":
+					print "Update email: {}".format(email)
+					user.email = email
+					db.session.flush()
 
+				if user.name != name and name is not None and name != "":
+					print "Update name: {}".format(name)
+					user.name = name
+					db.session.flush()
+
+		db.session.commit()
 		return response_ok()
 
 	except Exception, ex:

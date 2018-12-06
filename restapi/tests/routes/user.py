@@ -152,7 +152,106 @@ class TestUserBluePrint(BaseTestCase):
 
             user = User.find_user_with_id(66)
             self.assertEqual(user.invited_by_user, 88)
+
+
+    def test_subscribe_notification(self):
+        self.clear_data_before_test()
+
+        # clear email
+        users = db.session.query(User).filter(User.email=='a123a@gmail.com').all()
+        for u in users:
+            u.email = None
+            db.session.flush()
+
+        db.session.commit()
+
+        with self.client:
+            Uid = 66
+            params = {
+                "email": "a123a@gmail.com"
+            }
+            response = self.client.post(
+                                    '/subscribe-notification',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            user = User.find_user_with_id(66)
+            self.assertEqual(user.email, 'a123a@gmail.com') 
+
+            # call again
+            params = {
+                "email": "a123a@gmail.com"
+            }
+            response = self.client.post(
+                                    '/subscribe-notification',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
     
 
+    def test_subscribe_notification_with_user_not_verified(self):
+        self.clear_data_before_test()
+
+        # clear email
+        users = db.session.query(User).filter(User.email=='a123a@gmail.com').all()
+        for u in users:
+            u.email = None
+            db.session.flush()
+
+        db.session.commit()
+
+        with self.client:
+            Uid = 66
+            params = {
+                "email": "a123a@gmail.com",
+                "need_send_verification_code": 1
+            }
+            response = self.client.post(
+                                    '/subscribe-notification',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+
+            # set email to user first
+            u = User.find_user_with_id(66)
+            u.email = 'a123a@gmail.com'
+            db.session.commit()
+
+            # call again
+            params = {
+                "email": "a123a@gmail.com",
+                "need_send_verification_code": 1
+            }
+            response = self.client.post(
+                                    '/subscribe-notification',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+    
 if __name__ == '__main__':
     unittest.main()

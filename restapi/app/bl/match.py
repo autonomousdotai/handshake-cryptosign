@@ -163,7 +163,7 @@ def keyword_search(source, keywords):
 		txts = keywords.split(',')
 
 	if source is not None:
-		txts.append(source)
+		txts.append(clean_source_with_valid_format(source))
 	
 	return txts
 

@@ -7,7 +7,7 @@ import requests
 
 from flask import Blueprint, request, g
 from app import db
-from app.models import User
+from app.models import User, Match
 from flask_jwt_extended import (create_access_token)
 
 from app.helpers.message import MESSAGE, CODE
@@ -58,7 +58,20 @@ def user_hook():
 def comment_count_hook():
 	try:
 		data = request.json
-		print "Hook data: {}".format(data)
+		if data['commentNumber'] is None or data['objectId'] is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		# Hook data: {u'commentNumber': 8, u'objectId': u'outcome_id_1721'}
+		match_id = int(data['objectId'].replace('outcome_id_', ''))
+		match = Match.find_match_by_id(match_id)
+
+		if match is not None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		match.comment_count = data['commentNumber']
+		db.session.flush()
+		db.session.commit()
+
 		return response_ok()
 
 	except Exception, ex:

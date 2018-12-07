@@ -51,3 +51,16 @@ def user_hook():
 	except Exception, ex:
 		db.session.rollback()
 		return response_error(ex.message)
+
+
+@hook_routes.route('/comment-count', methods=['POST'])
+@service_required
+def comment_count_hook():
+	try:
+		data = request.json
+		print "Hook data: {}".format(data)
+		return response_ok()
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)

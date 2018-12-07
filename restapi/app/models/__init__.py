@@ -13,3 +13,4 @@ from token import *
 from contract import *
 from redeem import *
 from referral import *
+from history import *

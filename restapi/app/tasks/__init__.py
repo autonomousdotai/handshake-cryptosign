@@ -613,6 +613,7 @@ def run_bots(outcome_id):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("run_bots => ", exc_type, fname, exc_tb.tb_lineno)
 
+
 @celery.task()
 def event_image_default(match_id):
 	try:
@@ -622,10 +623,10 @@ def event_image_default(match_id):
 
 		source = Source.find_source_by_id(match.source_id)
 		if source is None:
-			return False;
+			return False
 
 		image_name = '{}_{}'.format(source.id, source.name).lower()
-		image_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', image_name);
+		image_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', image_name)
 		image_name = '{}.jpg'.format(image_name)
 
 		match.image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], '{}/{}'.format(app.config['GC_STORAGE_FOLDER'], app.config['GC_DEFAULT_FOLDER']), image_name)

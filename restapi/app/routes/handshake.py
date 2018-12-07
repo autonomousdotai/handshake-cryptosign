@@ -23,7 +23,7 @@ from app.helpers.bc_exception import BcException
 from app.helpers.decorators import login_required, whitelist
 from app.helpers.utils import is_equal, local_to_utc
 from app import db
-from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem
+from app.models import User, Handshake, Shaker, Outcome, Match, Task, Contract, Setting, Token, Redeem, History
 from app.constants import Handshake as HandshakeStatus
 from app.tasks import update_feed, subscribe_email_to_claim_redeem_code
 from datetime import *
@@ -169,6 +169,25 @@ def init():
 		if contract is None:
 			return response_error(MESSAGE.CONTRACT_INVALID, CODE.CONTRACT_INVALID)
 
+		# add to history
+		history = History(			
+			chain_id=chain_id,
+			description=description,
+			free_bet=free_bet,
+			from_address=from_address,
+			contract_address=contract.contract_address,
+			contract_json=contract.json_name,
+			odds=odds,
+			amount=amount,
+			currency=currency,
+			from_request=from_request,
+			side=side,
+			user_id=uid,
+			outcome_id=outcome_id
+		)
+		db.session.add(history)
+		db.session.flush()
+
 		# filter all handshakes which able be to match first
 		handshakes = handshake_bl.find_all_matched_handshakes(side, odds, outcome_id, amount, uid)
 		arr_hs = []
@@ -189,7 +208,8 @@ def init():
 				free_bet=free_bet,
 				contract_address=contract.contract_address,
 				contract_json=contract.json_name,
-				from_request=from_request
+				from_request=from_request,
+				history_id=history.id
 			)
 
 			db.session.add(handshake)
@@ -261,7 +281,8 @@ def init():
 					free_bet=free_bet,
 					contract_address=c.contract_address,
 					contract_json=c.json_name,
-					from_request=from_request
+					from_request=from_request,
+					history_id=history.id
 				)
 
 				db.session.add(shaker)
@@ -293,7 +314,8 @@ def init():
 					free_bet=free_bet,
 					contract_address=contract.contract_address,
 					contract_json=contract.json_name,
-					from_request=from_request
+					from_request=from_request,
+					history_id=history.id
 				)
 				db.session.add(handshake)
 				db.session.flush()
@@ -320,7 +342,6 @@ def init():
 		return response_ok(response)
 
 	except Exception, ex:
-		print ex
 		db.session.rollback()
 		return response_error(ex.message)
 

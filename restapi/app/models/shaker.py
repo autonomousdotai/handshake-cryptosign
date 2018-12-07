@@ -34,6 +34,7 @@ class Shaker(BaseModel):
 	from_request = db.Column(db.String(255),
 							server_default=str(''),
 	                      	default='')
+	history_id = db.Column(db.Integer)
 	handshake_id = db.Column('handshake_id', db.ForeignKey('handshake.id'))
 
 	@classmethod

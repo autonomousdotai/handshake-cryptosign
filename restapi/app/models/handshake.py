@@ -47,6 +47,7 @@ class Handshake(BaseModel):
 	side = db.Column(db.Integer,
 						server_default=str(CONST.SIDE_TYPE['SUPPORT']),
 	                   	default=CONST.SIDE_TYPE['SUPPORT'])
+	history_id = db.Column(db.Integer)
 	user_id = db.Column('user_id', db.ForeignKey('user.id'))
 	outcome_id = db.Column('outcome_id', db.ForeignKey('outcome.id'))
 	shakers = db.relationship('Shaker', backref='handshake', primaryjoin="Handshake.id == Shaker.handshake_id",

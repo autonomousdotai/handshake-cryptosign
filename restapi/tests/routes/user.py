@@ -252,6 +252,27 @@ class TestUserBluePrint(BaseTestCase):
                                     })
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] == 1)
-    
+
+
+    def test_subscribe_notification_with_user_not_verified(self):
+        self.clear_data_before_test()
+
+        with self.client:
+            Uid = 66
+            params = {
+                "ids": [9998, 9999],
+            }
+            response = self.client.post(
+                                    '/user/habit',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
 if __name__ == '__main__':
     unittest.main()

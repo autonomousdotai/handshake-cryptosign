@@ -162,13 +162,15 @@ def update_image(source_id):
 
 			matches = db.session.query(Match)\
 			.filter(\
-				Match.source_id == source.id,
-				or_(Match.image_url == None, Match.image_url == ""),
-				Match.deleted == 0,\
-				Match.date > seconds,\
-				Match.public == 1,\
-				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
+				and_(\
+					Match.source_id == source.id,
+					or_(Match.image_url == None, Match.image_url == ""),
+					Match.deleted == 0,\
+					Match.date > seconds,\
+					Match.public == 1,\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
 				)\
+			)\
 			.all()
 
 			image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], '{}/{}'.format(app.config.get('GC_STORAGE_FOLDER'), app.config.get('GC_DEFAULT_FOLDER')), image_name)

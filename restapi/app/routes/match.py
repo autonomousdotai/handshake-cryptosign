@@ -171,6 +171,11 @@ def add_match():
 					db.session.add(category)
 					db.session.flush()
 
+		image_url_default = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], '{}/{}'.format(app.config.get('GC_STORAGE_FOLDER'), app.config.get('GC_DEFAULT_FOLDER')), CONST.IMAGE_NAME_SOURCE_DEFAULT)
+
+		if source is not None and source.image_url is not None and source.image_url != '': 
+			image_url_default = source.image_url
+
 		match = Match(
 			homeTeamName=item.get('homeTeamName', ''),
 			homeTeamCode=item.get('homeTeamCode', ''),
@@ -190,7 +195,8 @@ def add_match():
 			grant_permission=int(item.get('grant_permission', 0)),
 			creator_wallet_address=item.get('creator_wallet_address'),
 			outcome_name=item.get('outcome_name'),
-			event_name=item.get('event_name')
+			event_name=item.get('event_name'),
+			image_url=image_url_default
 		)
 		db.session.add(match)
 		db.session.flush()
@@ -231,8 +237,6 @@ def add_match():
 		# Handle upload file to Google Storage
 		if file_name is not None and saved_path is not None:
 			upload_file_google_storage.delay(match.id, file_name, saved_path)
-		else:
-			event_image_default.delay(match.id)
 
 		return response_ok(response_json)
 	except Exception, ex:

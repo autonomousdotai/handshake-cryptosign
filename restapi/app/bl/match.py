@@ -186,6 +186,3 @@ def get_user_recommended_data(user_id, offset=10, timestamp=0):
 		
 		ids = list(map(lambda x : int(x["id"]), response['recomms']))
 		return ids
-
-
-	

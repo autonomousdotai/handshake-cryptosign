@@ -157,16 +157,33 @@ def handle_source_data(source):
 	return source_json
 
 
-def algolia_search(text):
+def keyword_search(source, keywords):
+	txts = []
+	if keywords is not None:
+		txts = keywords.split(',')
+
+	if source is not None:
+		txts.append(clean_source_with_valid_format(source))
+	
+	return txts
+
+
+def algolia_search(source, keywords):
+	txts = keyword_search(source, keywords)
 	arr = []
-	response = algolia.search(text)
-	hits = response['hits']
-	if hits is not None and len(hits) > 0:
-		for data in hits:
-			try:
-				arr.append(int(data['objectID']))	
-			except Exception as ex:
-				print(str(ex))
+
+	for txt in txts:
+		response = algolia.search(txt)
+		hits = response['hits']
+		if hits is not None and len(hits) > 0:
+			for data in hits:
+				try:
+					arr.append(int(data['objectID']))	
+				except Exception as ex:
+					print(str(ex))
+
+		if len(arr) > 0:
+			break
 
 	return arr
 

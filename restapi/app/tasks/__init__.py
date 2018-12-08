@@ -415,9 +415,12 @@ def send_email_event_verification_success(match_id, uid):
 			print("User is invalid")
 			return False
 
+		r = Referral.find_referral_by_uid(uid)
+		referral_link = '{}prediction?refer={}'.format(app.config['BASE_URL'], r.code)
+
 		match = Match.find_match_by_id(match_id)
 		subject = """Your event "{}" was verified""".format(match.name)
-		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(app.config['BASE_URL'], match.id, user.id))
+		mail_services.send(user.email, app.config['FROM_EMAIL'], subject, render_verification_success_mail_content(app.config['BASE_URL'], match.id, user.id, referral_link))
 		
 	except Exception as identifier:
 		exc_type, exc_obj, exc_tb = sys.exc_info()

@@ -24,7 +24,8 @@ def check_referral():
 
 		response = {
 			"code": None,
-			"referral_link": None
+			"referral_link": None,
+			"referred_users": referral_bl.all_referred_users_by_user(uid)
 		}
 		if r is None:
 			return response_error(response)

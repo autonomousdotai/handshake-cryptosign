@@ -66,3 +66,17 @@ def is_user_can_join_referral_program(user):
 		return True
 
 	return False
+
+
+def all_referred_users_by_user(user_id):
+	if user_id is None:
+		return None
+	
+	response = []
+	users = db.session.query(User).filter(User.invited_by_user==user_id).all()
+	for u in users:
+		data = {}
+		data['email'] = u.email
+		data['redeemed'] = u.played_bet
+		response.append(data)
+	return response

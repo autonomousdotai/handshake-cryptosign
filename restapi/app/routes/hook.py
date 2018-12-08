@@ -65,7 +65,7 @@ def comment_count_hook():
 		match_id = int(data['objectId'].replace('outcome_id_', ''))
 		match = Match.find_match_by_id(match_id)
 
-		if match is not None:
+		if match is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		match.comment_count = data['commentNumber']

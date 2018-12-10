@@ -7,7 +7,7 @@ import requests
 import app.constants as CONST
 import app.bl.admin as admin_bl
 
-from flask import Blueprint, request, g
+from flask import Blueprint, request, g, current_app as app
 from app import db
 from app.models import User, Match
 from flask_jwt_extended import (create_access_token)

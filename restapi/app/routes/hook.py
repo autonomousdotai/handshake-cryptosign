@@ -5,6 +5,7 @@ import json
 import hashlib
 import requests
 import app.constants as CONST
+import app.bl.admin as admin_bl
 
 from flask import Blueprint, request, g
 from app import db
@@ -14,6 +15,7 @@ from flask_jwt_extended import (create_access_token)
 from app.helpers.message import MESSAGE, CODE
 from app.helpers.decorators import service_required
 from app.helpers.response import response_ok, response_error
+from app.tasks import send_email_event_verification_failed
 
 hook_routes = Blueprint('hook', __name__)
 

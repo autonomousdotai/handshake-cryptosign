@@ -85,17 +85,13 @@ def comment_count_hook():
 @hook_routes.route('/slack/command', methods=['GET'])
 def slack_command_hook():
 	try:
-		data = request.json
-		print request
-		print data
-		print request.args
-		if data['token'] is None or data['token'] != app.config['SLACK_COMMAND_TOKEN']:
+		if request.args['token'] is None or request.args['token'] != app.config['SLACK_COMMAND_TOKEN']:
 			return response_error(MESSAGE.INVALID_TOKEN, CODE.INVALID_TOKEN)
 
-		if data['text'] is None or data['response_url'] is None:
+		if request.args['text'] is None or request.args['response_url'] is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 		
-		arr = data['text'].split('_')
+		arr = request.args['text'].split('_')
 		print arr
 		if len(arr) != 2:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)

@@ -82,7 +82,7 @@ def comment_count_hook():
 		return response_error(ex.message)
 
 
-@hook_routes.route('/slack/command', methods=['POST'])
+@hook_routes.route('/slack/command', methods=['GET'])
 def slack_command_hook():
 	try:
 		data = request.json

@@ -86,7 +86,7 @@ def comment_count_hook():
 def slack_command_hook():
 	try:
 		data = request.json
-		print data
+		print request.args
 		if data['token'] is None or data['token'] != app.config['SLACK_COMMAND_TOKEN']:
 			return response_error(MESSAGE.INVALID_TOKEN, CODE.INVALID_TOKEN)
 

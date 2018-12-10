@@ -967,6 +967,7 @@ class TestHandshakeBluePrint(BaseTestCase):
                                     })
 
             data = json.loads(response.data.decode()) 
+            print data
             data_json = data['data']['handshakes']
 
             hs = Handshake.find_handshake_by_id(handshake.id)

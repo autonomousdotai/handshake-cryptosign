@@ -7,11 +7,12 @@ user_token = db.Table('user_token',
                         )
 class User(BaseModel):
 	__tablename__ = 'user'
-	__json_public__ = ['id', 'email']
+	__json_public__ = ['id', 'email', 'name']
 
 	fcm_token = db.Column(db.Text)
 	payload = db.Column(db.Text)
 	email = db.Column(db.String(255))
+	name = db.Column(db.String(255))
 	free_bet = db.Column(db.Integer,
 						server_default=str(0),
 						default=0)

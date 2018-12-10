@@ -142,12 +142,18 @@ def user_accept_notification():
 		if 'email' not in data or is_valid_email(data["email"]) is False:
 			return response_error(MESSAGE.USER_INVALID_EMAIL, CODE.USER_INVALID_EMAIL)
 
+		is_need_send_verification_code = data.get('need_send_verification_code', 0)
 		email = data["email"]
-		if user_bl.is_email_subscribed(email):
+		is_subscribed = user_bl.is_email_subscribed(email)
+
+		if is_need_send_verification_code == 1:
+			if is_subscribed == False:
+				return response_error(MESSAGE.USER_CANNOT_RECEIVE_VERIFICATION_CODE, CODE.USER_CANNOT_RECEIVE_VERIFICATION_CODE)
+		
+		elif is_subscribed:
 			return response_error(MESSAGE.EMAIL_ALREADY_SUBSCRIBED, CODE.EMAIL_ALREADY_SUBSCRIBED)
 		
 		uid = int(request.headers["Uid"])
-
 		user = User.find_user_with_id(uid)
 		user.email = email
 		user.is_subscribe = 1

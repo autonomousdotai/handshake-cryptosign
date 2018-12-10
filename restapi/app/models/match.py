@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 
 class Match(BaseModel):
 	__tablename__ = 'match'
-	__json_public__ = ['id', 'date', 'reportTime', 'disputeTime', 'outcomes', 'name', 'outcome_name', 'event_name', 'public', 'market_fee', 'grant_permission', 'source_id', 'category_id', 'creator_wallet_address', 'created_user_id', 'image_url']
+	__json_public__ = ['id', 'date', 'reportTime', 'disputeTime', 'outcomes', 'name', 'outcome_name', 'event_name', 'public', 'market_fee', 'grant_permission', 'source_id', 'category_id', 'creator_wallet_address', 'created_user_id', 'image_url', 'comment_count']
 	__json_modifiers__ = {
         'outcomes': lambda outcomes, _: [outcome.to_json() for outcome in outcomes]
     }
@@ -42,6 +42,7 @@ class Match(BaseModel):
 						default=0)
 	creator_wallet_address = db.Column(db.String(255))
 	image_url = db.Column(db.String(512))
+	comment_count = db.Column(db.Integer)
 	category_id = db.Column('category_id', db.ForeignKey('category.id'))
 	source_id = db.Column('source_id', db.ForeignKey('source.id'))
 	outcomes = db.relationship('Outcome', backref='match', primaryjoin="Match.id == Outcome.match_id", lazy='dynamic')

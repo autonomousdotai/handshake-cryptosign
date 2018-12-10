@@ -41,6 +41,7 @@ class MESSAGE(object):
 	USER_INVALID_ACCESS_TOKEN = 'Invalid user'
 	USER_INVALID_SOURCE = 'Please login with google+ or facebook account.'
 	USER_RECEIVED_FREE_BET_ALREADY = 'You have received free bet already!'
+	USER_CANNOT_RECEIVE_VERIFICATION_CODE = 'Your input email cannot receive verification code'
 
 	# HANDSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = 'You\'re out of gas! Please wait while we add ETH to your account.'
@@ -138,7 +139,8 @@ class CODE(object):
 	USER_NEED_PURCHASE_PRODUCT = '1017'										
 	USER_INVALID_ACCESS_TOKEN = '1018' 										
 	USER_INVALID_SOURCE = '1019' 											
-	USER_RECEIVED_FREE_BET_ALREADY = '1020' 								
+	USER_RECEIVED_FREE_BET_ALREADY = '1020' 	
+	USER_CANNOT_RECEIVE_VERIFICATION_CODE = '1068'							
 
 	# HANDSHAKE
 	HANDSHAKE_NOT_ENOUGH_GAS = '1021'	

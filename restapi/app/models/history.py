@@ -29,8 +29,8 @@ class History(BaseModel):
 	side = db.Column(db.Integer,
 						server_default=str(CONST.SIDE_TYPE['SUPPORT']),
 	                   	default=CONST.SIDE_TYPE['SUPPORT'])
-	user_id = db.Column('user_id', db.ForeignKey('user.id'))
-	outcome_id = db.Column('outcome_id', db.ForeignKey('outcome.id'))
+	user_id = db.Column(db.Integer)
+	outcome_id = db.Column(db.Integer)
 
 	def __repr__(self):
 		return '<history {}>'.format(self.id)

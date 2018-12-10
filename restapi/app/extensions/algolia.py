@@ -18,6 +18,12 @@ class Algolia(object):
 	def load_algolia(self):
 		client = algoliasearch.Client(self.app.config['ALGOLIA_APPLICATION_ID'], self.app.config['ALGOLIA_API_KEY'])
 		self.index = client.init_index(self.app.config['ALGOLIA_INDEX_NAME'])
+		self.index.set_settings({
+			'searchableAttributes': [
+				'eventName, sourceName',
+				'sourceURL'
+			]
+		})
 
 
 	def search(self, text):

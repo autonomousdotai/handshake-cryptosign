@@ -131,13 +131,13 @@ def update_image(source_id):
 	try:
 		source = Source.find_source_by_id(source_id)
 		if source is None:
-			return False;
+			return False
 
 		request_size = request.headers.get('Content-length') # string
 		is_update_matchs = request.form.get('update_matchs', '0') == '1'
 
 		image_name = '{}_{}'.format(source.id, source.name).lower()
-		image_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', image_name);
+		image_name = re.sub(r'[^A-Za-z0-9\_\-\.]+', '_', image_name)
 		image_name = '{}.jpg'.format(image_name)
 
 		if request.files and len(request.files) > 0 and request.files['image'] is not None:
@@ -162,18 +162,20 @@ def update_image(source_id):
 
 			matches = db.session.query(Match)\
 			.filter(\
-				Match.source_id == source.id,
-				or_(Match.image_url == None, Match.image_url == ""),
-				Match.deleted == 0,\
-				Match.date > seconds,\
-				Match.public == 1,\
-				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
+				and_(\
+					Match.source_id == source.id,
+					or_(Match.image_url == None, Match.image_url == ""),
+					Match.deleted == 0,\
+					Match.date > seconds,\
+					Match.public == 1,\
+					Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None)).group_by(Outcome.match_id))
 				)\
+			)\
 			.all()
 
 			image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], '{}/{}'.format(app.config.get('GC_STORAGE_FOLDER'), app.config.get('GC_DEFAULT_FOLDER')), image_name)
 			for match in matches:
-				match.image_url = image_url;
+				match.image_url = image_url
 				db.session.flush()
 			db.session.commit()
 

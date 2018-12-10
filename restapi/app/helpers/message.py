@@ -17,6 +17,7 @@ class MESSAGE(object):
 	CANNOT_UNSUBSCRIBE_EMAIL = 'Cannot unsubscribe email!'
 	FILE_TOO_LARGE = 'File too large!'
 	EMAIL_ALREADY_SUBSCRIBED = 'Your email is already registered!'
+	INVALID_TOKEN = 'Please double check your token.'
 
 	# OUTCOME
 	OUTCOME_INVALID = 'Please check your outcome id'
@@ -116,6 +117,7 @@ class CODE(object):
 	CANNOT_UNSUBSCRIBE_EMAIL = '1055'
 	FILE_TOO_LARGE = '1064'
 	EMAIL_ALREADY_SUBSCRIBED = '1065'
+	INVALID_TOKEN = '1069'
 
 	# OUTCOME
 	OUTCOME_INVALID = '1008'												

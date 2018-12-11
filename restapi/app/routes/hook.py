@@ -130,7 +130,7 @@ def slack_command_hook():
 		response_slack_command.delay(request.args['response_url'], '[{}] {} by {}'.format(app.config['ENV'], text, request.args['user_name']))
 		
 		db.session.commit()
-		return response_ok(match.to_json())
+		return response_ok()
 
 	except Exception, ex:
 		db.session.rollback()

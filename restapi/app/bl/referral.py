@@ -56,7 +56,9 @@ def give_redeem_code_for_referred_user(user_id):
 def reward_user_redeem_code(user_id, code):
 	u = User.find_user_with_id(user_id)
 	if u is not None and is_valid_email(u.email):
-		send_reward_redeem.delay(u.email, code, '{}prediction?refer={}'.format(g.BASE_URL, code))
+		r = Referral.find_referral_by_uid(u.id)
+		if r is not None:
+			send_reward_redeem.delay(u.email, code, '{}prediction?refer={}'.format(g.BASE_URL, r.code))
 
 
 def is_user_can_join_referral_program(user):

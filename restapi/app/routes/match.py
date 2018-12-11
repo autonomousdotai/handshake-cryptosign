@@ -16,7 +16,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc, now_to_strftime
-from app.tasks import send_email_create_market, upload_file_google_storage, recombee_sync_user_data, event_image_default
+from app.tasks import send_email_create_market, upload_file_google_storage
 from app import db, recombee_client
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Token
 from app.helpers.message import MESSAGE, CODE

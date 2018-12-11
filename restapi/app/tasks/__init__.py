@@ -640,3 +640,22 @@ def event_image_default(match_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("event_image_default => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def response_slack_command(request_url, text, response_type="in_channel"):
+	try:
+		data = {
+			"response_type": response_type,
+			"text": text
+		}
+
+		res = requests.post(request_url, json=data)
+		if res.status_code > 400 or \
+			res.content is None or \
+			(isinstance(res.content, str) and 'null' in res.content):
+			print "Response slack fail: {}".format(request_url)
+
+	except Exception as e:
+		exc_type, exc_obj, exc_tb = sys.exc_info()
+		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+		print("response_slack_command => ", exc_type, fname, exc_tb.tb_lineno)

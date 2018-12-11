@@ -25,6 +25,7 @@ class Outcome(BaseModel):
 	approved = db.Column(db.Integer,
 						server_default=str(1),
 						default=1)
+	approve_by = db.Column(db.String(512))
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
 	contract_id = db.Column('contract_id', db.ForeignKey('contract.id'))
 	token_id = db.Column('token_id', db.ForeignKey('token.id'))

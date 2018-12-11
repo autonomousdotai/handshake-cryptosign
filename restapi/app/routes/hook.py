@@ -6,6 +6,7 @@ import hashlib
 import requests
 import app.constants as CONST
 import app.bl.admin as admin_bl
+import app.bl.match as match_bl
 
 from flask import Blueprint, request, g, current_app as app
 from app import db
@@ -103,6 +104,9 @@ def slack_command_hook():
 		match = Match.find_match_by_id(match_id)
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+		if match_bl.is_validate_match_time(match.to_json()) == False:
+			return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
 
 		for o in match.outcomes:
 			if o.approved == CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:

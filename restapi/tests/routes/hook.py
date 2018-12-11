@@ -129,7 +129,6 @@ class TestHookBluePrint(BaseTestCase):
                                     )
 
             data = json.loads(response.data.decode()) 
-            print data
             self.assertTrue(data['status'] == 1)
 
 
@@ -210,6 +209,50 @@ class TestHookBluePrint(BaseTestCase):
 
             data = json.loads(response.data.decode()) 
             self.assertTrue(data['status'] != 1)
+
+        # Case: time invalid
+        match = Match.find_match_by_id(4685)
+        if match is not None:
+            for o in match.outcomes:
+                db.session.delete(o)
+                db.session.commit()
+            db.session.delete(match)
+            db.session.commit()
+    
+        match = Match(
+            id=4685,
+            public=1,
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id = 3
+        )
+        db.session.add(match)
+        db.session.commit()
+
+        outcome = Outcome(
+            match_id=match.id,
+            name="test approve",
+            # hid=1
+            approved=CONST.OUTCOME_STATUS['APPROVED']
+        )
+        db.session.add(outcome)
+        db.session.commit()
+
+        with self.client:
+            url_query_str = """token=ABC123&team_id=T0001&team_domain=example&channel_id=C123456&channel_name=test&user_id=U123456&user_name=Steve&command=%2Fweather&text={}_{}&response_url=https://hooks.slack.com/commands/1234/5678""".format(match.id, 1)
+            response = self.client.get(
+                '/hook/slack/command?{}'.format(url_query_str)
+            )
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+
+        for o in match.outcomes:
+            db.session.delete(o)
+            db.session.commit()
+        db.session.delete(match)
+        db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

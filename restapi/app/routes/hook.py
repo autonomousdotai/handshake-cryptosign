@@ -103,6 +103,7 @@ def slack_command_hook():
 		match = Match.find_match_by_id(match_id)
 		if match is None:
 			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
 		for o in match.outcomes:
 			if o.approved == CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
 				o.approved = status
@@ -113,6 +114,8 @@ def slack_command_hook():
 					"user_name": request.args['user_name']
 				})
 				db.session.flush()
+			else:
+				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
 
 		if status == CONST.OUTCOME_STATUS['APPROVED']:
 			task = admin_bl.add_create_market_task(match)

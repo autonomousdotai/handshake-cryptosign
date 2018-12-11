@@ -127,7 +127,7 @@ def slack_command_hook():
 			text = '{}: {} REJECTED'.format(match.name, match.id)
 			send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
-		response_slack_command.delay(request.args['response_url'], '[{}] {}'.format(app.config['ENV'], text))
+		response_slack_command.delay(request.args['response_url'], '[{}] {} by {}'.format(app.config['ENV'], text, request.args['user_name']))
 		
 		db.session.commit()
 		return response_ok(match.to_json())

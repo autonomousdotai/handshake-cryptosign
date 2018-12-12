@@ -7,8 +7,6 @@ from app.core import db, configure_app, firebase, dropbox_services, mail_service
 from app.models import Handshake, Outcome, Match, Task, Contract, User, Setting, Referral, Source
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
-from app.constants import Handshake as HandshakeStatus
-from celery.schedules import crontab
 from app.core import slack_service
 
 import sys
@@ -653,6 +651,7 @@ def event_image_default(match_id):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("event_image_default => ", exc_type, fname, exc_tb.tb_lineno)
+
 
 @celery.task()
 def response_slack_command(request_url, text, response_type="in_channel"):

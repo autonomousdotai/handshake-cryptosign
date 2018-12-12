@@ -213,9 +213,8 @@ def get_text_list_need_approve():
 				Match.deleted == 0,\
 				Match.date > seconds,\
 				Match.public == 0,\
-				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None, Outcome.hid == CONST.OUTCOME_STATUS['PENDING'])).group_by(Outcome.match_id))
+				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid == None, Outcome.hid == CONST.OUTCOME_STATUS['PENDING'])).group_by(Outcome.match_id))
 				)\
-			.order_by(Match.date.asc(), Match.index.desc())\
 			.all()
 
 	text = ""

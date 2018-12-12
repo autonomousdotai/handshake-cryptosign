@@ -210,13 +210,13 @@ def get_text_list_need_approve():
 	text = ""
 
 	matches = db.session.query(Match)\
-			.filter(and_(\
+			.filter(\
 				Match.deleted == 0,\
 				Match.date > seconds,\
 				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid == None, Outcome.approved == CONST.OUTCOME_STATUS['PENDING'])).group_by(Outcome.match_id))
-				))\
+				)\
 			.all()
-
+	print matches
 	for match in matches:
 		text += '[{}] {} - match id: {}, closing time: {}\n'.format(app.config['ENV'], match.name, match.id, match.date)
 

@@ -4,7 +4,7 @@ from decimal import *
 from datetime import datetime
 from app.factory import make_celery
 from app.core import db, configure_app, firebase, dropbox_services, mail_services, gc_storage_client, recombee_client
-from app.models import Handshake, Outcome, Shaker, Match, Task, Contract, User, Setting, Referral, Source
+from app.models import Handshake, Outcome, Match, Task, Contract, User, Setting, Referral, Source
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
 from app.constants import Handshake as HandshakeStatus
@@ -247,16 +247,14 @@ def subscribe_email_to_claim_redeem_code(email, redeem_code_1, redeem_code_2, fc
 			return False
 
 		# Send email
-		r = Referral.find_referral_by_uid(uid)
-		if r is not None:
-			email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2, '{}prediction?refer={}'.format(app.config['BASE_URL'], r.code))
+		import app.bl.referral as referral_bl
+		code = referral_bl.issue_referral_code_for_user(User.find_user_with_id(uid))
+		email_body = render_email_claim_redeem_code_content(redeem_code_1, redeem_code_2, '{}prediction?refer={}'.format(app.config['BASE_URL'], code))
 
-			print '------- send redeem code to user {}-------'.format(email)
-			mail_services.send(email, app.config['FROM_EMAIL'], "Your free predictions", email_body)
+		print '------- send redeem code to user {}-------'.format(email)
+		mail_services.send(email, app.config['FROM_EMAIL'], "Your free predictions", email_body)
 
-			return True
-		
-		return False
+		return True
 
 	except Exception as e:
 		exc_type, exc_obj, exc_tb = sys.exc_info()

@@ -915,12 +915,14 @@ def all_users_play_in_outcome(outcome_id):
 	hs_user = db.session.query(Handshake.user_id.label('user_id'), Handshake.side.label('side'))\
 		.filter(Outcome.result > 0)\
 		.filter(Handshake.outcome_id == outcome_id)\
+		.filter(Handshake.status == HandshakeStatus['STATUS_INITED'])\
 		.group_by(Handshake.user_id, Outcome.result, Handshake.side)
 
 	s_user = db.session.query(Shaker.shaker_id.label("user_id"),Shaker.side.label('side'))\
 		.filter(Outcome.result > 0)\
 		.filter(Handshake.outcome_id == outcome_id)\
 		.filter(Shaker.handshake_id == Handshake.id)\
+		.filter(Shaker.status == HandshakeStatus['STATUS_SHAKER_SHAKED'])\
 		.group_by(Shaker.shaker_id, Outcome.result, Shaker.side)
 
 	total_users = hs_user.union_all(s_user).group_by('user_id', 'side').all()

@@ -247,5 +247,56 @@ class TestMatchBl(BaseTestCase):
         db.session.delete(source3)
         db.session.commit()
 
+    def get_text_list_need_approve(self):
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        items = []
+        match = Match(
+            public=1,
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id = 3
+        )
+        db.session.add(match)
+        db.session.commit()
+        items.append(match)
+
+        outcome = Outcome(
+            match_id=match.id,
+            name="test approve",
+            approved=-1
+        )
+        db.session.add(outcome)
+        items.append(outcome)
+        db.session.commit()
+
+        match1 = Match(
+            public=0,
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id = 3
+        )
+        db.session.add(match1)
+        db.session.commit()
+        items.append(match1)
+
+        outcome1 = Outcome(
+            match_id=match1.id,
+            name="test approve",
+            approved=-1
+        )
+        db.session.add(outcome1)
+        db.session.commit()
+        items.append(outcome1)
+
+        text = match_bl.get_text_list_need_approve()
+        for item in items:
+            db.session.delete(item)
+            db.session.commit()
+        
+        self.assertTrue(text != '')
+
 if __name__ == '__main__':
     unittest.main()

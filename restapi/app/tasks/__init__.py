@@ -44,7 +44,7 @@ def setup_periodic_tasks(sender, **kwargs):
 
 @celery.task
 def remind_slack():
-	message = 'Remind, please review: ```{}```'.format(match_bl.get_text_list_need_approve())
+	message = 'Remind \n {}'.format(match_bl.get_text_list_need_approve())
 	slack_service.send_message(message)
 
 

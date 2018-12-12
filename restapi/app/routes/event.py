@@ -1,10 +1,10 @@
 import app.bl.handshake as handshake_bl
 
 from flask import Blueprint, request
-from app.helpers.response import response_ok, response_error
 from app import db
-from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
-from app.models import Handshake, Outcome, Shaker, Match, Tx
+
+from app.helpers.response import response_ok, response_error
+from app.models import Tx
 from app.helpers.message import MESSAGE, CODE
 
 event_routes = Blueprint('event', __name__)
@@ -12,12 +12,12 @@ event_routes = Blueprint('event', __name__)
 
 @event_routes.route('/', methods=['POST'])
 def event():
-	data = request.json
-	print 'event = {}'.format(data)
-
-	if data is None:
-		return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 	try:
+		data = request.json
+		print 'event = {}'.format(data)
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
 		status = data.get('status', 1)
 		tx_id = int(data['id'])
 

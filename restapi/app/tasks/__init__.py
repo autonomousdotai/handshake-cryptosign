@@ -8,6 +8,8 @@ from app.models import Handshake, Outcome, Match, Task, Contract, User, Setting,
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
 from app.constants import Handshake as HandshakeStatus
+from celery.schedules import crontab
+from app.core import slack_service
 
 import sys
 import time
@@ -17,6 +19,8 @@ import os, hashlib
 import requests
 import random
 import app.bl.storage as storage_bl
+import app.bl.match as match_bl
+
 
 app = Flask(__name__)
 # config app
@@ -31,6 +35,17 @@ mail_services.init_app(app)
 
 # celery
 celery = make_celery(app)
+
+
+@celery.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Calls remind slack every 1 hours.
+    sender.add_periodic_task(60 * 60.0, remind_slack, name='remind every 1h')
+
+@celery.task
+def remind_slack():
+	message = 'Remind \n {}'.format(match_bl.get_text_list_need_approve())
+	slack_service.send_message(message)
 
 
 @celery.task()

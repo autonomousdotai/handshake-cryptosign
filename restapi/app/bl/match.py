@@ -1,8 +1,8 @@
-from flask import g
+from flask import g, current_app as app
 from datetime import *
 from urllib3 import util
 
-from sqlalchemy import func
+from sqlalchemy import and_, or_, desc, func
 from algoliasearch import algoliasearch
 from recombee_api_client.api_requests import RecommendItemsToUser
 from app import db
@@ -203,3 +203,24 @@ def get_user_recommended_data(user_id, offset=10, timestamp=0):
 		
 		ids = list(map(lambda x : int(x["id"]), response['recomms']))
 		return ids
+
+def get_text_list_need_approve():
+	t = datetime.now().timetuple()
+	seconds = local_to_utc(t)
+			
+	matches = db.session.query(Match)\
+			.filter(\
+				Match.deleted == 0,\
+				Match.date > seconds,\
+				Match.public == 0,\
+				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid != None, Outcome.hid == CONST.OUTCOME_STATUS['PENDING'])).group_by(Outcome.match_id))
+				)\
+			.order_by(Match.date.asc(), Match.index.desc())\
+			.all()
+
+	text = ""
+
+	for match in matches:
+		text += '[{}] {} - match id: {}, closing time: {}\n'.format(app.config['ENV'], match.name, match.id, match.date)
+
+	return text

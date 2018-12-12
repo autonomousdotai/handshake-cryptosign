@@ -86,58 +86,66 @@ def comment_count_hook():
 @hook_routes.route('/slack/command', methods=['GET'])
 def slack_command_hook():
 	try:
+		text = ""
 		if request.args['token'] is None or request.args['token'] != app.config['SLACK_COMMAND_TOKEN']:
 			return response_error(MESSAGE.INVALID_TOKEN, CODE.INVALID_TOKEN)
 
 		if request.args['text'] is None or request.args['response_url'] is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
-		arr = request.args['text'].split('_')
+		### Command: list ###
+		if request.args['text'].lower() is "list":
+			text = 'Please review: ```{}```'.format(match_bl.get_text_list_need_approve())
+			response_slack_command.delay(request.args['response_url'], text)
+			return response_ok()
 
-		if len(arr) != 2:
-			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
-
-		text = ""
-		match_id = int(arr[0])
-		status =  int(arr[1]) # CONST.OUTCOME_STATUS['APPROVED']
-
-		match = Match.find_match_by_id(match_id)
-		if match is None:
-			return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
-
-		if match_bl.is_validate_match_time(match.to_json()) == False:
-			return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
-
-		for o in match.outcomes:
-			if o.approved == CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
-				o.approved = status
-				o.approve_by = str({
-					"channel_id": request.args['channel_id'],
-					"channel_name": request.args['channel_name'],
-					"user_id": request.args['user_id'],
-					"user_name": request.args['user_name']
-				})
-				db.session.flush()
-			else:
-				return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
-
-		if status == CONST.OUTCOME_STATUS['APPROVED']:
-			task = admin_bl.add_create_market_task(match)
-			if task is not None:
-				db.session.add(task)
-				db.session.flush()
-				text = '{}: {} APPROVED'.format(match.name, match.id)
-			else:
-				text = '{}: {} Can not APPROVE (CONTRACT_EMPTY_VERSION)'.format(match.name, match.id)
-				return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+		### Command: approve ###
 		else:
-			text = '{}: {} REJECTED'.format(match.name, match.id)
-			send_email_event_verification_failed.delay(match.id, match.created_user_id)
+			arr = request.args['text'].split('_')
 
-		response_slack_command.delay(request.args['response_url'], '[REVIEW - {}] {} by {}'.format(app.config['ENV'], text, request.args['user_name']))
-		
-		db.session.commit()
-		return response_ok()
+			if len(arr) != 2:
+				return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+			match_id = int(arr[0])
+			status =  int(arr[1]) # CONST.OUTCOME_STATUS['APPROVED']
+
+			match = Match.find_match_by_id(match_id)
+			if match is None:
+				return response_error(MESSAGE.MATCH_NOT_FOUND, CODE.MATCH_NOT_FOUND)
+
+			if match_bl.is_validate_match_time(match.to_json()) == False:
+				return response_error(MESSAGE.MATCH_INVALID_TIME, CODE.MATCH_INVALID_TIME)
+
+			for o in match.outcomes:
+				if o.approved == CONST.OUTCOME_STATUS['PENDING'] and o.hid is None:
+					o.approved = status
+					o.approve_by = str({
+						"channel_id": request.args['channel_id'],
+						"channel_name": request.args['channel_name'],
+						"user_id": request.args['user_id'],
+						"user_name": request.args['user_name']
+					})
+					db.session.flush()
+				else:
+					return response_error(MESSAGE.OUTCOME_INVALID, CODE.OUTCOME_INVALID)
+
+			if status == CONST.OUTCOME_STATUS['APPROVED']:
+				task = admin_bl.add_create_market_task(match)
+				if task is not None:
+					db.session.add(task)
+					db.session.flush()
+					text = '{}: {} APPROVED'.format(match.name, match.id)
+				else:
+					text = '{}: {} Can not APPROVE (CONTRACT_EMPTY_VERSION)'.format(match.name, match.id)
+					return response_error(MESSAGE.CONTRACT_EMPTY_VERSION, CODE.CONTRACT_EMPTY_VERSION)
+			else:
+				text = '{}: {} REJECTED'.format(match.name, match.id)
+				send_email_event_verification_failed.delay(match.id, match.created_user_id)
+
+			response_slack_command.delay(request.args['response_url'], 'Result approve: ```[{}] {} by {}```'.format(app.config['ENV'], text, request.args['user_name']))
+			
+			db.session.commit()
+			return response_ok()
 
 	except Exception, ex:
 		db.session.rollback()

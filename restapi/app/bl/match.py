@@ -210,11 +210,11 @@ def get_text_list_need_approve():
 	text = ""
 
 	matches = db.session.query(Match)\
-			.filter(\
+			.filter(and_(\
 				Match.deleted == 0,\
 				Match.date > seconds,\
 				Match.id.in_(db.session.query(Outcome.match_id).filter(and_(Outcome.result == -1, Outcome.hid == None, Outcome.approved == CONST.OUTCOME_STATUS['PENDING'])).group_by(Outcome.match_id))
-				)\
+				))\
 			.all()
 
 	for match in matches:

@@ -94,9 +94,7 @@ def slack_command_hook():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		### Command: list ###
-		print request.args['text'].lower()
-		print request.args['text']
-		if request.args['text'].lower() is "list":
+		if request.args['text'].lower() == 'list':
 			text = 'Please review: ```{}```'.format(match_bl.get_text_list_need_approve())
 			response_slack_command.delay(request.args['response_url'], text)
 			return response_ok()

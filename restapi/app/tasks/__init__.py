@@ -39,12 +39,15 @@ celery = make_celery(app)
 def setup_periodic_tasks(sender, **kwargs):
 	if app.config['ENV'] != 'PRODUCTION':
 		return
-	# Calls remind slack every 1 hours.
-	sender.add_periodic_task(60 * 60.0, remind_slack, name='remind every 1h')
+	# Calls remind slack every 2 hours.
+	sender.add_periodic_task(2 * 60 * 60.0, remind_slack, name='remind every 2h')
 
 @celery.task
 def remind_slack():
-	message = 'Remind \n {}'.format(match_bl.get_text_list_need_approve())
+	text = match_bl.get_text_list_need_approve()
+	if text == '':
+		return
+	message = 'Remind \n {}'.format(text)
 	slack_service.send_message(message)
 
 

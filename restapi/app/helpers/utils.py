@@ -9,6 +9,7 @@ import hashlib
 
 from fractions import Fraction
 from datetime import datetime
+from time import gmtime, strftime
 from flask import g
 
 def is_valid_email(email):
@@ -110,9 +111,12 @@ def current_milli():
 	return int(round(time.time() * 1000))
 
 
-def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p'):
-    # '%Y-%m-%d %H:%M:%S'
-	return datetime.fromtimestamp(seconds).strftime(format)
+def second_to_strftime(seconds, format = '%b %d %Y %I:%M:%S %p', is_gmt=False):
+	# '%Y-%m-%d %H:%M:%S'
+	text = datetime.fromtimestamp(seconds).strftime(format)
+	if is_gmt:
+		text = '{} {}'.format(text, strftime("%z", gmtime()))
+	return text
 
 
 def now_to_strftime(format = '%b %d %Y %I:%M:%S %p'):

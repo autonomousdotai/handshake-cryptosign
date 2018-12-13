@@ -5,7 +5,7 @@ from sqlalchemy.event import listen
 from app import db
 from app.core import slack_service
 from app.models.base import BaseModel
-
+from app.helpers.utils import second_to_strftime
 class Match(BaseModel):
 	__tablename__ = 'match'
 	__json_public__ = ['id', 'date', 'reportTime', 'disputeTime', 'outcomes', 'name', 'outcome_name', 'event_name', 'public', 'market_fee', 'grant_permission', 'source_id', 'category_id', 'creator_wallet_address', 'created_user_id', 'image_url', 'comment_count']

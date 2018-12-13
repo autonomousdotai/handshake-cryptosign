@@ -20,7 +20,7 @@ from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result, run_bots
+from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result, run_bots, send_report_slack
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local, local_to_utc
 
@@ -366,8 +366,9 @@ def save_handshake_method_for_event(method, inputs):
 		outcome = Outcome.find_outcome_by_id(outcome_id)
 
 		if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
-    			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
+			outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 			db.session.flush()
+		send_report_slack.delay(outcome.id, result, status=0)
 
 	elif method == 'resolve':
 		outcome_id, result = offchain.replace('cryptosign_resolve', '').split('_')
@@ -425,7 +426,7 @@ def save_failed_handshake_method_for_event(method, tx):
 					if outcome is not None and outcome.result == CONST.RESULT_TYPE['PROCESSING']:
 						outcome.result = CONST.RESULT_TYPE['REPORT_FAILED']
 						db.session.flush()
-
+		send_report_slack.delay(outcome.id, result, status=2)
 		return None, None
 
 	return None, None
@@ -475,6 +476,8 @@ def save_handshake_for_event(event_name, inputs):
 
 			# send result email to users who play in
 			send_result_email(outcome.id, result)
+
+			send_report_slack.delay(outcome.id, result, status=1)
 
 			return handshakes, shakers
 

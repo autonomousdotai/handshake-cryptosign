@@ -35,22 +35,6 @@ mail_services.init_app(app)
 celery = make_celery(app)
 
 
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-	if app.config['ENV'] != 'PRODUCTION':
-		return
-	# Calls remind slack every 2 hours.
-	sender.add_periodic_task(2 * 60 * 60.0, remind_slack, name='remind every 2h')
-
-@celery.task
-def remind_slack():
-	text = match_bl.get_text_list_need_approve()
-	if text == '':
-		return
-	message = 'Remind \n {}'.format(text)
-	slack_service.send_message(message)
-
-
 @celery.task()
 def update_feed(handshake_id):
 	try:
@@ -502,7 +486,7 @@ def upload_file_google_storage(match_id, image_name, saved_path):
 		result_upload = gc_storage_client.upload_to_storage(app.config['GC_STORAGE_BUCKET'], image_crop_path if image_crop_path is not None else image_source_path, app.config['GC_STORAGE_FOLDER'], image_name)
 		if result_upload is False:
 			return None
-		
+
 		storage_bl.delete_file(image_source_path)
 		if image_crop_path is not None:
 			storage_bl.delete_file(image_crop_path)
@@ -676,3 +660,15 @@ def response_slack_command(request_url, text, response_type="in_channel"):
 		exc_type, exc_obj, exc_tb = sys.exc_info()
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("response_slack_command => ", exc_type, fname, exc_tb.tb_lineno)
+
+@celery.task()
+def send_report_slack(outcome_id, result, status):
+	outcome = Outcome.find_outcome_by_id(outcome_id)
+	if outcome is None:
+		slack_service.send_message('Outcome Id: {} is None. Status: {}'.format(outcome_id, status), title='*Report result:*')
+		return
+	match = Match.find_match_by_id(outcome.match_id)
+	if outcome is None:
+		slack_service.send_message('Match id: {} is None. Status: {}'.format(match.id, status), title='*Report result:*')
+		return
+	slack_service.send_message('_{}_. *Result*: {}. *Status*: {}'.format(match.name, result, status), title='*Report result:*')

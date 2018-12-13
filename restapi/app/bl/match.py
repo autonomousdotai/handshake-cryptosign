@@ -7,7 +7,7 @@ from algoliasearch import algoliasearch
 from recombee_api_client.api_requests import RecommendItemsToUser
 from app import db
 from app.models import User, Handshake, Match, Outcome, Contract, Shaker, Source
-from app.helpers.utils import local_to_utc
+from app.helpers.utils import local_to_utc, second_to_strftime
 from app.helpers.message import MESSAGE, CODE
 from app.constants import Handshake as HandshakeStatus
 from app.core import algolia, recombee_client
@@ -218,6 +218,6 @@ def get_text_list_need_approve():
 			.all()
 	print matches
 	for match in matches:
-		text += '[{}] {} - match id: {}, closing time: {}\n'.format(app.config['ENV'], match.name, match.id, match.date)
+		text += '[{}] {} - match id: {}, closing time: {}\n'.format(app.config['ENV'], match.name, match.id, second_to_strftime(match.date, is_gmt=True))
 
 	return text

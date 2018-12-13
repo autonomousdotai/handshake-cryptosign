@@ -5,7 +5,7 @@ from sqlalchemy.event import listen
 from app import db
 from app.core import slack_service
 from app.models.base import BaseModel
-
+from app.helpers.utils import second_to_strftime
 class Match(BaseModel):
 	__tablename__ = 'match'
 	__json_public__ = ['id', 'date', 'reportTime', 'disputeTime', 'outcomes', 'name', 'outcome_name', 'event_name', 'public', 'market_fee', 'grant_permission', 'source_id', 'category_id', 'creator_wallet_address', 'created_user_id', 'image_url', 'comment_count']
@@ -57,7 +57,7 @@ class Match(BaseModel):
 
 def remind_review_market(mapper, connection, target):
 	if target.created_user_id is not None and target.created_user_id > 0:
-		message = '```{} - match id: {}, closing time: {}```'.format(target.name, target.id, target.date)
+		message = '```{} - match id: {}, closing time: {}```'.format(target.name, target.id, second_to_strftime(target.date, is_gmt=True))
 		slack_service.send_message(message)
 
 listen(Match, 'after_insert', remind_review_market)

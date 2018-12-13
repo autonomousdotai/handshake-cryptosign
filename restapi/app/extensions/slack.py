@@ -13,12 +13,13 @@ class SlackService(object):
 		self.sc = SlackClient(self.app.config['SLACK_API_TOKEN'])
 		
 
-	def send_message(self, message):
+	def send_message(self, message, title='*Please review:*'):
 		try:
 			self.sc.api_call(
 						"chat.postMessage",
 						channel=self.app.config['SLACK_CHANNEL'],
-						text='Please review: ```[{}] {}```'.format(self.app.config['ENV'], message)
+						text='{} ```[{}] {}```'.format(title, self.app.config['ENV'], message),
+						mrkdwn=True
 						)
 		except Exception as ex:
 			print str(ex)

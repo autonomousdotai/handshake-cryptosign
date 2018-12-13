@@ -218,6 +218,6 @@ def get_text_list_need_approve():
 			.all()
 	print matches
 	for match in matches:
-		text += '[{}] {} - match id: {}, closing time: {}\n'.format(app.config['ENV'], match.name, match.id, second_to_strftime(match.date))
+		text += '[{}] {} - match id: {}, closing time: {}\n'.format(app.config['ENV'], match.name, match.id, second_to_strftime(match.date, is_gmt=True))
 
 	return text

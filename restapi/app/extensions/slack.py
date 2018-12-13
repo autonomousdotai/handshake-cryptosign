@@ -18,7 +18,7 @@ class SlackService(object):
 			self.sc.api_call(
 						"chat.postMessage",
 						channel=self.app.config['SLACK_CHANNEL'],
-						text='{} ```[{}] {}```'.format(title, self.app.config['ENV'], message),
+						text='{} \n[{}] {}'.format(title, self.app.config['ENV'], message),
 						mrkdwn=True
 						)
 		except Exception as ex:

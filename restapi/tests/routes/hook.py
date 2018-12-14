@@ -11,7 +11,7 @@ from datetime import datetime
 import mock
 import json
 import app.constants as CONST
-
+import app.bl.match as match_bl
 
 class TestHookBluePrint(BaseTestCase):
 
@@ -253,6 +253,83 @@ class TestHookBluePrint(BaseTestCase):
             db.session.commit()
         db.session.delete(match)
         db.session.commit()
+ 
+    def test_hook_slack_command1(self):
+        t = datetime.now().timetuple()
+        seconds = local_to_utc(t)
+        items = []
+        match = Match(
+            name='DDDDD',
+            public=1,
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id = 3
+        )
+        db.session.add(match)
+        db.session.commit()
+        items.append(match)
+
+        outcome = Outcome(
+            match_id=match.id,
+            name="test approve",
+            result=-1,
+            approved=-1
+        )
+        db.session.add(outcome)
+        items.append(outcome)
+        db.session.commit()
+
+        match1 = Match(
+            name='BBBBB',
+            public=0,
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id = 3
+        )
+        db.session.add(match1)
+        db.session.commit()
+        items.append(match1)
+
+        outcome1 = Outcome(
+            match_id=match1.id,
+            name="test approve",
+            result=-1,
+            approved=-1
+        )
+        db.session.add(outcome1)
+        db.session.commit()
+        items.append(outcome1)
+
+        match2 = Match(
+            name='AAAAAAA',
+            public=0,
+            date=seconds - 100,
+            reportTime=seconds + 200,
+            disputeTime=seconds + 300,
+            source_id = 3
+        )
+        db.session.add(match2)
+        db.session.commit()
+        items.append(match2)
+
+        outcome2 = Outcome(
+            match_id=match2.id,
+            name="test approve",
+            result=-1,
+            approved=0
+        )
+        db.session.add(outcome2)
+        db.session.commit()
+        items.append(outcome2)
+
+        text = match_bl.get_text_list_need_approve()
+        for item in items:
+            db.session.delete(item)
+            db.session.commit()
+        
+        self.assertTrue(text != '')
 
 if __name__ == '__main__':
     unittest.main()

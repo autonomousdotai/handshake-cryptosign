@@ -95,7 +95,7 @@ def slack_command_hook():
 
 		### Command: list ###
 		if request.args['text'].lower() == 'list':
-			text = 'Please review: ```{}```'.format(match_bl.get_text_list_need_approve())
+			text = '*Please review:* ```{}```'.format(match_bl.get_text_list_need_approve())
 			response_slack_command.delay(request.args['response_url'], text)
 			return response_ok()
 
@@ -142,7 +142,7 @@ def slack_command_hook():
 				text = '{}: {} REJECTED'.format(match.name, match.id)
 				send_email_event_verification_failed.delay(match.id, match.created_user_id)
 
-			response_slack_command.delay(request.args['response_url'], 'Result approve: ```[{}] {} by {}```'.format(app.config['ENV'], text, request.args['user_name']))
+			response_slack_command.delay(request.args['response_url'], '*Approve result:* ```[{}] {} by {}```'.format(app.config['ENV'], text, request.args['user_name']))
 			
 			db.session.commit()
 			return response_ok()

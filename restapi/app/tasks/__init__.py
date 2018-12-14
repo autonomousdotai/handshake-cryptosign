@@ -426,8 +426,9 @@ def send_email_event_verification_success(match_id, uid):
 			print("User is invalid")
 			return False
 
-		r = Referral.find_referral_by_uid(uid)
-		referral_link = '{}prediction?refer={}'.format(app.config['BASE_URL'], r.code)
+		import app.bl.referral as referral_bl
+		code = referral_bl.issue_referral_code_for_user(user)
+		referral_link = '{}prediction?refer={}'.format(app.config['BASE_URL'], code)
 
 		match = Match.find_match_by_id(match_id)
 		subject = """Your event "{}" was verified""".format(match.name)

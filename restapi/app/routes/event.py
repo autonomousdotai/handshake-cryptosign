@@ -1,4 +1,5 @@
 import app.bl.handshake as handshake_bl
+import app.bl.event as event_bl
 
 from flask import Blueprint, request
 from app import db
@@ -44,7 +45,9 @@ def event():
 			db.session.flush()
 
 		db.session.commit()
+		
 		handshake_bl.update_handshakes_feed(handshakes, shakers)
+		event_bl.run_bots_for_tx(tx)
 
 		return response_ok()
 	except Exception, ex:

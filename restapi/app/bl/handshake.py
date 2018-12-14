@@ -20,7 +20,7 @@ from sqlalchemy import and_, or_, func, text, not_
 from app.constants import Handshake as HandshakeStatus, CRYPTOSIGN_OFFCHAIN_PREFIX
 from app.models import Handshake, User, Shaker, Outcome, Match
 from app.helpers.bc_exception import BcException
-from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result, run_bots, send_report_slack
+from app.tasks import update_feed, add_shuriken, send_dispute_email, send_email_event_verification_success, send_email_match_result, send_report_slack
 from app.helpers.message import MESSAGE
 from app.helpers.utils import utc_to_local, local_to_utc
 
@@ -499,12 +499,6 @@ def save_handshake_for_event(event_name, inputs):
 				add_shuriken.delay(shaker.shaker_id, CONST.SHURIKEN_TYPE['REAL'])
 
 
-			# Run bots
-			h = Handshake.find_handshake_by_id(shaker.handshake_id)
-			if h is not None:
-				run_bots.delay(h.outcome_id)
-
-
 			# Give redeem code for referral user
 			u = User.find_user_with_id(shaker.shaker_id)
 			if u is not None and u.played_bet == 0:
@@ -560,9 +554,6 @@ def save_handshake_for_event(event_name, inputs):
 				add_shuriken.delay(handshake.user_id, CONST.SHURIKEN_TYPE['FREE'])
 			else:
 				add_shuriken.delay(handshake.user_id, CONST.SHURIKEN_TYPE['REAL'])
-
-			# Run bots
-			run_bots.delay(handshake.outcome_id)
 
 			# Give redeem code for referral user
 			u = User.find_user_with_id(handshake.user_id)

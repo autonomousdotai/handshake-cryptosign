@@ -19,9 +19,6 @@ import json
 
 class TestContractBl(BaseTestCase):
 
-    def setUp(self):
-        pass
-
     def clear_data_before_test(self):
         pass
 

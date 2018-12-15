@@ -415,8 +415,9 @@ def send_email_event_verification_success(match_id, uid):
 			print("User is invalid")
 			return False
 
-		r = Referral.find_referral_by_uid(uid)
-		referral_link = '{}prediction?refer={}'.format(app.config['BASE_URL'], r.code)
+		import app.bl.referral as referral_bl
+		code = referral_bl.issue_referral_code_for_user(user)
+		referral_link = '{}prediction?refer={}'.format(app.config['BASE_URL'], code)
 
 		match = Match.find_match_by_id(match_id)
 		subject = """Your event "{}" was verified""".format(match.name)
@@ -557,7 +558,7 @@ def run_bots(outcome_id):
 			print 'RUN BOTS FOR OUTCOME: {} with data: {}, {}'.format(outcome.id, support, oppose)
 			# add bot task match with support side
 			o = {}
-			if support[0] is not None and support[0].support_amount > 0:
+			if support is not None and len(support) > 0 and support[0] is not None and support[0].support_amount > 0:
 				odds = support[0].odds
 				v = odds/(odds-1)
 				v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))
@@ -584,7 +585,7 @@ def run_bots(outcome_id):
 
 
 			# add bot task match with oppose side
-			if oppose[0] is not None and oppose[0].oppose_amount > 0:
+			if oppose is not None and len(oppose) > 0 and oppose[0] is not None and oppose[0].oppose_amount > 0:
 				odds = oppose[0].odds
 				v = odds/(odds-1)
 				v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))

@@ -131,7 +131,7 @@ def render_verification_success_mail_content(base_url, match_id, uid, referral_l
         If you have any questions, please get in touch with us on <a href="http://t.me/ninja_org">Telegram</a> or contact <a href="mailto:support@ninja.org">support@ninja.org</a>.<br/><br/>
         Good luck!<br/>
         {}
-    """.format(render_match_content(match_id), "{}prediction/{}".format(base_url, render_generate_link(match_id, uid)), referral_link, render_signature_content())
+    """.format(render_match_content(match_id), "{}prediction{}".format(base_url, render_generate_link(match_id, uid)), referral_link, render_signature_content())
 
 
 def render_verification_failed_mail_content(match_id):

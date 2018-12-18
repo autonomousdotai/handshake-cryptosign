@@ -30,6 +30,50 @@ class TestUtils(BaseTestCase):
         result = True
         self.assertEqual(actual, result)
 
+        actual = is_valid_email('trong@datasoma.com')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@providier.com')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@cliptik.net')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@plutofox.com')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@lagify.com')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@khtyler.com')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@shayzam.ne')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@geroev.net')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@nando1.com')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@zdfpost.net')
+        result = False
+        self.assertEqual(actual, result)
+
+        actual = is_valid_email('trong@tempmail.ws')
+        result = False
+        self.assertEqual(actual, result)
+
     def test_is_number(self):
         actual = isnumber(0)
         expected = True

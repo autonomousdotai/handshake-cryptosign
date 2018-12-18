@@ -528,7 +528,7 @@ def run_bots(outcome_id):
 				accounts = json.load(f)
 
 			outcome = Outcome.find_outcome_by_id(outcome_id)
-			if outcome is None or outcome.hid is None:
+			if outcome is None or outcome.hid is None or outcome.result in [1, 2, 3]:
 				return False
 
 			contract = Contract.find_contract_by_id(outcome.contract_id)

@@ -1,11 +1,5 @@
-import requests
-import json
-import base64
-
 from flask import request, g
-from werkzeug.security import generate_password_hash
 from app import db
-from app.helpers.response import response_ok, response_error
 from app.routes.handshake import handshake_routes
 from app.routes.event import event_routes
 from app.routes.user import user_routes
@@ -21,8 +15,6 @@ from app.routes.contract import contract_routes
 from app.routes.hook import hook_routes
 from app.routes.redeem import redeem_routes
 from app.routes.referral import referral_routes
-from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
-                                get_jwt_identity, jwt_refresh_token_required)
 
 
 def init_routes(app):

@@ -17,7 +17,7 @@ def is_valid_email(email):
 		email = email.lower()
 		if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email) != None:
 			p = email.split('@')
-			if p[1] is not None and p[1] not in ['datasoma.com', 'providier.com', 'cliptik.net', 'plutofox.com', 'lagify.com', 'khtyler.com', 'shayzam.ne', 'geroev.net', 'nando1.com', 'zdfpost.net', 'tempmail.ws']:
+			if p[1] is not None and p[1] not in ['proove.org', 'izolrom.ro', 'voltaer.com', 'shayzam.net', 'yevme.com', 'opayq.com', 'emailna.co', 'tuta.io', 'getnada.com', 'moruzza.com', 'mailhex.com', 'radiodale.com', 'datasoma.com', 'providier.com', 'cliptik.net', 'plutofox.com', 'lagify.com', 'khtyler.com', 'shayzam.ne', 'geroev.net', 'nando1.com', 'zdfpost.net', 'tempmail.ws']:
 				return True
 	return False
 

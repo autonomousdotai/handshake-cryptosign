@@ -532,7 +532,9 @@ def run_bots(outcome_id):
 				return False
 
 			contract = Contract.find_contract_by_id(outcome.contract_id)
-			if contract is None:
+			active_contract = Contract.find_contract_by_address_and_json(app.config['PREDICTION_SMART_CONTRACT'], app.config['PREDICTION_JSON'])
+			if contract is None or \
+				contract.id != active_contract.id:
 				return False
 
 			# get all support handshakes need to be matched

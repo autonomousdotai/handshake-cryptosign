@@ -434,6 +434,11 @@ def create_free_bet():
 		odds = Decimal(data.get('odds', Decimal('2')))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+		from_address = data.get('from_address', '')
+
+		# check valid address
+		if len(from_address) == 0:
+			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
 		# check valid redeem or not
 		r = Redeem.find_redeem_by_code_and_user(redeem, uid)
@@ -479,6 +484,7 @@ def create_free_bet():
 		data['payload'] = user.payload
 		data['free_bet'] = 1
 		data['amount'] = CONST.CRYPTOSIGN_FREE_BET_AMOUNT
+		data['from_address'] = from_address
 
 		user.free_bet += 1
 		task = Task(

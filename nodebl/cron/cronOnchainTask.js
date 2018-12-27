@@ -37,7 +37,7 @@ const asyncScanOnchainTask = () => {
 									const onchainData = item.onchainData;
 									let arr_tmp = task.contract_json.split('_');
 									contract_json = arr_tmp.length > 0 ? arr_tmp[0] : ""
-
+									console.log('>>>>>>>>> ', task.id);
 									switch (contract_json) {
 										case 'PredictionHandshake':
 											switch (onchainData.contract_method) {

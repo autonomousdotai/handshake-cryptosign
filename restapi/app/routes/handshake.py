@@ -434,7 +434,6 @@ def create_free_bet():
 		odds = Decimal(data.get('odds', Decimal('2')))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
-		from_address = data.get('from_address', '')
 
 		# check valid address
 		if len(from_address) == 0:
@@ -484,7 +483,6 @@ def create_free_bet():
 		data['payload'] = user.payload
 		data['free_bet'] = 1
 		data['amount'] = CONST.CRYPTOSIGN_FREE_BET_AMOUNT
-		data['from_address'] = from_address
 
 		user.free_bet += 1
 		task = Task(

@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.INTEGER,
     contract_address: DataTypes.STRING,
     contract_json: DataTypes.STRING,
+    onchain_task_id: DataTypes.INTEGER
   }, {
     tableName: 'task',
     timestamps: false,

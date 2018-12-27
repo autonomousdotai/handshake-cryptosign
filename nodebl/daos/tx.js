@@ -12,7 +12,7 @@ module.exports = {
       }
     });
   },
-  create: function (hash, contract_address, contract_method, status, chain_id, offchain, payload) {
+  create: function (hash, contract_address, contract_method, status, chain_id, offchain, payload, on_chain_task_id) {
     return new Promise((resolve, reject ) => {
       models.sequelize.transaction({}, (tx) => {
         return models.Tx
@@ -25,6 +25,7 @@ module.exports = {
             chain_id: chain_id,
             offchain: offchain,
             payload: payload,
+            onchain_task_id: on_chain_task_id,
             deleted: 0,
             date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
             date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")

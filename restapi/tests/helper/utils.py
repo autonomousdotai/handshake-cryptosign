@@ -74,6 +74,10 @@ class TestUtils(BaseTestCase):
         result = False
         self.assertEqual(actual, result)
 
+        actual = is_valid_email('walter@dvg.global')
+        result = True
+        self.assertEqual(actual, result)
+
     def test_is_number(self):
         actual = isnumber(0)
         expected = True

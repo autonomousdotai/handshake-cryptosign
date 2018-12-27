@@ -136,7 +136,7 @@ def init():
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			return response_error(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE, CODE.HANDSHAKE_INVALID_BETTING_TYPE)
 
-		if len(from_address) == 0:
+		if len(from_address) < 40:
 			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
 		# check valid outcome or not
@@ -434,6 +434,11 @@ def create_free_bet():
 		odds = Decimal(data.get('odds', Decimal('2')))
 		amount = Decimal(CONST.CRYPTOSIGN_FREE_BET_AMOUNT)
 		side = int(data.get('side', CONST.SIDE_TYPE['SUPPORT']))
+		from_address = data.get('from_address', '')
+
+		# check valid address
+		if len(from_address) < 40:
+			return response_error(MESSAGE.INVALID_ADDRESS, CODE.INVALID_ADDRESS)
 
 		# check valid redeem or not
 		r = Redeem.find_redeem_by_code_and_user(redeem, uid)

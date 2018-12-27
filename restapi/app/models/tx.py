@@ -8,7 +8,7 @@ import json
 class Tx(BaseModel):
 	__tablename__ = 'tx'
 	__json_public__ = ['id', 'hash', 'contract_address', 'contract_method',
-	                   'payload', 'status', 'chain_id']
+	                   'payload', 'status', 'chain_id', 'onchain_task_id']
 
 	hash = db.Column(db.String(255))
 	contract_address = db.Column(db.String(255))
@@ -19,6 +19,7 @@ class Tx(BaseModel):
 	                   default=CONST.Tx['STATUS_PENDING'])
 	offchain = db.Column(db.String(255))
 	chain_id = db.Column(db.Integer, default=CONST.BLOCKCHAIN_NETWORK['RINKEBY'], server_default=str(CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
+	onchain_task_id = db.Column('onchain_task_id', db.ForeignKey('onchain_task.id'))
 
 	@classmethod
 	def find_tx_by_id(cls, tx_id):

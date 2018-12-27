@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     data: DataTypes.TEXT,
     status: DataTypes.INTEGER,
     contract_address: DataTypes.STRING,
-    contract_json: DataTypes.STRING,
+    contract_json: DataTypes.STRING
   }, {
     tableName: 'task',
     timestamps: false,

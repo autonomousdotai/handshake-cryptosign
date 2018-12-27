@@ -564,7 +564,6 @@ def run_bots(outcome_id):
 				odds = support[0].odds
 				v = odds/(odds-1)
 				v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))
-
 				support_amount = str(support[0].support_amount)
 				o['odds'] = str(v)
 				o['amount'] = support_amount if support_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
@@ -593,7 +592,7 @@ def run_bots(outcome_id):
 				v = float(Decimal(str(v)).quantize(Decimal('.1'), rounding=ROUND_HALF_DOWN))
 
 				oppose_amount = str(oppose[0].oppose_amount)
-				o['odds'] = v
+				o['odds'] = str(v)
 				o['amount'] = oppose_amount if oppose_amount < CONST.CRYPTOSIGN_MAXIMUM_MONEY else CONST.CRYPTOSIGN_MAXIMUM_MONEY
 				o['side'] = CONST.SIDE_TYPE['SUPPORT']	
 				o['outcome_id'] = outcome_id	

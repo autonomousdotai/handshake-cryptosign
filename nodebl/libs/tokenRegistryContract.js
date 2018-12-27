@@ -24,7 +24,7 @@ const tokenRegistryAbi = require('../contracts/TokenRegistry.json').abi;
  * @param {bytes32} offchain
  */
 
-const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice, _options) => {
+const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, offchain, gasPrice, _options, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = tokenRegistryAddress;
@@ -54,7 +54,7 @@ const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, o
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, tokenRegistryAddress, 'addNewToken', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, tokenRegistryAddress, 'addNewToken', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -68,7 +68,7 @@ const addNewTokenTransaction = (_nonce, _tokenAddr, _symbol, _name, _decimals, o
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, tokenRegistryAddress, 'addNewToken', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, tokenRegistryAddress, 'addNewToken', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {

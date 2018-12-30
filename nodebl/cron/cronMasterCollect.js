@@ -30,7 +30,7 @@ const asyncScanTask = (fromId) => {
 										contract_method: 'uninitForTrial',
 										hid: outcome.hid,
 										side: hs.side,
-										odds: parseInt(hs.odds * 100),
+										odds: hs.odds,
 										maker: hs.from_address, // owner address
 										value: hs.amount,
 										offchain: `cryptosign_m${hs.id}`

@@ -49,6 +49,18 @@ const saveTnxs = (arr) => {
 	});
 };
 
+const masterUnInitFreeBet = (params) => {
+	return unInitFreeBet({
+		contract_method: params.contract_method,
+		hid: params.hid * 1,
+		side: params.side * 1,
+		odds: params.odds * 1,
+		maker: params.maker,
+		value: params.value * 1,
+		offchain: params.offchain
+	});
+};
+
 /**
  * 
  * @param {number} params.hid
@@ -318,7 +330,7 @@ const asyncScanTask = () => {
 									case 'MASTER_COLLECT':
 										switch (task.action) {
 											case 'HANDSHAKE_UNINIT': {
-												processTaskFunc = unInitFreeBet(params);
+												processTaskFunc = masterUnInitFreeBet(params);
 											}
 											break;
 										}

@@ -16,7 +16,6 @@ module.exports = (sequelize, DataTypes) => {
     hid: DataTypes.STRING,
     result: DataTypes.INTEGER,
     index: DataTypes.INTEGER,
-    tx: DataTypes.STRING,
     contract_id: DataTypes.INTEGER,
     total_amount: DataTypes.DECIMAL(36, 18),
     total_dispute_amount: DataTypes.DECIMAL(36, 18),

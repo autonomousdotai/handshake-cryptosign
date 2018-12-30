@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  var Handshake = sequelize.define('Handshake', {
+  var Shaker = sequelize.define('Shaker', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -11,31 +11,28 @@ module.exports = (sequelize, DataTypes) => {
     date_created: DataTypes.DATE,
     date_modified: DataTypes.DATE,
     deleted: DataTypes.INTEGER,
-    hs_type: DataTypes.INTEGER,
-    extra_data: DataTypes.TEXT,
-    chain_id: DataTypes.INTEGER,
-    state: DataTypes.INTEGER,
-    description: DataTypes.TEXT,
-    status: DataTypes.INTEGER,
-    bk_status: DataTypes.INTEGER,
-    from_address: DataTypes.STRING,
-    odds: DataTypes.DECIMAL(20, 1),
+    shaker_id: DataTypes.INTEGER,
     amount: DataTypes.DECIMAL(36, 18),
     remaining_amount: DataTypes.DECIMAL(36, 18),
+    handshake_id: DataTypes.INTEGER,
     free_bet: DataTypes.INTEGER,
+    status: DataTypes.INTEGER,
+    bk_status: DataTypes.INTEGER,
     currency: DataTypes.STRING,
     side: DataTypes.INTEGER,
-    user_id: DataTypes.INTEGER,
-    outcome_id: DataTypes.INTEGER,
+    modified_user_id: DataTypes.INTEGER,
+    created_user_id: DataTypes.INTEGER,
+    chain_id: DataTypes.INTEGER,
+    from_address: DataTypes.STRING,
     contract_address: DataTypes.STRING,
     contract_json: DataTypes.STRING,
-    modified_user_id: DataTypes.INTEGER,
-    created_user_id: DataTypes.INTEGER
+    from_request: DataTypes.STRING,
+    history_id: DataTypes.INTEGER
   }, {
-    tableName: 'handshake',
+    tableName: 'shaker',
     timestamps: false,
     underscored: true,
   });
 
-  return Handshake;
+  return Shaker;
 };

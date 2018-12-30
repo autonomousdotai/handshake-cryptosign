@@ -314,7 +314,14 @@ const asyncScanTask = () => {
 											}
 											break;
 										}
-										
+									
+									case 'MASTER_COLLECT':
+										switch (task.action) {
+											case 'HANDSHAKE_UNINIT': {
+												processTaskFunc = unInitFreeBet(params);
+											}
+											break;
+										}
 									break;
 								}
 

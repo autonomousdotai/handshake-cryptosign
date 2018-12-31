@@ -67,7 +67,7 @@ module.exports = {
                         where: {
                             deleted: 0,
                             disputeTime: {
-                                [Op.gte]: Math.floor(+moment.utc()/1000)
+                                [Op.lte]: Math.floor(+moment.utc()/1000)
                             }
                         }
                     }

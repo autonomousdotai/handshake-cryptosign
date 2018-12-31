@@ -56,7 +56,7 @@ const masterUnInit = (params) => {
 			hid: params.hid,
 			side: params.side,
 			odds: parseInt(params.odds * 100),
-			value: params.value,
+			stake: params.stake,
 			offchain: params.offchain
 		}])
 	});

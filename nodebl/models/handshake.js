@@ -37,5 +37,12 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
   });
 
+  Handshake.associate = function (models) {
+    Handshake.belongsTo(models.Outcome, { 
+      foreignKey: 'outcome_id',
+      sourceKey: 'id'
+    })
+  };
+
   return Handshake;
 };

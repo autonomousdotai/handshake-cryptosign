@@ -49,15 +49,16 @@ const saveTnxs = (arr) => {
 	});
 };
 
-const masterUnInitFreeBet = (params) => {
-	return unInitFreeBet({
-		contract_method: params.contract_method,
-		hid: params.hid * 1,
-		side: params.side * 1,
-		odds: params.odds * 1,
-		maker: params.maker,
-		value: params.value * 1,
-		offchain: params.offchain
+const masterUnInit = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'uninitMaster',
+			hid: params.hid,
+			side: params.side,
+			odds: parseInt(params.odds * 100),
+			value: params.value,
+			offchain: params.offchain
+		}])
 	});
 };
 
@@ -330,7 +331,7 @@ const asyncScanTask = () => {
 									case 'MASTER_COLLECT':
 										switch (task.action) {
 											case 'HANDSHAKE_UNINIT': {
-												processTaskFunc = masterUnInitFreeBet(params);
+												processTaskFunc = masterUnInit(params);
 											}
 											break;
 										}

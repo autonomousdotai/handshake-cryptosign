@@ -56,6 +56,23 @@ module.exports = {
                     $ne: null
                 }
             },
+            include: [
+                {
+                    model: models.Outcome,
+                    as: 'Outcome',
+                    include: [
+                    {
+                        model: models.Match,
+                        as: 'Match',
+                        where: {
+                            deleted: 0,
+                            disputeTime: {
+                                [Op.gte]: Math.floor(+moment.utc()/1000)
+                            }
+                        }
+                    }
+                ]}
+            ],
             limit: 10
         });
     },

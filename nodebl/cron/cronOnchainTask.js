@@ -74,6 +74,9 @@ const asyncScanOnchainTask = () => {
 												case 'resolveOutcomeTransaction':
 													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
+												case 'uninitMaster':
+													smartContractFunc = predictionContract.uninitMaster(onchainData.hid, onchainData.side, onchainData.odds, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+												break;
 											}
 										break;
 										case 'TokenRegistry': 

@@ -27,5 +27,15 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
   });
 
+  Outcome.associate = function (models) {
+    Outcome.hasMany(models.Handshake, {
+      foreignKey: 'outcome_id',
+      sourceKey: 'id'
+    });
+    Outcome.belongsTo(models.Match, { 
+      foreignKey: 'match_id',
+      sourceKey: 'id'
+    })
+  };
   return Outcome;
 };

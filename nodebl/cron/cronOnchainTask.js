@@ -74,8 +74,8 @@ const asyncScanOnchainTask = () => {
 												case 'resolveOutcomeTransaction':
 													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
-												case 'uninitMaster':
-													smartContractFunc = predictionContract.uninitMaster(onchainData.hid, onchainData.side, onchainData.odds, `${onchainData.stake}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+												case 'refundMaster':
+													smartContractFunc = predictionContract.refundMaster(onchainData.hid, onchainData.side, onchainData.odds, `${onchainData.stake}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 											}
 										break;
@@ -147,7 +147,7 @@ const asyncScanOnchainTask = () => {
 };
 
 const runOnchainTaskCron = () => {
-    cron.schedule('*/5 * * * * *', async () => {
+    cron.schedule('*/15 * * * * *', async () => {
 		try {
 			const setting = await settingDAO.getByName('OnchainCronJob');
 				if (!setting) {

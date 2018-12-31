@@ -1,6 +1,7 @@
 
 const cron = require('node-cron');
 const handshakeDAO = require('../daos/handshake');
+const outcomeDAO = require('../daos/outcome');
 const settingDAO = require('../daos/setting');
 const taskDAO = require('../daos/task');
 
@@ -9,44 +10,73 @@ let isRunningCollectTask = false;
 const asyncScanTask = (fromId) => {
 	return new Promise((resolve, reject) => {
 
-		handshakeDAO.getAllMasterCollect(fromId)
-		.then(items => {
+		outcomeDAO.getAllMasterCollect()
+		.then(outcomes => {
 			const tnxs = [];
-			if (!items || items.length == 0) {
+			if (!outcomes || outcomes.length == 0) {
 				return resolve();
 			}
-			
-			items.forEach(hs => {
-				if (hs.Outcome != null && hs.Outcome.Match != null && hs.Outcome.hid >= 0) {
-					tnxs.push({
-						task_type: 'MASTER_COLLECT',
-						data: JSON.stringify({
-							contract_method: 'uninitMaster',
-							hid: hs.Outcome.hid,
-							side: hs.side,
-							odds: hs.odds,
-							stake: hs.amount,
-							offchain: `cryptosign_m${hs.id}`
-						}),
-						action: 'HANDSHAKE_UNINIT',
-						status: -1,
-						contract_address: hs.contract_address,
-						contract_json: hs.contract_json
-					});
-				}
+			const tasks = [];
+			const hs_update_id = [];
+			const oc_update_ids = [];
+
+			outcomes.forEach(outcome => {
+				tasks.push(
+					new Promise((resolve, reject) => {
+						handshakeDAO.getFirstMasterCollect(outcome.id)
+						.then(handshake => {
+							if (handshake) {
+								tnxs.push({
+									task_type: 'MASTER_COLLECT',
+									data: JSON.stringify({
+										contract_method: 'refundMaster',
+										hid: handshake.Outcome.hid,
+										offchain: `cryptosign_m${handshake.id}`
+									}),
+									action: 'HANDSHAKE_REFUND',
+									status: -1,
+									contract_address: handshake.contract_address,
+									contract_json: handshake.contract_json,
+								});
+								hs_update_id.push(handshake.id);
+							}
+							resolve();
+						})
+						.catch(err => {
+							console.error('Error get outcome: ', err);
+							return reject(err);
+						})
+					})
+				);
+				oc_update_ids.push(outcome.id);
 			});
-			taskDAO.multiInsert(tnxs).then((results) => {
-				const hs_ids = items.map(i => { return i.id; })
 
-				handshakeDAO.multiUpdateStatusById(hs_ids, -4) // 'STATUS_MAKER_UNINIT_PENDING': -4,
-				.then(updateResults => {
-					return resolve(updateResults);
-				})
-				.catch(err => {
-					console.error('Error update onchain task status: ', err);
-					return reject(err);
-				})
-
+			Promise.all(tasks)
+			.then(results => {
+				const all_oc_ids = outcomes.map(i => { return i.id; })
+				outcomeDAO.multiUpdateOutcomeMasterStatus(all_oc_ids, "scanned")
+				.then(result => {
+					taskDAO.multiInsert(tnxs).then((results) => {
+						outcomeDAO.multiUpdateOutcomeMasterStatus(oc_update_ids, "collect")
+						.then(resultOcUpdate => {
+							handshakeDAO.multiUpdateStatusById(hs_update_id, -4) // 'STATUS_MAKER_UNINIT_PENDING': -4,
+							.then(updateResults => {
+								return resolve(updateResults);
+							})
+							.catch(err => {
+								console.error('Error update handshake status: ', err);
+								return reject(err);
+							})	
+						})
+						.catch(err => {
+							console.error('Error update outcome status: ', err);
+							return reject(err);
+						})
+					})
+					.catch(err => {
+						return reject(err);
+					})
+				}).catch(reject);
 			}).catch(reject);
 		})
 		.catch(reject)

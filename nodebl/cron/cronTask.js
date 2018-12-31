@@ -49,14 +49,11 @@ const saveTnxs = (arr) => {
 	});
 };
 
-const masterUnInit = (params) => {
+const masterRefund = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
-			contract_method: 'uninitMaster',
+			contract_method: 'refundMaster',
 			hid: params.hid,
-			side: params.side,
-			odds: parseInt(params.odds * 100),
-			stake: params.stake,
 			offchain: params.offchain
 		}])
 	});
@@ -330,8 +327,8 @@ const asyncScanTask = () => {
 									
 									case 'MASTER_COLLECT':
 										switch (task.action) {
-											case 'HANDSHAKE_UNINIT': {
-												processTaskFunc = masterUnInit(params);
+											case 'HANDSHAKE_REFUND': {
+												processTaskFunc = masterRefund(params);
 											}
 											break;
 										}

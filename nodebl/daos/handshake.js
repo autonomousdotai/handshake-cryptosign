@@ -34,12 +34,10 @@ module.exports = {
             }
         });
     },
-    getAllMasterCollect: (fromId) => {
-        return models.Handshake.findAll({
+    getFirstMasterCollect: (outcome_id) => {
+        let query = {
             where: {
-                id: {
-                    $gt: fromId || 0
-                },
+                outcome_id: outcome_id,
                 [Op.or]: [{
                     status: 0 // STATUS_INITED
                 }, {
@@ -72,9 +70,9 @@ module.exports = {
                         }
                     }
                 ]}
-            ],
-            limit: 10
-        });
+            ]
+        };
+        return models.Handshake.findOne(query);
     },
     multiUpdateStatusById: (ids, status) => {
         return models.Handshake.update({
@@ -85,5 +83,5 @@ module.exports = {
                 id: ids
             }
         });
-    },
+    }
 };

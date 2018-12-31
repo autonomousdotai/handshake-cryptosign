@@ -913,11 +913,11 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
 };
 
 
-const uninitMaster = (_hid, _side, _odds, _stake, _offchain, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
+const refundMaster = (_hid, _offchain, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
-      console.log('uninitMaster');
-      console.log(_hid, _side, _odds, _stake, _nonce, _offchain, _options, contract_address, contract_json);
+      console.log('refundMaster');
+      console.log(_hid, _nonce, _offchain, _options, contract_address, contract_json);
 
       const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
@@ -934,7 +934,7 @@ const uninitMaster = (_hid, _side, _odds, _stake, _offchain, _nonce, gasPrice, _
         from: ownerAddress,
         nonce: '0x' + _nonce.toString(16),
         chainId: network_id,
-        data: contract.methods.uninit(_hid, _side, _odds, stake, web3.utils.fromUtf8(_offchain)).encodeABI()
+        data: contract.methods.refund(_hid, web3.utils.fromUtf8(_offchain)).encodeABI()
       };
 
       const tx = new ethTx(txParams);
@@ -947,7 +947,7 @@ const uninitMaster = (_hid, _side, _odds, _stake, _offchain, _nonce, gasPrice, _
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'uninitMaster', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
+        txDAO.create(tnxHash, contract_address, 'refundMaster', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -957,18 +957,18 @@ const uninitMaster = (_hid, _side, _odds, _stake, _offchain, _nonce, gasPrice, _
         });
       })
       .on('receipt', (receipt) => {
-        console.log('uninitMaster tnxHash: ', receipt);
+        console.log('refundMaster tnxHash: ', receipt);
       })
       .on('error', err => {
-        console.log('uninitMaster Error');
+        console.log('refundMaster Error');
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'uninitMaster', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
+          txDAO.create(-1, contract_address, 'refundMaster', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
-            console.log('Remove nonce at uninitMaster');
+            console.log('Remove nonce at refundMaster');
             web3Config.setNonce(web3Config.getNonce() -1);
           }
         }
@@ -1004,6 +1004,6 @@ module.exports = {
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction,
   uninitForTrial,
-  uninitMaster,
+  refundMaster,
   createMarketForShurikenUserTransaction
 };

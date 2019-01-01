@@ -75,7 +75,7 @@ const asyncScanOnchainTask = () => {
 													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'refundMaster':
-													smartContractFunc = predictionContract.refundMaster(onchainData.hid, onchainData.side, onchainData.odds, `${onchainData.stake}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+													smartContractFunc = predictionContract.refundMaster(onchainData.hid, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 											}
 										break;

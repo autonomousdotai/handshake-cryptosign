@@ -922,7 +922,6 @@ const refundMaster = (_hid, _offchain, _nonce, gasPrice, _options, contract_addr
       const contractAddress = contract_address;
       const privKey         = Buffer.from(privateKey, 'hex');
       const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
-      const stake           = web3.utils.toHex(web3.utils.toWei(_stake));
       const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
           from: ownerAddress
       });

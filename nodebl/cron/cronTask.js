@@ -49,6 +49,16 @@ const saveTnxs = (arr) => {
 	});
 };
 
+const masterRefund = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'refundMaster',
+			hid: params.hid,
+			offchain: params.offchain
+		}])
+	});
+};
+
 /**
  * 
  * @param {number} params.hid
@@ -314,7 +324,14 @@ const asyncScanTask = () => {
 											}
 											break;
 										}
-										
+									
+									case 'MASTER_COLLECT':
+										switch (task.action) {
+											case 'HANDSHAKE_REFUND': {
+												processTaskFunc = masterRefund(params);
+											}
+											break;
+										}
 									break;
 								}
 

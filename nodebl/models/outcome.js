@@ -16,10 +16,10 @@ module.exports = (sequelize, DataTypes) => {
     hid: DataTypes.STRING,
     result: DataTypes.INTEGER,
     index: DataTypes.INTEGER,
-    tx: DataTypes.STRING,
     contract_id: DataTypes.INTEGER,
     total_amount: DataTypes.DECIMAL(36, 18),
     total_dispute_amount: DataTypes.DECIMAL(36, 18),
+    master_collect_status: DataTypes.STRING,
     modified_user_id: DataTypes.INTEGER,
     created_user_id: DataTypes.INTEGER
   }, {
@@ -28,5 +28,15 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
   });
 
+  Outcome.associate = function (models) {
+    Outcome.hasMany(models.Handshake, {
+      foreignKey: 'outcome_id',
+      sourceKey: 'id'
+    });
+    Outcome.belongsTo(models.Match, { 
+      foreignKey: 'match_id',
+      sourceKey: 'id'
+    })
+  };
   return Outcome;
 };

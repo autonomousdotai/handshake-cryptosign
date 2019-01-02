@@ -912,6 +912,85 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
   });
 };
 
+
+const refundMaster = (_hid, _offchain, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      console.log('refundMaster');
+      console.log(_hid, _nonce, _offchain, _options, contract_address, contract_json);
+
+      const contractAddress = contract_address;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
+          from: ownerAddress
+      });
+
+      const txParams = {
+        gasPrice: gasPriceWei,
+        gasLimit: web3.utils.toHex(gasLimit),
+        to: contractAddress,
+        from: ownerAddress,
+        nonce: '0x' + _nonce.toString(16),
+        chainId: network_id,
+        data: contract.methods.refund(_hid, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+
+      const tx = new ethTx(txParams);
+      let tnxHash = -1;
+      tx.sign(privKey);
+
+      const serializedTx = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+
+        txDAO.create(tnxHash, contract_address, 'refundMaster', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
+        .catch(console.error);
+
+        return resolve({
+          raw: txParams,
+          hash: hash,
+          task: _options.task
+        });
+      })
+      .on('receipt', (receipt) => {
+        console.log('refundMaster tnxHash: ', receipt);
+      })
+      .on('error', err => {
+        console.log('refundMaster Error');
+        console.log(err);
+        // Fail at offchain
+        if (tnxHash == -1) {
+          txDAO.create(-1, contract_address, 'refundMaster', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
+          .catch(console.error);
+        } else {
+          if (!(err.message || err).includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at refundMaster');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
+        }
+        return reject({
+          err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_FAIL,
+          error: err,
+          options_data: {
+            task: _options.task
+          }
+        });
+      });
+    } catch (e) {
+      reject({
+        err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_EXCEPTION,
+        error: e,
+        options_data: {
+          task: _options.task
+        }
+      });
+    }
+  });
+};
+
 module.exports = {
   submitInitTransaction,
   createMarketTransaction,
@@ -924,5 +1003,6 @@ module.exports = {
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction,
   uninitForTrial,
+  refundMaster,
   createMarketForShurikenUserTransaction
 };

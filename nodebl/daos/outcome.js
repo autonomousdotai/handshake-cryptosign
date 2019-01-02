@@ -1,5 +1,6 @@
 const models = require('../models');
 const moment = require('moment');
+const Op = models.Sequelize.Op;
 
 // side: 0 (unknown), 1 (support), 2 (against)
 module.exports = {
@@ -36,5 +37,43 @@ module.exports = {
                 hid: hid,
                 date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
             });
+    },
+    getAllMasterCollect: () => {
+        return models.Outcome.findAll({
+            where: {
+                hid: {
+                    $gte: 0
+                },
+                [Op.or]: [{
+                    master_collect_status: null
+                }, {
+                    master_collect_status: ""
+                }],
+                deleted: 0
+            },
+            include: [
+                {
+                    model: models.Match,
+                    as: 'Match',
+                    where: {
+                        deleted: 0,
+                        disputeTime: {
+                            [Op.lte]: Math.floor(+moment.utc()/1000)
+                        }
+                    }
+                }
+            ],
+            limit: 10
+        });
+    },
+    multiUpdateOutcomeMasterStatus: (ids, status) => {
+        return models.Outcome.update({
+            master_collect_status: status,
+            date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
+        }, {
+            where: {
+                id: ids
+            }
+        });
     }
 };

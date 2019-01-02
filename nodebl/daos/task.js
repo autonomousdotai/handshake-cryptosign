@@ -51,5 +51,14 @@ module.exports = {
             ],
             attributes: ['id'] 
         });
-    }
+    },
+    multiInsert: (items) => {
+        return new Promise((resolve, reject ) => {
+          return models.Task.bulkCreate(items, {
+            validate: true
+          })
+          .then(resolve)
+          .catch(reject)
+        });
+      },
 };

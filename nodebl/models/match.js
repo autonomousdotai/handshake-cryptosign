@@ -26,7 +26,6 @@ module.exports = (sequelize, DataTypes) => {
     created_user_id: DataTypes.INTEGER,
     name: DataTypes.STRING,
     market_fee: DataTypes.INTEGER,
-    source: DataTypes.STRING,
     public: DataTypes.INTEGER
   }, {
     tableName: 'match',
@@ -34,5 +33,11 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
   });
 
+  Match.associate = function (models) {
+    Match.hasMany(models.Outcome, {
+      foreignKey: 'match_id',
+      sourceKey: 'id'
+    });
+  }
   return Match;
 };

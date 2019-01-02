@@ -134,7 +134,7 @@ def init():
 		free_bet = data.get('free_bet', 0)
 
 		print '-------- DEBUG INIT -------'
-		print '-------- amount = {}, type = {} -------'.format(amount, type(amount))
+		print '-------- amount = {}, type = {}, request = {} -------'.format(amount, type(amount), data.get('amount'))
 
 		if hs_type != CONST.Handshake['INDUSTRIES_BETTING']:
 			return response_error(MESSAGE.HANDSHAKE_INVALID_BETTING_TYPE, CODE.HANDSHAKE_INVALID_BETTING_TYPE)

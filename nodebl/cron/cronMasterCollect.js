@@ -9,9 +9,10 @@ let isRunningCollectTask = false;
 
 const asyncScanTask = (fromId) => {
 	return new Promise((resolve, reject) => {
-
+		console.log("Begin scan outcome");
 		outcomeDAO.getAllMasterCollect()
 		.then(outcomes => {
+			console.log("Outcomes: ", outcomes.length);
 			const tnxs = [];
 			if (!outcomes || outcomes.length == 0) {
 				return resolve();

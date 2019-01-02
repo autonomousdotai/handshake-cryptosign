@@ -26,7 +26,7 @@ const loadABI = (contract_json) => {
 // /*
 //     submit init transaction
 // */
-const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options, contract_address, contract_json) => {
+const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       const contractAddress = contract_address;
@@ -55,7 +55,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'init', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -71,7 +71,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'init', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -102,7 +102,7 @@ const submitInitTransaction = (_nonce, _hid, _side, _odds, _offchain, _value, ga
 // /*
 //     submit init test drive transaction
 // */
-const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json) => {
+const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   console.log('submitInitTestDriveTransaction');
   console.log(_hid, _side, _odds, _maker, _offchain, amount, _nonce, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
@@ -131,7 +131,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'initTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -148,7 +148,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'initTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -181,7 +181,7 @@ const submitInitTestDriveTransaction = (_hid, _side, _odds, _maker, _offchain, a
 // /*
 //     submit shake transaction
 // */
-const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json) => {
+const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   console.log('submitShakeTransaction');
   console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
@@ -210,7 +210,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'shake', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -228,7 +228,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'shake', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -261,7 +261,7 @@ const submitShakeTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerO
 // /*
 //     submit shake test drive transaction
 // */
-const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json) => {
+const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   console.log('submitShakeTestDriveTransaction');
   console.log(_hid, _side, _taker, _takerOdds, _maker, _makerOdds, _offchain, amount, _nonce, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
@@ -291,7 +291,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'shakeTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -308,7 +308,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'shakeTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -342,7 +342,7 @@ const submitShakeTestDriveTransaction = (_hid, _side, _taker, _takerOdds, _maker
  * @param {string} params.winner
  * @param {string} params.offchain
  */
-const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gasPrice, _options, contract_address, contract_json) => {
+const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   console.log('submitCollectTestDriveTransaction');
   console.log(_hid, _winner, _offchain, contract_address, contract_json);
   return new Promise(async(resolve, reject) => {
@@ -371,7 +371,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'collectTestDrive', -1, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -388,7 +388,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'collectTestDrive', 0, network_id, _offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -426,7 +426,7 @@ const submitCollectTestDriveTransaction = (_hid, _winner, _offchain, _nonce, gas
  * @param {bytes32} offchain
  */
 
-const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, _options, contract_address, contract_json) => {
+const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, dispute, offchain, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('createMarketTransaction');
@@ -458,7 +458,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'createMarket', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'createMarket', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -476,7 +476,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'createMarket', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -516,7 +516,7 @@ const createMarketTransaction = (_nonce, fee, source, closingTime, reportTime, d
  * @param {bytes32} offchain
  */
 
-const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, isGrantedPermission, closingTime, reportTime, disputeTime, offchain, gasPrice, _options, contract_address, contract_json) => {
+const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, isGrantedPermission, closingTime, reportTime, disputeTime, offchain, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('createMarketForShurikenUserTransaction');
@@ -548,7 +548,7 @@ const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, is
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'createMarketForShurikenUser', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })))
+        txDAO.create(tnxHash, contract_address, 'createMarketForShurikenUser', -1, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -566,7 +566,7 @@ const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, is
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'createMarketForShurikenUser', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'createMarketForShurikenUser', 0, network_id, offchain, JSON.stringify(Object.assign(rawTransaction, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -595,7 +595,7 @@ const createMarketForShurikenUserTransaction = (_nonce, creator, fee, source, is
 };
 
 
-const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
+const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       const offchain = _offchain || ('cryptosign_report' + outcome_id + '_' + outcome_result);
@@ -629,7 +629,7 @@ const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offch
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -646,7 +646,7 @@ const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offch
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -675,7 +675,7 @@ const reportOutcomeTransaction = (hid, outcome_id, outcome_result, nonce, _offch
 };
 
 
-const reportOutcomeForCreatorTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
+const reportOutcomeForCreatorTransaction = (hid, outcome_id, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       const offchain = _offchain || ('cryptosign_report' + outcome_id + '_' + outcome_result);
@@ -709,7 +709,7 @@ const reportOutcomeForCreatorTransaction = (hid, outcome_id, outcome_result, non
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'report', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -726,7 +726,7 @@ const reportOutcomeForCreatorTransaction = (hid, outcome_id, outcome_result, non
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'report', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -754,7 +754,7 @@ const reportOutcomeForCreatorTransaction = (hid, outcome_id, outcome_result, non
   });
 };
 
-const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json) => {
+const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       const offchain = _offchain || ('cryptosign_resolve' + outcome_result);
@@ -788,7 +788,7 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'resolve', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'resolve', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -805,7 +805,7 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'resolve', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'resolve', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
@@ -833,7 +833,7 @@ const resolveOutcomeTransaction = (hid, outcome_result, nonce, _offchain, gasPri
   });
 };
 
-const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, gasPrice, _options, contract_address, contract_json) => {
+const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
   return new Promise(async(resolve, reject) => {
     try {
       console.log('uninitForTrial');
@@ -867,7 +867,7 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
       .on('transactionHash', (hash) => {
         tnxHash = hash;
 
-        txDAO.create(tnxHash, contract_address, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })))
+        txDAO.create(tnxHash, contract_address, 'uninitForTrial', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
         .catch(console.error);
 
         return resolve({
@@ -884,11 +884,90 @@ const uninitForTrial = (_hid, _side, _odds, _maker, _value, _offchain, _nonce, g
         console.log(err);
         // Fail at offchain
         if (tnxHash == -1) {
-          txDAO.create(-1, contract_address, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })))
+          txDAO.create(-1, contract_address, 'uninitForTrial', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
           .catch(console.error);
         } else {
           if (!(err.message || err).includes('not mined within 50 blocks')) {
             console.log('Remove nonce at uninitForTrial');
+            web3Config.setNonce(web3Config.getNonce() -1);
+          }
+        }
+        return reject({
+          err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_FAIL,
+          error: err,
+          options_data: {
+            task: _options.task
+          }
+        });
+      });
+    } catch (e) {
+      reject({
+        err_type: constants.TASK_STATUS.UNINIT_FOR_TRIAL_TNX_EXCEPTION,
+        error: e,
+        options_data: {
+          task: _options.task
+        }
+      });
+    }
+  });
+};
+
+
+const refundMaster = (_hid, _offchain, _nonce, gasPrice, _options, contract_address, contract_json, on_chain_task_id) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      console.log('refundMaster');
+      console.log(_hid, _nonce, _offchain, _options, contract_address, contract_json);
+
+      const contractAddress = contract_address;
+      const privKey         = Buffer.from(privateKey, 'hex');
+      const gasPriceWei     = web3.utils.toHex(web3.utils.toWei(gasPrice, 'gwei'));
+      const contract        = new web3.eth.Contract(loadABI(contract_json), contractAddress, {
+          from: ownerAddress
+      });
+
+      const txParams = {
+        gasPrice: gasPriceWei,
+        gasLimit: web3.utils.toHex(gasLimit),
+        to: contractAddress,
+        from: ownerAddress,
+        nonce: '0x' + _nonce.toString(16),
+        chainId: network_id,
+        data: contract.methods.refund(_hid, web3.utils.fromUtf8(_offchain)).encodeABI()
+      };
+
+      const tx = new ethTx(txParams);
+      let tnxHash = -1;
+      tx.sign(privKey);
+
+      const serializedTx = tx.serialize();
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+      .on('transactionHash', (hash) => {
+        tnxHash = hash;
+
+        txDAO.create(tnxHash, contract_address, 'refundMaster', -1, network_id, _offchain, JSON.stringify(Object.assign(txParams, { _options })), on_chain_task_id)
+        .catch(console.error);
+
+        return resolve({
+          raw: txParams,
+          hash: hash,
+          task: _options.task
+        });
+      })
+      .on('receipt', (receipt) => {
+        console.log('refundMaster tnxHash: ', receipt);
+      })
+      .on('error', err => {
+        console.log('refundMaster Error');
+        console.log(err);
+        // Fail at offchain
+        if (tnxHash == -1) {
+          txDAO.create(-1, contract_address, 'refundMaster', 0, network_id, _offchain, JSON.stringify(Object.assign(txParams, { err: err.message, _options, tnxHash })), on_chain_task_id)
+          .catch(console.error);
+        } else {
+          if (!(err.message || err).includes('not mined within 50 blocks')) {
+            console.log('Remove nonce at refundMaster');
             web3Config.setNonce(web3Config.getNonce() -1);
           }
         }
@@ -924,5 +1003,6 @@ module.exports = {
   submitShakeTestDriveTransaction,
   submitCollectTestDriveTransaction,
   uninitForTrial,
+  refundMaster,
   createMarketForShurikenUserTransaction
 };

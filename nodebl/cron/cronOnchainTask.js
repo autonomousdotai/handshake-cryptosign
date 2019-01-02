@@ -42,51 +42,54 @@ const asyncScanOnchainTask = () => {
 										case 'PredictionHandshake':
 											switch (onchainData.contract_method) {
 												case 'createMarket':
-													smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'createMarketForShurikenUser':
-													smartContractFunc = predictionContract.createMarketForShurikenUserTransaction(nonce + index, onchainData.creator_wallet_address, onchainData.fee, onchainData.source, onchainData.grant_permission, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.createMarketForShurikenUserTransaction(nonce + index, onchainData.creator_wallet_address, onchainData.fee, onchainData.source, onchainData.grant_permission, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'init':
-													smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'shake':
-													smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'collectTestDrive':
-													smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'reportOutcomeTransaction':
-													smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'reportOutcomeForCreatorTransaction':
-													smartContractFunc = predictionContract.reportOutcomeForCreatorTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.reportOutcomeForCreatorTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'initTestDriveTransaction':
-													smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'shakeTestDriveTransaction':
-													smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item,task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item,task.contract_address, task.contract_json, task.id);
 												break;
 												case 'uninitForTrial':
-													smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 												case 'resolveOutcomeTransaction':
-													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json);
+													smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+												break;
+												case 'refundMaster':
+													smartContractFunc = predictionContract.refundMaster(onchainData.hid, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
 												break;
 											}
 										break;
 										case 'TokenRegistry': 
 											switch (onchainData.contract_method) {
 												case 'addNewToken':
-													smartContractFunc = tokenRegistryContract.addNewTokenTransaction(nonce + index, onchainData.token_address, onchainData.symbol, onchainData.name, onchainData.decimals, onchainData.offchain, gasPriceStr, item);
+													smartContractFunc = tokenRegistryContract.addNewTokenTransaction(nonce + index, onchainData.token_address, onchainData.symbol, onchainData.name, onchainData.decimals, onchainData.offchain, gasPriceStr, item, task.id);
 												break;
 											}
 										break;
 										case 'PredictionHandshakeWithToken': 
 											switch (onchainData.contract_method) {
 												case 'approveNewToken':
-													smartContractFunc = predictionWithTokenContract.approveNewToken(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item);
+													smartContractFunc = predictionWithTokenContract.approveNewToken(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.id);
 												break;
 											}
 										break;
@@ -144,7 +147,7 @@ const asyncScanOnchainTask = () => {
 };
 
 const runOnchainTaskCron = () => {
-    cron.schedule('*/5 * * * * *', async () => {
+    cron.schedule('*/15 * * * * *', async () => {
 		try {
 			const setting = await settingDAO.getByName('OnchainCronJob');
 				if (!setting) {

@@ -26,6 +26,9 @@ class Outcome(BaseModel):
 						server_default=str(1),
 						default=1)
 	approve_by = db.Column(db.String(512))
+	master_collect_status = db.Column(db.String(255),
+							server_default=str(''),
+	                      	default='')
 	match_id = db.Column('match_id', db.ForeignKey('match.id'))
 	contract_id = db.Column('contract_id', db.ForeignKey('contract.id'))
 	token_id = db.Column('token_id', db.ForeignKey('token.id'))

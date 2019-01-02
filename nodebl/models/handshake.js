@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
     odds: DataTypes.DECIMAL(20, 1),
     amount: DataTypes.DECIMAL(36, 18),
     remaining_amount: DataTypes.DECIMAL(36, 18),
+    free_bet: DataTypes.INTEGER,
     currency: DataTypes.STRING,
     side: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,
@@ -35,6 +36,13 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false,
     underscored: true,
   });
+
+  Handshake.associate = function (models) {
+    Handshake.belongsTo(models.Outcome, { 
+      foreignKey: 'outcome_id',
+      sourceKey: 'id'
+    })
+  };
 
   return Handshake;
 };

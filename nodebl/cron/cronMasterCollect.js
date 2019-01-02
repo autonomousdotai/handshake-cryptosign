@@ -84,7 +84,7 @@ const asyncScanTask = (fromId) => {
 };
 
 const runCron = () => {
-    cron.schedule('* */5 * * * *', async () => {
+    cron.schedule('*/60 * * * * *', async () => {
 		try {
 			const setting = await settingDAO.getByName('MasterCollect');
 				if (!setting) {

@@ -12,8 +12,6 @@ class SendGrid(object):
 
 	def init_app(self, app):
 		self.app = app
-		print "AAAAAAAAAAAAAAAAAA"
-		print app.config['SENDGRID_API_KEY']
 		self.connection = sendgrid.SendGridAPIClient(apikey=app.config['SENDGRID_API_KEY'])
 
 	def send(self, fromEmail, toEmail, subject, content):

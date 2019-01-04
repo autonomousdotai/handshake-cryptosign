@@ -886,6 +886,47 @@ class TestHandshakeBluePrint(BaseTestCase):
             db.session.commit()
 
 
+    def test_init_handshake_case_10(self):
+        # DEBUG
+        # Support
+        #   amount          odds
+        #   0.03            2
+        self.clear_data_before_test()
+
+        with self.client:
+            Uid = 66
+
+            params = {
+                "type": 3,
+                "extra_data": "", 
+                "description": "TESTING MODE",
+                "outcome_id": 88,
+                "amount": 0.03,
+                "currency": "ETH",
+                "chain_id": 4,
+                "side": 1,
+                "from_address": "0x4f94a1392A6B48dda8F41347B15AF7B80f3c5f03"
+            }
+            response = self.client.post(
+                                    '/handshake/init',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            data_json = data['data']['handshakes']
+
+            handshake = data_json[0]
+            self.assertEqual(len(data_json), 1)
+            self.assertTrue(data['status'] == 1)
+            self.assertEqual(handshake['type'], 'init')
+            self.assertEqual(handshake['amount'], 0.03)
+
+
     def test_init_handshake_with_win_value_equal_amount(self):
         self.clear_data_before_test()
         

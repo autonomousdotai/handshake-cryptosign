@@ -424,6 +424,10 @@ def create_free_bet():
 	"	Create a free-bet in ETH
 	"""
 	try:
+		setting = Setting.find_setting_by_name(CONST.SETTING_TYPE['FREE_BET'])
+		if setting is not None and setting.status == 0:
+			return response_error(MESSAGE.FREE_BET_UNABLE, CODE.FREE_BET_UNABLE)
+
 		uid = int(request.headers['Uid'])
 		chain_id = int(request.headers.get('ChainId', CONST.BLOCKCHAIN_NETWORK['RINKEBY']))
 		user = User.find_user_with_id(uid)

@@ -8,6 +8,7 @@ from app.models import Handshake, Outcome, Match, Task, Contract, User, Setting,
 from app.helpers.utils import utc_to_local, is_valid_email
 from app.helpers.mail_content import *
 from app.core import slack_service
+from celery_singleton import Singleton
 
 import sys
 import time
@@ -471,8 +472,7 @@ def update_status_feed(_id, status, amount=None, remaining_amount=None):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
-
-@celery.task(bind=True)
+@celery.task(base=Singleton)
 def upload_file_google_storage(match_id, image_name, saved_path):
 	try:
 		image_crop_path = None

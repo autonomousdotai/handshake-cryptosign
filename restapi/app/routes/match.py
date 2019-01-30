@@ -235,7 +235,7 @@ def add_match():
 		db.session.commit()
 
 		# Handle upload file to Google Storage
-		if file_name is not None and saved_path is not None:
+		if file_name is not None and saved_path is not None and storage_bl.check_file_exist(saved_path):
 			upload_file_google_storage.delay(match.id, file_name, saved_path)
 
 		return response_ok(response_json)

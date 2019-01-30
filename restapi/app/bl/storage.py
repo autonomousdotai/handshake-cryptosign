@@ -2,6 +2,7 @@
 from __future__ import division
 import os
 import re
+import os.path
 import app.constants as CONST
 
 from flask import g
@@ -14,6 +15,16 @@ def delete_file(path_file):
         os.remove(path_file)    
     except Exception as ex:
         print(str(ex))
+
+def check_file_exist(file_path):
+    try:
+        if os.path.exists(file_path):
+            return True
+        print "check_file_exist False"
+        return False
+    except Exception as ex:
+        print(str(ex))
+        return False
 
 
 def handle_upload_file(file, file_name=None):

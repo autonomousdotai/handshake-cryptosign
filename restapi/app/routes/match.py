@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import hashlib
+import socket
 import app.constants as CONST
 import app.bl.match as match_bl
 import app.bl.contract as contract_bl
@@ -16,7 +17,7 @@ from datetime import datetime
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required, admin_required
 from app.helpers.utils import local_to_utc, now_to_strftime
-from app.tasks import send_email_create_market, upload_file_google_storage, upload_file_google_storage_no_task
+from app.tasks import send_email_create_market, upload_file_google_storage
 from app import db, recombee_client
 from app.models import User, Match, Outcome, Task, Source, Category, Contract, Handshake, Token
 from app.helpers.message import MESSAGE, CODE
@@ -236,9 +237,7 @@ def add_match():
 
 		# Handle upload file to Google Storage
 		if file_name is not None and saved_path is not None and storage_bl.check_file_exist(saved_path):
-			# upload_file_google_storage.delay(match.id, file_name, saved_path)
-			upload_file_google_storage_no_task(match.id, file_name, saved_path)
-
+			upload_file_google_storage.delay(socket.gethostname(), match.id, file_name, saved_path)
 		return response_ok(response_json)
 	except Exception, ex:
 		db.session.rollback()

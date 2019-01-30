@@ -16,6 +16,7 @@ import simplejson as json
 import os, hashlib
 import requests
 import random
+import socket
 import app.bl.storage as storage_bl
 import app.bl.match as match_bl
 
@@ -473,38 +474,12 @@ def update_status_feed(_id, status, amount=None, remaining_amount=None):
 
 
 @celery.task()
-def upload_file_google_storage(match_id, image_name, saved_path):
+def upload_file_google_storage(server_name, match_id, image_name, saved_path):
 	try:
-		image_crop_path = None
-		image_source_path = saved_path
-		if storage_bl.validate_extension(image_name, CONST.CROP_ALLOWED_EXTENSIONS):
-			image_source_path, image_crop_path = storage_bl.handle_crop_image(image_name, saved_path)
+		if socket.gethostname() != server_name:
+			upload_file_google_storage.delay(server_name, match_id, image_name, saved_path)
+			return True
 
-		match = Match.find_match_by_id(match_id)
-		if match is None:
-			return False
-
-		result_upload = gc_storage_client.upload_to_storage(app.config['GC_STORAGE_BUCKET'], image_crop_path if image_crop_path is not None else image_source_path, app.config['GC_STORAGE_FOLDER'], image_name)
-		if result_upload is False:
-			return None
-
-		storage_bl.delete_file(image_source_path)
-		if image_crop_path is not None:
-			storage_bl.delete_file(image_crop_path)
-
-		image_url = CONST.SOURCE_GC_DOMAIN.format(app.config['GC_STORAGE_BUCKET'], app.config['GC_STORAGE_FOLDER'], image_name)
-		match.image_url = image_url
-		db.session.commit()
-
-	except Exception as e:
-		db.session.rollback()
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		print("upload_file_google_storage => ", exc_type, fname, exc_tb.tb_lineno)
-
-
-def upload_file_google_storage_no_task(match_id, image_name, saved_path):
-    	try:
 		image_crop_path = None
 		image_source_path = saved_path
 		if storage_bl.validate_extension(image_name, CONST.CROP_ALLOWED_EXTENSIONS):

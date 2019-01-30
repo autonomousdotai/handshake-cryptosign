@@ -62,4 +62,3 @@ algoliasearch==1.17.0
 google-cloud-storage==1.13.0
 recombee-api-client==2.2.0
 slackclient==1.3.0
-celery-singleton==0.1.3

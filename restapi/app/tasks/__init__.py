@@ -472,7 +472,7 @@ def update_status_feed(_id, status, amount=None, remaining_amount=None):
 		print("update_status_feed => ", exc_type, fname, exc_tb.tb_lineno)
 
 
-@celery.task()
+@celery.task(bind=True)
 def upload_file_google_storage(match_id, image_name, saved_path):
 	try:
 		image_crop_path = None

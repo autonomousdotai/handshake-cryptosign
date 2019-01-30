@@ -10,9 +10,11 @@ from tests.routes.base import BaseTestCase
 from app import db, app
 from app.helpers.message import MESSAGE
 
+import os
 import mock
 import json
 import time
+import app.constants as CONST
 import app.bl.storage as storage_bl
 
 class TestTask(BaseTestCase):
@@ -28,25 +30,29 @@ class TestTask(BaseTestCase):
         self.clear_data_before_test()
         filename = '2018-09-02 10.12.10.jpg'
 
-        actual = storage_bl.validate_extension(filename)
+        actual = storage_bl.validate_extension(filename, CONST.CROP_ALLOWED_EXTENSIONS)
         expected = True
         self.assertEqual(actual, expected) 
 
         filename = '2018-09-02 10.12.10'
-        actual = storage_bl.validate_extension(filename)
+        actual = storage_bl.validate_extension(filename, CONST.CROP_ALLOWED_EXTENSIONS)
         expected = False
         self.assertEqual(actual, expected) 
 
         filename = ''
-        actual = storage_bl.validate_extension(filename)
+        actual = storage_bl.validate_extension(filename, CONST.CROP_ALLOWED_EXTENSIONS)
         expected = False
         self.assertEqual(actual, expected)
 
         filename = None
-        actual = storage_bl.validate_extension(filename)
+        actual = storage_bl.validate_extension(filename, CONST.CROP_ALLOWED_EXTENSIONS)
         expected = False
         self.assertEqual(actual, expected)
 
+    def test_check_file_exist(self):
+        saved_path = os.path.join(app.config.get("UPLOAD_DIR"), "test_file.txt")
+        exist = storage_bl.check_file_exist(saved_path)
+        self.assertEqual(exist, True)
 
 if __name__ == '__main__':
     unittest.main()

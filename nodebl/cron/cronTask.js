@@ -25,35 +25,6 @@ let isRunningTask = false;
 let taskIdTracking = 0;
 
 
-/**
- * 
- * @param {array} arr
- * @param {object} onchainData
- * @param {object} task
- */
-const saveTnxs = (arr) => {
-	return new Promise((resolve, reject) => {
-		const tnxs = [];
-		(arr || []).forEach(item => {
-			if (item.onchainData) {
-				tnxs.push({
-					contract_json: (item.contract_json.length > 0) ? item.contract_json: item.onchainData.contract_json,
-					contract_address: (item.contract_address.length > 0) ? item.contract_address: item.onchainData.contract_address,
-					contract_method: item.onchainData.contract_method,
-					from_address: item.onchainData.from_address,
-					data: JSON.stringify(item),
-					status: -1,
-					task_id: item.task.id,
-					deleted: 0,
-					date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
-					date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss")
-				});
-			}
-		});
-		onchainDataDAO.multiInsert(tnxs).then(resolve).catch(reject);
-	});
-};
-
 const masterRefund = (params) => {
 	return new Promise((resolve, reject) => {
 		return resolve([{
@@ -148,8 +119,7 @@ const initBet = (params, task, isFreeBet) => {
 				});
 
 				taskDAO.multiInsert(tnxs).then((results) => {
-					console.log("=====================");
-					console.log(results);
+					taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_SUCCESS);
 					return resolve();
 				});
 			})
@@ -168,12 +138,7 @@ const initBet = (params, task, isFreeBet) => {
 
 const initBetOnchain = (params) => {
 	return new Promise((resolve, reject) => {
-		return resolve([{
-			contract_method: 'init',
-			hid: params.hid,
-			outcome_result: params.outcome_result,
-			offchain: params.offchain
-		}])
+		return resolve([params])
 	});
 };
 
@@ -306,7 +271,6 @@ const callSmartContract = (data) => {
 
 			data.forEach(itemData => {
 				const onchainData = itemData.onchain_task;
-				console.log(onchainData);
 				const task = itemData.task_dao;
 				if (onchainData) {
 					tasks.push(

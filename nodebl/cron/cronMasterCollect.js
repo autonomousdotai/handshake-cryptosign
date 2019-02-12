@@ -55,6 +55,7 @@ const asyncScanTask = (fromId) => {
 			Promise.all(tasks)
 			.then(results => {
 				const all_oc_ids = outcomes.map(i => { return i.id; })
+				console.log("Update outcomes status: scanned ", all_oc_ids);
 				outcomeDAO.multiUpdateOutcomeMasterStatus(all_oc_ids, "scanned")
 				.then(result => {
 					taskDAO.multiInsert(tnxs).then((results) => {

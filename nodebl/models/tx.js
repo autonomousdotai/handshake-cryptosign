@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     transaction_status: DataTypes.STRING,
     chain_id: DataTypes.INTEGER,
     offchain: DataTypes.STRING,
-    onchain_task_id: DataTypes.INTEGER,
+    task_id: DataTypes.INTEGER,
     deleted: DataTypes.INTEGER,
     date_created: DataTypes.DATE,
     date_modified: DataTypes.DATE

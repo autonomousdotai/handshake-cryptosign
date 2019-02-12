@@ -2,11 +2,16 @@
 const cron = require('node-cron');
 const configs = require('../configs');
 const moment = require('moment');
+const web3 = require('../configs/web3');
 
 // daos
 const taskDAO = require('../daos/task');
 const settingDAO = require('../daos/setting');
-const onchainDataDAO = require('../daos/onchainTask');
+
+// contracts
+const predictionContract = require('../libs/smartcontract');
+const tokenRegistryContract = require('../libs/tokenRegistryContract');
+const predictionWithTokenContract = require('../libs/tokenRegistryContract');
 
 const constants = require('../constants');
 const utils = require('../libs/utils');
@@ -127,7 +132,26 @@ const initBet = (params, task, isFreeBet) => {
 
 			utils.submitInitAPI(dataRequest)
 			.then(results => {
-				return resolve(results);
+				// Save all reponse to Task table
+				const tnxs = [];
+				(results || []).forEach(item => {
+					tnxs.push({
+						task_type: task.task_type,
+						action: 'INIT_ONCHAIN',
+						status: -1,
+						contract_address: task.contract_address,
+						contract_json: task.contract_json,
+						data: JSON.stringify(item),
+						date_created: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+						date_modified: moment().utc().format("YYYY-MM-DD HH:mm:ss"),
+					});
+				});
+
+				taskDAO.multiInsert(tnxs).then((results) => {
+					console.log("=====================");
+					console.log(results);
+					return resolve();
+				});
 			})
 			.catch(err => {
 				return reject(err);
@@ -139,6 +163,17 @@ const initBet = (params, task, isFreeBet) => {
 				options_data: { params }
 			});
 		}
+	});
+};
+
+const initBetOnchain = (params) => {
+	return new Promise((resolve, reject) => {
+		return resolve([{
+			contract_method: 'init',
+			hid: params.hid,
+			outcome_result: params.outcome_result,
+			offchain: params.offchain
+		}])
 	});
 };
 
@@ -260,6 +295,127 @@ const addFeed = (hs, task) => {
 	});
 };
 
+const callSmartContract = (data) => {
+	return new Promise((resolve, reject) => {
+		utils.getGasAndNonce()
+		.then(chain_infor => {
+			const gasPriceStr = chain_infor.gasPriceStr;
+			const nonce = chain_infor.nonce;
+			const tasks = [];
+			let index = 0;
+
+			data.forEach(itemData => {
+				const onchainData = itemData.onchain_task;
+				console.log(onchainData);
+				const task = itemData.task_dao;
+				if (onchainData) {
+					tasks.push(
+						new Promise((resolve, reject) => {
+							taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_CALL_SMARTCONTRACT_PROGRESSING)
+							.then( resultUpdate => {
+								let smartContractFunc = null;
+								const item = JSON.parse(task.data);
+								let arr_tmp = task.contract_json.split('_');
+								contract_json = arr_tmp.length > 0 ? arr_tmp[0] : ""
+
+								switch (contract_json) {
+									case 'PredictionHandshake':
+										switch (onchainData.contract_method) {
+											case 'createMarket':
+												smartContractFunc = predictionContract.createMarketTransaction(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'createMarketForShurikenUser':
+												smartContractFunc = predictionContract.createMarketForShurikenUserTransaction(nonce + index, onchainData.creator_wallet_address, onchainData.fee, onchainData.source, onchainData.grant_permission, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'init':
+												smartContractFunc = predictionContract.submitInitTransaction(nonce + index, onchainData.hid, onchainData.side, onchainData.odds, onchainData.offchain, onchainData.amount, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'shake':
+												smartContractFunc = predictionContract.submitShakeTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'collectTestDrive':
+												smartContractFunc = predictionContract.submitCollectTestDriveTransaction(onchainData.hid, onchainData.winner, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'reportOutcomeTransaction':
+												smartContractFunc = predictionContract.reportOutcomeTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'reportOutcomeForCreatorTransaction':
+												smartContractFunc = predictionContract.reportOutcomeForCreatorTransaction(onchainData.hid, onchainData.outcome_id, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'initTestDriveTransaction':
+												smartContractFunc = predictionContract.submitInitTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'shakeTestDriveTransaction':
+												smartContractFunc = predictionContract.submitShakeTestDriveTransaction(onchainData.hid, onchainData.side, onchainData.taker, onchainData.takerOdds, onchainData.maker, onchainData.makerOdds, onchainData.offchain, parseFloat(onchainData.amount), nonce + index, gasPriceStr, item,task.contract_address, task.contract_json, task.id);
+											break;
+											case 'uninitForTrial':
+												smartContractFunc = predictionContract.uninitForTrial(onchainData.hid, onchainData.side, onchainData.odds, onchainData.maker, `${onchainData.value}`, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'resolveOutcomeTransaction':
+												smartContractFunc = predictionContract.resolveOutcomeTransaction(onchainData.hid, onchainData.outcome_result, nonce + index, onchainData.offchain, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+											case 'refundMaster':
+												smartContractFunc = predictionContract.refundMaster(onchainData.hid, onchainData.offchain, nonce + index, gasPriceStr, item, task.contract_address, task.contract_json, task.id);
+											break;
+										}
+									break;
+									case 'TokenRegistry': 
+										switch (onchainData.contract_method) {
+											case 'addNewToken':
+												smartContractFunc = tokenRegistryContract.addNewTokenTransaction(nonce + index, onchainData.token_address, onchainData.symbol, onchainData.name, onchainData.decimals, onchainData.offchain, gasPriceStr, item, task.id);
+											break;
+										}
+									break;
+									case 'PredictionHandshakeWithToken': 
+										switch (onchainData.contract_method) {
+											case 'approveNewToken':
+												smartContractFunc = predictionWithTokenContract.approveNewToken(nonce + index, onchainData.fee, onchainData.source, onchainData.closingTime, onchainData.reportTime, onchainData.disputeTime, onchainData.offchain, gasPriceStr, item, task.id);
+											break;
+										}
+									break;
+								}
+	
+								if (smartContractFunc) {
+									index += 1;
+									smartContractFunc.then(result => {
+										return resolve(Object.assign(result, { taskId: task.id}));
+									}).catch(reject);
+								}
+							})
+							.catch(err => {
+								return reject({
+									err_type: constants.TASK_STATUS.UPDATE_TASK_STATUS_FAIL,
+									error: err,
+									options_data: {
+										task: task.toJSON()
+									}
+								});
+							})
+						})
+					);
+				} else {
+					console.error('Task onchain is empty with id: ', task.id);
+				}
+			});
+
+			Promise.all(tasks)
+			.then(results => {
+				if (Array.isArray(results) && results.length > 0) {
+					web3.setNonce( web3.getNonce() + results.length);
+					const taskIds = results.map(i => { return i.taskId; })
+					return resolve(taskIds);
+				} else {
+					resolve([]);
+				}
+			})
+			.catch(err => {
+				return reject(err);
+			})
+		})
+		.catch(reject);
+	});
+};
+
 const asyncScanTask = () => {
 	return new Promise((resolve, reject) => {
 		const tasks = [];
@@ -267,15 +423,13 @@ const asyncScanTask = () => {
 		.then(_tasks => {
 			taskIdTracking = _tasks.length > 0 ? _tasks[_tasks.length - 1].id : 0;
 			_tasks.forEach(task => {
-				if (task && task.task_type && task.data) {
+				if (task != undefined) {
 					tasks.push(
 						new Promise((resolve, reject) => {
 							taskDAO.updateStatusById(task, constants.TASK_STATUS.STATUS_PROGRESSING)
 							.then( resultUpdate => {
 								const params = JSON.parse(task.data)
 								let processTaskFunc = undefined;
-								let contract_json = task.contract_json;
-								let contract_address = task.contract_address;
 
 								switch (task.task_type) {
 									case 'NORMAL': // ETHER
@@ -291,6 +445,10 @@ const asyncScanTask = () => {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, false);
 											break;
+											case 'INIT_ONCHAIN':
+												processTaskFunc = initBetOnchain(params);
+											break;
+											
 											case 'REPORT':
 												processTaskFunc = report(params);
 											break;
@@ -307,6 +465,9 @@ const asyncScanTask = () => {
 										switch (task.action) {
 											case 'INIT':
 												processTaskFunc = initBet(params, task, true);
+											break;
+											case 'INIT_ONCHAIN':
+												processTaskFunc = initBetOnchain(params);
 											break;
 											case 'UNINIT':
 												processTaskFunc = unInitFreeBet(params);
@@ -345,17 +506,15 @@ const asyncScanTask = () => {
 								}
 			
 								processTaskFunc
-								.then(result => {
+								.then(results => {
 									return resolve({
-										contract_json: contract_json,
-										contract_address: contract_address,
-										onchainData: result,
-										task: task.toJSON()
+										task_dao: task,
+										onchain_task: results
 									});
 								})
 								.catch(err => {
 									utils.handleErrorTask(task, err.err_type);
-									return reject(err);
+									return resolve();
 								});
 							})
 							.catch(err => {
@@ -375,42 +534,35 @@ const asyncScanTask = () => {
 			});
 
 			Promise.all(tasks)
-			.then(results => {
-				let tnxs = [];
-				(results || []).forEach(i => {
-					if (Array.isArray(i.onchainData)) {
-						i.onchainData.forEach(tnxData => {
-							if (tnxData.contract_method) {
-								tnxs.push({
-									contract_json: i.contract_json,
-									contract_address: i.contract_address,
-									onchainData: tnxData,
-									task: i.task
+			.then( results => {
+				const onchain_arr = [];
+				results.forEach(item => {
+					if (item) {
+						if (Array.isArray(item.onchain_task)){
+							item.onchain_task.forEach(_item => {
+								onchain_arr.push({
+									task_dao: item.task_dao,
+									onchain_task: _item
 								});
-							}
-						});
-					} 
-				});
-
-				saveTnxs(tnxs)
-				.then(tnxResults => {
-					if (Array.isArray(tnxResults) && tnxResults.length > 0) {
-						const taskIds = tnxResults.map(i => { return i.task_id; })
-						taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
-						.then(updateResults => {
-							return resolve(tnxResults);
-						})
-						.catch(err => {
-							return reject(err);
-						})
-					} else {
-						resolve([]);
+							});
+						} else {
+							onchain_arr.push({
+								task_dao: item.task_dao,
+								onchain_task: item.onchain_task
+							});
+						}
 					}
+				});
+				return callSmartContract(onchain_arr);
+			})
+			.then(taskIds => {
+				taskDAO.multiUpdateStatusById(taskIds, constants.TASK_STATUS.STATUS_SUCCESS)
+				.then(updateResults => {
+					return resolve(updateResults);
 				})
 				.catch(err => {
-					console.error('Error', err);
 					return reject(err);
-				});
+				})
 			})
 			.catch(err => {
 				console.error('Error', err);

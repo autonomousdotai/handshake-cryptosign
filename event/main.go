@@ -86,6 +86,20 @@ func main() {
 	})
 	algoliaCron.Start()
 
+	userTokenCron := cron.New()
+	userToken := cp.NewUserToken()
+	userTokenCron.AddFunc("@every 10s", func() {
+		fmt.Println("user token run every 15m")
+		if !userToken.IsRunning {
+			userToken.IsRunning = true
+			userToken.ScanUserToken()
+			userToken.IsRunning = false
+		} else {
+			fmt.Println("user token is running")
+		}
+	})
+	userTokenCron.Start()
+
 	// loop forever
 	select {}
 }

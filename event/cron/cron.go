@@ -17,6 +17,7 @@ import (
 var txDAO = &daos.TxDAO{}
 var matchDAO = &daos.MatchDAO{}
 var outcomeDAO = &daos.OutcomeDAO{}
+var userTokenDAO = &daos.UserTokenDAO{}
 var hookService = &services.HookService{}
 var etherscanService = &services.EtherscanService{}
 

@@ -89,7 +89,7 @@ func main() {
 	userTokenCron := cron.New()
 	userToken := cp.NewUserToken()
 	userTokenCron.AddFunc("@every 10s", func() {
-		fmt.Println("user token run every 15m")
+		fmt.Println("user token run every 10s")
 		if !userToken.IsRunning {
 			userToken.IsRunning = true
 			userToken.ScanUserToken()

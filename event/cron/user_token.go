@@ -2,6 +2,7 @@ package cron
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -33,32 +34,49 @@ func (ut *UserToken) ScanUserToken() {
 		return
 	}
 
-	if len(uts) == 0 {
+	if len(userTokens) == 0 {
 		log.Println("User token: empty")
 	} else {
 		for index := 0; index < len(userTokens); index++ {
-			userTokens[index]
+			pending, status, err := ut.getTransacionReceipt(userTokens[index].Hash, etherClient)
+			if err != nil || pending {
+				return
+			}
+
+			var jsonData map[string]interface{}
+			json.Unmarshal([]byte(`{}`), &jsonData)
+			jsonData["eventName"] = "user_token"
+			jsonData["id"] = userTokens[index].ID
+			jsonData["status"] = int(status)
+
+			err = hookService.Event(jsonData)
+			if err != nil {
+				log.Println("Hook User Token event success error: ", err.Error())
+			}
 		}
 	}
 }
 
-func (ut *UserToken) getTransacionReceipt(hash string, etherClient *ethclient.Client) (status int, error) {
+func (ut *UserToken) getTransacionReceipt(hash string, etherClient *ethclient.Client) (bool, uint64, error) {
 	log.Printf("start scan tnxHash: %s\n", hash)
 	txHash := common.HexToHash(hash)
-	tx, pending, err := etherClient.TransactionByHash(context.Background(), txHash)
+	_, pending, err := etherClient.TransactionByHash(context.Background(), txHash)
+
+	if pending {
+		return false, 0, nil
+	}
+
 	if err == nil {
-		if !pending {
-			return -1, nil
-		}
 		receipt, err := etherClient.TransactionReceipt(context.Background(), txHash)
 		if err != nil {
 			log.Println("Scan Tx User Token: get receipt error", err.Error())
-		} else {
-			log.Printf("Tx User Token %s has receipt, status %d\n", transaction.Hash, receipt.Status)
-			return receipt.Status, nil
+			return false, receipt.Status, err
 		}
-	} else {
-		log.Printf("Tx User Token %s is pending or error occured\n", transaction.Hash)
+
+		log.Printf("Tx User Token %s has receipt, status %d\n", hash, receipt.Status)
+		return false, receipt.Status, nil
 	}
-	results <- true
+
+	log.Printf("Tx User Token %s is pending or error occured\n", hash)
+	return false, 0, err
 }

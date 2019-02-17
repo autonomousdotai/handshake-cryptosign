@@ -9,6 +9,6 @@ type UserToken struct {
 	Address string `gorm:"column:address;" json:"address"`
 }
 
-func (u Tx) TableName() string {
+func (u UserToken) TableName() string {
 	return "user_token"
 }

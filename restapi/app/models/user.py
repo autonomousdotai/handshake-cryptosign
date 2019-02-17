@@ -1,10 +1,10 @@
 from app import db
 from app.models.base import BaseModel
 
-user_token = db.Table('user_token',
-                        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                        db.Column('token_id', db.Integer, db.ForeignKey('token.id'), primary_key=True)
-                        )
+# user_token = db.Table('user_token',
+#                         db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+#                         db.Column('token_id', db.Integer, db.ForeignKey('token.id'), primary_key=True)
+                        # )
 class User(BaseModel):
 	__tablename__ = 'user'
 	__json_public__ = ['id', 'email', 'name']
@@ -30,7 +30,7 @@ class User(BaseModel):
 							default=0)
 	tokens = db.relationship(
 						"Token",
-						secondary=user_token,
+						secondary="UserToken",
 						primaryjoin='user_token.c.user_id==User.id',
 						secondaryjoin='user_token.c.token_id==Token.id',
 						backref=db.backref('back_tokens', lazy='dynamic'),

@@ -49,7 +49,7 @@ func (ut *UserToken) ScanUserToken() {
 			jsonData["id"] = userTokens[index].ID
 			jsonData["status"] = int(status)
 
-			err = hookService.Event(jsonData)
+			err = hookService.UserTokenEvent(jsonData)
 			if err != nil {
 				log.Println("Hook User Token event success error: ", err.Error())
 			}

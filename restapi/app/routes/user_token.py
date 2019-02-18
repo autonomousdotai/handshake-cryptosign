@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required
 from app.helpers.response import response_ok, response_error
 from app.helpers.decorators import login_required
 from app import db
-from app.models import UserToken, User
+from app.models import UserToken, User, Token
 from app.helpers.message import MESSAGE, CODE
 
 
@@ -36,6 +36,9 @@ def add():
 		uid = int(request.headers['Uid'])
 		data = request.json
 		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+		token = Token.find_token_by_id(data["token_id"])
+		if token is None:
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		ut = UserToken(

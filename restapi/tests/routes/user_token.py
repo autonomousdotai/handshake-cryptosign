@@ -115,5 +115,26 @@ class TestUserTokenBluePrint(BaseTestCase):
             db.session.delete(item)
             db.session.commit()
 
+
+            Uid = 66
+            params = {
+                "address": "0x123",
+                "hash": "0x987",
+                "token_id": 999999
+            }
+            # call appprove token again
+            response = self.client.post(
+                                    '/user-token/add',
+                                    data=json.dumps(params), 
+                                    content_type='application/json',
+                                    headers={
+                                        "Uid": "{}".format(Uid),
+                                        "Fcm-Token": "{}".format(123),
+                                        "Payload": "{}".format(123),
+                                    })
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 0)
+
 if __name__ == '__main__':
     unittest.main()

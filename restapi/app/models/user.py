@@ -30,7 +30,7 @@ class User(BaseModel):
 							default=0)
 	tokens = db.relationship(
 						"Token",
-						secondary="UserToken",
+						secondary="user_token",
 						primaryjoin='user_token.c.user_id==User.id',
 						secondaryjoin='user_token.c.token_id==Token.id',
 						backref=db.backref('back_tokens', lazy='dynamic'),

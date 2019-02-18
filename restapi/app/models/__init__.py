@@ -13,3 +13,4 @@ from contract import *
 from redeem import *
 from referral import *
 from history import *
+from user_token import *

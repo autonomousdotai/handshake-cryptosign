@@ -100,6 +100,8 @@ class MESSAGE(object):
 	# REFERRAL
 	REFERRAL_USER_JOINED_ALREADY = 'User has joined referral program already!'
 
+	# USER_TOKEN
+	USER_TOKEN_NOT_FOUND = 'User token not found. Please try again.'
 
 class CODE(object):
 	# ERROR
@@ -200,3 +202,6 @@ class CODE(object):
 
 	# REFERRAL
 	REFERRAL_USER_JOINED_ALREADY = '1066'
+
+	# USER TOKEN
+	USER_TOKEN_NOT_FOUND = '1070'

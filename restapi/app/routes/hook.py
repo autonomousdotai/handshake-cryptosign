@@ -10,7 +10,7 @@ import app.bl.match as match_bl
 
 from flask import Blueprint, request, g, current_app as app
 from app import db
-from app.models import User, Match
+from app.models import User, Match, UserToken
 from flask_jwt_extended import (create_access_token)
 
 from app.helpers.message import MESSAGE, CODE
@@ -146,6 +146,35 @@ def slack_command_hook():
 			
 			db.session.commit()
 			return response_ok()
+
+	except Exception, ex:
+		db.session.rollback()
+		return response_error(ex.message)
+
+
+@hook_routes.route('/user-token', methods=['POST'])
+@service_required
+def user_token_hook():
+	try:
+		data = request.json
+		print "Hook user-token data: {}".format(data)
+		if data is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		id = data.get('id', None)
+		status  = data.get('status', -1)
+
+		if id is None:
+			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
+
+		user_token = UserToken.find_user_token_with_id(id)
+		if user_token is None:
+			return response_error(MESSAGE.USER_TOKEN_NOT_FOUND, CODE.USER_TOKEN_NOT_FOUND)
+
+		user_token.status = status
+		db.session.commit()
+
+		return response_ok()
 
 	except Exception, ex:
 		db.session.rollback()

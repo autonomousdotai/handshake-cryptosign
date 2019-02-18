@@ -2,7 +2,7 @@
 from tests.routes.base import BaseTestCase
 from mock import patch
 from app import db, app
-from app.models import User, Match, Outcome
+from app.models import User, Match, Outcome, UserToken
 from sqlalchemy import bindparam, literal_column, func
 from app.helpers.message import MESSAGE
 from app.helpers.utils import local_to_utc
@@ -261,7 +261,7 @@ class TestHookBluePrint(BaseTestCase):
         match = Match(
             name='DDDDD',
             public=1,
-            date=seconds - 100,
+            date=seconds + 100,
             reportTime=seconds + 200,
             disputeTime=seconds + 300,
             source_id = 3
@@ -283,7 +283,7 @@ class TestHookBluePrint(BaseTestCase):
         match1 = Match(
             name='BBBBB',
             public=0,
-            date=seconds - 100,
+            date=seconds + 100,
             reportTime=seconds + 200,
             disputeTime=seconds + 300,
             source_id = 3
@@ -305,7 +305,7 @@ class TestHookBluePrint(BaseTestCase):
         match2 = Match(
             name='AAAAAAA',
             public=0,
-            date=seconds - 100,
+            date=seconds + 100,
             reportTime=seconds + 200,
             disputeTime=seconds + 300,
             source_id = 3
@@ -328,8 +328,42 @@ class TestHookBluePrint(BaseTestCase):
         for item in items:
             db.session.delete(item)
             db.session.commit()
-        
         self.assertTrue(text != '')
+
+    def test_hook_update_user_token(self):
+        user_token = UserToken.find_user_token_with_id(1)
+        if user_token is None:
+            user_token = UserToken(
+                address="0x3d00536dc2869cc7ee11c45f2fcc86c0336bffed",
+                status=-1,
+                hash="0x8617719aa89b6969367491bad5e4c971786d5f5004b5ff15c8537e4aae0f85b0"
+            )
+            db.session.add(user_token)
+        else:
+            user_token.status = -1
+            
+        db.session.commit()
+
+        with self.client:
+            params = {
+                "id": user_token.id,
+                "status": 1
+            }
+
+            response = self.client.post(
+                                    '/hook/user-token',
+                                    data=json.dumps(params), 
+                                    content_type='application/json'
+                                    )
+
+            data = json.loads(response.data.decode()) 
+            self.assertTrue(data['status'] == 1)
+
+            ut = UserToken.find_user_token_with_id(1)
+            self.assertTrue(ut.status == 1)
+            
+            db.session.delete(ut)
+            db.session.commit()
 
 if __name__ == '__main__':
     unittest.main()

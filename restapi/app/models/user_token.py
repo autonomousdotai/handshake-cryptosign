@@ -22,5 +22,9 @@ class UserToken(BaseModel):
 	def find_by_user_id_and_address(cls, user_id, address):
 		return UserToken.query.filter(UserToken.user_id == user_id, UserToken.address== func.binary(address)).first()
 
+	@classmethod
+	def find_user_token_with_id(cls, _id):
+		return UserToken.query.filter_by(id=_id).first()
+
 	def __repr__(self):
 		return '<UserToken {}>'.format(self.id)

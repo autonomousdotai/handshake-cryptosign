@@ -15,6 +15,7 @@ from app.routes.contract import contract_routes
 from app.routes.hook import hook_routes
 from app.routes.redeem import redeem_routes
 from app.routes.referral import referral_routes
+from app.routes.user_token import user_token_routes
 
 
 def init_routes(app):
@@ -36,4 +37,5 @@ def init_routes(app):
     app.register_blueprint(hook_routes, url_prefix='/hook')
     app.register_blueprint(redeem_routes, url_prefix='/redeem')
     app.register_blueprint(referral_routes, url_prefix='/referral')
+    app.register_blueprint(user_token_routes, url_prefix='/user-token')
     app.register_blueprint(user_routes)

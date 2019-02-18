@@ -28,6 +28,12 @@ class User(BaseModel):
 	played_bet = db.Column(db.Integer,
 							server_default=str(0),
 							default=0)
+	# tokens = db.relationship('UserToken', backref='user', primaryjoin="User.id == UserToken.user_id",
+	# 							lazy='dynamic', uselist=False)
+	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
+	                            lazy='dynamic')
+	referral = db.relationship('Referral', backref='user', primaryjoin="User.id == Referral.user_id", 
+								uselist=False)
 	tokens = db.relationship(
 						"Token",
 						secondary="user_token",
@@ -35,10 +41,6 @@ class User(BaseModel):
 						secondaryjoin='user_token.c.token_id==Token.id',
 						backref=db.backref('back_tokens', lazy='dynamic'),
 						lazy='dynamic')
-	handshakes = db.relationship('Handshake', backref='user', primaryjoin="User.id == Handshake.user_id",
-	                            lazy='dynamic')
-	referral = db.relationship('Referral', backref='user', primaryjoin="User.id == Referral.user_id", 
-								uselist=False)
 
 	@classmethod
 	def find_user_with_id(cls, user_id):

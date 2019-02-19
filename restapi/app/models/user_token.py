@@ -8,11 +8,12 @@ import json
 
 class UserToken(BaseModel):
 	__tablename__ = 'user_token'
-	__json_public__ = ['id', 'user_id', 'address', 'token_id', 'status', 'hash']
+	__json_public__ = ['id', 'user_id', 'address', 'token_id', 'contract_id', 'status', 'hash']
 
 	user_id = db.Column('user_id', db.ForeignKey('user.id'))
 	address = db.Column(db.String(255))
 	token_id = db.Column('token_id', db.ForeignKey('token.id'))
+	contract_id = db.Column('contract_id', db.ForeignKey('contract.id'))
 	status = db.Column(db.Integer,
 							server_default=str(CONST.USER_TOKEN_STATUS['PENDING']),
 							default=CONST.USER_TOKEN_STATUS['PENDING'])

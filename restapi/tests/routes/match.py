@@ -1260,6 +1260,7 @@ class TestMatchBluePrint(BaseTestCase):
                             "awayTeamFlag": "",
                             "name": "Nigeria - Iceland - Sangunji",
                             "public": 1,
+                            "token_id":1,
                             "source": {
                                 "name": "Worlcup Russia 2018_{}".format(seconds),
                                 "url": "google.com_{}".format(seconds),
@@ -1275,7 +1276,7 @@ class TestMatchBluePrint(BaseTestCase):
                 }
             )
             response = self.client.post(
-                                    '/match/add?token_id=1',
+                                    '/match/add',
                                     data=multipart_form_data,
                                     headers={
                                         "Uid": "{}".format(88),

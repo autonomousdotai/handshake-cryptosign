@@ -112,7 +112,6 @@ def add_match():
 		from_request = request.headers.get('Request-From', 'mobile')
 		request_size = request.headers.get('Content-length') # string
 		uid = int(request.headers['Uid'])
-		token_id = request.args.get('token_id')
 		file_name = None
 		saved_path = None
 
@@ -120,6 +119,8 @@ def add_match():
 			return response_error(MESSAGE.INVALID_DATA, CODE.INVALID_DATA)
 
 		item = json.loads(request.form.get('data'))
+		token_id = item.get('token_id', None)
+
 		if request.files and len(request.files) > 0 and request.files['image'] is not None:
 			if int(request_size) <= CONST.UPLOAD_MAX_FILE_SIZE and storage_bl.validate_extension(request.files['image'].filename, CONST.UPLOAD_ALLOWED_EXTENSIONS):
 				file_name, saved_path = storage_bl.handle_upload_file(request.files['image'])

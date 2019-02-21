@@ -167,7 +167,7 @@ class TestMatchBluePrint(BaseTestCase):
             db.session.delete(s)
             db.session.commit()
 
-        Task.query.delete()
+        # Task.query.delete()
         db.session.commit()
 
 

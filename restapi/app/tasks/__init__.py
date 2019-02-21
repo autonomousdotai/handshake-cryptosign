@@ -49,6 +49,8 @@ def update_feed(handshake_id):
 			print 'outcome for handshake: {} is None'.format(handshake_id)
 			return
 
+		token = Token.find_token_by_id(outcome.token_id)
+
 		match = Match.find_match_by_id(outcome.match_id)
 		if match is None:
 			print 'match is None'
@@ -105,6 +107,13 @@ def update_feed(handshake_id):
 			"contract_json_s": handshake.contract_json,
 			"contract_type_s": CONST.CONTRACT_TYPE['ETH'] if outcome.token_id is None else CONST.CONTRACT_TYPE['ERC20']
 		}
+
+		if token is not None:
+			hs["token_id_i"] = token.id
+			hs["token_name_s"] = token.name
+			hs["token_symbol_s"] = token.symbol
+			hs["token_decimal_i"] = token.decimal
+
 		print 'create maker {}'.format(hs)
 
 		# add to firebase database

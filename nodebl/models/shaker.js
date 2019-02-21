@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     deleted: DataTypes.INTEGER,
     shaker_id: DataTypes.INTEGER,
     amount: DataTypes.DECIMAL(36, 18),
-    remaining_amount: DataTypes.DECIMAL(36, 18),
+    // remaining_amount: DataTypes.DECIMAL(36, 18),
     handshake_id: DataTypes.INTEGER,
     free_bet: DataTypes.INTEGER,
     status: DataTypes.INTEGER,
@@ -33,6 +33,13 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false,
     underscored: true,
   });
+
+  Shaker.associate = function (models) {
+    Shaker.belongsTo(models.Handshake, { 
+      foreignKey: 'handshake_id',
+      sourceKey: 'id'
+    })
+  };
 
   return Shaker;
 };

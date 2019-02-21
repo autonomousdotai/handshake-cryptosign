@@ -50,7 +50,7 @@ def matches():
 		# get suggested matches from recombee
 		match_ids_recommended = match_bl.get_user_recommended_data(user_id=uid, offset=20, timestamp=seconds)
 
-		# get suggested matches from algolia		
+		# get suggested matches from algolia
 		arr_ids = match_bl.algolia_search(source, keywords)
 		if arr_ids is not None and len(arr_ids) > 0:
 			match_ids_recommended.extend(arr_ids)
@@ -91,6 +91,13 @@ def matches():
 						"support": outcome_bl.count_support_users_play_on_outcome(match.outcomes[0].id),
 						"oppose": outcome_bl.count_against_users_play_on_outcome(match.outcomes[0].id)
 					}
+				
+				if match.outcomes[0].token_id is not None:
+					token = Token.find_token_by_id(match.outcomes[0].token_id)
+					if token is None:
+						return response_error(MESSAGE.TOKEN_NOT_FOUND, CODE.TOKEN_NOT_FOUND)
+					match_json["token"] = token.to_json()
+
 				response.append(match_json)
 
 		return response_ok(response)

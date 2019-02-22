@@ -79,7 +79,7 @@ func (h HookService) UserTokenEvent(jsonData map[string]interface{}) error {
 	conf := config.GetConfig()
 
 	endpoint := conf.GetString("hookEndpoint")
-	endpoint = fmt.Sprintf("%s/user-token", endpoint)
+	endpoint = fmt.Sprintf("%s/hook/user-token", endpoint)
 	jsonValue, _ := json.Marshal(jsonData)
 
 	request, _ := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonValue))

@@ -12,7 +12,7 @@ chardet==3.0.4
 click==6.7
 enum34==1.1.6
 Flask==1.0.2
-Flask-Cors==3.0.3
+Flask-Cors==3.0.9
 Flask-JWT-Extended==3.7.1
 Flask-Migrate==2.1.1
 Flask-Script==2.0.6
